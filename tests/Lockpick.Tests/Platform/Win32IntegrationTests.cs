@@ -45,10 +45,21 @@ public sealed class Win32IntegrationTests : IDisposable
             return p.Threads.Cast<ProcessThread>().All(t => t.ThreadState == System.Diagnostics.ThreadState.Wait && t.WaitReason == ThreadWaitReason.Suspended);
         }
 
+        // Thread states are sampled by the OS; give them a moment to show the change.
+        static bool Eventually(Func<bool> condition)
+        {
+            for (var i = 0; i < 50 && !condition(); i++)
+            {
+                Thread.Sleep(20);
+            }
+
+            return condition();
+        }
+
         Assert.Null(ProcessSuspender.Suspend(_child.Id));
-        Assert.True(AllSuspended(_child.Id));
+        Assert.True(Eventually(() => AllSuspended(_child.Id)));
         Assert.Null(ProcessSuspender.Resume(_child.Id));
-        Assert.False(AllSuspended(_child.Id));
+        Assert.True(Eventually(() => !AllSuspended(_child.Id)));
         Assert.NotNull(ProcessSuspender.Suspend(int.MaxValue - 1)); // no such process: an error, not an exception
     }
 

@@ -69,9 +69,9 @@ from a third-party source, diagnostics only.
 | `0x03` | Quantity drops by 1 per shot (7 → 0), equipped as a weapon | Shotgun |
 | `0x0C` | Loaded into the shotgun: a reload takes exactly the missing rounds (capacity 7) | **Shotgun shells** |
 | `0x44` | Consumed while HP rose 54 → 86 (+32, Jill) | Green herb? (BioRand id 68) |
-| `0x07` | Picked up with 6 rounds, −1 per shot, 201 damage per hit | Bazooka? (BioRand id 7) |
-| `0x11` | Loaded into an empty `0x07` (×6), which became `0x08` ×6 — not shotgun shells | Bazooka rounds |
-| `0x08` | `0x07` after loading `0x11` rounds; −1 per shot | Bazooka with other rounds? (BioRand id 8) |
+| `0x07` | Picked up with 6 rounds by Forest, −1 per shot, 201 damage per hit | **Bazooka, explosive rounds** (BioRand says acid: swapped) |
+| `0x11` | Loaded into an empty `0x07` (×6), which became `0x08` ×6 — not shotgun shells | **Acid rounds** |
+| `0x08` | `0x07` after loading `0x11` rounds; 95 damage per hit (the speedrun chart's acid grenade) | **Bazooka, acid rounds** |
 | `0x47` | Made from two `0x44`; consumed while HP went 71 → 96 (max) | Mixed herb (green + green)? |
 | `0x21` | Dropped by the statue pushed in 202, picked up in 105, placed in the lion head in 10D (scenario flag A0 `0x10000`) | **Blue gem** (owner-confirmed) |
 | `0x29` | Received from the lion head in 10D for the blue gem | **Wind crest** (owner-confirmed) |

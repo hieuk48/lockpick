@@ -130,7 +130,7 @@
           "verifies": "Bazooka ids and round types",
           "status": "partial",
           "evidence": [
-            "2026-10-13 (live session 4, Jill, memory log): weapon id 0x07 picked up with 6 rounds, fired 6 → 0 (one round per shot, 201 damage per hit); loading id 0x11 ×6 into the empty 0x07 turned it into id 0x08 ×6, also fired. Likely the bazooka with two round types (BioRand ids 7/8) — names unconfirmed; flame rounds not seen"
+            "2026-10-13 re-check of sessions 4-7: 0x07 is the bazooka with explosive rounds (as found by Forest; 201 damage per hit, 15 hits), 0x08 the bazooka with acid rounds (an empty 0x07 loaded with acid rounds 0x11; 95 damage, the speedrun chart's acid grenade). BioRand's names for 7/8 are swapped; 0x10 (explosive rounds) picked up but never loaded. Flame rounds not seen"
           ]
         },
         {
@@ -154,7 +154,8 @@
             "first aid spray (full heal) seen",
             "2026-10-13: id 0x44 consumed while HP went 54 → 86 (+32, Jill) — likely green herb (BioRand id 68)",
             "2026-10-13 (live session 4, Jill, memory log): id 0x47 (made from two 0x44) consumed while HP went 71 → 96 (capped at max) — likely mixed herb (green + green)",
-            "evidence in 2026-10-13 live session 7 (Jill, ask mode, mansion to guardhouse): HP 56 → 96 — needs review"
+            "evidence in 2026-10-13 live session 7 (Jill, ask mode, mansion to guardhouse): HP 56 → 96 — needs review",
+            "2026-10-13 re-check of sessions 4-7 (session 7): green herb +32; G+G used (+40, capped); red+green and red+green+blue mixed but not used. Still needed: red+green, blue herb, green+blue and three-herb mixes used"
           ],
           "detector": "healing"
         },
@@ -162,7 +163,10 @@
           "id": "B109",
           "task": "Get **poisoned** (snake/Yawn/spider) and cure it with a blue herb or serum",
           "verifies": "Status flags (player +0xDC)",
-          "status": "needed"
+          "status": "partial",
+          "evidence": [
+            "2026-10-13 re-check of sessions 4-7 (session 7): poisoned by Yawn in 210 — after a 10 HP bite, HP fell 2 at a time every few seconds (the chart's poison: -2 HP every 4 s) until Jill fainted and was rescued (story flags named). Cure with a blue herb or serum not yet seen"
+          ]
         },
         {
           "id": "B110",
@@ -171,7 +175,8 @@
           "status": "partial",
           "evidence": [
             "2026-10-13 (live session 4, Jill, memory log): 0x44 + 0x44 → 0x47 in one slot (herbs); empty 0x07 + 0x11 ×6 → 0x08 ×6 (loading a weapon with a different round type)",
-            "2026-10-13 (live session 5, Jill): empty Beretta (0x02 ×0) + clip (0x0B ×15) → Beretta ×15 in the Beretta's slot; the clip's slot empties"
+            "2026-10-13 (live session 5, Jill): empty Beretta (0x02 ×0) + clip (0x0B ×15) → Beretta ×15 in the Beretta's slot; the clip's slot empties",
+            "2026-10-13 re-check of sessions 4-7 (session 7): green + green, red + green, then red+green + blue into the three-herb mix; acid rounds loaded into the bazooka again"
           ]
         },
         {
@@ -181,7 +186,8 @@
           "status": "partial",
           "evidence": [
             "2026-10-13 (live session 4, Jill, memory log): blue gem = id 0x21, wind crest = id 0x29 (both owner-confirmed): gem from the dining room 105, placed in the lion head in 10D, crest received",
-            "2026-10-13 (live session 5: new Jill game, then new Chris game): id 0x2D received in the gallery 117 and used in 11A like the wind crest — likely another crest"
+            "2026-10-13 (live session 5: new Jill game, then new Chris game): id 0x2D received in the gallery 117 and used in 11A like the wind crest — likely another crest",
+            "2026-10-13 re-check of sessions 4-7 (session 7, player's answers): gold emblem 0x20, music notes 0x23 (piano), moon crest 0x2C, sun crest 0x2E, shield key 0x35, armor key 0x34, lighter 0x30, serum 0x42 — each used where the player said. Square crank 0x1D picked up; MO disk, V-Jolt and lab keys not yet seen"
           ]
         },
         {
@@ -380,11 +386,12 @@
           "id": "B501",
           "task": "Unlock doors with keys and the lockpick",
           "verifies": "Lock flags bank `0xBE9874`",
-          "status": "partial",
+          "status": "done",
           "detector": "lock_flags",
           "evidence": [
             "2026-10-13 (live session 4, Jill, memory log): flagLocks0 gained one bit at each of four door unlocks (rooms 207, 206, 103 twice) with no item used — which bit is which door still needs mapping",
-            "evidence in 2026-10-13 live session 7 (Jill, ask mode, mansion to guardhouse): 1 flag word(s) changed: flagLocks0 — needs review"
+            "evidence in 2026-10-13 live session 7 (Jill, ask mode, mansion to guardhouse): 1 flag word(s) changed: flagLocks0 — needs review",
+            "2026-10-13 re-check of sessions 4-7: every lock flag change matched a door in the room index (keys: armor key in 102, the lockpick on Sword-key doors, doors unlocked from the inside) or a locked desk (102, 111)"
           ]
         },
         {
@@ -408,7 +415,8 @@
           "evidence": [
             "2026-10-13 (live session 4, Jill, memory log): 13 zombie kills, each set exactly one new bit in flagEnemies (kill flags persist); crow kills set none",
             "2026-10-13 (live session 5: new Jill game, then new Chris game): 20 zombies and 3 dogs killed (Jill and Chris), each setting one flagEnemies bit — set when the enemy first falls, even if it gets back up; a new game clears them all. Other enemy types not yet killed",
-            "evidence in 2026-10-13 live session 7 (Jill, ask mode, mansion to guardhouse): type 0 (Zombie) ×13, type 2 (Cerberus (dog)) ×9, type 5 (Crow) ×3, type 15 ×6, type 17 (Zombie (researcher)) ×9 — needs review"
+            "evidence in 2026-10-13 live session 7 (Jill, ask mode, mansion to guardhouse): type 0 (Zombie) ×13, type 2 (Cerberus (dog)) ×9, type 5 (Crow) ×3, type 15 ×6, type 17 (Zombie (researcher)) ×9 — needs review",
+            "2026-10-13 re-check of sessions 4-7 (session 7): kills of zombies, researcher zombies, dogs, crows and mansion plants (6, by the chemical); Yawn and the later enemies not yet killed"
           ]
         },
         {
@@ -421,7 +429,8 @@
             "2026-10-13 (live session 5: new Jill game, then new Chris game): statue push in room 202, seen three times (session 4, and both new games in session 5): stateFlags bit 0x40 is set while pushing (slow straight-line movement), then scenario flag A0 bit 0x100000 and stateFlags 0x100000 (camera cut) as the statue falls; it drops the blue gem in the dining room (105). Shelves/boxes not yet seen",
             "2026-10-13 (live session 5: new Jill game, then new Chris game): stairs in room 107 pushed to reach the map, by Jill and by Chris (owner + capture): push bit 0x40 during each push; picking up the map then cleared flagRoomItems4 bit 0x4000 and set flagRoom3 bit 0x8, with no inventory change. The pushed object's own position is not in the recorded memory (no word moves with the push), so object positions need another region",
             "2026-10-13 (live session 4, Jill, memory log): flagRoom0/1 are rooms-visited bits (bit 31 − room number, one word per stage), not object state",
-            "evidence in 2026-10-13 live session 7 (Jill, ask mode, mansion to guardhouse): 13 flag word(s) changed: flagRoom0, flagRoom1, flagRoom2, flagRoom3, flagRoom4, flagRoomItems0, flagRoomItems1, flagRoomItems2 … — needs review"
+            "evidence in 2026-10-13 live session 7 (Jill, ask mode, mansion to guardhouse): 13 flag word(s) changed: flagRoom0, flagRoom1, flagRoom2, flagRoom3, flagRoom4, flagRoomItems0, flagRoomItems1, flagRoomItems2 … — needs review",
+            "2026-10-13 re-check of sessions 4-7 (session 7): statue pushed over the hole in the guardhouse (400) — scenario flag named. Pushed objects' positions are not in the recorded memory; shelves/boxes not yet seen"
           ]
         }
       ]
@@ -489,10 +498,11 @@
           "id": "B705",
           "task": "Resets mid-run (quit to title; restart the game)",
           "verifies": "Reset detection",
-          "status": "partial",
+          "status": "done",
           "evidence": [
             "quit to title and game restart seen",
-            "evidence in 2026-10-13 live session 7 (Jill, ask mode, mansion to guardhouse): 1 restart(s) / reload(s) — needs review"
+            "evidence in 2026-10-13 live session 7 (Jill, ask mode, mansion to guardhouse): 1 restart(s) / reload(s) — needs review",
+            "2026-10-13 re-check of sessions 4-7: quit to title and a new game (session 5: Jill run, then Chris), loads and game restarts are all detected as separate segments; timers jumping back reset the event detector"
           ],
           "detector": "resets"
         }
