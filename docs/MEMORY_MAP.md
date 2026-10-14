@@ -269,7 +269,7 @@ are entered with door records instead.
 
 | Address | Observation (live, 2026-10-13) | Lead |
 |---|---|---|
-| `0xD226A0` (u8) | Changes on room entry and when enemies appear (e.g. `0x08 → 0x20` as the dogs burst into 108, back after the kill) | Current music track |
+| `0xD226A0` (u8) | Changes on room entry and when enemies appear (e.g. `0x08 → 0x20` as the dogs burst into 108, back after the kill). **2026-10-14, 588 automated room visits:** `0x08` in most rooms with or without enemies, `0xFF` around transitions, `0x40` set in a fixed group of rooms (10D, 10F, 115, 119, 203, 205, 20B, 20D, 210, 310, 405, 409, 60A, 60D, 615, 700, 705, 70B, 718) | Not a track number — a sound/BGM state bitfield; no danger cue |
 | `0xD226A4` (u32) | Set to `0xD91AF4` from the first message shown onwards | Pointer to the on-screen text buffer — recorded as capture region `textBuffer` (`0xD91A00`, 1 KB) to find the message shown |
 
 Room files keep their text in the MSG section (`offsets[11]`: u16 offset table, then text in the game's own encoding

@@ -237,7 +237,7 @@ players play the game themselves; Lockpick enhances their play.
 ## Backlog / ideas
 
 - Lockpick window: remember size/position per monitor; "compact" always-on-top mode for a side screen.
-- Music track lead (`0xD226A0`: changes when enemies burst in) — a "danger" cue for the HUD if confirmed.
+- ~~Music track lead (`0xD226A0`)~~ — ruled out 2026-10-14 (a sound-state bitfield, not a track id; MEMORY_MAP Leads).
 - Ask mode with a controller button instead of the keyboard (the owner plays with a DualSense).
 - Debug: one-click "export support bundle" (log + recording + fingerprint, no game files).
 - Investigate why the game window cannot be dragged (window style `0x14C80000` has a caption; the 1997 window procedure likely swallows the move).
