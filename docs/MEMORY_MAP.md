@@ -287,6 +287,24 @@ are entered with door records instead.
 | `0xBE98BC` (4 B, MSB-first) | Items examined: keys, cranks, the herbicide and the books show a generic name ("MANSION KEY", "CRANK", "CHEMICAL", "RED BOOK"…) until examined; flag index = byte at `0x4BD81D + id·4 + 2` (none when bit 7 set), generic names at `0x4BF260[index]` | decomp + live: CHECK, turn the Shield key until "A carving of a shield." → bit 5 set, name SHIELD KEY |
 | `0xD213A0` | Item-use flags (bank 9): a room's "flag set" action raises the bit (item − 0x1B) while the player stands at the spot; USE checks it | decomp + room scripts (105 fireplace: items 31/32) |
 
+## Player status, healing, combat (decomp facts checked live, 2026-10-14 — dev test suite)
+
+| Address / rule | What | Evidence |
+|---|---|---|
+| `0xD22730` (u32) | In-game timer, frames at 30 fps (counts in menus too) | live: 153 frames in 5.07 s |
+| `0xAE9F2F` (u8) | Status-screen ECG band, only updated while the screen is drawn: `(HP − 1) / (maxHP >> 2)` → 0 Danger, 1 Caution, 2–3 Fine; 4 while poisoned | live: Jill at HP 1, 24, 25, 48, 49, 72, 73, 96 gave 0,0,1,1,2,2,3,3; poisoned 4 |
+| `0xBE63C0` (u8, player +0xDC) | Status: `0x02` poisoned (`0x20` Yawn poison per the decomp; `0x10`/`0x80` are other bits) | live: wasp stings (408) set `0x02`; the blue herb cleared it; the serum said "You don't need to use this item at the moment." |
+| `0xBE6458` (u8, player +0x174) | Poison timer: counts down per frame; at 0 it reloads to ~120 and HP drops 2 | live: −2 HP at frames 7988, 8108, 8230 |
+| healing | Green herb +⅓ max HP, green+green and green+green+blue +⅔, three greens / green+red / green+red+blue / first aid spray full, green+blue +⅓ and cures; red or blue alone: "You don't need to use this item at the moment." | live (Jill, from HP 10): +32, +64, +86 (full) … |
+| herb mixing | G+G 0x47, R+G 0x46, G+B 0x48, GG+G 0x4A, GG+B 0x4B, GR+B 0x49, GB+R 0x49, GB+G 0x4B; three greens + green: "Mixing these does not seem to work." — each asks "Will you mix the herbs?" | live, all 8 + the refusal |
+| full inventory | `0xBE9827` at the slot limit (Jill 8, Chris 6): "You can't carry any more items." and the item stays; ammo into a matching stack is still taken | live (Jill): the Emblem refused; a clip taken into the clip stack (flag 50 cleared) |
+| `0x4BB648` | Weapon reach, u32 per weapon (id − 1), Chris row then Jill row: knife 400/500, Beretta 1200/1300, shotgun 2600, magnum 800, flamethrower 400, bazooka 900, rocket 1100; beyond it shots miss or don't fire | exe + live (bazooka fired only inside 900) |
+| `0x4BB698` | Weapon damage, first run: 12-byte records, i16 at +6, index (weapon − 1) + enemy type × 10 | live hits: knife 8, flamethrower 20, shotgun 53, bazooka explosive 201 / acid 95 on zombies; explosive 60, acid 60, flame 205 on Black Tiger; rocket 900 on a dog — all equal to the table. **Beretta: 12 per hit on zombies every time (table 9)** — open |
+| deaths | A killing hit leaves HP = before − damage, except zombie head kills (−300) and rocket kills of zombies (−1) | live |
+| `0xBE9849` | Equipped slot, 1-based (0 = none) — not the item id the decomp calls it | live (B114) + harness |
+| `0xBE9840` / `0xBE9842` | The game's held / newly pressed input word: forward `0x11`, back `0x24`, turn `0x02`/`0x08`, run `0x8200`, aim `0x0500` (RT), action `0x00C0` (A) | 5.6 h of the owner's captures + live (holding RT reads `0x0500`) |
+| movement | Walk 1,207 units/s, run 5,461, turn 2,549 facing units/s standing (about half while running) | the owner's captures |
+
 Keys: a door that takes a key opens only once the key has been **examined** — holding an unexamined Shield key gave
 "It's locked. / A carving of a shield."; examined, the door unlocked (lock bit 7 in `flagLocks0`), the game asked
 "This key is useless now. Discard?" in the status screen, and the next press went through (20E → 210, live

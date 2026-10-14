@@ -138,12 +138,32 @@ def try_pickup(item: dict, room: rdt_map.Room, clear_inventory: bool = True) -> 
             result["throughScenery"] = through
             break
     if result["triggered"] is not None:
-        # Examine text, "Will you take …?" (Yes is the default), document pages: A until control returns.
-        for press in range(40):  # documents can run to many pages, and some loop: cancel (X) closes them
-            if not ap.flags() & INTERACTING:
+        # Follow the game's message state: read every text, answer "Will you take …?" yes by reading the choice, close
+        # pages only while they wait; the document screen (0x100) has no message — A turns its pages, and cancel (X)
+        # closes documents that loop their pages (the researcher's will).
+        said, pages = [], 0
+        for _ in range(80):
+            state = ap.message_state()
+            if state == ap.PROMPT:
+                said.append(ap.message_text())
+                ap.answer(True)
+                result["prompts"] += 1
+                continue
+            if state in (ap.PAGE, ap.WAITING):
+                said += ap.dismiss()
+                continue
+            if state:
+                ap.send("wait 150")
+                continue
+            f = ap.flags()
+            if not f & INTERACTING:
                 break
-            ap.send(f"press {'X' if press >= 10 and press % 2 else 'A'} 150", "wait 900")
-            result["prompts"] += 1
+            if f & 0x100:
+                pages += 1
+                ap.send(f"press {'X' if pages > 10 and pages % 2 else 'A'} 150", "wait 700")
+            else:
+                ap.send("wait 300")
+        result["said"], result["documentPages"] = said, pages
         ap.settle(30)
     inv_after, flags_after = inventory(), ap.peek(ITEM_FLAGS, 32)
     # Count values, not membership: a second identical item (e.g. a spray when one is kept) is still a gain.
@@ -155,8 +175,10 @@ def try_pickup(item: dict, room: rdt_map.Room, clear_inventory: bool = True) -> 
     return result
 
 
-def enter(room: str, character: str, table: list[dict]) -> None:
+def enter(room: str, character: str, table: list[dict], freeze: bool = True) -> None:
     record = doors.record_to(table, room, character)
+    if not ap.in_control():
+        ap.settle(30)  # the harness refuses a door handoff while a room change, menu or message is running
     for _ in range(3):
         ap.send("door " + record.hex(), "wait 800", timeout=60)
         for _ in range(25):
@@ -164,7 +186,8 @@ def enter(room: str, character: str, table: list[dict]) -> None:
             if now == room:
                 ap.send("heal")
                 ap.settle(60)
-                ap.send("freeze-enemies")  # sweeps don't need the room's enemies acting (count 0 until the next room)
+                if freeze:
+                    ap.send("freeze-enemies")  # sweeps don't need the room's enemies acting (count 0 until the next room)
                 return
             if now and now[1:] == room[1:] and int(now[0]) == int(room[0]) + 5:
                 raise ap.Failed(f"redirected to {now}")

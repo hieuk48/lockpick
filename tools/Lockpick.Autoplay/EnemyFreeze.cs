@@ -66,6 +66,43 @@ internal sealed partial class EnemyFreeze : IDisposable
         }
     }
 
+    /// <summary>
+    /// Undoes <see cref="Freeze"/> in the same room: writes the count back (1–30) while it still reads 0, so the room's
+    /// enemies act again — combat tests freeze them while the player raises a gun at close range, then thaw and fire.
+    /// </summary>
+    public void Thaw(byte count)
+    {
+        if (count is < 1 or > 30)
+        {
+            throw new ArgumentOutOfRangeException(nameof(count), "1–30");
+        }
+
+        if (ProcessSuspender.Suspend(_processId) is { } error)
+        {
+            throw new InvalidOperationException("suspend failed: " + error);
+        }
+
+        try
+        {
+            var buffer = new byte[1];
+            if (!ReadProcessMemory(_process, (nint)EnemyCount, buffer, 1, out _) || buffer[0] != 0)
+            {
+                throw new InvalidOperationException($"the enemy count isn't frozen (reads {buffer[0]})");
+            }
+
+            byte[] value = [count];
+            if (!WriteProcessMemory(_process, (nint)EnemyCount, value, 1, out var written) || written != 1
+                || !ReadProcessMemory(_process, (nint)EnemyCount, buffer, 1, out _) || buffer[0] != count)
+            {
+                throw new InvalidOperationException("writing the enemy count failed or did not read back");
+            }
+        }
+        finally
+        {
+            ProcessSuspender.Resume(_processId);
+        }
+    }
+
     public void Dispose() => _process.Dispose();
 
     [LibraryImport("kernel32.dll", SetLastError = true)]

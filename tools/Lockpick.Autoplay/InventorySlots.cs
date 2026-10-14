@@ -16,7 +16,7 @@ namespace Lockpick.Autoplay;
 internal sealed partial class InventorySlots : IDisposable
 {
     private const ulong Slots = 0xBE9944;
-    private const ulong EquippedSlot = 0xBE9849;
+    private const ulong EquippedSlot = 0xBE9849; // 1-based, 0 = nothing equipped (docs/MEMORY_MAP.md)
     private const ulong HeldCount = 0xBE9827; // g_TotalHeldItems: slots at or past it count as empty (menu, keys)
     private const int Count = 8;
 
@@ -34,7 +34,11 @@ internal sealed partial class InventorySlots : IDisposable
         }
     }
 
-    /// <summary>Clears slots <paramref name="from"/>..7 except the equipped one; returns how many were cleared.</summary>
+    /// <summary>
+    /// Clears slots <paramref name="from"/>..7 except the equipped one, compacts the rest to the front (the equipped
+    /// slot follows its weapon) and sets the held count; returns how many were cleared. Grid icons aren't moved (they
+    /// load on game start/load), so they can show the wrong picture until then.
+    /// </summary>
     public int ClearFrom(int from)
     {
         if (from is < 1 or > Count)
@@ -49,10 +53,11 @@ internal sealed partial class InventorySlots : IDisposable
 
         try
         {
-            var equipped = Read(EquippedSlot, 1)[0];
+            var equipped = Read(EquippedSlot, 1)[0] - 1; // 0-based; −1 when nothing is equipped
             var slots = Read(Slots, Count * 2);
             var kept = new List<ushort>();
             var cleared = 0;
+            var equippedAt = -1;
             for (var slot = 0; slot < Count; slot++)
             {
                 var value = BitConverter.ToUInt16(slots, slot * 2);
@@ -60,6 +65,11 @@ internal sealed partial class InventorySlots : IDisposable
                 {
                     if (value != 0)
                     {
+                        if (slot == equipped)
+                        {
+                            equippedAt = kept.Count;
+                        }
+
                         kept.Add(value);
                     }
                 }
@@ -67,12 +77,6 @@ internal sealed partial class InventorySlots : IDisposable
                 {
                     cleared++;
                 }
-            }
-
-            if (equipped < Count && from <= equipped)
-            {
-                // Compacting would move the equipped item; leave the layout alone in that case.
-                return 0;
             }
 
             var compacted = new byte[Count * 2];
@@ -83,6 +87,12 @@ internal sealed partial class InventorySlots : IDisposable
 
             Write(Slots, compacted);
             Write(HeldCount, [(byte)kept.Count]);
+            if (equippedAt >= 0 && equippedAt != equipped)
+            {
+                // The equipped weapon moved up with the compaction: the 1-based equipped slot follows it.
+                Write(EquippedSlot, [(byte)(equippedAt + 1)]);
+            }
+
             return cleared;
         }
         finally

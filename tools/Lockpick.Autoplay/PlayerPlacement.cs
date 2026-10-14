@@ -91,6 +91,38 @@ internal sealed partial class PlayerPlacement : IDisposable
         }
     }
 
+    /// <summary>
+    /// Sets HP to <paramref name="hp"/> (1..max, alive players only) — for healing and status-screen tests that need a
+    /// known starting HP.
+    /// </summary>
+    public short SetHealth(int hp)
+    {
+        var max = Read(MaxHealth, 1)[0];
+        if (max is 0 or > 200 || hp < 1 || hp > max)
+        {
+            throw new ArgumentOutOfRangeException(nameof(hp), $"1..{max}");
+        }
+
+        if (ProcessSuspender.Suspend(_processId) is { } error)
+        {
+            throw new InvalidOperationException("suspend failed: " + error);
+        }
+
+        try
+        {
+            if (BitConverter.ToInt16(Read(Health, 2)) > 0)
+            {
+                Write(Health, BitConverter.GetBytes((short)hp));
+            }
+
+            return BitConverter.ToInt16(Read(Health, 2));
+        }
+        finally
+        {
+            ProcessSuspender.Resume(_processId);
+        }
+    }
+
     public void Dispose() => _process.Dispose();
 
     private byte[] Read(ulong address, int length)

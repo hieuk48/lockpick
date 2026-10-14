@@ -54,8 +54,8 @@ class Route:
         self.table = doors.build(survey.INSTALL)
         self.room: str | None = None
 
-    def enter(self, room: str) -> None:
-        pickup.enter(room, self.character, self.table)
+    def enter(self, room: str, freeze: bool = True) -> None:
+        pickup.enter(room, self.character, self.table, freeze)
         self.room = room
         self.log(f"in {room}: {ap.state()}")
 
@@ -89,13 +89,25 @@ class Route:
 
     def take_here(self, item: int) -> bool:
         """Presses A where the player stands (after a push put them in front of the item) and answers the prompts."""
-        before = ap.peek(0xBE9944, 16)
-        ap.send("press A 150", "wait 1000")
-        for _ in range(10):
-            if not ap.flags() & (0x800 | 0x8000 | 0x100):
+        before = ap.inventory()
+        if not ap.in_control():
+            self.log(f"  take {item} here: not in control")
+            return False
+        ap.send("press A 150", "wait 800")
+        said = []
+        for _ in range(40):
+            state = ap.message_state()
+            if state == ap.PROMPT:
+                said.append(ap.message_text())
+                ap.answer(True)
+            elif state in (ap.PAGE, ap.WAITING):
+                said += ap.dismiss()
+            elif state or ap.flags() & (0x800 | 0x100):
+                ap.send("wait 200")
+            else:
                 break
-            ap.send("press A 150", "wait 900")
-        ok = item in [b for b in ap.peek(0xBE9944, 16)[::2]] and before != ap.peek(0xBE9944, 16)
+        ok = item in [i for i, _, _ in ap.inventory()] and before != ap.inventory()
+        self.log(f"  said {said}")
         self.log(f"  take {item} here: {'ok' if ok else 'FAILED'}")
         return ok
 

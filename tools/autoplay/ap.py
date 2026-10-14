@@ -582,3 +582,127 @@ def examine(item: int, turns: int = 24) -> dict:
         return {"item": item, "before": before, "after": item_name(item), "examined": examined(item), "said": notes}
     finally:
         close_menu()
+
+
+ENEMIES, ENEMY_SIZE, ENEMY_SLOTS = 0xBE6464, 0x18C, 30
+EQUIPPED_SLOT = 0xBE9849
+
+
+def enemies(all_slots: bool = False) -> list[dict]:
+    """Active enemy slots (0xBE6464, 30 x 0x18C: +0 flags bit 1 = active, +1 type, +0x34/+0x3C X/Z, +0x88 HP)."""
+    import struct
+    raw = peek(ENEMIES, ENEMY_SIZE * ENEMY_SLOTS)
+    found = []
+    for i in range(ENEMY_SLOTS):
+        e = raw[i * ENEMY_SIZE:(i + 1) * ENEMY_SIZE]
+        if e[0] & 1 or (all_slots and e[1]):
+            found.append({"slot": i, "type": e[1], "flags": e[0], "hp": struct.unpack_from("<h", e, 0x88)[0],
+                          "x": struct.unpack_from("<i", e, 0x34)[0], "z": struct.unpack_from("<i", e, 0x3C)[0]})
+    return found
+
+
+def angle_to(x: int, z: int, tx: int, tz: int) -> int:
+    """Facing that points from (x, z) at (tx, tz): direction (cos θ, −sin θ), 4096 units per turn."""
+    import math
+    return round(math.atan2(-(tz - z), tx - x) / (2 * math.pi) * 4096) % 4096
+
+
+def hp() -> int:
+    return int.from_bytes(peek(0xBE636C, 2), "little", signed=True)
+
+
+def equipped() -> int:
+    """Item id of the equipped weapon (0 when none): 0xBE9849 is the 1-based slot (live, bounty B114)."""
+    slot = peek(EQUIPPED_SLOT, 1)[0]
+    return peek(INVENTORY_SLOTS + (slot - 1) * 2, 1)[0] if 1 <= slot <= 8 else 0
+
+
+def fire_at(slot: int, shots: int = 1, gap_ms: int = 900) -> list[dict]:
+    """Turns to face the enemy in `slot` where the player stands, aims (RT held) and fires `shots` times (A), reading the
+    enemy's HP after each shot. Returns one record per shot: the HP before/after and whether it changed."""
+    import struct
+    x, _, z = pos()
+    target = next((e for e in enemies(True) if e["slot"] == slot), None)
+    if target is None:
+        raise Failed(f"no enemy in slot {slot}")
+    send(f"place {x} {z} {angle_to(x, z, target['x'], target['z'])}", "wait 200", "hold RT", "wait 600")
+    shots_out = []
+    try:
+        for _ in range(shots):
+            before = next((e["hp"] for e in enemies(True) if e["slot"] == slot), None)
+            send("press A 120", f"wait {gap_ms}")
+            after = next((e["hp"] for e in enemies(True) if e["slot"] == slot), None)
+            shots_out.append({"before": before, "after": after, "damage": None if before is None or after is None else before - after})
+            if after is not None and after <= 0:
+                break
+    finally:
+        send("release RT")
+    return shots_out
+
+
+COMBINE_CURSOR = 0xAE9F25  # second grid cursor while combining (8 + 2·slot; live 2026-10-14)
+
+
+def combine(first: int, second: int, timeout: float = 30) -> dict:
+    """COMBN: opens the submenu on `first`, chooses COMBN, moves the combine cursor to `second` (checked) and confirms;
+    a "Will you mix ...?" prompt is answered yes. Returns the inventory before/after. Closes the menu afterwards."""
+    import time
+    before = inventory()
+    try:
+        _open_submenu(first, timeout)
+        _choose(2)
+        if not wait_for(lambda: peek(MENU_INPUT + 1, 1)[0] == 4, 3):
+            raise Failed("combine mode didn't start")
+        slots = [i for i, _, _ in before]
+        own = slots.index(first)
+        candidates = [i for i, item in enumerate(slots) if item == second and i != own]
+        if not candidates:
+            raise Failed(f"no second {second} to combine with")
+        target = 8 + 2 * candidates[0]
+        end = time.time() + timeout
+        while (cursor := peek(COMBINE_CURSOR, 1)[0]) != target:
+            if time.time() > end:
+                raise Failed(f"combine cursor never reached {target} (at {cursor})")
+            key = "Down" if (cursor & ~2) < (target & ~2) else "Up" if (cursor & ~2) > (target & ~2) else "Right"
+            send(f"press {key} 100")
+            wait_for(lambda: peek(COMBINE_CURSOR, 1)[0] != cursor, 1.0)
+        send("press A 120")
+        said, end = [], time.time() + 6
+        while time.time() < end:
+            state = message_state()
+            if state == PROMPT:
+                said.append(message_text())
+                answer(True)
+            elif state in (PAGE, WAITING):
+                said += dismiss()
+            elif state:
+                send("wait 150")  # still typing
+            elif said:
+                break
+            else:
+                send("wait 200")
+        return {"first": first, "second": second, "before": before, "after": inventory(), "said": said}
+    finally:
+        close_menu()
+
+
+def status_band() -> int:
+    """Opens the status screen, reads the ECG band the game draws (0xAE9F2F: 0 Danger, 1 Caution, 2-3 Fine, 4 poison;
+    only updated while the screen is drawn) and closes it again."""
+    if not in_control():
+        raise Failed("not in control: the status screen won't open")
+    send("press Y")
+    if not wait_for(status_open, 10):
+        raise Failed("the status screen didn't open")
+    send("wait 1200")
+    band = peek(0xAE9F2F, 1)[0]
+    close_menu()
+    return band
+
+
+PLAYER_STATUS, POISON_TIMER = 0xBE63C0, 0xBE6458  # player +0xDC (0x02 poison, 0x20 Yawn poison), +0x174
+
+
+def igt() -> int:
+    """In-game timer, frames at 30 fps (0xD22730)."""
+    return int.from_bytes(peek(0xD22730, 4), "little")

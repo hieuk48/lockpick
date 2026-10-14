@@ -10,10 +10,15 @@ namespace Lockpick.Autoplay;
 ///   speed [ms|normal]            show or set the game's tick interval (normal 33 ms; smaller = fast-forward)
 ///   place x z [angle]            stand the player at a spot in the current room (PlayerPlacement.cs)
 ///   freeze-enemies               stop this room's enemies acting (count 0 until the next room; EnemyFreeze.cs)
+///   thaw-enemies n               undo freeze-enemies in the same room (n = the count freeze-enemies printed)
+///   enemy-hp slot n              set an active enemy's HP (1..5000) so a damage test keeps it alive (EnemyHealth.cs)
 ///   camera id                    cut to a camera of the room (must have a switch-zone group; CameraCut.cs)
 ///   inv-clear from               empty inventory slots from..7 (not the equipped one; InventorySlots.cs)
 ///   give item [qty]              put an item in the first empty inventory slot (default qty 1; InventorySlots.cs)
 ///   heal                         HP back to the maximum (alive players only)
+///   hp n                         set HP to n (1..max, alive players only)
+///   flag A|B n 0|1               set or clear one story flag (bank A 0..127, B 0..255; StoryFlags.cs)
+///   hold A+RT | release A+RT     hold inputs down until released (e.g. aim with RT, then press A to fire)
 ///   door hex48                   enter a room through a door record (RoomWarp.cs; dev runs only)
 ///   focus                        bring the game to the front (only when nobody is using the PC)
 ///   background                   focus patch: the game keeps running unfocused, keyboard map blanked (restored on exit)
@@ -44,6 +49,8 @@ internal sealed class Runner(Pad pad, TextWriter log) : IDisposable
     private Recorder? _recorder;
     private PlayerPlacement? _placement;
     private InventorySlots? _inventory;
+    private StoryFlags? _flags;
+    private EnemyHealth? _enemyHealth;
     private CameraCut? _camera;
     private EnemyFreeze? _freeze;
 
@@ -173,6 +180,16 @@ internal sealed class Runner(Pad pad, TextWriter log) : IDisposable
                     w.Length > 3 ? short.Parse(w[3], CultureInfo.InvariantCulture) : null);
                 Log($"  placed ({Describe(Game.Read())})");
                 break;
+            case "enemy-hp":
+                _enemyHealth ??= new EnemyHealth(Game.ProcessId);
+                var hpWas = _enemyHealth.Set(int.Parse(w[1], CultureInfo.InvariantCulture), int.Parse(w[2], CultureInfo.InvariantCulture));
+                Log($"  enemy {w[1]} HP {hpWas} -> {w[2]}");
+                break;
+            case "thaw-enemies":
+                _freeze ??= new EnemyFreeze(Game.ProcessId);
+                _freeze.Thaw(byte.Parse(w[1], CultureInfo.InvariantCulture));
+                Log($"  enemy count {w[1]}");
+                break;
             case "freeze-enemies":
                 _freeze ??= new EnemyFreeze(Game.ProcessId);
                 Log($"  enemies frozen (count was {_freeze.Freeze()})");
@@ -211,6 +228,25 @@ internal sealed class Runner(Pad pad, TextWriter log) : IDisposable
                 break;
             case "press":
                 Press(w[1], w.Length > 2 ? int.Parse(w[2], CultureInfo.InvariantCulture) : 120);
+                break;
+            case "hold" or "release":
+                if (!Pad.IsKnown(w[1]))
+                {
+                    throw new ArgumentException($"unknown input in '{w[1]}'");
+                }
+
+                RequireForeground();
+                pad.Set(w[1], w[0] == "hold");
+                break;
+            case "flag":
+                _flags ??= new StoryFlags(Game.ProcessId);
+                var flagNumber = int.Parse(w[2], CultureInfo.InvariantCulture);
+                var was = _flags.Set(w[1][0], flagNumber, w[3] == "1");
+                Log($"  {w[1]}{flagNumber}: {(was ? 1 : 0)} -> {w[3]}");
+                break;
+            case "hp":
+                _placement ??= new PlayerPlacement(Game.ProcessId);
+                Log($"  HP {_placement.SetHealth(int.Parse(w[1], CultureInfo.InvariantCulture))}");
                 break;
             case "wait":
                 await Task.Delay(int.Parse(w[1], CultureInfo.InvariantCulture));
@@ -443,6 +479,10 @@ internal sealed class Runner(Pad pad, TextWriter log) : IDisposable
         _camera = null;
         _freeze?.Dispose();
         _freeze = null;
+        _flags?.Dispose();
+        _flags = null;
+        _enemyHealth?.Dispose();
+        _enemyHealth = null;
         _game?.Dispose();
         _game = null;
     }
