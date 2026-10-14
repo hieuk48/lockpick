@@ -147,6 +147,11 @@ to read-only access, opt-in per session. `GamePause` guarantees the resume: on a
 watchdog, app exit, and at the next start if Lockpick died while the game was frozen (the frozen pid and its start
 time are kept in settings). Answers are `markers.jsonl` entries of kind `answer`/`skipped` with the changes asked
 about; confirmed meanings go into `data/games/re1/flag-labels.json`, which the timeline and the explainer share.
+To interrupt as little as possible, everything predictable is explained without asking: rooms visited (the game's own
+table), maps and documents (item id + 46 / + 35), story flags the room's script sets, cleared story flags, and story
+changes within 5 s of a player action (item used, received, picked up or put back, map/document taken, kill, door,
+damage taken, pushing, an enemy appearing) — those are saved as `auto` markers for later labelling.
+`tools/bounties/ask_preview.py` replays captures through the same rules (`--no-labels` to test unplayed parts).
 
 **ADR-014 — Capture markers and a registered hotkey, not a keyboard hook.** Players mark moments while capturing
 (`markers.jsonl`: wall-clock time, attachment, room, game time, a note that can be added later). The hotkey uses

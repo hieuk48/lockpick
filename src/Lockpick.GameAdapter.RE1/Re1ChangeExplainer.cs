@@ -29,6 +29,10 @@ internal sealed class Re1Knowledge
         Items = [.. root.GetProperty("items").EnumerateArray().Select(e => Use(e, "flag", "item"))];
         Enemies = [.. root.GetProperty("enemies").EnumerateArray().Select(e => Use(e, "flag", "type"))];
         Doors = [.. root.GetProperty("doors").EnumerateArray().Select(e => Use(e, "lockFlag", "key"))];
+        Story = [.. root.GetProperty("story").EnumerateArray().Select(e =>
+            new FlagUse(e.GetProperty("room").GetString()!, e.GetProperty("player").GetString()!, Int(e, "flag"),
+                e.GetProperty("bank").GetString()![0]))];
+        Documents = names.RootElement.TryGetProperty("documents", out var docs) ? Table(docs) : [];
         ItemNames = Table(names.RootElement.GetProperty("items"));
         foreach (var (id, name) in Table(names.RootElement.GetProperty("maps")))
         {
@@ -45,6 +49,11 @@ internal sealed class Re1Knowledge
     public List<FlagUse> Enemies { get; }
 
     public List<FlagUse> Doors { get; }
+
+    /// <summary>Story flags set by a room's own script (What = 'A' or 'B', the bank).</summary>
+    public List<FlagUse> Story { get; }
+
+    public Dictionary<int, string> Documents { get; }
 
     public Dictionary<int, string> ItemNames { get; }
 
@@ -103,6 +112,8 @@ internal sealed class Re1ChangeExplainer(Re1Knowledge knowledge) : IChangeExplai
             known.Add($"entered room {room}");
         }
 
+        var actions = new List<string>();
+        var picked = new HashSet<int>();
         foreach (var (bank, words, kind) in Banks)
         {
             for (var word = 0; word < words; word++)
@@ -123,22 +134,74 @@ internal sealed class Re1ChangeExplainer(Re1Knowledge knowledge) : IChangeExplai
 
                     var set = (value & mask) != 0;
                     var flag = (word * 32) + (31 - bit);
+                    if (bank == "flagRoomItems" && !set && Find(knowledge.Items, flag, room, player) is { } taken)
+                    {
+                        picked.Add(taken.What);
+                    }
+
+                    var story = bank.StartsWith("flagScenario", StringComparison.Ordinal);
                     if (Explain(bank, word, mask, flag, set, room, player) is { } explanation)
                     {
                         if (explanation.Length > 0)
                         {
                             known.Add(explanation);
+                            if (!story && !explanation.StartsWith("first visit", StringComparison.Ordinal))
+                            {
+                                actions.Add(explanation); // pickups, kills, unlocks, maps and documents taken
+                            }
                         }
+                    }
+                    else if (story && !set)
+                    {
+                        known.Add($"story {bank[^1]} #{flag} ended"); // a state set earlier ends; not worth a question
                     }
                     else
                     {
                         unexplained.Add(new UnexplainedChange(
                             $"{key}:0x{mask:X8}:{(set ? "set" : "clear")}",
-                            $"{kind} flag #{flag} {(set ? "set" : "cleared")} ({key} bit 0x{mask:X}) in room {room}"));
+                            $"{kind} flag #{flag} {(set ? "set" : "cleared")} ({key} bit 0x{mask:X}) in room {room}",
+                            ByAction: story || bank == "flagRoomItems"));
                     }
                 }
             }
         }
+
+        // Inventory: items used up, handed over or combined are actions that story flags around them belong to.
+        var had = Inventory(previous);
+        var has = Inventory(current);
+        var boxBefore = Box(previous);
+        var boxAfter = Box(current);
+        var gone = had.Except(has).Where(id => !boxAfter.Contains(id) || boxBefore.Contains(id)).ToList();
+        var came = has.Except(had).Where(id => !picked.Contains(id) && !boxBefore.Contains(id)).ToList();
+        if (gone.Count > 0 && came.Count > 0)
+        {
+            actions.Add($"combined {string.Join(" + ", gone.Select(knowledge.Item))} into {string.Join(", ", came.Select(knowledge.Item))}");
+        }
+        else
+        {
+            actions.AddRange(gone.Select(id => $"used {knowledge.Item(id)}"));
+            actions.AddRange(came.Select(id => $"received {knowledge.Item(id)}"));
+        }
+
+        // Getting hurt, and pushing (stateFlags 0x40), start and end events too (Yawn's first bite, the statue falls).
+        if (Raw(previous, "hp") is { } hpBefore && Raw(current, "hp") is { } hpNow && (short)hpNow < (short)hpBefore)
+        {
+            actions.Add($"took damage ({(short)hpBefore} → {(short)hpNow})");
+        }
+
+        if (Raw(previous, "stateFlags") is { } sfBefore && Raw(current, "stateFlags") is { } sfNow && ((sfBefore ^ sfNow) & PushingBit) != 0)
+        {
+            actions.Add((sfNow & PushingBit) != 0 ? "started pushing something" : "stopped pushing");
+        }
+
+        // Enemies appearing in the room the player is in (not the slots refilled by a room load).
+        if (previousLocation == location)
+        {
+            var present = ActiveEnemies(previous);
+            actions.AddRange(ActiveEnemies(current).Except(present).Select(type => $"{knowledge.Enemy(type)} appears"));
+        }
+
+        known.AddRange(actions.Where(a => !known.Contains(a)));
 
         // Ids the name tables don't know. Enemies only once the room has loaded (same room in both polls).
         for (var slot = 0; slot < 8; slot++)
@@ -155,24 +218,46 @@ internal sealed class Re1ChangeExplainer(Re1Knowledge knowledge) : IChangeExplai
             }
         }
 
-        return new ChangeReport(unexplained, known);
+        return new ChangeReport(unexplained, known) { Actions = actions };
     }
 
-    /// <summary>Flags from here on in the room bank are maps taken (124 = 1F, 125 = 2F, 126 = garden) and documents.</summary>
+    /// <summary>Room-bank flags from here on are maps taken (flag = item id + 46), from 130 documents (item id + 35).</summary>
     private const int FirstMapFlag = 124;
 
+    /// <summary>stateFlags bit set while the player pushes an object (statue in 202, stairs in 107; live 2026-10-13).</summary>
+    private const uint PushingBit = 0x40;
+
+    /// <summary>Kill flag for enemies a room script doesn't remember (em_set kill flag 255).</summary>
+    private const int NotRemembered = 255;
+    private const int FirstDocumentFlag = 130;
+
     /// <summary>
-    /// Where each stage's rooms start in the rooms-visited flags: one flag per room, numbered on across stages
-    /// (live 2026-10-13: 100 = 0, 200 = 32, 300 = 63, 400 = 82). Later stages are not mapped yet.
+    /// The game's rooms-visited table (0x4D31E0: first flag per stage; 0x4D31E8: rooms per stage), read by the map code
+    /// at 0x48773B / 0x487755: flag = base[stage] + room. Stages 6 and 7 (the mansion revisited) use 1 and 2.
     /// </summary>
-    private static readonly int[] StageVisitBase = [0, 32, 63, 82];
+    private static readonly int[] StageVisitBase = [0, 32, 63, 82, 100];
+    private static readonly int[] StageRooms = [32, 31, 19, 18, 24];
 
     private static string VisitedRoom(int flag)
     {
         var stage = Array.FindLastIndex(StageVisitBase, b => b <= flag);
-        var room = flag - StageVisitBase[stage];
-        return stage == StageVisitBase.Length - 1 && room > 0x1F ? $"(flag {flag})" : $"{stage + 1}{room:X2}";
+        return $"{stage + 1}{flag - StageVisitBase[stage]:X2}";
     }
+
+    /// <summary>The room id the room scripts use: the mansion revisited (6xx, 7xx) runs the 1xx/2xx scripts' flags.</summary>
+    private static bool SameRoom(string a, string b) =>
+        a == b || (a[1..] == b[1..] && (a[0], b[0]) is ('1', '6') or ('6', '1') or ('2', '7') or ('7', '2'));
+
+    private static HashSet<int> Inventory(GameSnapshot s) =>
+        [.. Enumerable.Range(0, 8).Select(i => Raw(s, $"inv{i}") is { } v ? (int)(v & 0xFF) : 0).Where(id => id > 0)];
+
+    private static HashSet<int> ActiveEnemies(GameSnapshot s) =>
+        [.. Enumerable.Range(0, 8)
+            .Where(i => Raw(s, $"enemy{i}Flags") is { } f && (f & 1) != 0 && Raw(s, $"enemy{i}Hp") is { } hp && (short)hp > 0)
+            .Select(i => (int)(Raw(s, $"enemy{i}Type") ?? 0))];
+
+    private static HashSet<int> Box(GameSnapshot s) =>
+        [.. Enumerable.Range(0, 48).Select(i => Raw(s, $"box{i}") is { } v ? (int)(v & 0xFF) : 0).Where(id => id > 0)];
 
     private static uint? Raw(GameSnapshot snapshot, string field) =>
         snapshot.RawFields.TryGetValue(field, out var value) && value.HasValue ? (uint)value.Value : null;
@@ -195,14 +280,26 @@ internal sealed class Re1ChangeExplainer(Re1Knowledge knowledge) : IChangeExplai
         {
             case "flagRoomItems" when Find(knowledge.Items, flag, room, player) is { } item:
                 return set ? $"put {knowledge.Item(item.What)} back" : $"picked up {knowledge.Item(item.What)}";
+            case "flagEnemies" when set && flag == NotRemembered:
+                return "killed an enemy that doesn't stay dead";
             case "flagEnemies" when set && Find(knowledge.Enemies, flag, room, player) is { } enemy:
                 return $"killed {knowledge.Enemy(enemy.What)}";
             case "flagLocks" when Find(knowledge.Doors, flag, room, player) is { } door:
                 return $"{(set ? "unlocked" : "locked")} door {door.Room}→{door.Target}";
+            case "flagLocks":
+                // Lock flags no door uses belong to locked desks and boxes (Jill's lockpick opened two in 102 and 111).
+                return set ? $"opened something locked in room {room} (lock #{flag})" : string.Empty;
 
             // Rooms visited (the map's "explored" marks): flags below FirstMapFlag, set on the first visit.
             case "flagRoom" when set && flag < FirstMapFlag:
                 return $"first visit to room {VisitedRoom(flag)}";
+            case "flagRoom" when set && flag < FirstDocumentFlag:
+                return $"took {knowledge.Item(flag - 46)}";
+            case "flagRoom" when set:
+                return $"took {(knowledge.Documents.TryGetValue(flag - 35, out var doc) ? doc : $"document {flag - 35}")}";
+            case "flagScenarioA" or "flagScenarioB"
+                when knowledge.Story.Exists(u => u.Flag == flag && u.What == bank[^1] && SameRoom(u.Room, room) && (u.Player == player || u.Player == "both")):
+                return $"room {room} event (story {bank[^1]} #{flag})";
             default:
                 return null;
         }

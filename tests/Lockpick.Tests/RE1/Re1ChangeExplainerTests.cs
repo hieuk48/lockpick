@@ -76,9 +76,35 @@ public class Re1ChangeExplainerTests
         Assert.Equal(["first visit to room 300"], _explainer.Explain(Jill(0, "300", ("flagRoom1", 0)), Jill(1, "300", ("flagRoom1", 0x1))).Known);
         Assert.Equal(["first visit to room 11D"], _explainer.Explain(Jill(0, "107"), Jill(1, "107", ("flagRoom0", 0x06000004))).Known);
 
-        // Beyond the visits come maps and documents: an unlabelled one is asked about.
-        var odd = Assert.Single(_explainer.Explain(Jill(0, "107", ("flagRoom4", 0)), Jill(1, "107", ("flagRoom4", 0x1))).Unexplained);
-        Assert.Equal("flagRoom4:0x00000001:set", odd.Key);
+        // Room-bank flags are only ever set in play; one being cleared is unexpected and asked about.
+        var odd = Assert.Single(_explainer.Explain(Jill(0, "107", ("flagRoom4", 0x1)), Jill(1, "107", ("flagRoom4", 0))).Unexplained);
+        Assert.Equal("flagRoom4:0x00000001:clear", odd.Key);
+    }
+
+    [Fact]
+    public void Story_flags_from_room_scripts_maps_and_documents_are_explained()
+    {
+        // Room 10B's script sets story A #9 on the first visit (also labelled, but the script alone explains it).
+        Assert.Empty(_explainer.Explain(Jill(0, "10B", ("flagScenarioA0", 0)), Jill(1, "10B", ("flagScenarioA0", 0x00400000))).Unexplained);
+
+        // Unlabelled maps and documents follow the rule: map flag = item + 46 (127 → item 81), document = item + 35
+        // (133 → document 98).
+        Assert.Equal(["took item 0x51"], _explainer.Explain(Jill(0, "300", ("flagRoom3", 0)), Jill(1, "300", ("flagRoom3", 0x1))).Known);
+        Assert.Equal(["took document 98"], _explainer.Explain(Jill(0, "10E", ("flagRoom4", 0)), Jill(1, "10E", ("flagRoom4", 0x04000000))).Known);
+    }
+
+    [Fact]
+    public void Player_actions_are_reported_and_unknown_story_flags_can_be_attributed_to_them()
+    {
+        // Placing the star crest (item 0x2D) in 11A while an unlabelled story flag (A3 bit 0x2) is set.
+        var report = _explainer.Explain(
+            Jill(0, "11A", ("inv2", 0x012D), ("flagScenarioA3", 0)),
+            Jill(1, "11A", ("flagScenarioA3", 0x2)));
+        Assert.Contains("used Star crest", report.Actions);
+        Assert.True(Assert.Single(report.Unexplained).ByAction);
+
+        // A cleared story flag just ends a state: not asked about.
+        Assert.Empty(_explainer.Explain(Jill(0, raw: ("flagScenarioB0", 0x80000001)), Jill(1, raw: ("flagScenarioB0", 0x80000000))).Unexplained);
     }
 
     [Fact]

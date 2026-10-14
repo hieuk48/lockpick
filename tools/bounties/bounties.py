@@ -274,7 +274,7 @@ def parse_markers(text: str) -> list[dict]:
             "room": str(m["room"])[:8] if m.get("room") else None,
             "gameSeconds": float(seconds) if isinstance(seconds, (int, float)) else None,
             "note": " ".join(str(m.get("note", "")).split())[:200],
-            "kind": m.get("kind") if m.get("kind") in ("marker", "answer", "skipped") else "marker",
+            "kind": m.get("kind") if m.get("kind") in ("marker", "answer", "skipped", "auto") else "marker",
             "changes": [str(c)[:200] for c in m.get("changes") or [] if isinstance(c, str)][:12],
         })
     return markers
@@ -527,8 +527,12 @@ def report(data: dict, capture: Capture, findings: dict[str, Finding], facts: di
         new = ", ".join(f"0x{i:02X}" for i in facts["new_item_ids"]) or "none"
         lines.append(f"**Item ids seen:** {', '.join(f'0x{i:02X}' for i in facts['item_ids'])} (new: {new})")
     if capture.markers:
-        lines += ["", "**Markers:**"]
-        for m in capture.markers[:MAX_REPORTED_MARKERS]:
+        autos = [m for m in capture.markers if m["kind"] == "auto"]
+        if autos:
+            lines += ["", f"_{len(autos)} story change(s) were put down to the player's actions (see the timeline)._"]
+        shown = [m for m in capture.markers if m["kind"] != "auto"]
+        lines += ["", "**Markers:**"] if shown else []
+        for m in shown[:MAX_REPORTED_MARKERS]:
             where = [m["at"]]
             if m["room"]:
                 where.append(f"room {m['room']}")
@@ -541,8 +545,8 @@ def report(data: dict, capture: Capture, findings: dict[str, Finding], facts: di
             asked = f" (asked about: {'; '.join(m['changes'])})" if m["changes"] else ""
             detail = kind + (f"`{note}`" if note else "") + asked
             lines.append(f"- #{m['number']} {' · '.join(where)}" + (f" — {detail}" if detail else ""))
-        if len(capture.markers) > MAX_REPORTED_MARKERS:
-            lines.append(f"- … and {len(capture.markers) - MAX_REPORTED_MARKERS} more")
+        if len(shown) > MAX_REPORTED_MARKERS:
+            lines.append(f"- … and {len(shown) - MAX_REPORTED_MARKERS} more")
     if not matched and not rooms:
         reason = ("it only contains the title screen or attract-mode demos — start or load a game while capturing"
                   if facts["samples"] else "no game data was recorded — was the game running while capturing?")

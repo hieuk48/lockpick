@@ -15,7 +15,8 @@ public sealed record CapturedBuild(string FileName, long FileSize, string Sha256
 /// A moment the player marked while capturing (markers.jsonl), so the data around it can be matched to what happened
 /// on screen. <see cref="At"/> is the wall clock the memory log and traces also use.
 /// </summary>
-/// <param name="Kind">"marker" (added by the player), "answer" or "skipped" (an ask-mode question).</param>
+/// <param name="Kind">"marker" (added by the player), "answer" or "skipped" (an ask-mode question), or "auto" (a story
+/// change ask mode put down to a player action instead of asking).</param>
 /// <param name="Changes">For questions: the unexplained changes that were asked about.</param>
 public sealed record CaptureMarker(int Number, DateTimeOffset At, int Attachment, double? GameSeconds, string? Room, string Note, string Kind = "marker", IReadOnlyList<string>? Changes = null);
 
@@ -216,6 +217,27 @@ public sealed class CaptureSession : IDisposable
             _markers.Add(marker);
             _events?.WriteLine($"[{_time.GetLocalNow().ToString("HH:mm:ss.fff", CultureInfo.InvariantCulture)}] Question {marker.Number} ({string.Join("; ", marker.Changes!)}): {(note.Length > 0 ? note : "skipped")}");
             _events?.Flush();
+            WriteMarkers();
+            return marker;
+        }
+    }
+
+    /// <summary>Records a story change ask mode attributed to a player action (kind "auto"), so it can be labelled later.</summary>
+    public CaptureMarker AddAttribution(Insight.AttributedChange attributed)
+    {
+        lock (_gate)
+        {
+            ObjectDisposedException.ThrowIf(_stopped, this);
+            var marker = new CaptureMarker(
+                _markers.Count + 1,
+                attributed.At.ToLocalTime(),
+                _trace is not null ? _info.Attachments : 0,
+                attributed.GameTime is { } t ? Math.Round(t.TotalSeconds, 2) : null,
+                attributed.Room,
+                CleanNote(attributed.Action),
+                "auto",
+                [attributed.Change.Description]);
+            _markers.Add(marker);
             WriteMarkers();
             return marker;
         }

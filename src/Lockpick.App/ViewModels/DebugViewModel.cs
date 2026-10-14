@@ -219,7 +219,20 @@ public sealed partial class DebugViewModel : PageViewModel, IDisposable
             return;
         }
 
-        if (questions.Feed(snapshot) is { } question)
+        var question = questions.Feed(snapshot);
+        foreach (var attributed in questions.TakeAttributed())
+        {
+            try
+            {
+                _capture?.AddAttribution(attributed);
+            }
+            catch (ObjectDisposedException)
+            {
+                return; // the capture was stopped meanwhile
+            }
+        }
+
+        if (question is not null)
         {
             _asking = true;
             Dispatcher.UIThread.Post(() => _ = AskAsync(question));

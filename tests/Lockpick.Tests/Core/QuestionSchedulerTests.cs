@@ -14,9 +14,14 @@ public class QuestionSchedulerTests
 
         public Dictionary<int, string> KnownByPoll { get; } = [];
 
+        public Dictionary<int, string> ActionByPoll { get; } = [];
+
         public ChangeReport Explain(GameSnapshot previous, GameSnapshot current) => new(
-            ByPoll.TryGetValue((int)current.Sequence, out var keys) ? [.. keys.Select(k => new UnexplainedChange(k, k))] : [],
-            KnownByPoll.TryGetValue((int)current.Sequence, out var known) ? [known] : []);
+            ByPoll.TryGetValue((int)current.Sequence, out var keys) ? [.. keys.Select(k => new UnexplainedChange(k, k, ByAction: k.StartsWith("story", StringComparison.Ordinal)))] : [],
+            KnownByPoll.TryGetValue((int)current.Sequence, out var known) ? [known] : [])
+        {
+            Actions = ActionByPoll.TryGetValue((int)current.Sequence, out var action) ? [action] : [],
+        };
     }
 
     private static GameSnapshot Poll(int n, bool playing = true, bool timerRuns = true) => new()
@@ -43,6 +48,35 @@ public class QuestionSchedulerTests
         Assert.Equal("105", question.Room);
         Assert.Equal(T0.AddSeconds(1), question.At);
         Assert.Equal(["1:41 picked up Emblem"], question.Context);
+    }
+
+    [Fact]
+    public void Story_changes_next_to_a_player_action_are_attributed_not_asked()
+    {
+        // Poll 1: a crest is used; poll 3: a story flag changes (2 s later) and an unrelated lock flag too.
+        var explainer = new ScriptedExplainer { ActionByPoll = { [1] = "used Star crest" }, ByPoll = { [3] = ["story A #106", "lock #40"] } };
+        var scheduler = new QuestionScheduler(explainer);
+        for (var n = 0; n <= 6; n++)
+        {
+            if (scheduler.Feed(Poll(n)) is { } question)
+            {
+                Assert.Equal(["lock #40"], question.Changes.Select(c => c.Key)); // only non-story changes are still asked
+            }
+        }
+
+        var attributed = Assert.Single(scheduler.TakeAttributed());
+        Assert.Equal(("used Star crest", "story A #106"), (attributed.Action, attributed.Change.Key));
+        Assert.Empty(scheduler.TakeAttributed());
+
+        // Far from any action, a story change is asked about.
+        var lonely = new QuestionScheduler(new ScriptedExplainer { ActionByPoll = { [1] = "used Star crest" }, ByPoll = { [20] = ["story A #3"] } });
+        PendingQuestion? asked = null;
+        for (var n = 0; n <= 25; n++)
+        {
+            asked ??= lonely.Feed(Poll(n));
+        }
+
+        Assert.Equal(["story A #3"], asked!.Changes.Select(c => c.Key));
     }
 
     [Fact]

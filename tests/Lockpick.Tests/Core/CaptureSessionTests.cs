@@ -260,6 +260,8 @@ public sealed class CaptureSessionTests : IDisposable
 
         var answered = capture.AddAnswer(question, "  Kenneth's body\nfound ");
         var skipped = capture.AddAnswer(question, null);
+        var auto = capture.AddAttribution(new Lockpick.Core.Insight.AttributedChange(question.Changes[0], "used Star crest", "11A", null, _time.GetUtcNow()));
+        Assert.Equal(("auto", "used Star crest", "11A"), (auto.Kind, auto.Note, auto.Room));
 
         Assert.Equal(("answer", "Kenneth's body found", "104", 87.0), (answered.Kind, answered.Note, answered.Room, answered.GameSeconds));
         Assert.Equal("skipped", skipped.Kind);

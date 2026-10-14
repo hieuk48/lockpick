@@ -346,7 +346,9 @@ def render(capture: bounties.Capture, names: Names) -> str:
             ms = None
         note = f": {m['note']}" if m["note"] else ""
         where = f"{m['at']}{' room ' + m['room'] if m['room'] else ''}"
-        if m["kind"] in ("answer", "skipped"):
+        if m["kind"] == "auto":
+            timeline.lines.append((ms, f"🔗 {where} — {m['note']} → {'; '.join(m['changes'])}"))
+        elif m["kind"] in ("answer", "skipped"):
             answer = f"**{m['note']}**" if m["note"] else "(skipped)"
             timeline.lines.append((ms, f"❓ **Question #{m['number']}** {where} — {answer} — about: {'; '.join(m['changes'])}"))
         else:

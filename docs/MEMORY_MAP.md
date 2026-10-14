@@ -133,11 +133,15 @@ The flag banks tile `0xBE9854`–`0xBE98E4` exactly and end where the item box s
 - **`flagEnemies`**: each of 13 zombie kills set exactly one new bit; killing crows set none.
 - **`flagRoomItems`**: each pickup cleared exactly one bit as the item entered the inventory (1 = still in the world).
 - **`flagRoom` bank** (the map's flags, flag *n* = bit 31 − *n* % 32 of word *n* / 32):
-  - flags 0–123: rooms visited, one per room, numbered on across stages — 100 = 0, 200 = 32, 300 = 63, 400 = 82
-    (stages 5+ not mapped yet). The map's own room numbers count: 107's back room is map room 11D (flag 29), the
+  - flags 0–123: rooms visited, one per room: flag = base[stage] + room. **Static:** the table is in the exe at
+    `0x4D31E0` (bases `00 20 3F 52 64` = 0, 32, 63, 82, 100) followed at `0x4D31E8` by the rooms per stage
+    (`20 1F 13 12 18` = 32, 31, 19, 18, 24 — 124 in all), read by the map code (`mov cl,[eax+0x4D31E0]` at
+    `0x487755`, `cmp [eax+0x4D31E8],bl` at `0x48773B`). Confirmed live for stages 1–4; stages 6/7 (the mansion
+    revisited) use 1/2. The map's own room numbers count: 107's back room is map room 11D (flag 29), the
     piano room's secret room 11E (30), the room behind the 2F bookcase 21D (61);
-  - 124 = 1F map, 125 = 2F map, 126 = garden map taken;
-  - 128+ = documents taken (130 researcher's will, 132 keeper's diary, 145 the book about mixing herbs).
+  - 124–129 maps taken: flag = map item id + 46 (124 = 1F map, item 78; 125 = 2F map, 79; 126 = garden map, 80);
+  - 130+ documents taken: flag = document item id + 35 (130 researcher's will, item 95; 132 keeper's diary, 97;
+    145 the book about mixing herbs, 110).
 - **`flagLocks0`**: one bit set per door unlocked (4 doors).
 - **Statue push (202)**, seen three times (session 4 and both new games in session 5): `stateFlags` bit `0x40` is set
   while pushing; when the statue falls, `flagScenarioA0` bit `0x100000` and `stateFlags` `0x100000` (camera cut) are set.
@@ -162,6 +166,9 @@ What changes during play but isn't explained yet — candidates for markers in f
   about 70 story and puzzle events — Barry's scenes, the ceiling trap, the gallery, crests, the piano and emblems,
   Richard and the serum, Yawn, the aquarium, the water gate, the guardhouse statue — in
   `data/games/re1/flag-labels.json` with their source. Later areas are still unknown; ask-mode captures name them.
+- **Room scripts set story flags:** `set` group 0 writes bank A (`flagScenarioA`), group 1 bank B (`flagScenarioB`)
+  — about 35 confirmed labels match a `set` in the room where the player was. `tools/rdt` records them
+  (`room-index.json` → `story`). Cutscene/event scripts (`offsets[8]`) set the rest and are not parsed yet.
 - **`flagLocks`** also covers locked desks (flags 30, 31: desks opened with Jill's lockpick in 102 and 111).
 - **Kill flag 255** (`flagEnemies7` bit `0x1`) is set when an enemy whose room script says "not persisted" dies.
 - **Jill's lockpick** is given by Barry in the main hall (`flagScenarioA3` bit `0x8`) and never appears in the

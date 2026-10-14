@@ -1,5 +1,5 @@
 {
- "comment": "RE1 item and enemy/character ids. Names from IntelOrca's BioRand Re1ItemIds/Re1EnemyIds (MIT); 'observed' = behaviour confirmed in live captures (docs/MEMORY_MAP.md). Ids from 0x4E up are maps and documents.",
+ "comment": "RE1 item and enemy/character ids. Names from IntelOrca's BioRand Re1ItemIds/Re1EnemyIds (MIT); 'observed' = behaviour confirmed in live captures (docs/MEMORY_MAP.md). Ids from 0x4E up are maps and documents. Maps (78+) and documents (95+) were named by the owner in play; their map-bank flags are item + 46 (maps) and item + 35 (documents).",
  "items": {
   "1": "Combat knife",
   "2": "Beretta",
@@ -105,7 +105,9 @@
   "17": "see 7"
  },
  "maps": {
-  "78": "Map (mansion 1F)"
+  "78": "Map (mansion 1F)",
+  "79": "Map (mansion 2F)",
+  "80": "Map (courtyard garden)"
  },
  "enemies": {
   "0": "Zombie",
@@ -156,5 +158,10 @@
   34,
   37,
   38
- ]
+ ],
+ "documents": {
+  "95": "Researcher's will",
+  "97": "Keeper's diary",
+  "110": "Book about mixing herbs"
+ }
 }
