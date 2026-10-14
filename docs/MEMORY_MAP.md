@@ -181,6 +181,15 @@ What changes during play but isn't explained yet — candidates for markers in f
   (224-byte table, single bytes change at a few moments — door/map state?), and the system block `0xD213A1–0xD21503`
   (arrays with a 0x24 stride).
 
+## Save files (`SAVE\savedatN.dat`)
+
+2690 bytes, starting `53 43 13 01`. Offsets `0x04`–`0x41B` are a copy of the game-state block: save offset +
+`0xBE9620` = memory address (found 2026-10-13 by matching a save written during a live capture against the memory
+recorded 48 ms earlier) — so stage/room/camera, every flag bank, the item box and the inventory decode with the
+profile's addresses. Byte `0x212` is `0x2F` (the ink ribbon's id: what a save costs) in every Chris save and `0` in
+every Jill save. `tools/bounties/saves.py` reads saves offline (character, room, inventory, box, progress, story); it
+decoded 67 community practice saves and the owner's 8 into the rooms their names describe.
+
 ## Leads (unverified)
 
 | Address | Observation (live, 2026-10-13) | Lead |
