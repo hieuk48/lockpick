@@ -13,7 +13,8 @@ Status legend: ✅ done and verified · 🟡 done, partially verified · ⬜ not
 | 0.1.2 | In-app credits, capture bounties, community setup | ✅ released 2026-10-13 (first update path 0.1.1 → 0.1.2) |
 | 0.1.3 | Bounty automation, capture fixes from live testing (compact recordings, mid-session start) | ✅ released 2026-10-13 |
 | 0.1.4 | Captures record the game-state memory; enemy and flag detection; grouped reads | ✅ released 2026-10-13 |
-| 0.1.5 | Research tooling: capture markers, ask mode, room index, capture timeline, subtitles pack | 🟡 built and used live; not released |
+| 0.1.5 | Research tooling: capture markers, ask mode, room index, capture timeline, subtitles pack | ✅ released 2026-10-13 |
+| 0.1.6 | Progress tracker (read-only): items left, documents, maps, rooms explored, kills, story progress | ⬜ next |
 | 0.2.0 | Core trainer functionality and memory modification | ⬜ |
 | 0.3.0 | Real-time overlay and customizable HUD | ⬜ |
 | 0.4.0 | Room, camera, item and enemy database | ⬜ |
@@ -64,7 +65,7 @@ character id 1, max HP 96 and the Jill RDT bit.
 
 ---
 
-## 0.1.5 — Research tooling (built, ready to release)
+## 0.1.5 — Research tooling (released)
 
 Built and used in live sessions 6–8 (2026-10-13); see CHANGELOG `[Unreleased]`.
 
@@ -80,7 +81,22 @@ Built and used in live sessions 6–8 (2026-10-13); see CHANGELOG `[Unreleased]`
 
 ---
 
-## 0.2.0 — Core trainer (next)
+## 0.1.6 — Progress tracker (next)
+
+Pulled forward from 0.7.0 (owner's decision, 2026-10-13): read-only and Challenge-safe, and it needs no new memory
+research — the room index, the flag banks and the named flags already hold everything.
+
+Acceptance criteria:
+- A Progress page: per area and per room, the items still there vs taken (room index + pickup flags), documents and
+  maps collected, rooms explored (the map's own flags, all five stages), enemies killed for good (kill flags).
+- Story progress from the named flags (what has happened, in game order), unnamed flags shown as "unnamed event".
+- Character-aware (Jill's and Chris's room files differ) and correct for the mansion revisited (6xx/7xx).
+- Updates live while playing; works from a loaded save (flags, not history).
+- Verified live against a playthrough: counts match what the player saw; no writes, no extra process access.
+
+---
+
+## 0.2.0 — Core trainer
 
 Goal: deliberate, validated memory modification in Trainer Mode, with Challenge Mode enforcing no writes.
 

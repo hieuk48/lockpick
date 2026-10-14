@@ -6,6 +6,10 @@ All notable changes to this project are documented here. The format follows
 
 ## [Unreleased]
 
+## [0.1.5] - 2026-10-13
+
+Research tooling, used across three long live sessions (Jill from a new game to the mansion revisited).
+
 ### Added
 - Capture markers: press **Ctrl+Shift+M** while playing (configurable in Settings) or use **Add marker** on the Debug
   page to mark a moment, then describe it. Markers record the time, room and game time, are saved in the capture
@@ -13,10 +17,22 @@ All notable changes to this project are documented here. The format follows
 - Ask mode for captures (Debug page, off by default): when the game does something Lockpick can't explain — usually
   a cutscene or scripted event — it pauses the game and asks what happened. Answers are saved in the capture with the
   changes they explain. Pausing suspends the game process only while the question is open (opt-in; never writes).
+  It works out what it can without asking — rooms visited (the game's own table), maps and documents, events a room's
+  own script triggers, cleared story flags, and story changes within 5 s of something the player did (an item used,
+  received or picked up, a kill, a door, damage, pushing, an enemy appearing; saved as "auto" notes) — so it asks only
+  about cutscenes, surprises and switch puzzles. The question says when the change happened and what came just before.
+  About 85 story and puzzle events are named so far (`data/games/re1/flag-labels.json`).
 - Capture timeline (`tools/bounties/timeline.py`): a readable account of a capture — rooms, pickups, documents and
   maps by name, kills, enemies getting back up, unlocked doors, pushes, item box, item use, saves and markers.
 - Room index (`tools/rdt/rdt_index.py` → `data/games/re1/room-index.json`): which item, enemy or door each game flag
   belongs to, read from the game's own room files (ids and numbers only); item and enemy names from BioRand (MIT).
+- Item and enemy names confirmed in play: about 60 item ids (the bazooka ids 7/8 are the other way round from
+  BioRand's list: 7 explosive, 8 acid) and most enemy types (zombies, dogs, crows, plants, Yawn, Hunters, giant spiders,
+  wasps, Neptune, Plant 42); attacks named by their damage (speedrun damage chart, matches the GOG build).
+- Research tools for the voice-over: local transcription (`tools/voice`) and the separate, optional
+  [lockpick-subtitles](https://github.com/mscrnt/lockpick-subtitles) pack (fan transcription; the dialogue is Capcom's).
+- `tools/bounties/ask_preview.py`: replays captures through ask mode's rules to see what would be asked.
+- Captures also record the game's text buffer (research for on-screen text).
 - A "buy me a coffee" link in the README and the repository's Sponsor button (optional; it doesn't buy features or
   bounties).
 
