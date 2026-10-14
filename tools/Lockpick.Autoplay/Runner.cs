@@ -6,6 +6,9 @@ namespace Lockpick.Autoplay;
 /// <summary>
 /// Runs test scripts, one command per line ('#' starts a comment):
 ///   launch                       start the game if it isn't running and attach
+///   restart                      close the game and start it again (keeps 'background' on)
+///   speed [ms|normal]            show or set the game's tick interval (normal 33 ms; smaller = fast-forward)
+///   door hex48                   enter a room through a door record (RoomWarp.cs; dev runs only)
 ///   focus                        bring the game to the front (only when nobody is using the PC)
 ///   background                   focus patch: the game keeps running unfocused, keyboard map blanked (restored on exit)
 ///   press A [ms]                 press (and release) inputs; combine with '+', e.g. press Up+B 400
@@ -13,8 +16,11 @@ namespace Lockpick.Autoplay;
 ///   until room 106 [ms]          wait for a room (default timeout 30 s); also: until gameplay, until field=value
 ///   expect room 106              fail unless true now; same conditions as until
 ///   state                        print what Lockpick reads
+///   record [folder] | record stop   record a Lockpick capture (memory, trace, markers) across restarts
+///   mark note                    add a capture marker
+///   peek addr len                print memory (hex, read-only)
 ///   calibrate                    press every input; print the PSX bits the game read
-///   shot file.png                screenshot the game window
+///   shot file.png [width]        screenshot the game window (optionally scaled down)
 ///   look question...             screenshot and ask the vision model (LOCKPICK_VISION_URL)
 ///   echo text
 /// Without 'background', input is sent only while the game is the foreground window; the run stops if it loses focus.
@@ -27,6 +33,9 @@ internal sealed class Runner(Pad pad, TextWriter log) : IDisposable
     private readonly Stopwatch _clock = Stopwatch.StartNew();
     private Game? _game;
     private FocusPatch? _patch;
+    private RoomWarp? _warp;
+    private GameSpeed? _speed;
+    private Recorder? _recorder;
 
     public Game Game => _game ?? throw new InvalidOperationException("the game is not attached (add 'launch' first)");
 
@@ -88,9 +97,26 @@ internal sealed class Runner(Pad pad, TextWriter log) : IDisposable
         switch (w[0].ToLowerInvariant())
         {
             case "launch":
+            case "restart":
+                var background = _patch is not null;
+                Detach();
                 if (Game.TryAttach(out _) is { } running)
                 {
-                    running.Dispose();
+                    if (w[0] == "restart")
+                    {
+                        using (var process = Process.GetProcessById(running.ProcessId))
+                        {
+                            process.Kill();
+                            process.WaitForExit(10000);
+                        }
+
+                        running.Dispose();
+                        Game.Launch();
+                    }
+                    else
+                    {
+                        running.Dispose();
+                    }
                 }
                 else
                 {
@@ -98,9 +124,29 @@ internal sealed class Runner(Pad pad, TextWriter log) : IDisposable
                 }
 
                 Attach(TimeSpan.FromSeconds(60));
+                if (background)
+                {
+                    _patch = FocusPatch.Apply(Game.ProcessId, Log);
+                }
+
                 break;
             case "background":
                 _patch ??= FocusPatch.Apply(Game.ProcessId, Log);
+                break;
+            case "speed":
+                _speed ??= new GameSpeed(Game.ProcessId);
+                if (w.Length > 1)
+                {
+                    _speed.SetIntervalMs(w[1] == "normal" ? _speed.OriginalMs : uint.Parse(w[1], CultureInfo.InvariantCulture));
+                }
+
+                Log("  " + _speed.Describe());
+                break;
+            case "door":
+                var record = Convert.FromHexString(w[1]);
+                _warp ??= new RoomWarp(Game.ProcessId);
+                _warp.Enter(record);
+                Log($"  door handed to the game (destination byte 0x{record[0x0D]:X2}, arrival {BitConverter.ToInt16(record, 0x0E)}, {BitConverter.ToInt16(record, 0x12)})");
                 break;
             case "focus":
                 if (!Game.Focus())
@@ -137,6 +183,35 @@ internal sealed class Runner(Pad pad, TextWriter log) : IDisposable
                 }
 
                 break;
+            case "record":
+                if (w.Length > 1 && w[1] == "stop")
+                {
+                    if (_recorder is not null)
+                    {
+                        Log("  capture saved: " + await _recorder.StopAsync());
+                        await _recorder.DisposeAsync();
+                        _recorder = null;
+                    }
+                }
+                else
+                {
+                    _recorder ??= new Recorder(w.Length > 1 ? string.Join(' ', w[1..]) : shotFolder);
+                    Log("  recording to " + _recorder.Directory);
+                }
+
+                break;
+            case "mark":
+                if (_recorder is not null)
+                {
+                    var marker = _recorder.Mark(string.Join(' ', w[1..]));
+                    Log($"  marker {marker.Number} room={marker.Room}");
+                }
+
+                break;
+            case "peek":
+                var at = ulong.Parse(w[1].Replace("0x", string.Empty, StringComparison.OrdinalIgnoreCase), NumberStyles.HexNumber, CultureInfo.InvariantCulture);
+                Log($"  0x{at:X}: {Convert.ToHexString(Game.ReadBytes(at, int.Parse(w[2], CultureInfo.InvariantCulture)))}");
+                break;
             case "calibrate":
                 Calibrate();
                 break;
@@ -145,7 +220,7 @@ internal sealed class Runner(Pad pad, TextWriter log) : IDisposable
                 break;
             case "shot":
                 var path = Path.Combine(shotFolder, w[1]);
-                Game.Screenshot(path);
+                Game.Screenshot(path, w.Length > 2 ? int.Parse(w[2], CultureInfo.InvariantCulture) : 0);
                 Log($"  saved {path}");
                 break;
             case "look":
@@ -282,12 +357,31 @@ internal sealed class Runner(Pad pad, TextWriter log) : IDisposable
 
     public void Dispose()
     {
+        if (_recorder is not null)
+        {
+            Log("capture saved: " + _recorder.StopAsync().GetAwaiter().GetResult());
+            _recorder.DisposeAsync().AsTask().GetAwaiter().GetResult();
+            _recorder = null;
+        }
+
+        Detach();
+    }
+
+    /// <summary>Removes the focus patch and lets go of the current game process.</summary>
+    private void Detach()
+    {
         if (_patch is not null)
         {
             _patch.Dispose();
+            _patch = null;
             Log("focus patch removed");
         }
 
+        _warp?.Dispose();
+        _warp = null;
+        _speed?.Dispose();
+        _speed = null;
         _game?.Dispose();
+        _game = null;
     }
 }

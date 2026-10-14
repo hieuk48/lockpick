@@ -71,6 +71,12 @@ internal sealed class Game : IDisposable
         return _process.TryRead(address, buffer) ? BitConverter.ToUInt32(buffer) : throw new IOException($"read 0x{address:X} failed");
     }
 
+    public byte[] ReadBytes(ulong address, int length)
+    {
+        var buffer = new byte[length];
+        return _process.TryRead(address, buffer) ? buffer : throw new IOException($"read 0x{address:X} failed");
+    }
+
     public nint Window
     {
         get
@@ -101,7 +107,7 @@ internal sealed class Game : IDisposable
     }
 
     /// <summary>Saves the game's client area as PNG; works behind other windows (PrintWindow with full content).</summary>
-    public void Screenshot(string path)
+    public void Screenshot(string path, int width = 0)
     {
         var window = Window;
         Native.GetClientRect(window, out var rect);
@@ -124,6 +130,13 @@ internal sealed class Game : IDisposable
         }
 
         Directory.CreateDirectory(Path.GetDirectoryName(Path.GetFullPath(path))!);
+        if (width > 0 && width < bitmap.Width)
+        {
+            using var small = new Bitmap(bitmap, width, bitmap.Height * width / bitmap.Width);
+            small.Save(path, ImageFormat.Png);
+            return;
+        }
+
         bitmap.Save(path, ImageFormat.Png);
     }
 
