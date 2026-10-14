@@ -265,6 +265,26 @@ Save files, leads (not yet live-checked): offset `0x220` (u16) holds the HP (Jil
 `0x22C`/`0x22E` look like X/Z and `0x230` like the facing (always < 4096). A save resumes in its save room; rooms
 are entered with door records instead.
 
+## Interaction, menus and cameras (static + live, 2026-10-14 — dev harness)
+
+| Address / rule | What | Evidence |
+|---|---|---|
+| `0xD91AA0` (288 B), tail ptr `0xD91BC0` | Room action table: 12-byte entries `[0]` handler (1 door, 2 message, 3 key prompt, 4 item pickup, 7 flag set, 9 event…), `[1]` probe flags (`0x80` action key only, `0x40` test own position), `+6` item flag, `+8` record pointer (zone x/z/w/d, item id at +8) | decomp; live: armed pickups listed per room match the room files and the pickups made |
+| action probe | On A, the point **600 units ahead** of the player is tested against the zones (`check_action_object` `0x41C150`); facing 0 = +X, 1024 = −Z | live: Emblem picked up from 600 back facing in |
+| item pickup | flag `0x800` (item viewer) + `0x8000` message; "Will you take …?" defaults to Yes; inventory slot gets `item \| qty << 8`, item flag cleared | live: 138 of 138 Jill pickups gave the item and cleared the flag the room index names |
+| documents | pickup screen `0x100` (+ camera lock + ramp); some loop their pages on A — cancel (X) closes them | live: researcher's will (20A) |
+| `0xBE9822` + state bit `0x20` | Camera id + "camera redraw": the next frame runs `display_room_camera_bg` (`0x462D50`) — a camera cut on demand; the game only tests the current camera's switch zones, so it never re-cuts after a teleport by itself; the camera must have a group in the room's switch table | decomp + live (105 table and fireplace cameras) |
+| `0xBE41E2` (u8) | Enemy count; `update_entities` (`0x48F0F0`) returns when 0 → enemies stop and aren't drawn until the next room load | disassembly + live (101's zombies) |
+| `0xD22774` / `0xD22775` / `0xD22777` | Title: cursor (1 NEW GAME, 2 LOAD GAME, preset to 2 when saves exist), menu shown, title loop | live trace |
+| `0xAC9880` / `0xAC93F0` | Character select: state (1 = waiting for input, 6 = start), selection (0 Chris, 1 Jill) | decomp + live (new games for both) |
+| `0xAE9F20` / `0xAE9F23` / `0xAE9F1B` | Inventory menu: grid takes input when 1; cursor (8 + 2·slot); selected item id | decomp (USE path to be live-checked) |
+| `0xD213A0` | Item-use flags (bank 9): a room's "flag set" action raises the bit (item − 0x1B) while the player stands at the spot; USE checks it | decomp + room scripts (105 fireplace: items 31/32) |
+
+Room scripts (`tools/rdt/scd.py`) and event scripts (`tools/rdt/events.py`) read every room's conditions: e.g. 105
+places the blue jewel only once "the statue falls" (A11), always arms the shield key (only the clock — a
+script-placed object — stands in front), and using the gold emblem at the fireplace sets B171 and starts the clock
+events; 106 runs its "go back" scene (event 4) after the opening and before the Kenneth scene.
+
 ## Leads (unverified)
 
 | Address | Observation (live, 2026-10-13) | Lead |

@@ -83,6 +83,10 @@ conditions), `state`, `peek addr len`, `calibrate`, `shot file.png [width]`, `lo
 - `place <x> <z> [angle]` — stand the player at a spot in the current room, e.g. an item's pickup zone
   (`doors.items()`: the zone's centre is floor next to the item) (`PlayerPlacement.cs`). The camera re-cuts only when
   the player walks across a camera trigger, so the view may lag until they move.
+- `camera <id>` — cut to a camera of the room (memory trigger; the camera must have a switch-zone group —
+  `rdt_map.camera_for(x, z)` picks one) (`CameraCut.cs`).
+- `freeze-enemies` — stop the room's enemies until the next room load (`EnemyFreeze.cs`); `heal`; `inv-clear <from>`
+  (empty spare inventory slots).
 - `speed <ms>` / `speed normal` — the game's tick interval (normal 33 ms); smaller values fast-forward cutscenes and
   scripted waits with every effect intact (`GameSpeed.cs`; restored on exit).
 - `record [folder]` / `mark <note>` / `record stop` — a Lockpick capture of the run (trace, events, memory regions,
@@ -115,6 +119,14 @@ look Which menu is open, and which entry is highlighted?
   the status screen, records the scene; slot 1 is restored and hash-checked after every save.
 - `report.py <run-dir>` — `atlas.md`: per area and room, the room files' contents, what the live run found and the
   vision description.
+- `pickup.py <out> <save-backup> [jill] [chris]` — stands at every armed item (live action table) so the 600-unit
+  probe lands in its zone from a spot outside collision, picks it up and checks item and flag against the room index.
+- `rag.py index <run-dir>` / `ask …` — retrieval on the local stack (TEI embeddings, Qdrant collection `lockpick`,
+  reranker): flag labels, names, room-script facts, pickup results, the atlas; grounded vision questions use it
+  (`context.py`). Env: `LOCKPICK_EMBED_URL`, `LOCKPICK_RERANK_URL`, `LOCKPICK_QDRANT_URL`.
+- `tools/rdt`: `scd.py` (room scripts with their conditions), `events.py` (event scripts), `rdt_map.py` (geometry),
+  `render_map.py` / `floor_map.py` (room and floor maps, local HTML), `tools/bounties/flag_timeline.py` (when each saved
+  flag turns on across practice saves).
 - `llm.py "question" files…` — digests long text (decompiled code, logs) with the local model; leads only.
 
 Environment: `LOCKPICK_VISION_URL` / `LOCKPICK_VISION_MODEL` (OpenAI-compatible vision model; also used by
