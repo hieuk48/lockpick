@@ -13,6 +13,8 @@ import sys
 from collections import defaultdict
 from pathlib import Path
 
+sys.path.insert(0, str(Path(__file__).parent))
+
 ROOT = Path(__file__).resolve().parents[2]
 DATA = ROOT / "data" / "games" / "re1"
 
@@ -48,7 +50,10 @@ def main(argv: list[str]) -> int:
         for e in index[kind]:
             for who in (("jill", "chris") if e["player"] == "both" else (e["player"],)):
                 files[e["room"]][who][kind].append(e)
-    all_rooms = sorted(set(survey["jill"]) | set(survey["chris"]) | set(files), key=lambda r: (r[0], r[1:]))
+    # Door targets whose room file is a 4-byte stub (the room exists only in the return-mansion stages) aren't rooms.
+    import survey as survey_module  # tools/autoplay/survey.py
+    all_rooms = sorted((set(survey["jill"]) | set(survey["chris"]) | set(files)), key=lambda r: (r[0], r[1:]))
+    all_rooms = [r for r in all_rooms if survey_module.room_file_ok(r, "jill") or survey_module.room_file_ok(r, "chris")]
     by_area: dict[str, list[str]] = defaultdict(list)
     for r in all_rooms:
         by_area[rooms["rooms"].get(r, {}).get("area") or rooms["areas"].get(r[0], f"Stage {r[0]}")].append(r)
