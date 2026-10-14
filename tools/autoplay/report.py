@@ -94,7 +94,9 @@ def main(argv: list[str]) -> int:
     if library:
         ok = sum(1 for e in library if e.get("roomMatches") and e.get("characterMatches"))
         lines += ["## Save library", "", f"{ok} of {len(library)} saves loaded with room and character matching the "
-                  "offline decode.", "", "| Save | Expected | Live | Result |", "|---|---|---|---|"]
+                  "offline decode.", "", "The status-screen readings in library.jsonl are not used: the vision model returned black "
+                  "frames or invented generic item lists. Item names were checked against the game's own name table "
+                  "instead (docs/MEMORY_MAP.md).", "", "| Save | Expected | Live | Result |", "|---|---|---|---|"]
         for e in library:
             want = e.get("expected", {})
             live = e.get("live", {})
