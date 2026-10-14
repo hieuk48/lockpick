@@ -61,6 +61,8 @@ def pick(folder: Path, character: str, room: str) -> dict:
 def main(argv: list[str]) -> int:
     sys.stdout.reconfigure(encoding="utf-8")
     character, room = argv[0].lower(), argv[1].upper()
+    if not survey.room_file_ok(room, character):
+        raise SystemExit(f"room {room} has no room file for {character} (a stub that crashes the game)")
     opt = lambda name, default: Path(argv[argv.index(name) + 1]) if name in argv else default  # noqa: E731
     night = Path(os.environ["LOCALAPPDATA"]) / "Lockpick" / "research" / "night-20261014"
     folder = opt("--saves", Path(os.environ["LOCALAPPDATA"]) / "Lockpick" / "research" / "saves" / "community")
