@@ -12,6 +12,7 @@ from __future__ import annotations
 
 import json
 import math
+from collections import Counter
 import struct
 import sys
 import time
@@ -142,7 +143,8 @@ def try_pickup(item: dict, room: rdt_map.Room) -> dict:
             result["prompts"] += 1
         ap.settle(30)
     inv_after, flags_after = inventory(), ap.peek(ITEM_FLAGS, 32)
-    result["gained"] = [v for v in inv_after if v and v not in inv_before]
+    # Count values, not membership: a second identical item (e.g. a spray when one is kept) is still a gain.
+    result["gained"] = list((Counter(v for v in inv_after if v) - Counter(v for v in inv_before if v)).elements())
     result["gainedItems"] = [v & 0xFF for v in result["gained"]]
     result["clearedFlags"] = cleared_flags(flags_before, flags_after)
     result["itemMatches"] = item["item"] in result["gainedItems"]
