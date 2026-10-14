@@ -72,7 +72,7 @@ internal sealed class Runner(Pad pad, TextWriter log) : IDisposable
     {
         var end = DateTime.UtcNow + timeout;
         string reason;
-        while ((_game = Game.TryAttach(out reason)) is null)
+        while ((_game = TryAttachOnce(out reason)) is null)
         {
             if (DateTime.UtcNow > end)
             {
@@ -93,6 +93,21 @@ internal sealed class Runner(Pad pad, TextWriter log) : IDisposable
         }
 
         Log($"attached ({Describe(Game.Read())})");
+    }
+
+    /// <summary>A game that has just been launched may not have its modules readable yet; that's "not ready".</summary>
+    private static Game? TryAttachOnce(out string reason)
+    {
+        try
+        {
+            return Game.TryAttach(out reason);
+        }
+        catch (Exception e) when (e is Core.Processes.ProcessAccessException or InvalidOperationException or IOException
+                                   or System.ComponentModel.Win32Exception)
+        {
+            reason = e.Message;
+            return null;
+        }
     }
 
     private async Task ExecuteAsync(string[] w, string shotFolder)
