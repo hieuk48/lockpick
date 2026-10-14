@@ -16,7 +16,7 @@ internal sealed class Re1Knowledge
 {
     private const string ResourcePrefix = "Lockpick.GameAdapter.RE1.Data.";
 
-    private Re1Knowledge(JsonDocument index, JsonDocument names, JsonDocument labels)
+    private Re1Knowledge(JsonDocument index, JsonDocument names, JsonDocument labels, JsonDocument rooms)
     {
         static int Int(JsonElement e, string key) => e.TryGetProperty(key, out var v) && v.ValueKind == JsonValueKind.Number ? v.GetInt32() : -1;
         static FlagUse Use(JsonElement e, string flag, string what) =>
@@ -40,9 +40,24 @@ internal sealed class Re1Knowledge
         }
 
         EnemyNames = Table(names.RootElement.GetProperty("enemies"));
-        Labels = labels.RootElement.GetProperty("labels").EnumerateArray()
-            .ToDictionary(e => (e.GetProperty("bank").GetString()!, Convert.ToUInt32(e.GetProperty("mask").GetString(), 16)), e => e.GetProperty("label").GetString()!);
+        LabelOrder = [.. labels.RootElement.GetProperty("labels").EnumerateArray()
+            .Select(e => (e.GetProperty("bank").GetString()!, Convert.ToUInt32(e.GetProperty("mask").GetString(), 16), e.GetProperty("label").GetString()!))];
+        Labels = LabelOrder.GroupBy(l => (l.Bank, l.Mask)).ToDictionary(g => g.Key, g => g.First().Label);
+        Areas = rooms.RootElement.GetProperty("areas").EnumerateObject().ToDictionary(p => p.Name[0], p => p.Value.GetString()!);
+        RoomNames = rooms.RootElement.GetProperty("rooms").EnumerateObject()
+            .Where(p => p.Value.TryGetProperty("name", out _))
+            .ToDictionary(p => p.Name, p => p.Value.GetProperty("name").GetString()!);
     }
+
+    /// <summary>The confirmed labels in file order (roughly the order they happen in the game).</summary>
+    public List<(string Bank, uint Mask, string Label)> LabelOrder { get; }
+
+    /// <summary>Area name by the room id's stage digit ('1' = Mansion 1F ...).</summary>
+    public Dictionary<char, string> Areas { get; }
+
+    public Dictionary<string, string> RoomNames { get; }
+
+    public string RoomLabel(string room) => RoomNames.TryGetValue(room, out var name) ? $"{room} {name}" : room;
 
     public List<FlagUse> Items { get; }
 
@@ -74,7 +89,8 @@ internal sealed class Re1Knowledge
         using var index = Load("room-index.json");
         using var names = Load("names.json");
         using var labels = Load("flag-labels.json");
-        return new Re1Knowledge(index, names, labels);
+        using var rooms = Load("rooms.json");
+        return new Re1Knowledge(index, names, labels, rooms);
     }
 
     public string Item(int id) => ItemNames.TryGetValue(id, out var name) ? name : $"item 0x{id:X2}";

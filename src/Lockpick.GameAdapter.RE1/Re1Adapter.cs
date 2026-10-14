@@ -59,6 +59,9 @@ public sealed class Re1Adapter : IGameAdapter
     public Core.Insight.IChangeExplainer CreateChangeExplainer(VersionProfile profile) =>
         new Re1ChangeExplainer(Re1Knowledge.LoadEmbedded());
 
+    public Core.Insight.IProgressTracker CreateProgressTracker(VersionProfile profile) =>
+        new Re1ProgressTracker(Re1Knowledge.LoadEmbedded());
+
     public static IEnumerable<VersionProfile> LoadEmbeddedProfiles()
     {
         var assembly = typeof(Re1Adapter).Assembly;

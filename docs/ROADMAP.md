@@ -14,7 +14,7 @@ Status legend: ✅ done and verified · 🟡 done, partially verified · ⬜ not
 | 0.1.3 | Bounty automation, capture fixes from live testing (compact recordings, mid-session start) | ✅ released 2026-10-13 |
 | 0.1.4 | Captures record the game-state memory; enemy and flag detection; grouped reads | ✅ released 2026-10-13 |
 | 0.1.5 | Research tooling: capture markers, ask mode, room index, capture timeline, subtitles pack | ✅ released 2026-10-13 |
-| 0.1.6 | Progress tracker (read-only): items left, documents, maps, rooms explored, kills, story progress | ⬜ next |
+| 0.1.6 | Progress tracker (read-only): items left, documents, maps, rooms explored, kills, story progress | 🟡 built; needs the live check |
 | 0.2.0 | Core trainer functionality and memory modification | ⬜ |
 | 0.3.0 | Real-time overlay and customizable HUD | ⬜ |
 | 0.4.0 | Room, camera, item and enemy database | ⬜ |

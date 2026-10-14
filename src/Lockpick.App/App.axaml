@@ -44,6 +44,9 @@
     <DataTemplate DataType="vm:DashboardViewModel">
       <views:DashboardView />
     </DataTemplate>
+    <DataTemplate DataType="vm:ProgressViewModel">
+      <views:ProgressView />
+    </DataTemplate>
     <DataTemplate DataType="vm:DebugViewModel">
       <views:DebugView />
     </DataTemplate>

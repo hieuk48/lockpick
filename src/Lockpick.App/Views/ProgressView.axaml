@@ -1,0 +1,81 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:vm="using:Lockpick.App.ViewModels"
+             xmlns:c="using:Lockpick.App.Controls"
+             x:Class="Lockpick.App.Views.ProgressView"
+             x:DataType="vm:ProgressViewModel">
+
+  <ScrollViewer>
+    <StackPanel Spacing="12" MaxWidth="900" HorizontalAlignment="Left">
+
+      <Border Classes="card">
+        <StackPanel Spacing="4">
+          <StackPanel Classes="cardhead">
+            <c:LucideIcon Data="{StaticResource Icon.ListChecks}" />
+            <TextBlock Classes="caption" Text="PROGRESS" />
+          </StackPanel>
+          <TextBlock Classes="headline" Text="{Binding Summary}" TextWrapping="Wrap" />
+          <TextBlock TextWrapping="Wrap" Foreground="{StaticResource LpMutedBrush}"
+                     Text="Read from the game's own flags (read-only), so it works from a loaded save too. Items are what each room holds for your character; some appear only after story events." />
+        </StackPanel>
+      </Border>
+
+      <ItemsControl ItemsSource="{Binding Areas}">
+        <ItemsControl.ItemsPanel>
+          <ItemsPanelTemplate>
+            <StackPanel Spacing="12" />
+          </ItemsPanelTemplate>
+        </ItemsControl.ItemsPanel>
+        <ItemsControl.ItemTemplate>
+          <DataTemplate x:DataType="vm:ProgressAreaRow">
+            <Border Classes="card">
+              <StackPanel Spacing="8">
+                <TextBlock Classes="caption" Text="{Binding Name}" />
+                <ItemsControl ItemsSource="{Binding Groups}">
+                  <ItemsControl.ItemsPanel>
+                    <ItemsPanelTemplate>
+                      <StackPanel Spacing="6" />
+                    </ItemsPanelTemplate>
+                  </ItemsControl.ItemsPanel>
+                  <ItemsControl.ItemTemplate>
+                    <DataTemplate x:DataType="vm:ProgressGroupRow">
+                      <StackPanel Spacing="2">
+                        <Grid ColumnDefinitions="*,Auto">
+                          <TextBlock Classes="label" Text="{Binding Title}" />
+                          <TextBlock Grid.Column="1" Classes="mono" Text="{Binding Count}" />
+                        </Grid>
+                        <ProgressBar Classes="health" Minimum="0" Maximum="100" Value="{Binding Percent}" />
+                        <Expander Header="{Binding LeftHeader}" IsVisible="{Binding HasLeft}" HorizontalAlignment="Stretch">
+                          <ItemsControl ItemsSource="{Binding Left}">
+                            <ItemsControl.ItemTemplate>
+                              <DataTemplate x:DataType="x:String">
+                                <TextBlock Text="{Binding}" TextWrapping="Wrap" Foreground="{StaticResource LpMutedBrush}" />
+                              </DataTemplate>
+                            </ItemsControl.ItemTemplate>
+                          </ItemsControl>
+                        </Expander>
+                      </StackPanel>
+                    </DataTemplate>
+                  </ItemsControl.ItemTemplate>
+                </ItemsControl>
+              </StackPanel>
+            </Border>
+          </DataTemplate>
+        </ItemsControl.ItemTemplate>
+      </ItemsControl>
+
+      <Border Classes="card">
+        <StackPanel Spacing="4">
+          <TextBlock Classes="caption" Text="{Binding StoryHeader}" />
+          <ItemsControl ItemsSource="{Binding Story}">
+            <ItemsControl.ItemTemplate>
+              <DataTemplate x:DataType="x:String">
+                <TextBlock Text="{Binding StringFormat='• {0}'}" TextWrapping="Wrap" />
+              </DataTemplate>
+            </ItemsControl.ItemTemplate>
+          </ItemsControl>
+        </StackPanel>
+      </Border>
+    </StackPanel>
+  </ScrollViewer>
+</UserControl>

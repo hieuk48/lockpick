@@ -45,6 +45,9 @@ public interface IGameAdapter
     /// adapter has no such knowledge.
     /// </summary>
     Insight.IChangeExplainer? CreateChangeExplainer(VersionProfile profile) => null;
+
+    /// <summary>Works out the player's progress (items, documents, rooms, enemies, story); null when unsupported.</summary>
+    Insight.IProgressTracker? CreateProgressTracker(VersionProfile profile) => null;
 }
 
 /// <summary>A verified connection to one running game process.</summary>

@@ -6,6 +6,12 @@ All notable changes to this project are documented here. The format follows
 
 ## [Unreleased]
 
+### Added
+- Progress page (read-only): per area, items taken vs still there, documents and maps, rooms explored (the game's own
+  room table) and enemies defeated for good, with what's left and where; plus the story so far from the named events.
+  Read from the game's flags, so it works from a loaded save. `tools/bounties/progress_preview.py` shows the same for a
+  capture.
+
 ## [0.1.5] - 2026-10-13
 
 Research tooling, used across three long live sessions (Jill from a new game to the mansion revisited).
