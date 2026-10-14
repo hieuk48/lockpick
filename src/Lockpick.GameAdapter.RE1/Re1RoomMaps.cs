@@ -10,8 +10,9 @@ namespace Lockpick.GameAdapter.RE1;
 /// and cached per room. Layout (tools/rdt/rdt_map.py; ecruells/resident-evil-pc-decomp Types.h, checked against the
 /// files): byte 1 camera count, cameras at 0x94 (0x2C each: from x/z at +0x08/+0x10, target x/z at +0x14/+0x1C);
 /// collision at the pointer at 0x4C (header: five per-quadrant counts as i32 at +4, then 0x0C-byte records xMax, zMax,
-/// xMin, zMin, type — low byte 3 = circle — and flags, bit 8 = blocks); doors (opcode 0x0C) and item pickups
-/// (opcode 0x18) from the init/main scripts at the pointers at 0x60/0x64.
+/// xMin, zMin, type — low byte 3 = circle — and flags, bit 8 = blocks); doors (opcode 0x0C), item pickups (opcode
+/// 0x18) and item-use spots (room action 0x0D with handler 7 and words (9, item − 0x1B): it raises the item's use bit
+/// while the player stands there) from the init/main scripts at the pointers at 0x60/0x64.
 /// </summary>
 public sealed class Re1RoomMaps : IRoomMapSource
 {
@@ -32,9 +33,13 @@ public sealed class Re1RoomMaps : IRoomMapSource
     private readonly string _stageRoot;
     private readonly Func<int, string> _itemName;
     private readonly ConcurrentDictionary<string, RoomMap?> _cache = new();
+    private readonly IReadOnlyDictionary<(string Room, int Item), (string Bank, uint Mask)> _fills;
 
-    public Re1RoomMaps(string installDirectory, Func<int, string> itemName)
+    /// <param name="fills">Confirmed story flags that mean an item is in place at its use spot (flag-labels.json "fills").</param>
+    public Re1RoomMaps(string installDirectory, Func<int, string> itemName,
+        IReadOnlyDictionary<(string Room, int Item), (string Bank, uint Mask)>? fills = null)
     {
+        _fills = fills ?? new Dictionary<(string, int), (string, uint)>();
         var usa = Path.Combine(installDirectory, "USA");
         _stageRoot = Directory.Exists(usa) ? usa : installDirectory;
         _itemName = itemName;
@@ -63,6 +68,32 @@ public sealed class Re1RoomMaps : IRoomMapSource
                 return null;
             }
         });
+    }
+
+    /// <summary>
+    /// An item is taken once its pickup flag is clear: flagRoomItems bit n (bit 31 − n % 32 of word n / 32) is 1 while
+    /// the item is still in the world (verified 2026-10-14: 295 pickups cleared exactly the indexed flag).
+    /// </summary>
+    public bool? IsTaken(MapItem item, GameSnapshot snapshot)
+    {
+        if (item.Flag < 0 || !snapshot.RawFields.TryGetValue($"flagRoomItems{item.Flag / 32}", out var word) || !word.HasValue)
+        {
+            return null;
+        }
+
+        return (word.Value & (1L << (31 - item.Flag % 32))) == 0;
+    }
+
+    /// <summary>Only use spots with a confirmed story flag are known; the rest stay null.</summary>
+    public bool? IsFilled(RoomMap map, MapSocket socket, GameSnapshot snapshot)
+    {
+        if (!_fills.TryGetValue((map.RoomId, socket.ItemId), out var fill)
+            || !snapshot.RawFields.TryGetValue(fill.Bank, out var word) || !word.HasValue)
+        {
+            return null;
+        }
+
+        return (word.Value & fill.Mask) != 0;
     }
 
     /// <summary>Parses one room file; null when it isn't a readable room (stubs, damaged files).</summary>
@@ -114,6 +145,7 @@ public sealed class Re1RoomMaps : IRoomMapSource
 
             var doors = new List<MapDoor>();
             var items = new List<MapItem>();
+            var sockets = new List<MapSocket>();
             foreach (var pointerOffset in new[] { 0x60, 0x64 })
             {
                 var block = (int)U32(data, pointerOffset);
@@ -125,12 +157,12 @@ public sealed class Re1RoomMaps : IRoomMapSource
                         break;
                     }
 
-                    ReadScript(data.Slice(block + 2, length - 2), room, doors, items, itemName);
+                    ReadScript(data.Slice(block + 2, length - 2), room, doors, items, sockets, itemName);
                     block += length;
                 }
             }
 
-            return new RoomMap($"{room.Stage}{room.Room:X2}", shapes, doors, items, cameras);
+            return new RoomMap($"{room.Stage}{room.Room:X2}", shapes, doors, items, cameras, sockets);
         }
         catch (ArgumentOutOfRangeException)
         {
@@ -139,7 +171,7 @@ public sealed class Re1RoomMaps : IRoomMapSource
     }
 
     private static void ReadScript(ReadOnlySpan<byte> script, RoomLocation room, List<MapDoor> doors, List<MapItem> items,
-        Func<int, string> itemName)
+        List<MapSocket> sockets, Func<int, string> itemName)
     {
         var pos = 0;
         while (pos < script.Length)
@@ -166,7 +198,16 @@ public sealed class Re1RoomMaps : IRoomMapSource
                 // the same pickup in both branches of a condition.
                 if ((w > 16 || d > 16) && !items.Exists(i => i.ItemId == id && i.X == x && i.Z == z))
                 {
-                    items.Add(new MapItem(x, z, w, d, id, itemName(id)));
+                    items.Add(new MapItem(x, z, w, d, id, itemName(id), b[0x16]));
+                }
+            }
+
+            else if (op == 0x0D && b[0x0A] == 7 && U16(b, 0x0C) == 9)
+            {
+                int x = I16(b, 2), z = I16(b, 4), w = U16(b, 6), d = U16(b, 8), id = U16(b, 0x0E) + 0x1B;
+                if (!sockets.Exists(s => s.ItemId == id && s.X == x && s.Z == z))
+                {
+                    sockets.Add(new MapSocket(x, z, w, d, id, itemName(id)));
                 }
             }
 

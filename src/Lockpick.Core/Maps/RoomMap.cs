@@ -15,8 +15,12 @@ public sealed record MapShape(MapShapeKind Kind, int X0, int Z0, int X1, int Z1,
 /// <summary>A door zone in this room and the room it leads to (adapter-specific id, e.g. "106").</summary>
 public sealed record MapDoor(int X, int Z, int Width, int Depth, string Target);
 
-/// <summary>An item pickup zone placed by the room's own data for this character.</summary>
-public sealed record MapItem(int X, int Z, int Width, int Depth, int ItemId, string Name);
+/// <summary>An item pickup zone placed by the room's own data for this character; <paramref name="Flag"/> is the
+/// adapter's pickup flag (−1 when none).</summary>
+public sealed record MapItem(int X, int Z, int Width, int Depth, int ItemId, string Name, int Flag = -1);
+
+/// <summary>A spot where an item is used and stays (e.g. an emblem slot): the item shows there once it's in place.</summary>
+public sealed record MapSocket(int X, int Z, int Width, int Depth, int ItemId, string Name);
 
 /// <summary>A fixed camera: where it stands and the point it looks at.</summary>
 public sealed record MapCamera(int Id, int X, int Z, int TargetX, int TargetZ);
@@ -30,7 +34,8 @@ public sealed record RoomMap(
     IReadOnlyList<MapShape> Shapes,
     IReadOnlyList<MapDoor> Doors,
     IReadOnlyList<MapItem> Items,
-    IReadOnlyList<MapCamera> Cameras)
+    IReadOnlyList<MapCamera> Cameras,
+    IReadOnlyList<MapSocket> Sockets)
 {
     /// <summary>Bounds of the walls and doors (very large shapes, e.g. whole-room floor zones, are ignored).</summary>
     public (int X0, int Z0, int X1, int Z1) Bounds
@@ -69,4 +74,10 @@ public interface IRoomMapSource
 {
     /// <summary>The map of <paramref name="room"/> as <paramref name="character"/> sees it, or null when unavailable.</summary>
     RoomMap? Load(RoomLocation room, PlayableCharacter character);
+
+    /// <summary>True when the player has already taken <paramref name="item"/> in this game; null when unknown.</summary>
+    bool? IsTaken(MapItem item, GameSnapshot snapshot) => null;
+
+    /// <summary>True when the socket's item has been put in place in this game; null when unknown.</summary>
+    bool? IsFilled(RoomMap map, MapSocket socket, GameSnapshot snapshot) => null;
 }

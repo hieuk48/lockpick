@@ -46,6 +46,14 @@ public sealed partial class MapViewModel : PageViewModel
     [ObservableProperty]
     public partial bool HasPlayer { get; private set; }
 
+    /// <summary>Room-file items already taken in this game.</summary>
+    [ObservableProperty]
+    public partial IReadOnlySet<MapItem>? TakenItems { get; private set; }
+
+    /// <summary>Use spots whose item has been put in place in this game.</summary>
+    [ObservableProperty]
+    public partial IReadOnlySet<MapSocket>? FilledSockets { get; private set; }
+
     /// <summary>Items the game has placed in this room right now (null when the game doesn't report them).</summary>
     [ObservableProperty]
     public partial IReadOnlyList<PlacedItem>? PlacedItems { get; private set; }
@@ -122,6 +130,21 @@ public sealed partial class MapViewModel : PageViewModel
         }
 
         Heading = map is null ? $"Room {room.Id} — no map for this room" : $"Room {room.Id}";
+        if (map is not null)
+        {
+            var taken = map.Items.Where(i => maps.IsTaken(i, s) == true).ToHashSet();
+            if (TakenItems is null || !taken.SetEquals(TakenItems))
+            {
+                TakenItems = taken;
+            }
+
+            var filled = map.Sockets.Where(k => maps.IsFilled(map, k, s) == true).ToHashSet();
+            if (FilledSockets is null || !filled.SetEquals(FilledSockets))
+            {
+                FilledSockets = filled;
+            }
+        }
+
         var placed = s.PlacedItems.TryGet(out var items) ? items : null;
         if (placed is null != PlacedItems is null || (placed is not null && PlacedItems is not null && !placed.SequenceEqual(PlacedItems)))
         {

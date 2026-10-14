@@ -15,12 +15,12 @@
         <TextBlock Classes="headline" Text="{Binding Heading}" TextWrapping="Wrap" />
         <TextBlock TextWrapping="Wrap" Foreground="{StaticResource LpMutedBrush}" Text="{Binding Details}" />
         <TextBlock TextWrapping="Wrap" Foreground="{StaticResource LpMutedBrush}"
-                   Text="Walls and furniture from the room's collision; green = doors (to room), amber = items in the room now, faint dashed = items that appear later in the story or were already taken. The arrow is you." />
+                   Text="Walls and furniture from the room's collision; green = doors (to room), amber = items in the room now (dashed = put in place), faint = items you've taken, or that appear later in the story. The arrow is you." />
       </StackPanel>
     </Border>
 
     <Border Classes="card" Grid.Row="1" MinHeight="240">
-      <c:RoomMapControl Map="{Binding Map}" PlacedItems="{Binding PlacedItems}" PlayerX="{Binding PlayerX}" PlayerZ="{Binding PlayerZ}"
+      <c:RoomMapControl Map="{Binding Map}" PlacedItems="{Binding PlacedItems}" TakenItems="{Binding TakenItems}" FilledSockets="{Binding FilledSockets}" PlayerX="{Binding PlayerX}" PlayerZ="{Binding PlayerZ}"
                         PlayerAngle="{Binding PlayerAngle}" HasPlayer="{Binding HasPlayer}"
                         WallBrush="{StaticResource LpMutedBrush}" SoftBrush="{StaticResource LpBorderBrush}"
                         DoorBrush="{StaticResource LpGreenBrush}" ItemBrush="{StaticResource LpAmberBrush}"

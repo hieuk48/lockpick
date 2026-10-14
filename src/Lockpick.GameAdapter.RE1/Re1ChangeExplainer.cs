@@ -43,11 +43,18 @@ internal sealed class Re1Knowledge
         LabelOrder = [.. labels.RootElement.GetProperty("labels").EnumerateArray()
             .Select(e => (e.GetProperty("bank").GetString()!, Convert.ToUInt32(e.GetProperty("mask").GetString(), 16), e.GetProperty("label").GetString()!))];
         Labels = LabelOrder.GroupBy(l => (l.Bank, l.Mask)).ToDictionary(g => g.Key, g => g.First().Label);
+        Fills = labels.RootElement.GetProperty("labels").EnumerateArray()
+            .Where(e => e.TryGetProperty("fills", out _))
+            .ToDictionary(e => (e.GetProperty("fills").GetProperty("room").GetString()!, e.GetProperty("fills").GetProperty("item").GetInt32()),
+                e => (e.GetProperty("bank").GetString()!, Convert.ToUInt32(e.GetProperty("mask").GetString(), 16)));
         Areas = rooms.RootElement.GetProperty("areas").EnumerateObject().ToDictionary(p => p.Name[0], p => p.Value.GetString()!);
         RoomNames = rooms.RootElement.GetProperty("rooms").EnumerateObject()
             .Where(p => p.Value.TryGetProperty("name", out _))
             .ToDictionary(p => p.Name, p => p.Value.GetProperty("name").GetString()!);
     }
+
+    /// <summary>Story flags that put an item in place at its use spot in a room (room id, item id → bank field, mask).</summary>
+    public Dictionary<(string Room, int Item), (string Bank, uint Mask)> Fills { get; }
 
     /// <summary>The confirmed labels in file order (roughly the order they happen in the game).</summary>
     public List<(string Bank, uint Mask, string Label)> LabelOrder { get; }

@@ -62,8 +62,11 @@ public sealed class Re1Adapter : IGameAdapter
     public Core.Insight.IProgressTracker CreateProgressTracker(VersionProfile profile) =>
         new Re1ProgressTracker(Re1Knowledge.LoadEmbedded());
 
-    public Core.Maps.IRoomMapSource CreateRoomMaps(string installDirectory) =>
-        new Re1RoomMaps(installDirectory, Re1Knowledge.LoadEmbedded().Item);
+    public Core.Maps.IRoomMapSource CreateRoomMaps(string installDirectory)
+    {
+        var knowledge = Re1Knowledge.LoadEmbedded();
+        return new Re1RoomMaps(installDirectory, knowledge.Item, knowledge.Fills);
+    }
 
     public static IEnumerable<VersionProfile> LoadEmbeddedProfiles()
     {

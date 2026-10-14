@@ -20,6 +20,10 @@ public sealed class RoomMapControl : Control
     public static readonly StyledProperty<double> PlayerAngleProperty = AvaloniaProperty.Register<RoomMapControl, double>(nameof(PlayerAngle));
     public static readonly StyledProperty<IReadOnlyList<PlacedItem>?> PlacedItemsProperty =
         AvaloniaProperty.Register<RoomMapControl, IReadOnlyList<PlacedItem>?>(nameof(PlacedItems));
+    public static readonly StyledProperty<IReadOnlySet<MapItem>?> TakenItemsProperty =
+        AvaloniaProperty.Register<RoomMapControl, IReadOnlySet<MapItem>?>(nameof(TakenItems));
+    public static readonly StyledProperty<IReadOnlySet<MapSocket>?> FilledSocketsProperty =
+        AvaloniaProperty.Register<RoomMapControl, IReadOnlySet<MapSocket>?>(nameof(FilledSockets));
     public static readonly StyledProperty<bool> HasPlayerProperty = AvaloniaProperty.Register<RoomMapControl, bool>(nameof(HasPlayer));
     public static readonly StyledProperty<IBrush?> WallBrushProperty = AvaloniaProperty.Register<RoomMapControl, IBrush?>(nameof(WallBrush));
     public static readonly StyledProperty<IBrush?> SoftBrushProperty = AvaloniaProperty.Register<RoomMapControl, IBrush?>(nameof(SoftBrush));
@@ -31,7 +35,7 @@ public sealed class RoomMapControl : Control
 
     static RoomMapControl()
     {
-        AffectsRender<RoomMapControl>(MapProperty, PlacedItemsProperty, PlayerXProperty, PlayerZProperty, PlayerAngleProperty, HasPlayerProperty,
+        AffectsRender<RoomMapControl>(MapProperty, PlacedItemsProperty, TakenItemsProperty, FilledSocketsProperty, PlayerXProperty, PlayerZProperty, PlayerAngleProperty, HasPlayerProperty,
             WallBrushProperty, SoftBrushProperty, DoorBrushProperty, ItemBrushProperty, PlayerBrushProperty);
     }
 
@@ -50,6 +54,12 @@ public sealed class RoomMapControl : Control
     /// are drawn faintly as "later" (story-gated or already taken).
     /// </summary>
     public IReadOnlyList<PlacedItem>? PlacedItems { get => GetValue(PlacedItemsProperty); set => SetValue(PlacedItemsProperty, value); }
+
+    /// <summary>Room-file items the player has already taken (labelled "taken" rather than "later").</summary>
+    public IReadOnlySet<MapItem>? TakenItems { get => GetValue(TakenItemsProperty); set => SetValue(TakenItemsProperty, value); }
+
+    /// <summary>Use spots whose item has been put in place (e.g. the gold emblem in its slot).</summary>
+    public IReadOnlySet<MapSocket>? FilledSockets { get => GetValue(FilledSocketsProperty); set => SetValue(FilledSocketsProperty, value); }
 
     public IBrush? WallBrush { get => GetValue(WallBrushProperty); set => SetValue(WallBrushProperty, value); }
 
@@ -103,10 +113,16 @@ public sealed class RoomMapControl : Control
         }
 
         var placed = PlacedItems;
+        var filled = FilledSockets ?? new HashSet<MapSocket>();
         foreach (var item in map.Items)
         {
             var present = placed is null || placed.Any(p => p.ItemId == item.ItemId && p.X == item.X && p.Z == item.Z);
             var rect = R(item.X, item.Z, item.X + item.Width, item.Z + item.Depth);
+            if (!present && filled.Any(f => f.X == item.X && f.Z == item.Z))
+            {
+                continue; // the spot now holds the item put in place there (drawn below)
+            }
+
             if (present)
             {
                 context.DrawRectangle(null, ItemBrush is null ? null : new Pen(ItemBrush, 1.5), rect);
@@ -114,10 +130,19 @@ public sealed class RoomMapControl : Control
             }
             else if (SoftBrush is not null)
             {
-                // In the room files but not placed now: after a story event, or already taken.
-                context.DrawRectangle(null, new Pen(SoftBrush, 1, new DashStyle([3, 3], 0)), rect);
-                DrawLabel(context, item.Name + " (later)", rect.TopLeft + new Vector(rect.Width / 2, -8), SoftBrush, 9);
+                // In the room files but not placed now: already taken, or not placed until a story event.
+                var taken = TakenItems?.Contains(item) == true;
+                context.DrawRectangle(null, new Pen(SoftBrush, 1, new DashStyle(taken ? [1, 4] : [3, 3], 0)), rect);
+                DrawLabel(context, item.Name + (taken ? " (taken)" : " (later)"), rect.TopLeft + new Vector(rect.Width / 2, -8), SoftBrush, 9);
             }
+        }
+
+        foreach (var socket in filled.Where(f => !map.Items.Any(i => i.ItemId == f.ItemId && i.X == f.X && i.Z == f.Z
+                     && (placed is null || placed.Any(p => p.ItemId == i.ItemId && p.X == i.X && p.Z == i.Z)))))
+        {
+            var rect = R(socket.X, socket.Z, socket.X + socket.Width, socket.Z + socket.Depth);
+            context.DrawRectangle(null, ItemBrush is null ? null : new Pen(ItemBrush, 1.5, new DashStyle([6, 2], 0)), rect);
+            DrawLabel(context, socket.Name + " (in place)", rect.TopLeft + new Vector(rect.Width / 2, -8), ItemBrush, 10);
         }
 
         if (placed is not null)

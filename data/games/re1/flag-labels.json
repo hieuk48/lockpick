@@ -221,13 +221,21 @@
    "bank": "flagScenarioB5",
    "mask": "0x01000000",
    "label": "wood Emblem put in the 10F slot, the door reopens (Jill); set at the start of Chris's game until he takes the Emblem",
-   "source": "owner, ask mode 2026-10-13 (Jill, mansion → guardhouse)"
+   "source": "owner, ask mode 2026-10-13 (Jill, mansion → guardhouse)",
+   "fills": {
+    "room": "10F",
+    "item": 31
+   }
   },
   {
    "bank": "flagScenarioB5",
    "mask": "0x00100000",
    "label": "gold emblem on the dining-room wall: the clock reveals the shield key (105)",
-   "source": "owner, ask mode 2026-10-13 (Jill, mansion → guardhouse)"
+   "source": "owner, ask mode 2026-10-13 (Jill, mansion → guardhouse)",
+   "fills": {
+    "room": "105",
+    "item": 32
+   }
   },
   {
    "bank": "flagLocks0",
