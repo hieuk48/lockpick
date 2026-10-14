@@ -170,7 +170,13 @@ def new_game(character: str = "chris", fast_ms: int = 4) -> float:
 
 def peek(address: int, length: int) -> bytes:
     out = send(f"peek {address:X} {length}")
-    return bytes.fromhex(out.split(": ")[-1].split()[0])
+    try:
+        data = bytes.fromhex(out.split(": ")[-1].split()[0])
+    except (IndexError, ValueError) as e:
+        raise Failed(f"unexpected peek reply: {out[-200:]!r}") from e
+    if len(data) != length:
+        raise Failed(f"peek returned {len(data)} of {length} bytes")
+    return data
 
 
 def events() -> list[tuple[int, int]]:
