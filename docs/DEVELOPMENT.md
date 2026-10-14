@@ -44,6 +44,60 @@ dotnet run --project tools/Lockpick.Probe -- trace --seconds 600 > trace.txt
 - `trace` prints every raw profile-field change at 30 Hz (timer/position shown as context). This is the
   primary tool for verifying or refuting an address.
 
+## Autoplay harness (developer only — never shipped)
+
+`tools/Lockpick.Autoplay` drives the game with a **virtual Xbox 360 controller** for automated tests. It is dev
+tooling: not part of the app, its installer or any release (release.yml publishes only the app and the probe) —
+players play the game themselves.
+
+Setup: install the ViGEmBus driver once (`winget install ViGEm.ViGEmBus`, admin prompt). The controller is plugged
+in for a run and unplugged at the end.
+
+```powershell
+dotnet build tools/Lockpick.Autoplay -c Release
+$ap = "tools/Lockpick.Autoplay/bin/Release/net10.0-windows/lockpick-autoplay.exe"
+& $ap serve --launch --background  # start the game with the pad plugged in; keep it running in the background
+& $ap send "press A; until gameplay 60000; state; shot room.png"   # commands to the running server
+& $ap send --file test.txt         # a whole script
+& $ap send quit                    # stop: unplugs the pad, removes the focus patch (the game keeps running)
+& $ap run test.txt                 # one-shot: a script in its own process (start it with `launch`)
+& $ap calibrate --launch           # press every input; print the PSX bits the game read (0xBF0A04)
+```
+
+The game finds controllers **only when it starts**, so it must be launched by the harness (`serve --launch`, a
+script's `launch`, `calibrate --launch`); a pad plugged into an already running game is ignored. `serve` keeps one
+pad for the game's lifetime, so tests can be sent step by step. Stop the server before rebuilding (DLL lock).
+
+`--background` (or the script command `background`) applies the **dev-only focus patch** (`FocusPatch.cs`): the
+game keeps running and reading the pad while other windows are in front, and its keyboard map is kept blank so keys
+typed elsewhere don't reach it. Bytes are checked before writing, read back, and restored when the harness exits; the
+changes are in the game's memory only and end with the process. Screenshots use PrintWindow, so they work behind
+other windows.
+
+Script commands (one per line, `#` comments): `launch`, `background`, `focus`, `press A [ms]` (combine with `+`),
+`wait ms`, `until room 106 [ms]` / `until gameplay` / `until field=value`, `expect …` (same conditions), `state`,
+`calibrate`, `shot file.png`, `look <question>`, `echo`. Controller → game (default joystick table): A action,
+X run/cancel, Y status, Back options, RT aim, d-pad/left stick move. Example:
+
+```text
+launch
+background
+wait 12000
+press A          # title: press any button
+shot menu.png
+look Which menu is open, and which entry is highlighted?
+```
+
+Rules:
+- Without `background`, every press checks the game is the foreground window and the run stops if it isn't
+  (someone is using the PC). Use `focus` only when nobody is.
+- Pressing through the title screen can load the player's saves (it did on 2026-10-14) — harmless (loading writes
+  nothing), but drive menus deliberately and check `SAVE/` against the backup afterwards.
+- Never save in-game during a run unless the script borrows a slot; back up `SAVE/` first and restore it with a hash
+  check afterwards.
+- `look` asks a vision model on an OpenAI-compatible server (set `LOCKPICK_VISION_URL`, e.g. `http://host:8000/v1`,
+  and `LOCKPICK_VISION_MODEL`) to label a screen; pass/fail always comes from memory.
+
 ## Verifying a memory address (required before marking it trusted)
 
 1. **Source it.** Record where the lead came from (decomp, SDK layout, autosplitter, own analysis).

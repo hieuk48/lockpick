@@ -12,6 +12,11 @@ All notable changes to this project are documented here. The format follows
   Read from the game's flags, so it works from a loaded save. `tools/bounties/progress_preview.py` shows the same for a
   capture.
 
+### Developer tooling (not shipped)
+- `tools/Lockpick.Autoplay`: a test harness for the maintainer — virtual Xbox 360 controller (ViGEmBus), game-state
+  checks, background screenshots and an optional focus patch for runs behind other windows. Never part of the app or
+  its releases.
+
 ## [0.1.5] - 2026-10-13
 
 Research tooling, used across three long live sessions (Jill from a new game to the mansion revisited).

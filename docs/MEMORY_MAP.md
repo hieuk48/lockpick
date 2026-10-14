@@ -195,7 +195,7 @@ profile's addresses. The character is the low bit of `0xBE9829` (save offset `0x
 "Jill's character ID changes in a few spots"). Byte `0x212` agrees (`0x2F`, the ink ribbon a save costs, for Chris). `tools/bounties/saves.py` reads saves offline (character, room, inventory, box, progress, story); it
 decoded 67 community practice saves and the owner's 8 into the rooms their names describe.
 
-## Focus and input (static analysis of this build, 2026-10-13 — not yet tested live)
+## Focus and input (static analysis 2026-10-13; live-tested 2026-10-14 with the dev harness)
 
 | Address | What | Evidence |
 |---|---|---|
@@ -204,7 +204,7 @@ decoded 67 community practice saves and the owner's 8 into the rooms their names
 | `0x441E9D`–`0x441EA3` | Main loop skips `main_loop` (`0x428EB0`: input, game, render) while the flag is 0 — the focus-loss pause | `39 1D 2C CB 4B 00 0F 84 C8 FE FF FF` |
 | `0x497BA0` | `ReadPadBoth`: keyboard (+ joystick #0) → PSX button word; returns 0 if `[0x4D460C]` | ends `A1 18 40 AC 00 C3 CC×8` at `0x497BF2` |
 | `0x4202F0` | Keyboard poll: `GetAsyncKeyState` over the 32-key map at `0xAC4030` (copied from `0x4D4730`); GOG edits left only map indices 0–3, 5, 10, 11, 13, 27–31 active | `GetAsyncKeyState` works unfocused |
-| `0xBF0A04` / `0xBF0A08` (u32) | Raw held / newly-pressed PSX word per tick (`0x44E000`) | rewritten every tick |
+| `0xBF0A04` / `0xBF0A08` (u32) | Raw held / newly-pressed PSX word per tick (`0x44E000`) | rewritten every tick; **live 2026-10-14:** `0xBF0A04` showed the bit of every virtual-controller input pressed, on the title screen and in gameplay |
 | `0xBE9840` / `0xBE9842` (u16) | `key_on` / `key_trg` (remapped per control type `[0xBE9A5C]&3`) | rewritten every tick |
 
 PSX button word: `0x1000` up, `0x4000` down, `0x8000` left, `0x2000` right, `0x80` action/confirm, `0x40`
@@ -212,10 +212,17 @@ cancel/run, `0x08` aim, `0x800` status, `0x900` options. Default keys (`0x4D4730
 A (options), Ctrl, Enter, Space, Esc. The owner's machine has a remapped table (registry `Key Def` and every save's
 `0x800`): A = up, Up arrow = down, Down arrow = options — why simulated arrow keys did nothing useful.
 
+Controller (live 2026-10-14, virtual Xbox 360 pad, default joystick table): A action `0x80`, X cancel/run `0x40`,
+Y status `0x800`, Back options `0x900`, RT aim `0x08`, d-pad and left stick movement; B, Start, LB, RB, LT and the
+stick clicks unmapped. **The game finds controllers only at startup** — a pad plugged in later is ignored. The keyboard
+map at `0xAC4030` is rewritten ~2 s after launch with the player's table (and presumably on save load).
+
 Planned patches (Trainer Mode, opt-in, reversible, read back, never in Challenge Mode):
 - **Keep running unfocused:** `0x44126B` `C7 05 2C CB 4B 00 00 00 00 00` → `E9 C6 00 00 00 90 90 90 90 90`
   (`WM_ACTIVATE` goes straight to `DefWindowProcA`; the flag stays 1, sounds aren't paused). Data-only alternative:
-  write 1 to `0x4BCB2C` after each deactivation. Risks: keys typed in other windows reach the game
+  write 1 to `0x4BCB2C` after each deactivation. **Live 2026-10-14 (dev harness `--background`):** with the patch,
+  the flag set to 1 and the key map blanked, the game ran with another window in front, read every controller input
+  and rendered normally (PrintWindow screenshots of gameplay); restoring the bytes on exit worked. Risks: keys typed in other windows reach the game
   (`GetAsyncKeyState`) — zero the key map at `0xAC4030` while unfocused or set `0x4D460C`; DirectSound mutes unfocused
   buffers (no `GLOBALFOCUS`, `0x41EBBD`); GOG's ddraw wrapper may still black out the window (unanalysed).
 - **Input from Lockpick:** `0x497BF7` `C3 CC CC CC CC CC` → `0D 00 00 00 00 C3` (`or eax, imm32; ret`): the u32 at

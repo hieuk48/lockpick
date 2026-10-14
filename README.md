@@ -89,6 +89,7 @@ src/
   Lockpick.App/                Avalonia desktop app
 data/games/re1/profiles/       version profiles (addresses, anchors, evidence) — source of truth
 tools/Lockpick.Probe/          headless identify / watch / trace / record
+tools/Lockpick.Autoplay/       developer-only test harness (virtual controller); not part of the app
 tools/fixtures/                trace → recording fixture converter
 tests/Lockpick.Tests/          unit, fixture playback and Win32 integration tests
 benchmarks/                    BenchmarkDotNet suites

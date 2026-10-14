@@ -134,15 +134,26 @@ Acceptance criteria:
   [lockpick-subtitles](https://github.com/mscrnt/lockpick-subtitles) pack (off by default; checked against the
   player's voice files by SHA-256), shown in the overlay while a line plays. Needs: which voice file is playing
   (captures / cutscene scripts).
-- Investigate rendering while the game is unfocused (the game blacks out when inactive): requires an
-  opt-in in-process patch; must be isolated, reversible and never used in Challenge Mode. **Chosen by the owner
-  (2026-10-13)** as the way to run the game in the background: patch the game's focus handling so it keeps running,
-  and supply controller input by writing the game's input state in memory (no keystrokes, no focus needed).
-- **Background play and automated testing** (builds on the above and 0.2 writes): load a scene (save library), drive
-  the game through memory input, capture and screenshot, check expected flags/items/rooms — regression tests for
-  addresses and rules, and capture bounties that need precise actions. A first keyboard-driven experiment
-  (2026-10-13) launched the game, reached the load screen and took screenshots, but focus can't be held while the PC is
-  in use and arrow keys didn't register — hence the in-game approach.
+- Keep the game running while the player uses Lockpick on another screen (the game pauses and blacks out when
+  inactive): opt-in in-process focus patch (`0x44126B`, MEMORY_MAP "Focus and input") — isolated, reversible, read
+  back, never in Challenge Mode. **Chosen by the owner (2026-10-13).**
+
+## Developer tooling (never shipped)
+
+Automated play is for the owner's development and testing only — never in the app, its installer or a release:
+players play the game themselves; Lockpick enhances their play.
+
+- **Automated testing harness** (`tools/Lockpick.Autoplay`, started 2026-10-14): a virtual Xbox 360 controller
+  (ViGEmBus) plus Lockpick's read-only state — scripts launch the game, press inputs, wait for rooms/flags, check
+  expectations and take screenshots; `calibrate` reports the controller → PSX mapping the game reads.
+  Next: load a scene from the save library (backed-up slot), regression scripts for addresses and event rules, capture
+  bounties that need precise actions, optional screen labelling by a local vision model. Keyboard injection was
+  dropped (2026-10-13): focus can't be held while the PC is in use and the owner's key table is remapped.
+- Unattended runs — **done 2026-10-14:** `--background` applies the focus patch inside the harness (dev runs only)
+  and blanks the keyboard map; the game ran, read the virtual pad and rendered behind other windows. Memory input
+  (`0x497BF7`) isn't needed for testing.
+- Vision labels — **working 2026-10-14:** `look` sends a screenshot to a local OpenAI-compatible vision model; it
+  named the title screen and quoted its text verbatim (a lead for on-screen text research too).
 
 ## 0.4.0 — World database
 

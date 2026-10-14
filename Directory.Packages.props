@@ -16,5 +16,7 @@
     <PackageVersion Include="xunit" Version="2.9.3" />
     <PackageVersion Include="xunit.runner.visualstudio" Version="4.0.1" />
     <PackageVersion Include="BenchmarkDotNet" Version="0.15.8" />
+    <!-- Developer-only (tools/Lockpick.Autoplay): virtual controller for automated tests; never shipped. -->
+    <PackageVersion Include="Nefarius.ViGEm.Client" Version="1.21.256" />
   </ItemGroup>
 </Project>

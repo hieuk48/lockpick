@@ -1,0 +1,293 @@
+using System.Diagnostics;
+using System.Globalization;
+
+namespace Lockpick.Autoplay;
+
+/// <summary>
+/// Runs test scripts, one command per line ('#' starts a comment):
+///   launch                       start the game if it isn't running and attach
+///   focus                        bring the game to the front (only when nobody is using the PC)
+///   background                   focus patch: the game keeps running unfocused, keyboard map blanked (restored on exit)
+///   press A [ms]                 press (and release) inputs; combine with '+', e.g. press Up+B 400
+///   wait ms
+///   until room 106 [ms]          wait for a room (default timeout 30 s); also: until gameplay, until field=value
+///   expect room 106              fail unless true now; same conditions as until
+///   state                        print what Lockpick reads
+///   calibrate                    press every input; print the PSX bits the game read
+///   shot file.png                screenshot the game window
+///   look question...             screenshot and ask the vision model (LOCKPICK_VISION_URL)
+///   echo text
+/// Without 'background', input is sent only while the game is the foreground window; the run stops if it loses focus.
+/// </summary>
+internal sealed class Runner(Pad pad, TextWriter log) : IDisposable
+{
+    /// <summary>Where the run log goes (the console, or a client of <c>serve</c>).</summary>
+    public TextWriter Output { get; set; } = log;
+
+    private readonly Stopwatch _clock = Stopwatch.StartNew();
+    private Game? _game;
+    private FocusPatch? _patch;
+
+    public Game Game => _game ?? throw new InvalidOperationException("the game is not attached (add 'launch' first)");
+
+    public async Task RunAsync(IEnumerable<string> lines, string shotFolder)
+    {
+        var number = 0;
+        foreach (var raw in lines)
+        {
+            number++;
+            var line = raw.Split('#')[0].Trim();
+            if (line.Length == 0)
+            {
+                continue;
+            }
+
+            Log($"> {line}");
+            try
+            {
+                await ExecuteAsync(line.Split(' ', StringSplitOptions.RemoveEmptyEntries), shotFolder);
+            }
+            catch (Exception e) when (e is not OutOfMemoryException)
+            {
+                throw new InvalidOperationException($"line {number} '{line}': {e.Message}", e);
+            }
+        }
+    }
+
+    public void Log(string text) => Output.WriteLine($"[{_clock.Elapsed:mm\\:ss\\.fff}] {text}");
+
+    public void Attach(TimeSpan timeout)
+    {
+        var end = DateTime.UtcNow + timeout;
+        string reason;
+        while ((_game = Game.TryAttach(out reason)) is null)
+        {
+            if (DateTime.UtcNow > end)
+            {
+                throw new TimeoutException(reason);
+            }
+
+            Thread.Sleep(500);
+        }
+
+        while (Game.Window == 0 && !Game.HasExited)
+        {
+            if (DateTime.UtcNow > end)
+            {
+                throw new TimeoutException("the game has no window yet");
+            }
+
+            Thread.Sleep(250);
+        }
+
+        Log($"attached ({Describe(Game.Read())})");
+    }
+
+    private async Task ExecuteAsync(string[] w, string shotFolder)
+    {
+        switch (w[0].ToLowerInvariant())
+        {
+            case "launch":
+                if (Game.TryAttach(out _) is { } running)
+                {
+                    running.Dispose();
+                }
+                else
+                {
+                    Game.Launch();
+                }
+
+                Attach(TimeSpan.FromSeconds(60));
+                break;
+            case "background":
+                _patch ??= FocusPatch.Apply(Game.ProcessId, Log);
+                break;
+            case "focus":
+                if (!Game.Focus())
+                {
+                    throw new InvalidOperationException("could not bring the game to the front");
+                }
+
+                break;
+            case "press":
+                Press(w[1], w.Length > 2 ? int.Parse(w[2], CultureInfo.InvariantCulture) : 120);
+                break;
+            case "wait":
+                await Task.Delay(int.Parse(w[1], CultureInfo.InvariantCulture));
+                break;
+            case "until":
+                var (condition, timeout) = ParseCondition(w[1..]);
+                var end = DateTime.UtcNow + timeout;
+                while (!condition())
+                {
+                    if (DateTime.UtcNow > end || Game.HasExited)
+                    {
+                        throw new TimeoutException($"timed out; now {Describe(Game.Read())}");
+                    }
+
+                    await Task.Delay(33);
+                }
+
+                Log($"  ok ({Describe(Game.Read())})");
+                break;
+            case "expect":
+                if (!ParseCondition(w[1..]).Condition())
+                {
+                    throw new InvalidOperationException($"expectation failed; now {Describe(Game.Read())}");
+                }
+
+                break;
+            case "calibrate":
+                Calibrate();
+                break;
+            case "state":
+                Log("  " + Describe(Game.Read()));
+                break;
+            case "shot":
+                var path = Path.Combine(shotFolder, w[1]);
+                Game.Screenshot(path);
+                Log($"  saved {path}");
+                break;
+            case "look":
+                var image = Path.Combine(shotFolder, $"look-{DateTime.Now:HHmmss}.png");
+                Game.Screenshot(image);
+                Log("  " + (Vision.IsConfigured ? await Vision.AskAsync(image, string.Join(' ', w[1..])) : "(LOCKPICK_VISION_URL not set)"));
+                break;
+            case "echo":
+                Log("  " + string.Join(' ', w[1..]));
+                break;
+            default:
+                throw new ArgumentException($"unknown command '{w[0]}'");
+        }
+    }
+
+    /// <summary>Presses inputs for <paramref name="holdMs"/> then releases them; the game needs ≥ 2 ticks each way.</summary>
+    public void Press(string combo, int holdMs)
+    {
+        if (!Pad.IsKnown(combo))
+        {
+            throw new ArgumentException($"unknown input in '{combo}'");
+        }
+
+        RequireForeground();
+        pad.Set(combo, true);
+        try
+        {
+            Thread.Sleep(Math.Max(holdMs, 80));
+        }
+        finally
+        {
+            pad.Set(combo, false);
+        }
+
+        Thread.Sleep(80);
+    }
+
+    // Presses every input in turn and ORs the game's raw button word over the hold: the controller → PSX mapping the game
+    // actually uses (it depends on the player's joystick table, save offset 0xA02).
+    public void Calibrate()
+    {
+        var game = Game;
+        RequireForeground();
+        var idle = Sample(game, 300);
+        Log($"idle word 0x{idle:X4}{(idle != 0 ? " (something is held — results are OR-ed with it)" : string.Empty)}");
+        foreach (var input in Pad.AllInputs)
+        {
+            uint seen = 0;
+            var press = Task.Run(() => Press(input, 250));
+            while (!press.IsCompleted)
+            {
+                seen |= game.ReadU32(Game.HeldButtons);
+                Thread.Sleep(4);
+            }
+
+            press.GetAwaiter().GetResult();
+            Thread.Sleep(300);
+            Log($"{input,-7} -> 0x{seen & ~idle & 0xFFFF:X4} {Names(seen & ~idle)}");
+        }
+    }
+
+    private static uint Sample(Game game, int ms)
+    {
+        uint seen = 0;
+        var end = DateTime.UtcNow.AddMilliseconds(ms);
+        while (DateTime.UtcNow < end)
+        {
+            seen |= game.ReadU32(Game.HeldButtons);
+            Thread.Sleep(4);
+        }
+
+        return seen;
+    }
+
+    private static string Names(uint word)
+    {
+        (uint Bit, string Name)[] bits =
+        [
+            (0x1000, "up"), (0x4000, "down"), (0x8000, "left"), (0x2000, "right"), (0x80, "action"), (0x40, "cancel/run"),
+            (0x08, "aim"), (0x800, "status"), (0x100, "options?"), (0x10, "0x10"), (0x20, "0x20"), (0x01, "0x01"), (0x02, "0x02"),
+            (0x04, "0x04"), (0x200, "0x200"), (0x400, "0x400"),
+        ];
+        return string.Join(' ', bits.Where(b => (word & b.Bit) != 0).Select(b => b.Name));
+    }
+
+    public void RequireForeground()
+    {
+        if (_patch is null && !Game.IsForeground)
+        {
+            throw new InvalidOperationException("the game is not the foreground window (is someone using the PC?) — stopped");
+        }
+    }
+
+    private (Func<bool> Condition, TimeSpan Timeout) ParseCondition(string[] w)
+    {
+        var timeout = TimeSpan.FromSeconds(30);
+        Func<bool> condition;
+        if (w[0].Equals("room", StringComparison.OrdinalIgnoreCase))
+        {
+            var room = w[1];
+            condition = () => Game.Read().Location is { HasValue: true } l && l.Value.Id.Equals(room, StringComparison.OrdinalIgnoreCase);
+            w = w[2..];
+        }
+        else if (w[0].Equals("gameplay", StringComparison.OrdinalIgnoreCase))
+        {
+            condition = () => Game.Read().InGameplay is { HasValue: true, Value: true };
+            w = w[1..];
+        }
+        else if (w[0].Split('=') is [var field, var text])
+        {
+            var value = text.StartsWith("0x", StringComparison.OrdinalIgnoreCase)
+                ? long.Parse(text[2..], NumberStyles.HexNumber, CultureInfo.InvariantCulture)
+                : long.Parse(text, CultureInfo.InvariantCulture);
+            condition = () => Game.Read().RawFields.TryGetValue(field, out var f)
+                ? f.HasValue && f.Value == value
+                : throw new ArgumentException($"unknown field '{field}'");
+            w = w[1..];
+        }
+        else
+        {
+            throw new ArgumentException($"unknown condition '{w[0]}'");
+        }
+
+        if (w.Length > 0)
+        {
+            timeout = TimeSpan.FromMilliseconds(int.Parse(w[0], CultureInfo.InvariantCulture));
+        }
+
+        return (condition, timeout);
+    }
+
+    public static string Describe(Core.State.GameSnapshot s) =>
+        $"gameplay={s.InGameplay} room={s.Location} hp={s.Health} char={s.Character} pos={s.Position}";
+
+    public void Dispose()
+    {
+        if (_patch is not null)
+        {
+            _patch.Dispose();
+            Log("focus patch removed");
+        }
+
+        _game?.Dispose();
+    }
+}
