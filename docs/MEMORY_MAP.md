@@ -183,13 +183,44 @@ What changes during play but isn't explained yet — candidates for markers in f
 
 ## Save files (`SAVE\savedatN.dat`)
 
-2690 bytes, starting `53 43 13 01`. Offsets `0x04`–`0x41B` are a copy of the game-state block: save offset +
-`0xBE9620` = memory address (found 2026-10-13 by matching a save written during a live capture against the memory
+2690 bytes (`0xA82`), starting `53 43 13 01`. **Static (2026-10-13):** written by `0x493926`–`0x493A06`
+(`fwrite 0xA82`), read by `0x493D04`; **no checksum** or transform (the loader only checks section sizes). Layout:
+`0x000`–`0x7FF` = memory `0xBE9620`–`0xBE9E1F` verbatim; `0x800` key map (32 VK codes); `0x820` keyboard→pad table;
+`0x8A0` SideWinder table; `0x920` copy of `0xBE995C` (0xE0 bytes); `0xA00`/`0xA01` two bytes; `0xA02` joystick
+table. Inside the block: save count `0x228` (`0xBE9848`), character also at `0x22B` (`0xBE984B`). After a load the
+game ORs `0xBE41C0 |= 0x10000000` (and `0x800000` for a non-Chris character). Save offset + `0xBE9620` = memory address (found 2026-10-13 by matching a save written during a live capture against the memory
 recorded 48 ms earlier) — so stage/room/camera, every flag bank, the item box and the inventory decode with the
 profile's addresses. The character is the low bit of `0xBE9829` (save offset `0x209`; field `saveCharacter`):
 0 Chris, 1 Jill in all 75 saves checked; bit `0x4` is set only in the underground caves and the lab (the autosplitter's
 "Jill's character ID changes in a few spots"). Byte `0x212` agrees (`0x2F`, the ink ribbon a save costs, for Chris). `tools/bounties/saves.py` reads saves offline (character, room, inventory, box, progress, story); it
 decoded 67 community practice saves and the owner's 8 into the rooms their names describe.
+
+## Focus and input (static analysis of this build, 2026-10-13 — not yet tested live)
+
+| Address | What | Evidence |
+|---|---|---|
+| `0x441170` | Window procedure (class registered at `0x441CBB`) | `C7 44 24 70 70 11 44 00` at `0x441C71` |
+| `0x4BCB2C` (u32) | The only "focused" flag (decomp `g_bWindowFocused`); image value 1 | written only by `WM_ACTIVATE` at `0x44126B` (0) / `0x4412A0` (1); `WM_ACTIVATE` also pauses sounds (`0x480640`) |
+| `0x441E9D`–`0x441EA3` | Main loop skips `main_loop` (`0x428EB0`: input, game, render) while the flag is 0 — the focus-loss pause | `39 1D 2C CB 4B 00 0F 84 C8 FE FF FF` |
+| `0x497BA0` | `ReadPadBoth`: keyboard (+ joystick #0) → PSX button word; returns 0 if `[0x4D460C]` | ends `A1 18 40 AC 00 C3 CC×8` at `0x497BF2` |
+| `0x4202F0` | Keyboard poll: `GetAsyncKeyState` over the 32-key map at `0xAC4030` (copied from `0x4D4730`); GOG edits left only map indices 0–3, 5, 10, 11, 13, 27–31 active | `GetAsyncKeyState` works unfocused |
+| `0xBF0A04` / `0xBF0A08` (u32) | Raw held / newly-pressed PSX word per tick (`0x44E000`) | rewritten every tick |
+| `0xBE9840` / `0xBE9842` (u16) | `key_on` / `key_trg` (remapped per control type `[0xBE9A5C]&3`) | rewritten every tick |
+
+PSX button word: `0x1000` up, `0x4000` down, `0x8000` left, `0x2000` right, `0x80` action/confirm, `0x40`
+cancel/run, `0x08` aim, `0x800` status, `0x900` options. Default keys (`0x4D4730`): arrows, V, X (aim), C, Z (status),
+A (options), Ctrl, Enter, Space, Esc. The owner's machine has a remapped table (registry `Key Def` and every save's
+`0x800`): A = up, Up arrow = down, Down arrow = options — why simulated arrow keys did nothing useful.
+
+Planned patches (Trainer Mode, opt-in, reversible, read back, never in Challenge Mode):
+- **Keep running unfocused:** `0x44126B` `C7 05 2C CB 4B 00 00 00 00 00` → `E9 C6 00 00 00 90 90 90 90 90`
+  (`WM_ACTIVATE` goes straight to `DefWindowProcA`; the flag stays 1, sounds aren't paused). Data-only alternative:
+  write 1 to `0x4BCB2C` after each deactivation. Risks: keys typed in other windows reach the game
+  (`GetAsyncKeyState`) — zero the key map at `0xAC4030` while unfocused or set `0x4D460C`; DirectSound mutes unfocused
+  buffers (no `GLOBALFOCUS`, `0x41EBBD`); GOG's ddraw wrapper may still black out the window (unanalysed).
+- **Input from Lockpick:** `0x497BF7` `C3 CC CC CC CC CC` → `0D 00 00 00 00 C3` (`or eax, imm32; ret`): the u32 at
+  `0x497BF8` becomes a button mask OR-ed into every read — triggers, menus and movement follow naturally. Hold ≥ 2
+  ticks, release ≥ 2 ticks.
 
 ## Leads (unverified)
 

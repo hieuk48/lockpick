@@ -2,8 +2,9 @@
 
     python tools/bounties/saves.py <folder or .dat files> [--json out.json]
 
-A save is a copy of the game-state block: save offset + 0xBE9620 = memory address for offsets 0x04–0x41B (stage, room
-and camera at 0xBE9820, every flag bank, the item box at 0xBE98E4, the inventory at 0xBE9944) — found by matching a
+A save is a copy of the game-state block: save offset + 0xBE9620 = memory address for offsets 0x000–0x7FF (stage, room
+and camera at 0xBE9820, every flag bank, the item box at 0xBE98E4, the inventory at 0xBE9944); no checksum (static
+analysis of the loader at 0x493D04) — found by matching a
 save written during a live capture against the memory recorded at that moment (2026-10-13). The character is the low
 bit of 0xBE9829 (offset 0x209: Chris 0, Jill 1; bit 0x4 is set in the underground caves and the lab — lead from the
 RE1aio autosplitter's characterID, checked against 75 saves); byte 0x212 agrees (0x2F, the ink ribbon a save costs,
@@ -24,7 +25,7 @@ import timeline  # noqa: E402
 
 SAVE_SIZE = 2690
 BLOCK = 0xBE9620
-BLOCK_END = BLOCK + 0x41C
+BLOCK_END = BLOCK + 0x800
 CHARACTER_BYTE = 0x209  # 0xBE9829: bit 0 = Jill, bit 0x4 = underground/lab section
 
 
