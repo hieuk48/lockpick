@@ -1,5 +1,5 @@
 {
- "comment": "RE1 item and enemy/character ids. Names from IntelOrca's BioRand Re1ItemIds/Re1EnemyIds (MIT); 'observed' = behaviour confirmed in live captures (docs/MEMORY_MAP.md). Ids from 0x4E up are maps and documents. Maps (78+) and documents (95+) were named by the owner in play; their map-bank flags are item + 46 (maps) and item + 35 (documents). Ids 7/8 are named from play (BioRand has them swapped): 7 as found does 201 per hit, 8 = 7 loaded with acid rounds (17) does 95, the speedrun damage chart's acid grenade.",
+ "comment": "RE1 item and enemy/character ids. Names from IntelOrca's BioRand Re1ItemIds/Re1EnemyIds (MIT); 'observed' = behaviour confirmed in live captures (docs/MEMORY_MAP.md). Ids from 0x4E up are maps and documents. Maps (78+) and documents (95+) were named by the owner in play; their map-bank flags are item + 46 (maps) and item + 35 (documents). Ids 7/8 are named from play (BioRand has them swapped): 7 as found does 201 per hit, 8 = 7 loaded with acid rounds (17) does 95, the speedrun damage chart's acid grenade. Item names were checked against the game's own item-name table (pointers at 0x4BF0A0 in this build, index = id - 1) on 2026-10-14: ids 1-77 agree except 56 (closet key), 61 (desk key), 62 (blank book), now corrected, and 50, which has no name in the table.",
  "items": {
   "1": "Combat knife",
   "2": "Beretta",
@@ -56,13 +56,13 @@
   "53": "Shield key",
   "54": "Helmet key",
   "55": "Master key",
-  "56": "Special key",
+  "56": "Closet key",
   "57": "Dorm key 002",
   "58": "Dorm key 003",
   "59": "Control room key",
   "60": "Power room key",
-  "61": "Small key",
-  "62": "Red book",
+  "61": "Desk key (small key)",
+  "62": "Blank book (red book)",
   "63": "Doom book 2",
   "64": "Doom book 1",
   "65": "First aid spray",
@@ -75,7 +75,8 @@
   "72": "Mixed herb (G+B)",
   "73": "Mixed herb (G+R+B)",
   "74": "Mixed herb (G+G+G)",
-  "75": "Mixed herb (G+G+B)"
+  "75": "Mixed herb (G+G+B)",
+  "77": "Radio"
  },
  "itemsObserved": [
   1,
