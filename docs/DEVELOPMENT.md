@@ -74,27 +74,64 @@ typed elsewhere don't reach it. Bytes are checked before writing, read back, and
 changes are in the game's memory only and end with the process. Screenshots use PrintWindow, so they work behind
 other windows.
 
-Script commands (one per line, `#` comments): `launch`, `background`, `focus`, `press A [ms]` (combine with `+`),
-`wait ms`, `until room 106 [ms]` / `until gameplay` / `until field=value`, `expect …` (same conditions), `state`,
-`calibrate`, `shot file.png`, `look <question>`, `echo`. Controller → game (default joystick table): A action,
-X run/cancel, Y status, Back options, RT aim, d-pad/left stick move. Example:
+Script commands (one per line, `#` comments): `launch`, `restart`, `background`, `focus`, `press A [ms]`
+(combine with `+`), `wait ms`, `until room 106 [ms]` / `until gameplay` / `until field=value`, `expect …` (same
+conditions), `state`, `peek addr len`, `calibrate`, `shot file.png [width]`, `look <question>`, `echo`, plus:
+
+- `door <48 hex digits>` — enter a room through a door record, exactly as the game's doors do (`RoomWarp.cs`,
+  MEMORY_MAP "Room changes"): the game plays its door animation and places the player at the door's arrival spot.
+- `place <x> <z> [angle]` — stand the player at a spot in the current room, e.g. an item's pickup zone
+  (`doors.items()`: the zone's centre is floor next to the item) (`PlayerPlacement.cs`). The camera re-cuts only when
+  the player walks across a camera trigger, so the view may lag until they move.
+- `speed <ms>` / `speed normal` — the game's tick interval (normal 33 ms); smaller values fast-forward cutscenes and
+  scripted waits with every effect intact (`GameSpeed.cs`; restored on exit).
+- `record [folder]` / `mark <note>` / `record stop` — a Lockpick capture of the run (trace, events, memory regions,
+  markers), readable by `tools/bounties`.
+
+Controller → game (default joystick table): A action, X run/cancel, Y status, Back options, RT aim, d-pad/left stick
+move. Example:
 
 ```text
 launch
 background
 wait 12000
 press A          # title: press any button
-shot menu.png
+shot menu.png 480
 look Which menu is open, and which entry is highlighted?
 ```
+
+### Python runners (`tools/autoplay`)
+
+- `ap.py` — client: `serve()`, `send()`, `look()`, `state()`, `screen()` (vision-classified: title, newload, card,
+  loadmenu, …), `new_game("jill"|"chris")` (title → NEW GAME → character card → intro fast-forwarded → control),
+  `in_control()` / `settle()` (state-flag busy bits; fast-forwards cutscenes until control returns).
+- `doors.py` — door table from the player's install (every door's 24-byte record); `record_to(table, "105",
+  "jill")` picks a real door into a room.
+- `survey.py <out> <save-backup> [jill] [chris] [--rooms 105,106]` — from a new game, enters every door-reachable
+  room, fast-forwards cutscenes, records state, enemy slots, a screenshot and a one-line vision description; restarts
+  after deaths, redirects (scenario flag 0 sends stage 1/2 doors to 6/7) and errors; resumable.
+- `library.py <out> <save-backup> <folders…> [--own]` — loads saves (the owner's slots in place; others borrowed into
+  slot 1 with the owner's key settings) and checks Lockpick's live room/character against the offline decode, reads
+  the status screen, records the scene; slot 1 is restored and hash-checked after every save.
+- `report.py <run-dir>` — `atlas.md`: per area and room, the room files' contents, what the live run found and the
+  vision description.
+- `llm.py "question" files…` — digests long text (decompiled code, logs) with the local model; leads only.
+
+Environment: `LOCKPICK_VISION_URL` / `LOCKPICK_VISION_MODEL` (OpenAI-compatible vision model; also used by
+`llm.py`). Outputs stay outside the repository (`%LOCALAPPDATA%\Lockpick\research\…`): screenshots and
+descriptions of the game are not committed.
 
 Rules:
 - Without `background`, every press checks the game is the foreground window and the run stops if it isn't
   (someone is using the PC). Use `focus` only when nobody is.
-- Pressing through the title screen can load the player's saves (it did on 2026-10-14) — harmless (loading writes
-  nothing), but drive menus deliberately and check `SAVE/` against the backup afterwards.
-- Never save in-game during a run unless the script borrows a slot; back up `SAVE/` first and restore it with a hash
-  check afterwards.
+- Pressing through the title screen can load the player's saves (it did twice on 2026-10-14): `ap.wait_screen` only
+  presses on screens where a press is harmless (logo, title, text, black) and backs out of the load list.
+- The runners make `SAVE/*.dat` read-only for the whole run, so the game can't overwrite a save even if a stray press
+  reaches a typewriter (one did on 2026-10-14; the hash check restored the file). Only the runners' own writes (the
+  borrowed slot, restores) lift the flag, and set it again.
+- Never save in-game during a run unless the script borrows a slot; back up `SAVE/` (with a SHA-256 manifest)
+  first and restore it with a hash check afterwards. `survey.py` and `library.py` check `SAVE/` after every step and
+  restore any changed file from the backup.
 - `look` asks a vision model on an OpenAI-compatible server (set `LOCKPICK_VISION_URL`, e.g. `http://host:8000/v1`,
   and `LOCKPICK_VISION_MODEL`) to label a screen; pass/fail always comes from memory.
 

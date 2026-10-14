@@ -8,6 +8,7 @@ namespace Lockpick.Autoplay;
 ///   launch                       start the game if it isn't running and attach
 ///   restart                      close the game and start it again (keeps 'background' on)
 ///   speed [ms|normal]            show or set the game's tick interval (normal 33 ms; smaller = fast-forward)
+///   place x z [angle]            stand the player at a spot in the current room (PlayerPlacement.cs)
 ///   door hex48                   enter a room through a door record (RoomWarp.cs; dev runs only)
 ///   focus                        bring the game to the front (only when nobody is using the PC)
 ///   background                   focus patch: the game keeps running unfocused, keyboard map blanked (restored on exit)
@@ -36,6 +37,7 @@ internal sealed class Runner(Pad pad, TextWriter log) : IDisposable
     private RoomWarp? _warp;
     private GameSpeed? _speed;
     private Recorder? _recorder;
+    private PlayerPlacement? _placement;
 
     public Game Game => _game ?? throw new InvalidOperationException("the game is not attached (add 'launch' first)");
 
@@ -141,6 +143,12 @@ internal sealed class Runner(Pad pad, TextWriter log) : IDisposable
                 }
 
                 Log("  " + _speed.Describe());
+                break;
+            case "place":
+                _placement ??= new PlayerPlacement(Game.ProcessId);
+                _placement.Place(int.Parse(w[1], CultureInfo.InvariantCulture), int.Parse(w[2], CultureInfo.InvariantCulture),
+                    w.Length > 3 ? short.Parse(w[3], CultureInfo.InvariantCulture) : null);
+                Log($"  placed ({Describe(Game.Read())})");
                 break;
             case "door":
                 var record = Convert.FromHexString(w[1]);
@@ -381,6 +389,8 @@ internal sealed class Runner(Pad pad, TextWriter log) : IDisposable
         _warp = null;
         _speed?.Dispose();
         _speed = null;
+        _placement?.Dispose();
+        _placement = null;
         _game?.Dispose();
         _game = null;
     }

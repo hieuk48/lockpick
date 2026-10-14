@@ -63,3 +63,22 @@ def main(argv: list[str]) -> int:
 
 if __name__ == "__main__":
     sys.exit(main(sys.argv[1:]))
+
+
+def items(install: Path) -> list[dict]:
+    """Every item pickup zone (item_aot_set: x, z, width, depth at +2; item +0x0A, quantity +0x0B, flag +0x16), with
+    the zone's centre — where the player stands to pick the item up."""
+    usa = install / "USA" if (install / "USA").is_dir() else install
+    found = []
+    for path in sorted(usa.glob("Stage*/ROOM*.RDT")):
+        m = rdt_index.ROOM_FILE.match(path.name)
+        if not m or path.stat().st_size < 0x94:
+            continue
+        stage, room, variant = m.groups()
+        for op, b in rdt_index.opcodes(path.read_bytes()):
+            if op == rdt_index.OP_ITEM:
+                x, z, w, d = struct.unpack_from("<hhHH", b, 2)
+                found.append({"character": CHARACTERS[variant], "room": f"{stage}{room.upper()}", "item": b[0x0A],
+                              "quantity": b[0x0B], "flag": b[0x16], "zone": [x, z, w, d],
+                              "stand": [x + w // 2, z + d // 2]})
+    return found

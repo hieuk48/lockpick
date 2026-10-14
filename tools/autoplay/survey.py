@@ -27,6 +27,20 @@ DESCRIBE = ("Describe this Resident Evil room screenshot in at most 30 words: th
             "people visible, and any items on the floor or furniture.")
 
 
+def write_save(path: Path, data: bytes) -> None:
+    """Writes a save file the harness owns the change to; save files stay read-only otherwise, so the game itself
+    can never overwrite one during a run."""
+    if path.exists():
+        path.chmod(0o666)
+    path.write_bytes(data)
+    path.chmod(0o444)
+
+
+def protect_saves() -> None:
+    for path in SAVE.glob("*.dat"):
+        path.chmod(0o444)
+
+
 def check_saves(backup: Path, log) -> None:
     """Restores the SAVE folder from the backup if any file differs (the survey must never save)."""
     manifest = {}
@@ -37,7 +51,7 @@ def check_saves(backup: Path, log) -> None:
     for name, digest in manifest.items():
         path = SAVE / name
         if not path.exists() or hashlib.sha256(path.read_bytes()).hexdigest().upper() != digest:
-            shutil.copy2(backup / name, path)
+            write_save(path, (backup / name).read_bytes())
             ok = hashlib.sha256(path.read_bytes()).hexdigest().upper() == digest
             log(f"!! SAVE/{name} changed during the run — restored from backup ({'verified' if ok else 'RESTORE FAILED'})")
     for path in SAVE.iterdir():
@@ -68,9 +82,54 @@ def fresh_game(character: str, log) -> None:
     raise ap.Failed("could not start a new game")
 
 
+def visit(room: str, character: str, table: list[dict], out: Path, log) -> dict:
+    """Enters one room through a door record and records what is there."""
+    entry = {"room": room, "character": character, "at": time.strftime("%Y-%m-%dT%H:%M:%S")}
+    try:
+        s = ap.state()
+        if s.get("gameplay") != "True" or ap.flags() & ap.DEAD or s.get("hp", "0").startswith(("0/", "-")):
+            log("player dead or game not in play — new game")
+            fresh_game(character, log)
+        ap.send(f"mark survey {character} enter {room}")
+        record = doors.record_to(table, room, character)
+        ap.send("door " + record.hex(), "wait 800", timeout=60)
+        for _ in range(60):
+            now = ap.state().get("room")
+            if now == room:
+                break
+            # Scenario flag 0 remaps stages 1/2 to their return versions 6/7 (room_transition_load).
+            if now and now[1:] == room[1:] and int(now[0]) == int(room[0]) + 5:
+                entry["redirectedTo"] = now
+                raise ap.Failed(f"redirected to {now} (stage-variant flag set in this game)")
+            ap.send("wait 300")
+        else:
+            raise ap.Failed(f"did not arrive; now {ap.state()}")
+        entry["entered"] = True
+        entry["control"] = ap.settle(90)
+        s = ap.state()
+        entry.update({"hp": s.get("hp"), "pos": s.get("pos"), "now": s.get("room"),
+                      "flags": f"{ap.flags():08X}", "enemies": enemies()})
+        for _ in range(2):
+            shot = ap.shot(f"survey-{character}-{room}.png", 480)
+            entry["seen"] = ap.look(DESCRIBE)
+            if entry["seen"].strip().lower().strip(".") != "black":
+                break
+            ap.send("wait 1500")  # a fade was still running
+        kept = out / "shots" / shot.name
+        kept.parent.mkdir(exist_ok=True)
+        shutil.copy2(shot, kept)
+        entry["shot"] = str(kept)
+        entry.pop("error", None)
+        log(f"{room}: control={entry['control']} hp={entry['hp']} enemies={[e['type'] for e in entry['enemies']]} — {entry['seen'][:120]}")
+    except (ap.Failed, KeyError, ValueError, OSError) as e:
+        entry["error"] = str(e)[-300:]
+    return entry
+
+
 def survey(character: str, out: Path, backup: Path, table: list[dict], only: set[str] | None) -> None:
     results = out / f"survey-{character}.jsonl"
-    done = {json.loads(l)["room"] for l in results.read_text(encoding="utf-8").splitlines()} if results.exists() else set()
+    done = {e["room"] for e in map(json.loads, results.read_text(encoding="utf-8").splitlines())
+            if not e.get("error")} if results.exists() else set()
     logfile = (out / f"survey-{character}.log").open("a", encoding="utf-8")
 
     def log(text: str) -> None:
@@ -85,30 +144,11 @@ def survey(character: str, out: Path, backup: Path, table: list[dict], only: set
     log(f"surveying {len(rooms)} rooms for {character}")
     fresh_game(character, log)
     for room in rooms:
-        entry = {"room": room, "character": character, "at": time.strftime("%Y-%m-%dT%H:%M:%S")}
-        try:
-            s = ap.state()
-            if s.get("gameplay") != "True" or ap.flags() & ap.DEAD or s.get("hp", "0").startswith(("0/", "-")):
-                log("player dead or game not in play — new game")
-                fresh_game(character, log)
-            ap.send(f"mark survey {character} enter {room}")
-            record = doors.record_to(table, room, character)
-            ap.send("door " + record.hex(), f"until room {room} 20000", timeout=60)
-            entry["entered"] = True
-            entry["control"] = ap.settle(90)
-            s = ap.state()
-            entry.update({"hp": s.get("hp"), "pos": s.get("pos"), "now": s.get("room"),
-                          "flags": f"{ap.flags():08X}", "enemies": enemies()})
-            shot = ap.shot(f"survey-{character}-{room}.png", 480)
-            kept = out / "shots" / shot.name
-            kept.parent.mkdir(exist_ok=True)
-            shutil.copy2(shot, kept)
-            entry["shot"] = str(kept)
-            entry["seen"] = ap.look(DESCRIBE)
-            log(f"{room}: control={entry['control']} hp={entry['hp']} enemies={[e['type'] for e in entry['enemies']]} — {entry['seen'][:120]}")
-        except (ap.Failed, KeyError, ValueError, OSError) as e:
-            entry["error"] = str(e)[-300:]
-            log(f"{room}: ERROR {entry['error'][-160:]}")
+        for attempt in range(2):
+            entry = visit(room, character, table, out, log)
+            if not entry.get("error"):
+                break
+            log(f"{room}: {entry['error'][-160:]}")
             try:
                 fresh_game(character, log)
             except ap.Failed as e2:
@@ -131,6 +171,7 @@ def main(argv: list[str]) -> int:
     characters = [a for a in argv[2:] if a in ("jill", "chris")] or ["jill", "chris"]
     out.mkdir(parents=True, exist_ok=True)
     table = doors.build(INSTALL)
+    protect_saves()
     ap.serve()
     ap.send(f"record {out / 'captures'}")
     try:

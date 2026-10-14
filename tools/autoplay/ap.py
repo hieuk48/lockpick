@@ -103,8 +103,16 @@ SCREENS = ("Answer with exactly one word from this list: black, logo, title (big
            "loadmenu (a list of save files), gameplay, other.")
 
 
+# Screens where pressing A only skips ahead. Never press on NEW GAME / LOAD GAME, the load list or the ID card:
+# a stray press there can load the owner's save (it did once on 2026-10-14).
+SAFE_TO_PRESS = {"black", "logo", "title", "text"}
+
+
 def screen() -> str:
-    return look(SCREENS).strip().lower().strip(".")
+    try:
+        return look(SCREENS).strip().lower().strip(".")
+    except Failed:
+        return "black"  # no picture yet (the window is still being created, or a mode switch)
 
 
 def wait_screen(wanted: set[str], timeout: float = 60, press: str | None = None) -> str:
@@ -115,7 +123,9 @@ def wait_screen(wanted: set[str], timeout: float = 60, press: str | None = None)
         kind = screen()
         if kind in wanted:
             return kind
-        if press:
+        if kind == "loadmenu":
+            send("press X", "wait 700")  # never pick a save by accident: back out of the load list
+        elif press and kind in SAFE_TO_PRESS:
             send(f"press {press}")
         send("wait 700")
     raise Failed(f"screen never became {wanted}")
@@ -147,6 +157,11 @@ def new_game(character: str = "chris", fast_ms: int = 4) -> float:
     if fast_ms == 0:
         return time.time() - t
     send(f"speed {fast_ms}")
+    # Past the ID card there is no menu left to misfire on: press through the opening text and movie.
+    for _ in range(240):
+        if state().get("gameplay") == "True":
+            break
+        send("press A", "wait 500")
     send("wait 3000")
     if settle(240, fast_ms) and state().get("char", "").lower() == character:
         return time.time() - t
@@ -170,6 +185,7 @@ STATE_FLAGS = 0xBE41C0
 # transition, fade. The script bits 0x0C are not "busy": room 104's script leaves 0x4 set while the player walks.
 BUSY = 0x80 | 0xFF00 | 0x10000 | 0x20000 | 0x40000 | 0x100000 | 0x01000000 | 0x04000000 | 0x20000000
 DEAD = 0x01000000
+MESSAGE = 0x8000
 
 
 def flags() -> int:
@@ -196,6 +212,11 @@ def settle(timeout: float = 120, fast_ms: int = 4) -> bool:
             send("wait 300")
             continue
         calm = 0
-        send(f"speed {fast_ms}", "press A 120", "wait 250")
+        # Fast-forward; press A only to close a message box (0x8000), never otherwise — a stray press can carry
+        # into control in front of a typewriter or item.
+        if flags() & MESSAGE:
+            send(f"speed {fast_ms}", "press A 120", "wait 250")
+        else:
+            send(f"speed {fast_ms}", "wait 300")
     send("speed normal")
     return False

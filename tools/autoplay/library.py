@@ -33,11 +33,11 @@ def borrow(save: Path, backup: Path) -> None:
     own = (backup / "savedat1.dat").read_bytes()
     for start, end in SETTINGS:
         data[start:end] = own[start:end]
-    SLOT1.write_bytes(bytes(data))
+    survey.write_save(SLOT1, bytes(data))
 
 
 def restore_slot1(backup: Path) -> bool:
-    shutil.copy2(backup / "savedat1.dat", SLOT1)
+    survey.write_save(SLOT1, (backup / "savedat1.dat").read_bytes())
     return hashlib.sha256(SLOT1.read_bytes()).digest() == hashlib.sha256((backup / "savedat1.dat").read_bytes()).digest()
 
 
@@ -55,6 +55,18 @@ def load_slot(slot: int) -> float:
     if not ap.settle(120):
         raise ap.Failed(f"no control after loading slot {slot}: {ap.state()}")
     return time.time() - t
+
+
+def read_status() -> dict:
+    """Opens the status screen (Y), has the vision model read it, and closes it again (X)."""
+    ap.send("press Y", "wait 2500")
+    shot = ap.shot("status.png", 960)
+    text = ap.look("This is the inventory/status screen. List exactly, comma separated, every item name and count "
+                   "you can read in the item slots, then the condition text (Fine/Caution/Danger). Nothing else.")
+    ap.send("press X", "wait 1200")
+    if not ap.in_control():
+        ap.send("press X", "wait 1200")
+    return {"read": text, "shot": str(shot)}
 
 
 def expected(path: Path, names) -> dict:
@@ -100,6 +112,7 @@ def run(entries: list[tuple[str, Path, int | None]], out: Path, backup: Path) ->
             shutil.copy2(shot, kept)
             entry["shot"] = str(kept)
             entry["seen"] = ap.look(survey.DESCRIBE)
+            entry["statusScreen"] = read_status()
             log(f"{name}: room {s.get('room')} (save says {want['room']}) {s.get('char')} — "
                 f"{'OK' if entry['roomMatches'] and entry['characterMatches'] else 'MISMATCH'}")
         except (ap.Failed, KeyError, ValueError, OSError) as e:
@@ -127,6 +140,7 @@ def main(argv: list[str]) -> int:
                 entries.append((path.stem, path, None))
     if not ap.EXE.exists():
         raise SystemExit("build tools/Lockpick.Autoplay first")
+    survey.protect_saves()
     ap.serve()
     ap.send(f"record {out / 'captures'}")
     try:
