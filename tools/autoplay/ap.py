@@ -274,7 +274,9 @@ def settle(timeout: float = 120, fast_ms: int = 4) -> bool:
         # of a typewriter or item.
         f = flags()
         speed = f"speed {fast_ms}" if f & CUTSCENE else "speed normal"
-        if f & MESSAGE:
+        # Messages, the pickup screen (0x100: also documents and maps, page by page) and the item viewer (0x800) wait
+        # for a press; a document read on pickup sets camera lock and ramp too, so it looks like a cutscene otherwise.
+        if f & (MESSAGE | 0x100 | 0x800):
             send(speed, "press A 120", "wait 250")
         else:
             send(speed, "wait 300")

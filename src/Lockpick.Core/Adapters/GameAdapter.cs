@@ -48,6 +48,12 @@ public interface IGameAdapter
 
     /// <summary>Works out the player's progress (items, documents, rooms, enemies, story); null when unsupported.</summary>
     Insight.IProgressTracker? CreateProgressTracker(VersionProfile profile) => null;
+
+    /// <summary>
+    /// Reads room layouts (collision, doors, items, cameras) from the player's own install at
+    /// <paramref name="installDirectory"/>; null when the adapter can't.
+    /// </summary>
+    Maps.IRoomMapSource? CreateRoomMaps(string installDirectory) => null;
 }
 
 /// <summary>A verified connection to one running game process.</summary>
