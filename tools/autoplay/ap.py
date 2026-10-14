@@ -224,3 +224,24 @@ def settle(timeout: float = 120, fast_ms: int = 4) -> bool:
             send(speed, "wait 300")
     send("speed normal")
     return False
+
+
+def describe(image: Path, question: str, max_tokens: int = 200) -> str:
+    """Asks the vision model about a screenshot file (no second capture). Dark scenes are not 'black': only a fully
+    black frame (a fade) is."""
+    import base64
+    import json as _json
+    import urllib.request
+    url = (os.environ.get("LOCKPICK_VISION_URL") or "").rstrip("/")
+    if not url:
+        return "(LOCKPICK_VISION_URL not set)"
+    data = "data:image/png;base64," + base64.b64encode(Path(image).read_bytes()).decode()
+    body = {"model": os.environ.get("LOCKPICK_VISION_MODEL", "default"), "max_tokens": max_tokens, "temperature": 0,
+            "chat_template_kwargs": {"enable_thinking": False},
+            "messages": [{"role": "user", "content": [
+                {"type": "image_url", "image_url": {"url": data}},
+                {"type": "text", "text": "This is a screenshot of Resident Evil (1996, PC); its scenes are often dark. "
+                                         "Answer 'black' only if the whole frame is uniformly black (a fade). " + question}]}]}
+    req = urllib.request.Request(url + "/chat/completions", _json.dumps(body).encode(), {"Content-Type": "application/json"})
+    with urllib.request.urlopen(req, timeout=180) as r:
+        return _json.load(r)["choices"][0]["message"]["content"].strip()

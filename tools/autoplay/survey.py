@@ -127,7 +127,7 @@ def visit(room: str, character: str, table: list[dict], out: Path, log) -> dict:
                       "flags": f"{ap.flags():08X}", "enemies": enemies()})
         for _ in range(2):
             shot = ap.shot(f"survey-{character}-{room}.png", 480)
-            entry["seen"] = ap.look(DESCRIBE)
+            entry["seen"] = ap.describe(shot, DESCRIBE)
             if entry["seen"].strip().lower().strip(".") != "black":
                 break
             ap.send("wait 1500")  # a fade was still running

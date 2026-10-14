@@ -61,8 +61,8 @@ def read_status() -> dict:
     """Opens the status screen (Y), has the vision model read it, and closes it again (X)."""
     ap.send("press Y", "wait 2500")
     shot = ap.shot("status.png", 960)
-    text = ap.look("This is the inventory/status screen. List exactly, comma separated, every item name and count "
-                   "you can read in the item slots, then the condition text (Fine/Caution/Danger). Nothing else.")
+    text = ap.describe(shot, "This is the inventory/status screen. List exactly, comma separated, every item name and "
+                       "count you can read in the item slots, then the condition text (Fine/Caution/Danger). Nothing else.")
     ap.send("press X", "wait 1200")
     if not ap.in_control():
         ap.send("press X", "wait 1200")
@@ -111,7 +111,7 @@ def run(entries: list[tuple[str, Path, int | None]], out: Path, backup: Path) ->
             kept.parent.mkdir(exist_ok=True)
             shutil.copy2(shot, kept)
             entry["shot"] = str(kept)
-            entry["seen"] = ap.look(survey.DESCRIBE)
+            entry["seen"] = ap.describe(shot, survey.DESCRIBE)
             entry["statusScreen"] = read_status()
             log(f"{name}: room {s.get('room')} (save says {want['room']}) {s.get('char')} — "
                 f"{'OK' if entry['roomMatches'] and entry['characterMatches'] else 'MISMATCH'}")
