@@ -35,6 +35,7 @@ class Room:
     walk: list[tuple[int, int, int, int]] = field(default_factory=list)
     doors: list[dict] = field(default_factory=list)
     items: list[dict] = field(default_factory=list)
+    objects: list[dict] = field(default_factory=list)  # script-placed models (furniture, the dining-room clock …)
 
     def camera_for(self, x: int, z: int) -> int | None:
         """A camera that shows (x, z). Each camera's first switch record is its coverage quad; among the cameras whose
@@ -120,6 +121,15 @@ def load(install: Path, room: str, character: str) -> Room:
         n = data[ptr]
         for i in range(n):
             r.walk.append(struct.unpack_from("<4h", data, ptr + 2 + i * 0x0C))
+    try:
+        import scd  # noqa: PLC0415 — script-placed objects with the conditions that place them
+        listing = scd.read_room(path_for(install, room, character), scd.Names())
+        for part in ("init", "main"):
+            for st in listing[part]:
+                if st["kind"] == "object":
+                    r.objects.append({"slot": st["slot"], "pos": st["pos"], "params": st["params"], "guards": st["guards"]})
+    except (ImportError, ValueError, KeyError):
+        pass
     for op, b in rdt_index.opcodes(data):
         if op == rdt_index.OP_DOOR:
             x, z, w, d = struct.unpack_from("<hhHH", b, 2)

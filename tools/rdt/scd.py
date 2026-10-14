@@ -94,6 +94,14 @@ def describe(op: int, b: bytes, names: Names) -> dict:
     if op == 0x1B:
         guard = "" if b[3] == 255 else f", gone once flagEnemies[{b[3]}] is set"
         return {"kind": "enemy", "type": b[1], "text": f"spawn {names.enemies.get(str(b[1]), b[1])}{guard}"}
+    if op == 0x1F:
+        x, y, z = struct.unpack_from("<3h", b, 4)
+        params = struct.unpack_from("<8H", b, 0x0C)
+        return {"kind": "object", "slot": b[1], "pos": [x, y, z], "params": list(params),
+                "text": f"object {b[1]} at ({x},{y},{z}) params {params}"}
+    if op == 0x30:
+        z, w, x, y = struct.unpack_from("<4H", b, 4)
+        return {"kind": "boundary", "list": b[1], "index": b[2], "text": f"collision record {b[1]}/{b[2]} set to {x},{y},{z},{w}"}
     if op == 0x20:
         x, y, z = struct.unpack_from("<3h", b, 8)
         return {"kind": "player", "text": f"move player to ({x},{y},{z}) facing {struct.unpack_from('<h', b, 4)[0]}"}

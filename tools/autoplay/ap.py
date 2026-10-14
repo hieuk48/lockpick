@@ -301,3 +301,39 @@ def describe(image: Path, question: str, max_tokens: int = 200) -> str:
     req = urllib.request.Request(url + "/chat/completions", _json.dumps(body).encode(), {"Content-Type": "application/json"})
     with urllib.request.urlopen(req, timeout=180) as r:
         return _json.load(r)["choices"][0]["message"]["content"].strip()
+
+
+# Inventory menu (ecruells/resident-evil-pc-decomp MainMenu.cpp; to be live-checked): 0xAE9F20 = 1 while the item grid
+# takes input; cursor 0xAE9F23: 0–7 the tab row, 8 + 2·slot the item slots (two per row; Left/Right toggles bit 2,
+# Down +4, Up −4); 0xAE9F1B = the selected item id. USE needs the room to allow the item there (g_itemUseFlags).
+MENU_INPUT, MENU_CURSOR, MENU_ITEM = 0xAE9F20, 0xAE9F23, 0xAE9F1B
+INVENTORY_SLOTS = 0xBE9944
+
+
+def use_item(item: int, timeout: float = 30) -> dict:
+    """Opens the status screen, moves to the item's slot, confirms and chooses USE (the first submenu entry)."""
+    import time
+    raw = peek(INVENTORY_SLOTS, 16)
+    slots = [raw[i * 2] for i in range(8)]
+    if item not in slots:
+        raise Failed(f"item {item} is not in the inventory ({slots})")
+    target = 8 + 2 * slots.index(item)
+    send("press Y")
+    if not wait_for(lambda: peek(MENU_INPUT, 1)[0] == 1, 10):
+        raise Failed("the status screen didn't open")
+    end = time.time() + timeout
+    while time.time() < end:
+        cursor = peek(MENU_CURSOR, 1)[0]
+        if cursor == target:
+            break
+        if (cursor & ~2) < (target & ~2):
+            send("press Down 100", "wait 250")
+        elif (cursor & ~2) > (target & ~2):
+            send("press Up 100", "wait 250")
+        else:
+            send("press Right 100", "wait 250")
+    else:
+        raise Failed(f"cursor never reached slot {slots.index(item)}")
+    selected = peek(MENU_ITEM, 1)[0]
+    send("press A 120", "wait 700", "press A 120", "wait 1500")
+    return {"slot": slots.index(item), "selected": selected}

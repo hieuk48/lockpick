@@ -73,6 +73,13 @@ def svg_room(r: rdt_map.Room, names: dict) -> str:
         out.append(f'<rect x="{a[0]:.1f}" y="{a[1]:.1f}" width="{c[0]-a[0]:.1f}" height="{c[1]-a[1]:.1f}" class="item">'
                    f'<title>{name} ×{it["quantity"]} (flag {it["flag"]})</title></rect>')
         out.append(f'<text x="{(a[0]+c[0])/2:.1f}" y="{a[1]-2:.1f}" class="itemlabel">{name}</text>')
+    for o in r.objects:
+        x, _, z = o["pos"]
+        w, d = max(o["params"][6], 200), max(o["params"][7], 200)  # approximate footprint (params 6/7, unverified)
+        a, c = px(x - w / 2, z + d / 2), px(x + w / 2, z - d / 2)
+        cond = html.escape(" / ".join(o["guards"]) or "always")
+        out.append(f'<rect x="{a[0]:.1f}" y="{a[1]:.1f}" width="{c[0]-a[0]:.1f}" height="{c[1]-a[1]:.1f}" class="object">'
+                   f'<title>object {o["slot"]} at ({x},{z}) — placed when: {cond}</title></rect>')
     for cam in r.cameras:
         (fx, _, fz), (tx, _, tz) = cam["from"], cam["to"]
         a, b = px(fx, fz), px(tx, tz)
@@ -95,10 +102,10 @@ svg.room{max-width:100%;height:auto;background:color-mix(in srgb,var(--bg) 85%,v
 .switch{fill:var(--switch);stroke:var(--cam);stroke-width:.5;stroke-dasharray:3 2}
 .door{fill:none;stroke:var(--door);stroke-width:2}.doorlabel{fill:var(--door);font-size:11px;text-anchor:middle}
 .item{fill:var(--item);opacity:.35;stroke:var(--item)}.itemlabel{fill:var(--item);font-size:10px;text-anchor:middle}
-.cam{fill:var(--cam)}.camline{stroke:var(--cam);stroke-width:1;opacity:.6}.camlabel{fill:var(--cam);font-size:10px}
+.object{fill:#9b59b6;opacity:.45;stroke:#9b59b6;stroke-dasharray:2 2}.cam{fill:var(--cam)}.camline{stroke:var(--cam);stroke-width:1;opacity:.6}.camlabel{fill:var(--cam);font-size:10px}
 </style></head><body><h1>Room maps</h1><div class="legend">Top-down, +X right, +Z up. Dark = blocking collision,
 light = floor/soft zones, green = doors (target room), gold = item pickup zones, blue = cameras (looking along the
-line) and their switch zones. Hover for details. Built from the local install.</div><div class="grid">
+line) and their switch zones, purple dashed = objects placed by the room script (approximate size; hover for when). Hover for details. Built from the local install.</div><div class="grid">
 {cards}</div></body></html>"""
 
 
