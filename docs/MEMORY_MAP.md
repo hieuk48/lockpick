@@ -98,6 +98,14 @@ Stage/room note: walking up the main-hall stairs goes to `stage=1, room=0x03` (r
 | Door transition | `0x8201000C → 0x6601000C → 0x46010000 → 0x46000000 → 0x42000000 → 0x82000000` |
 | Death | `0x8100000C` (`0x01000000` set when HP reached −10) |
 | Jill game, main hall | `0x4080000C` (`0x00800000` = Jill RDT variant) |
+| Player in control (live 2026-10-14, dev harness: still unless pushed, moves when pushed) | `0x80800000` (Jill), `0x80800004` in 104 (its script leaves `0x4` set) |
+| Opening cutscene, Jill (same run: moves on its own) | `0x8091000C`, `0x8093000C` |
+
+The "free movement, room 106" row above was most likely recorded during the opening cutscene: in the 2026-10-14
+run the character moved on its own while `0x00100000` (camera lock), `0x00010000` and `0x00020000` (voice) were set,
+and control came back with all three clear. The dev harness treats any of `0x80 | 0xFF00 | 0x10000 | 0x20000 |
+0x40000 | 0x100000 | 0x01000000 | 0x04000000 | 0x20000000` as "player not in control" (bit names from the
+ecruells/resident-evil-pc-decomp reference; `0x4`/`0x8` are set by room scripts and are not a busy signal).
 
 Bits with support: `0x00800000` Jill RDT variant (static + live), `0x01000000` player dead (static + live),
 `0x04000000` door transition (live), `0x00008000` menu (live). `0x02000000` is **not** a gameplay flag.
@@ -228,6 +236,26 @@ Planned patches (Trainer Mode, opt-in, reversible, read back, never in Challenge
 - **Input from Lockpick:** `0x497BF7` `C3 CC CC CC CC CC` → `0D 00 00 00 00 C3` (`or eax, imm32; ret`): the u32 at
   `0x497BF8` becomes a button mask OR-ed into every read — triggers, menus and movement follow naturally. Hold ≥ 2
   ticks, release ≥ 2 ticks.
+
+## Room changes, game speed (static analysis + live, 2026-10-14 — dev harness only)
+
+Used by the developer-only autoplay harness (`tools/Lockpick.Autoplay`), never by the app.
+
+| Address | What | Evidence |
+|---|---|---|
+| `0x41B59C` | `door_begin_transition`: `[0xBEBCBC] = record`, `[0xBE41C0] \|= 0x02000000`, `[0xBEBCC0] = 0` (u16), `[0xBE961B] = 1` (u8), then a black rect | disassembly of this build; the decomp's port names `0xD22760` for the last byte, the original writes `0xBE961B` |
+| `0x4810DE` | `game_loop` reads `[0xBE961B]`: 1 → room-change path (`room_transition_load` `0x4813C0`) | disassembly |
+| door record (24 bytes) | the RDT `door_aot_set` opcode without its first two bytes: `+0x0A` door type, `+0x0B` entry camera (`&0x3F`), `+0x0C` lock, `+0x0D` destination (`< 0x20` same stage, else `(stage digit << 5) \| room`), `+0x0E` arrival x, y, z, angle (i16), `+0x16` key | live: handing a 106 → 105 record entered 105 with the door animation at (30900, 8300); the 2026-10-14 room survey entered rooms the same way (results in the survey notes) |
+| scenario flag 0 (bank `0xBE98C0`) | while set, a destination in stage 1/2 loads the stage 6/7 version (`room_transition_load`) | decomp + live: a warp to 104 arrived in 604 after the flag was set during play |
+| `0x441F0C`–`0x441F75` | main-loop limiter: when `[0x4D46D8]` != 0 and `[0x4BCB48]` == 1, `main_loop` runs once per `[0x4BCB54]` ms (33 = 30 ticks/s) | disassembly; live: `[0x4BCB54]` read 33 with mode 1, writing a smaller interval fast-forwards cutscenes (measured from a capture of the 2026-10-14 run: with 4 ms the game clock ran up to 8.2× real time in the opening — the full 33/4 — and 3–6× in rooms, presumably render-bound) |
+| `0xBF0A04` | raw pad word — see "Focus and input" | live |
+
+Event-script slots (lead): `0xBF084C`, 8 × `0x34` bytes, `+0x00` state, `+0x02` active — one slot stays active
+during free movement, several during the opening cutscene.
+
+Save files, leads (not yet live-checked): offset `0x220` (u16) holds the HP (Jill saves 96 = `0x60`, Chris 140),
+`0x22C`/`0x22E` look like X/Z and `0x230` like the facing (always < 4096). A save resumes in its save room; rooms
+are entered with door records instead.
 
 ## Leads (unverified)
 
