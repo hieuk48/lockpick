@@ -71,8 +71,14 @@ public class Re1ChangeExplainerTests
     public void First_visits_are_explained_but_other_room_bank_bits_are_not()
     {
         Assert.Empty(_explainer.Explain(Jill(0, "104"), Jill(1, "104", ("flagRoom0", 0x0E000000))).Unexplained); // room 104 = bit 27
-        var odd = Assert.Single(_explainer.Explain(Jill(0, "107"), Jill(1, "107", ("flagRoom3", 0x10))).Unexplained);
-        Assert.Equal("flagRoom3:0x00000010:set", odd.Key);
+        // Visits are numbered on across stages: the courtyard (300) is flag 63, and the map's own room numbers count
+        // (107's back room is map room 11D, flag 29).
+        Assert.Equal(["first visit to room 300"], _explainer.Explain(Jill(0, "300", ("flagRoom1", 0)), Jill(1, "300", ("flagRoom1", 0x1))).Known);
+        Assert.Equal(["first visit to room 11D"], _explainer.Explain(Jill(0, "107"), Jill(1, "107", ("flagRoom0", 0x06000004))).Known);
+
+        // Beyond the visits come maps and documents: an unlabelled one is asked about.
+        var odd = Assert.Single(_explainer.Explain(Jill(0, "107", ("flagRoom4", 0)), Jill(1, "107", ("flagRoom4", 0x1))).Unexplained);
+        Assert.Equal("flagRoom4:0x00000001:set", odd.Key);
     }
 
     [Fact]

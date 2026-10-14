@@ -131,8 +131,12 @@ The flag banks tile `0xBE9854`–`0xBE98E4` exactly and end where the item box s
   Type 15 is the mansion plant: six of them in 10C (HP 1 each), slapping for 2 HP — the damage chart's value.
 - **`flagEnemies`**: each of 13 zombie kills set exactly one new bit; killing crows set none.
 - **`flagRoomItems`**: each pickup cleared exactly one bit as the item entered the inventory (1 = still in the world).
-- **`flagRoom0`/`flagRoom1`**: rooms visited, one word per stage, room *n* = bit 31 − *n* (e.g. 100 → `0x80000000`,
-  118 → `0x80`, 212 → `0x2000`); every first entry into a room set its bit.
+- **`flagRoom` bank** (the map's flags, flag *n* = bit 31 − *n* % 32 of word *n* / 32):
+  - flags 0–123: rooms visited, one per room, numbered on across stages — 100 = 0, 200 = 32, 300 = 63, 400 = 82
+    (stages 5+ not mapped yet). The map's own room numbers count: 107's back room is map room 11D (flag 29), the
+    piano room's secret room 11E (30), the room behind the 2F bookcase 21D (61);
+  - 124 = 1F map, 125 = 2F map, 126 = garden map taken;
+  - 128+ = documents taken (130 researcher's will, 132 keeper's diary, 145 the book about mixing herbs).
 - **`flagLocks0`**: one bit set per door unlocked (4 doors).
 - **Statue push (202)**, seen three times (session 4 and both new games in session 5): `stateFlags` bit `0x40` is set
   while pushing; when the statue falls, `flagScenarioA0` bit `0x100000` and `stateFlags` `0x100000` (camera cut) are set.
@@ -153,11 +157,11 @@ The flag banks tile `0xBE9854`–`0xBE98E4` exactly and end where the item box s
 
 What changes during play but isn't explained yet — candidates for markers in future captures.
 
-- **Scenario flags** (`flagScenarioA/B`): the first ask-mode session (Jill, new game → the dogs in 108) named 18
-  story events, from the opening to each dog's entrance — they are in `data/games/re1/flag-labels.json` with their
-  source. Flags from later in the game are still unknown; ask-mode captures name them as they come up.
-- **`flagRoom` beyond rooms visited:** word 3 bit `0x8` = took the 1F map, word 0 bit `0x4` = the zombie lying in
-  107 gets up (both confirmed); word 4 bit `0x4000` (flag 145) when the 206 document was read is still unconfirmed.
+- **Scenario flags** (`flagScenarioA/B`): two ask-mode sessions (Jill, new game → the guardhouse save room) named
+  about 70 story and puzzle events — Barry's scenes, the ceiling trap, the gallery, crests, the piano and emblems,
+  Richard and the serum, Yawn, the aquarium, the water gate, the guardhouse statue — in
+  `data/games/re1/flag-labels.json` with their source. Later areas are still unknown; ask-mode captures name them.
+- **`flagLocks`** also covers locked desks (flags 30, 31: desks opened with Jill's lockpick in 102 and 111).
 - **Kill flag 255** (`flagEnemies7` bit `0x1`) is set when an enemy whose room script says "not persisted" dies.
 - **Jill's lockpick** is given by Barry in the main hall (`flagScenarioA3` bit `0x8`) and never appears in the
   inventory or item box; it opens the Sword-key doors (107→108, 103→10E).

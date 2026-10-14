@@ -158,6 +158,22 @@ internal sealed class Re1ChangeExplainer(Re1Knowledge knowledge) : IChangeExplai
         return new ChangeReport(unexplained, known);
     }
 
+    /// <summary>Flags from here on in the room bank are maps taken (124 = 1F, 125 = 2F, 126 = garden) and documents.</summary>
+    private const int FirstMapFlag = 124;
+
+    /// <summary>
+    /// Where each stage's rooms start in the rooms-visited flags: one flag per room, numbered on across stages
+    /// (live 2026-10-13: 100 = 0, 200 = 32, 300 = 63, 400 = 82). Later stages are not mapped yet.
+    /// </summary>
+    private static readonly int[] StageVisitBase = [0, 32, 63, 82];
+
+    private static string VisitedRoom(int flag)
+    {
+        var stage = Array.FindLastIndex(StageVisitBase, b => b <= flag);
+        var room = flag - StageVisitBase[stage];
+        return stage == StageVisitBase.Length - 1 && room > 0x1F ? $"(flag {flag})" : $"{stage + 1}{room:X2}";
+    }
+
     private static uint? Raw(GameSnapshot snapshot, string field) =>
         snapshot.RawFields.TryGetValue(field, out var value) && value.HasValue ? (uint)value.Value : null;
 
@@ -184,10 +200,9 @@ internal sealed class Re1ChangeExplainer(Re1Knowledge knowledge) : IChangeExplai
             case "flagLocks" when Find(knowledge.Doors, flag, room, player) is { } door:
                 return $"{(set ? "unlocked" : "locked")} door {door.Room}→{door.Target}";
 
-            // Rooms visited: one word per stage, room n = bit 31 - n, set on the first visit.
-            case "flagRoom" when set && word == room[0] - '1'
-                && 31 - System.Numerics.BitOperations.TrailingZeroCount(mask) == int.Parse(room.AsSpan(1), NumberStyles.HexNumber, CultureInfo.InvariantCulture):
-                return "first visit";
+            // Rooms visited (the map's "explored" marks): flags below FirstMapFlag, set on the first visit.
+            case "flagRoom" when set && flag < FirstMapFlag:
+                return $"first visit to room {VisitedRoom(flag)}";
             default:
                 return null;
         }

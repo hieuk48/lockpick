@@ -116,12 +116,6 @@
    "source": "owner, ask mode 2026-10-13 (Jill new game)"
   },
   {
-   "bank": "flagRoom0",
-   "mask": "0x00000004",
-   "label": "107: the zombie lying by the ink ribbons gets up",
-   "source": "owner, ask mode 2026-10-13 (Jill new game)"
-  },
-  {
    "bank": "flagScenarioB2",
    "mask": "0x80000000",
    "label": "108: the first dog appears",
@@ -132,6 +126,312 @@
    "mask": "0x40000000",
    "label": "108: the second dog appears",
    "source": "owner, ask mode 2026-10-13 (Jill new game)"
+  },
+  {
+   "bank": "flagScenarioB1",
+   "mask": "0x80000000",
+   "label": "Barry breaks in and saves Jill from the lowering ceiling (115)",
+   "source": "owner, ask mode 2026-10-13 (Jill, mansion → guardhouse)"
+  },
+  {
+   "bank": "flagScenarioB1",
+   "mask": "0x40000000",
+   "label": "ceiling-trap rescue over (back in 109)",
+   "source": "owner, ask mode 2026-10-13 (Jill, mansion → guardhouse)"
+  },
+  {
+   "bank": "flagScenarioA0",
+   "mask": "0x00400000",
+   "label": "first time in 10B (cleared when the 2F fireplace is lit)",
+   "source": "owner, ask mode 2026-10-13 (Jill, mansion → guardhouse)"
+  },
+  {
+   "bank": "flagScenarioA0",
+   "mask": "0x10000000",
+   "label": "gallery puzzle solved: the star crest is revealed behind the painting (117)",
+   "source": "owner, ask mode 2026-10-13 (Jill, mansion → guardhouse)"
+  },
+  {
+   "bank": "flagScenarioA3",
+   "mask": "0x00200000",
+   "label": "star crest placed in the crest door (11A)",
+   "source": "owner, ask mode 2026-10-13 (Jill, mansion → guardhouse)"
+  },
+  {
+   "bank": "flagRoom4",
+   "mask": "0x00004000",
+   "label": "took the book about mixing herbs (document, 206)",
+   "source": "owner, ask mode 2026-10-13 (Jill, mansion → guardhouse)"
+  },
+  {
+   "bank": "flagScenarioA3",
+   "mask": "0x01000000",
+   "label": "on the balcony with Forest's body (212)",
+   "source": "owner, ask mode 2026-10-13 (Jill, mansion → guardhouse)"
+  },
+  {
+   "bank": "flagScenarioB2",
+   "mask": "0x00000002",
+   "label": "Forest examined: the crows attack (212)",
+   "source": "owner, ask mode 2026-10-13 (Jill, mansion → guardhouse)"
+  },
+  {
+   "bank": "flagScenarioB2",
+   "mask": "0x20000000",
+   "label": "Forest examined: the crows attack (212)",
+   "source": "owner, ask mode 2026-10-13 (Jill, mansion → guardhouse)"
+  },
+  {
+   "bank": "flagScenarioB3",
+   "mask": "0x80000000",
+   "label": "a zombie breaks out of the closet in the keeper's bedroom (10E)",
+   "source": "owner, ask mode 2026-10-13 (Jill, mansion → guardhouse)"
+  },
+  {
+   "bank": "flagRoom4",
+   "mask": "0x08000000",
+   "label": "took the keeper's diary (document, 10E)",
+   "source": "owner, ask mode 2026-10-13 (Jill, mansion → guardhouse)"
+  },
+  {
+   "bank": "flagScenarioB5",
+   "mask": "0x00400000",
+   "label": "chemical poured into the pump: the plant dies, the armor key is reachable (10C)",
+   "source": "owner, ask mode 2026-10-13 (Jill, mansion → guardhouse)"
+  },
+  {
+   "bank": "flagLocks0",
+   "mask": "0x00000002",
+   "label": "desk unlocked with the lockpick (102, shotgun shells inside)",
+   "source": "owner, ask mode 2026-10-13 (Jill, mansion → guardhouse)"
+  },
+  {
+   "bank": "flagScenarioB5",
+   "mask": "0x04000000",
+   "label": "piano played: the secret room opens, gold emblem taken (10F)",
+   "source": "owner, ask mode 2026-10-13 (Jill, mansion → guardhouse)"
+  },
+  {
+   "bank": "flagScenarioB5",
+   "mask": "0x02000000",
+   "label": "the secret room's door shuts after the gold emblem is taken (10F)",
+   "source": "owner, ask mode 2026-10-13 (Jill, mansion → guardhouse)"
+  },
+  {
+   "bank": "flagScenarioB5",
+   "mask": "0x01000000",
+   "label": "wood Emblem put in the 10F slot, the door reopens (Jill); set at the start of Chris's game until he takes the Emblem",
+   "source": "owner, ask mode 2026-10-13 (Jill, mansion → guardhouse)"
+  },
+  {
+   "bank": "flagScenarioB5",
+   "mask": "0x00100000",
+   "label": "gold emblem on the dining-room wall: the clock reveals the shield key (105)",
+   "source": "owner, ask mode 2026-10-13 (Jill, mansion → guardhouse)"
+  },
+  {
+   "bank": "flagLocks0",
+   "mask": "0x00000001",
+   "label": "desk unlocked with the lockpick (111)",
+   "source": "owner, ask mode 2026-10-13 (Jill, mansion → guardhouse)"
+  },
+  {
+   "bank": "flagScenarioA1",
+   "mask": "0x00000020",
+   "label": "floor switch pressed: the sun crest is revealed (205)",
+   "source": "owner, ask mode 2026-10-13 (Jill, mansion → guardhouse)"
+  },
+  {
+   "bank": "flagScenarioB1",
+   "mask": "0x10000000",
+   "label": "Richard is waiting for the serum (set when found in 20D, cleared when the serum is picked up)",
+   "source": "owner, ask mode 2026-10-13 (Jill, mansion → guardhouse)"
+  },
+  {
+   "bank": "flagScenarioB3",
+   "mask": "0x20000000",
+   "label": "Richard found poisoned (20D)",
+   "source": "owner, ask mode 2026-10-13 (Jill, mansion → guardhouse)"
+  },
+  {
+   "bank": "flagScenarioA2",
+   "mask": "0x00040000",
+   "label": "serum errand starts (15 minutes, after Richard's cutscene)",
+   "source": "owner, ask mode 2026-10-13 (Jill, mansion → guardhouse)"
+  },
+  {
+   "bank": "flagScenarioA2",
+   "mask": "0x00400000",
+   "label": "serum errand: reached the save room (100)",
+   "source": "owner, ask mode 2026-10-13 (Jill, mansion → guardhouse)"
+  },
+  {
+   "bank": "flagScenarioB3",
+   "mask": "0x10000000",
+   "label": "back with Richard carrying the serum (20D)",
+   "source": "owner, ask mode 2026-10-13 (Jill, mansion → guardhouse)"
+  },
+  {
+   "bank": "flagScenarioB3",
+   "mask": "0x04000000",
+   "label": "serum given to Richard (20D)",
+   "source": "owner, ask mode 2026-10-13 (Jill, mansion → guardhouse)"
+  },
+  {
+   "bank": "flagScenarioB3",
+   "mask": "0x40000000",
+   "label": "serum given to Richard (20D)",
+   "source": "owner, ask mode 2026-10-13 (Jill, mansion → guardhouse)"
+  },
+  {
+   "bank": "flagScenarioA3",
+   "mask": "0x00000001",
+   "label": "Richard gives Jill his radio",
+   "source": "owner, ask mode 2026-10-13 (Jill, mansion → guardhouse)"
+  },
+  {
+   "bank": "flagScenarioA0",
+   "mask": "0x00008000",
+   "label": "Yawn appears (210)",
+   "source": "owner, ask mode 2026-10-13 (Jill, mansion → guardhouse)"
+  },
+  {
+   "bank": "flagScenarioB2",
+   "mask": "0x10000000",
+   "label": "Yawn's first attack (210)",
+   "source": "owner, ask mode 2026-10-13 (Jill, mansion → guardhouse)"
+  },
+  {
+   "bank": "flagScenarioA2",
+   "mask": "0x01000000",
+   "label": "Jill faints from Yawn's poison (20E)",
+   "source": "owner, ask mode 2026-10-13 (Jill, mansion → guardhouse)"
+  },
+  {
+   "bank": "flagScenarioB2",
+   "mask": "0x00000200",
+   "label": "Jill faints from Yawn's poison (20E)",
+   "source": "owner, ask mode 2026-10-13 (Jill, mansion → guardhouse)"
+  },
+  {
+   "bank": "flagScenarioB1",
+   "mask": "0x20000000",
+   "label": "rescued after fainting and carried to the save room",
+   "source": "owner, ask mode 2026-10-13 (Jill, mansion → guardhouse)"
+  },
+  {
+   "bank": "flagScenarioA3",
+   "mask": "0x00000004",
+   "label": "waking up in the save room (100)",
+   "source": "owner, ask mode 2026-10-13 (Jill, mansion → guardhouse)"
+  },
+  {
+   "bank": "flagScenarioB3",
+   "mask": "0x02000000",
+   "label": "first time on the east stairway 2F (207)",
+   "source": "owner, ask mode 2026-10-13 (Jill, mansion → guardhouse)"
+  },
+  {
+   "bank": "flagScenarioB0",
+   "mask": "0x00800000",
+   "label": "took the researcher's will (Jill, 20A); set for Chris early in the main hall",
+   "source": "owner, ask mode 2026-10-13 (Jill, mansion → guardhouse)"
+  },
+  {
+   "bank": "flagRoom4",
+   "mask": "0x20000000",
+   "label": "took the researcher's will (document, 20A)",
+   "source": "owner, ask mode 2026-10-13 (Jill, mansion → guardhouse)"
+  },
+  {
+   "bank": "flagScenarioA0",
+   "mask": "0x00002000",
+   "label": "switch in the bug case: the aquarium drains (20A)",
+   "source": "owner, ask mode 2026-10-13 (Jill, mansion → guardhouse)"
+  },
+  {
+   "bank": "flagScenarioA0",
+   "mask": "0x00800000",
+   "label": "lighter used on the fireplace: the 2F map appears (20B)",
+   "source": "owner, ask mode 2026-10-13 (Jill, mansion → guardhouse)"
+  },
+  {
+   "bank": "flagRoomItems0",
+   "mask": "0x00004000",
+   "label": "took the mansion 2F map (20B)",
+   "source": "owner, ask mode 2026-10-13 (Jill, mansion → guardhouse)"
+  },
+  {
+   "bank": "flagRoom3",
+   "mask": "0x00000004",
+   "label": "took the mansion 2F map",
+   "source": "owner, ask mode 2026-10-13 (Jill, mansion → guardhouse)"
+  },
+  {
+   "bank": "flagScenarioA0",
+   "mask": "0x00200000",
+   "label": "candles lit in the small dining room: the bookcase moves (20F)",
+   "source": "owner, ask mode 2026-10-13 (Jill, mansion → guardhouse)"
+  },
+  {
+   "bank": "flagScenarioA3",
+   "mask": "0x00400000",
+   "label": "sun crest placed in the crest door (11A)",
+   "source": "owner, ask mode 2026-10-13 (Jill, mansion → guardhouse)"
+  },
+  {
+   "bank": "flagScenarioA3",
+   "mask": "0x00080000",
+   "label": "wind crest placed in the crest door (11A)",
+   "source": "owner, ask mode 2026-10-13 (Jill, mansion → guardhouse)"
+  },
+  {
+   "bank": "flagScenarioA3",
+   "mask": "0x00100000",
+   "label": "moon crest placed in the crest door (11A)",
+   "source": "owner, ask mode 2026-10-13 (Jill, mansion → guardhouse)"
+  },
+  {
+   "bank": "flagScenarioA0",
+   "mask": "0x00000800",
+   "label": "first time in the courtyard garden (300)",
+   "source": "owner, ask mode 2026-10-13 (Jill, mansion → guardhouse)"
+  },
+  {
+   "bank": "flagRoom3",
+   "mask": "0x00000002",
+   "label": "took the garden map",
+   "source": "owner, ask mode 2026-10-13 (Jill, mansion → guardhouse)"
+  },
+  {
+   "bank": "flagScenarioA1",
+   "mask": "0x00010000",
+   "label": "water drained at the water gate (301)",
+   "source": "owner, ask mode 2026-10-13 (Jill, mansion → guardhouse)"
+  },
+  {
+   "bank": "flagScenarioA2",
+   "mask": "0x00002000",
+   "label": "water drained at the water gate (301)",
+   "source": "owner, ask mode 2026-10-13 (Jill, mansion → guardhouse)"
+  },
+  {
+   "bank": "flagScenarioA1",
+   "mask": "0x00008000",
+   "label": "elevator down to the falls (301)",
+   "source": "owner, ask mode 2026-10-13 (Jill, mansion → guardhouse)"
+  },
+  {
+   "bank": "flagScenarioA0",
+   "mask": "0x00000002",
+   "label": "first time in the guardhouse (400)",
+   "source": "owner, ask mode 2026-10-13 (Jill, mansion → guardhouse)"
+  },
+  {
+   "bank": "flagScenarioA2",
+   "mask": "0x00004000",
+   "label": "statue pushed over the hole (400)",
+   "source": "owner, ask mode 2026-10-13 (Jill, mansion → guardhouse)"
   }
  ]
 }
