@@ -49,6 +49,38 @@ def notes(run: Path | None) -> list[dict]:
     for room, info in rooms["rooms"].items():
         if info.get("name"):
             found.append({"text": f"Room {room} is the {info['name']} ({info.get('area', '')}).", "kind": "room", "room": room})
+    research = run.parent if run else None
+    # Room scripts (tools/rdt/scd.py --json): what each room places or starts, and under which conditions.
+    for character in ("jill", "chris"):
+        scripts = research / f"scripts-{character}.json" if research else None
+        if scripts and scripts.exists():
+            for room, listing in json.loads(scripts.read_text(encoding="utf-8")).items():
+                facts = []
+                for part in ("init", "main"):
+                    for st in listing[part]:
+                        if st["kind"] in ("item", "event", "flag", "door", "player", "enemy", "fmv") or (
+                                st["kind"] == "action" and st.get("handler") in (3, 4, 7, 9)):
+                            guard = (" when " + " / ".join(st["guards"])) if st["guards"] else ""
+                            facts.append(st["text"] + guard)
+                for i in range(0, len(facts), 6):  # small chunks rerank better than one long note
+                    found.append({"text": f"Room {room} script ({character}): " + "; ".join(facts[i:i + 6]),
+                                  "kind": "script", "room": room})
+    # Pickup sweep results and flag-timeline windows, when present.
+    for name in ("pickup-jill.jsonl", "pickup-chris.jsonl"):
+        path = research / "pickup" / name if research else None
+        if path and path.exists():
+            for line in path.read_text(encoding="utf-8").splitlines():
+                e = json.loads(line)
+                item = names["items"].get(str(e["item"]), e["item"])
+                outcome = e.get("note") or e.get("error") or ("picked up" + (" through scenery" if e.get("throughScenery") else "")
+                                                               if e.get("itemMatches") else "no pickup prompt")
+                found.append({"text": f"Room {e['room']} ({e['character']}, new game): {item} (item flag {e['flag']}) — {outcome}.",
+                              "kind": "pickup", "room": e["room"]})
+    timeline = research / "flag-timeline.md" if research else None
+    if timeline and timeline.exists():
+        for line in timeline.read_text(encoding="utf-8").splitlines():
+            if line.startswith("- "):
+                found.append({"text": "Flag timeline: " + line[2:].replace("`", ""), "kind": "timeline"})
     if run and (run / "atlas.md").exists():
         room, lines = None, []
         for line in (run / "atlas.md").read_text(encoding="utf-8").splitlines():
