@@ -9,6 +9,9 @@ All notable changes to this project are documented here. The format follows
 ### Added
 - Map page (read-only): the room you're in, drawn from your own install's room files — walls and furniture, doors with the room they lead to, item spots for your character — with your position and facing live. Items show as in the room now, taken,
   or coming later in the story, and items put in place (the gold emblem in its slot) show where they sit.
+  Enemies and people in the room are drawn live (a shape and colour per kind, bosses as stars, people as blue
+  squares), and rooms show their names next to the number on the map and the dashboard. Jill's map and progress
+  no longer list ink ribbons: the game never places them in her game.
 - Progress page (read-only): per area, items taken vs still there, documents and maps, rooms explored (the game's own
   room table) and enemies defeated for good, with what's left and where; plus the story so far from the named events.
   Read from the game's flags, so it works from a loaded save. `tools/bounties/progress_preview.py` shows the same for a

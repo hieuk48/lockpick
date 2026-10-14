@@ -54,6 +54,9 @@ public interface IGameAdapter
     /// <paramref name="installDirectory"/>; null when the adapter can't.
     /// </summary>
     Maps.IRoomMapSource? CreateRoomMaps(string installDirectory) => null;
+
+    /// <summary>A short name for the room (e.g. "Dining room"), or null when the adapter doesn't know it.</summary>
+    string? RoomName(string roomId) => null;
 }
 
 /// <summary>A verified connection to one running game process.</summary>

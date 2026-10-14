@@ -67,6 +67,24 @@ public class Re1ProgressTrackerTests
     }
 
     [Fact]
+    public void Ink_ribbons_are_listed_for_Chris_but_never_for_Jill()
+    {
+        static bool Ribbons(ProgressReport report) =>
+            report.Areas.SelectMany(a => a.Groups).SelectMany(g => g.Entries).Any(e => e.Name == "Ink ribbon");
+
+        Assert.False(Ribbons(_tracker.Evaluate(Jill())!));
+        Assert.True(Ribbons(_tracker.Evaluate(Jill(("character", 0)))!));
+    }
+
+    [Fact]
+    public void The_adapter_names_rooms_it_knows()
+    {
+        var adapter = new Re1Adapter();
+        Assert.Equal("Dining room", adapter.RoomName("105"));
+        Assert.Null(adapter.RoomName("XYZ"));
+    }
+
+    [Fact]
     public void Nothing_is_reported_outside_a_game()
     {
         Assert.Null(_tracker.Evaluate(new GameSnapshot { InGameplay = Field<bool>.Valid(false) }));

@@ -17,6 +17,10 @@ internal sealed class Re1ProgressTracker(Re1Knowledge knowledge) : IProgressTrac
     /// <summary>Room "items" that are never picked up: Jill's lockpick is handed over by Barry in a cutscene.</summary>
     private static readonly HashSet<int> NotPickups = [49];
 
+    // Jill's room files list ink ribbons, but the game never places them for her (no ribbons in her game: none of her
+    // 20 ribbon spots was ever armed in the 2026-10-14 pickup sweep across every story phase; Chris picked up 10 of 14).
+    private const int InkRibbon = 0x2F;
+
     /// <summary>The game's rooms-visited table (0x4D31E0 / 0x4D31E8): first flag and room count per stage 1–5.</summary>
     private static readonly (int Base, int Rooms)[] VisitTable = [(0, 32), (32, 31), (63, 19), (82, 18), (100, 24)];
 
@@ -31,7 +35,9 @@ internal sealed class Re1ProgressTracker(Re1Knowledge knowledge) : IProgressTrac
         bool Mine(FlagUse u) => u.Player == player || u.Player == "both";
 
         // One entry per flag (a flag can appear in several rooms' scripts); the first room listed is where it is.
-        var items = knowledge.Items.Where(u => Mine(u) && u.Flag >= 0 && !NotPickups.Contains(u.What)).GroupBy(u => u.Flag).Select(g => g.First()).ToList();
+        var items = knowledge.Items.Where(u => Mine(u) && u.Flag >= 0 && !NotPickups.Contains(u.What)
+                && !(player == "jill" && u.What == InkRibbon))
+            .GroupBy(u => u.Flag).Select(g => g.First()).ToList();
         var enemies = knowledge.Enemies.Where(u => Mine(u) && u.Flag is >= 0 and not NotRemembered && u.What < FirstNpcType)
             .GroupBy(u => u.Flag).Select(g => g.First()).ToList();
 

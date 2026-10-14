@@ -24,6 +24,10 @@ public sealed class RoomMapControl : Control
         AvaloniaProperty.Register<RoomMapControl, IReadOnlySet<MapItem>?>(nameof(TakenItems));
     public static readonly StyledProperty<IReadOnlySet<MapSocket>?> FilledSocketsProperty =
         AvaloniaProperty.Register<RoomMapControl, IReadOnlySet<MapSocket>?>(nameof(FilledSockets));
+    public static readonly StyledProperty<IReadOnlyDictionary<string, string>?> DoorNamesProperty =
+        AvaloniaProperty.Register<RoomMapControl, IReadOnlyDictionary<string, string>?>(nameof(DoorNames));
+    public static readonly StyledProperty<IReadOnlyList<LiveActor>?> ActorsProperty =
+        AvaloniaProperty.Register<RoomMapControl, IReadOnlyList<LiveActor>?>(nameof(Actors));
     public static readonly StyledProperty<bool> HasPlayerProperty = AvaloniaProperty.Register<RoomMapControl, bool>(nameof(HasPlayer));
     public static readonly StyledProperty<IBrush?> WallBrushProperty = AvaloniaProperty.Register<RoomMapControl, IBrush?>(nameof(WallBrush));
     public static readonly StyledProperty<IBrush?> SoftBrushProperty = AvaloniaProperty.Register<RoomMapControl, IBrush?>(nameof(SoftBrush));
@@ -37,7 +41,7 @@ public sealed class RoomMapControl : Control
 
     static RoomMapControl()
     {
-        AffectsRender<RoomMapControl>(MapProperty, PlacedItemsProperty, TakenItemsProperty, FilledSocketsProperty, PlayerXProperty, PlayerZProperty, PlayerAngleProperty, HasPlayerProperty,
+        AffectsRender<RoomMapControl>(MapProperty, PlacedItemsProperty, TakenItemsProperty, FilledSocketsProperty, DoorNamesProperty, ActorsProperty, PlayerXProperty, PlayerZProperty, PlayerAngleProperty, HasPlayerProperty,
             WallBrushProperty, SoftBrushProperty, DoorBrushProperty, ItemBrushProperty, PlayerBrushProperty,
             FaintTextBrushProperty, LabelPlateBrushProperty);
     }
@@ -60,6 +64,12 @@ public sealed class RoomMapControl : Control
 
     /// <summary>Room-file items the player has already taken (labelled "taken" rather than "later").</summary>
     public IReadOnlySet<MapItem>? TakenItems { get => GetValue(TakenItemsProperty); set => SetValue(TakenItemsProperty, value); }
+
+    /// <summary>Enemies and NPCs in the room right now.</summary>
+    public IReadOnlyList<LiveActor>? Actors { get => GetValue(ActorsProperty); set => SetValue(ActorsProperty, value); }
+
+    /// <summary>Door labels by target room id ("106 Main hall"); the id alone when missing.</summary>
+    public IReadOnlyDictionary<string, string>? DoorNames { get => GetValue(DoorNamesProperty); set => SetValue(DoorNamesProperty, value); }
 
     /// <summary>Use spots whose item has been put in place (e.g. the gold emblem in its slot).</summary>
     public IReadOnlySet<MapSocket>? FilledSockets { get => GetValue(FilledSocketsProperty); set => SetValue(FilledSocketsProperty, value); }
@@ -118,7 +128,7 @@ public sealed class RoomMapControl : Control
         {
             var rect = R(d.X, d.Z, d.X + d.Width, d.Z + d.Depth);
             context.DrawRectangle(null, doorPen, rect);
-            DrawLabel(context, d.Target, rect.Center, DoorBrush, 12);
+            DrawLabel(context, DoorNames?.GetValueOrDefault(d.Target) ?? d.Target, rect.Center, DoorBrush, 12);
         }
 
         var placed = PlacedItems;
@@ -166,6 +176,11 @@ public sealed class RoomMapControl : Control
             }
         }
 
+        foreach (var actor in Actors ?? [])
+        {
+            DrawActor(context, actor, P(actor.X, actor.Z));
+        }
+
         if (HasPlayer && PlayerBrush is not null)
         {
             var at = P(PlayerX, PlayerZ);
@@ -188,6 +203,90 @@ public sealed class RoomMapControl : Control
         }
     }
 
+    private enum Glyph
+    {
+        Circle,
+        Triangle,
+        Diamond,
+        Square,
+        Hexagon,
+        Star,
+    }
+
+    // One look per family of enemy type (RE1 ids; names.json): shape, colour and a letter inside.
+    private static (Glyph Shape, Color Color, string Letter) Style(LiveActor actor) => actor.Kind switch
+    {
+        ActorKind.Npc => (Glyph.Square, Color.Parse("#4FA3FF"), actor.Name.Length > 0 ? actor.Name[..1] : "?"),
+        ActorKind.Boss => (Glyph.Star, Color.Parse("#E040FB"), "B"),
+        _ => actor.Type switch
+        {
+            0 or 1 or 17 => (Glyph.Circle, Color.Parse("#7CB342"), "Z"),   // zombies
+            2 => (Glyph.Triangle, Color.Parse("#FF8A3D"), "D"),            // Cerberus
+            3 => (Glyph.Hexagon, Color.Parse("#B388FF"), "S"),             // giant spider
+            5 => (Glyph.Diamond, Color.Parse("#B0BEC5"), "C"),             // crow
+            6 => (Glyph.Triangle, Color.Parse("#FF5252"), "H"),            // hunter
+            7 => (Glyph.Diamond, Color.Parse("#FFD740"), "W"),             // wasp
+            9 => (Glyph.Hexagon, Color.Parse("#26C6DA"), "C"),             // chimera
+            10 => (Glyph.Circle, Color.Parse("#C6FF00"), "S"),             // snake
+            _ => (Glyph.Circle, Color.Parse("#9E9E9E"), "?"),              // plants, webs, the lab arms
+        },
+    };
+
+    private void DrawActor(DrawingContext context, LiveActor actor, Point at)
+    {
+        var (shape, color, letter) = Style(actor);
+        var size = actor.Kind == ActorKind.Boss ? 11.0 : 8.0;
+        var fill = new SolidColorBrush(color, 0.85);
+        var pen = new Pen(new SolidColorBrush(Colors.Black, 0.8), 1.2);
+        var geometry = new StreamGeometry();
+        using (var g = geometry.Open())
+        {
+            var corners = shape switch
+            {
+                Glyph.Triangle => 3,
+                Glyph.Diamond or Glyph.Square => 4,
+                Glyph.Hexagon => 6,
+                Glyph.Star => 10,
+                _ => 0,
+            };
+            if (corners == 0)
+            {
+                g.BeginFigure(at + new Vector(size, 0), true);
+                g.ArcTo(at - new Vector(size, 0), new Size(size, size), 0, false, SweepDirection.Clockwise);
+                g.ArcTo(at + new Vector(size, 0), new Size(size, size), 0, false, SweepDirection.Clockwise);
+            }
+            else
+            {
+                var start = shape == Glyph.Square ? Math.PI / 4 : -Math.PI / 2;
+                for (var i = 0; i < corners; i++)
+                {
+                    var r = shape == Glyph.Star && i % 2 == 1 ? size * 0.5 : size;
+                    var a = start + i * 2 * Math.PI / corners;
+                    var p = at + new Vector(Math.Cos(a) * r, Math.Sin(a) * r);
+                    if (i == 0)
+                    {
+                        g.BeginFigure(p, true);
+                    }
+                    else
+                    {
+                        g.LineTo(p);
+                    }
+                }
+            }
+
+            g.EndFigure(true);
+        }
+
+        context.DrawGeometry(fill, pen, geometry);
+        // Facing: a short tick (world direction (cos θ, −sin θ); screen Y runs opposite to Z).
+        var theta = actor.Angle * Math.PI * 2 / 4096;
+        var facing = new Vector(Math.Cos(theta), Math.Sin(theta));
+        context.DrawLine(new Pen(fill, 2), at + facing * size, at + facing * (size + 6));
+        var text = new FormattedText(letter, CultureInfo.CurrentCulture, FlowDirection.LeftToRight, Typeface.Default, size, Brushes.Black);
+        context.DrawText(text, at - new Vector(text.Width / 2, text.Height / 2));
+        DrawLabel(context, actor.Name, at + new Vector(0, size + 9), fill, 10);
+    }
+
     private void DrawLabel(DrawingContext context, string text, Point center, IBrush? brush, double size)
     {
         if (brush is null || string.IsNullOrEmpty(text))
@@ -197,6 +296,9 @@ public sealed class RoomMapControl : Control
 
         var formatted = new FormattedText(text, CultureInfo.CurrentCulture, FlowDirection.LeftToRight, Typeface.Default, size, brush);
         var origin = center - new Vector(formatted.Width / 2, formatted.Height / 2);
+        // Keep labels inside the control (actors can stand outside the room's walls, e.g. a script-placed zombie).
+        origin = new Point(Math.Clamp(origin.X, 4, Math.Max(4, Bounds.Width - formatted.Width - 4)),
+            Math.Clamp(origin.Y, 2, Math.Max(2, Bounds.Height - formatted.Height - 2)));
         if (LabelPlateBrush is { } plate)
         {
             context.DrawRectangle(plate, null, new Rect(origin, new Size(formatted.Width, formatted.Height)).Inflate(new Thickness(4, 1)), 3, 3);

@@ -30,6 +30,17 @@ public readonly record struct RoomLocation(int Stage, int Room)
 /// <summary>An item the game has placed in the current room right now (adapter-specific id; zone in room units).</summary>
 public sealed record PlacedItem(int ItemId, int X, int Z, int Width, int Depth);
 
+/// <summary>What a live actor is, for drawing: an ordinary enemy, a boss, or a non-player character (partners etc.).</summary>
+public enum ActorKind
+{
+    Enemy,
+    Boss,
+    Npc,
+}
+
+/// <summary>An enemy or NPC in the current room right now (adapter-specific type id; room units; raw facing).</summary>
+public sealed record LiveActor(int Slot, int Type, string Name, ActorKind Kind, int X, int Z, int Angle, int Hp);
+
 /// <summary>World position in game units. Orientation is kept raw because units differ per game.</summary>
 public readonly record struct Position(int X, int Y, int Z)
 {
@@ -87,6 +98,11 @@ public sealed record GameSnapshot
     /// </summary>
     [JsonIgnore]
     public Field<IReadOnlyList<PlacedItem>> PlacedItems { get; init; } = Field<IReadOnlyList<PlacedItem>>.Unsupported;
+
+    /// <summary>Enemies and NPCs active in the current room (for the map; not recorded in captures, whose regions hold
+    /// the raw slots).</summary>
+    [JsonIgnore]
+    public Field<IReadOnlyList<LiveActor>> Actors { get; init; } = Field<IReadOnlyList<LiveActor>>.Unsupported;
 
     /// <summary>
     /// Compares the game-facing content of two snapshots, ignoring sequence, timestamp and raw diagnostics.

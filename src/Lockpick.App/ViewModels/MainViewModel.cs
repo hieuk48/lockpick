@@ -18,7 +18,7 @@ public sealed partial class MainViewModel : ObservableObject, IDisposable
         State = new LiveState(services.Source);
         Debug = new DebugViewModel(services, State);
         _settings = new SettingsViewModel(services, RunSetup);
-        Pages = [new DashboardViewModel(State), new ProgressViewModel(services, State), new MapViewModel(services, State), Debug, _settings];
+        Pages = [new DashboardViewModel(State, services.Adapter.RoomName), new ProgressViewModel(services, State), new MapViewModel(services, State), Debug, _settings];
         SelectedPage = Pages[0];
         Updates = services.Updates;
         State.PropertyChanged += OnStateChanged;

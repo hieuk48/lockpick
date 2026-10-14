@@ -76,6 +76,38 @@ public class Re1AdapterTests
     }
 
     [Fact]
+    public void Active_enemies_and_npcs_are_read_and_dead_or_inactive_slots_skipped()
+    {
+        NewChrisGameInMainHall();
+        void Slot(int i, byte flags, byte type, int x, int z, short hp)
+        {
+            var at = Re1Session.ActorSlots + (ulong)(i * Re1Session.ActorSize);
+            var bytes = new byte[Re1Session.ActorSize];
+            bytes[0] = flags;
+            bytes[1] = type;
+            BitConverter.GetBytes(x).CopyTo(bytes, 0x34);
+            BitConverter.GetBytes(z).CopyTo(bytes, 0x3C);
+            BitConverter.GetBytes(hp).CopyTo(bytes, 0x88);
+            _memory.Write(at, bytes);
+        }
+
+        _memory.Write(Re1Session.ActorSlots, new byte[Re1Session.ActorSize * Re1Session.ActorCount]);
+        Slot(0, 1, 0, 5300, 5800, 63);    // a zombie
+        Slot(1, 1, 13, 100, 200, 3050);   // Yawn (boss)
+        Slot(2, 1, 0, 0, 0, -1);          // a dead zombie
+        Slot(3, 0, 2, 0, 0, 60);          // an inactive slot
+        Slot(4, 1, 34, 900, 900, 0);      // Barry (NPC, HP 0)
+        var session = new Re1Session(new ValidatedMemory(_memory, [_profile.ImageRange]), _profile, Re1Adapter.ActorInfo);
+
+        var actors = session.Read(1, T0).Actors.Value;
+
+        Assert.Equal([0, 1, 4], actors.Select(a => a.Slot));
+        Assert.Equal(new LiveActor(0, 0, "Zombie", ActorKind.Enemy, 5300, 5800, 0, 63), actors[0]);
+        Assert.Equal(ActorKind.Boss, actors[1].Kind);
+        Assert.Equal(("Barry", ActorKind.Npc), (actors[2].Name, actors[2].Kind));
+    }
+
+    [Fact]
     public void Placed_items_are_reread_once_a_second_and_on_room_change()
     {
         NewChrisGameInMainHall();
@@ -269,8 +301,8 @@ public class Re1AdapterTests
         var s = session.Read(1, T0);
 
         // A few block reads for the fields, plus the room's placed items (the action table; the fake has no
-        // entries, so no record reads) - refreshed once a second.
-        Assert.InRange(session.LastReadCalls, 1, 5);
+        // entries, so no record reads) - refreshed once a second - and one block for the enemy/NPC slots.
+        Assert.InRange(session.LastReadCalls, 1, 6);
         Assert.Equal(new Health(140, 140), s.Health.Value);
         Assert.Equal("106", s.Location.Value.Id);
         Assert.Equal(0x0F02, s.RawFields["inv1"].Value);

@@ -28,6 +28,7 @@ public sealed class Re1RoomMaps : IRoomMapSource
     ];
 
     private const int HeaderSize = 0x94;
+    private const int InkRibbon = 0x2F;
     private const int MaxFileSize = 4 * 1024 * 1024;
 
     private readonly string _stageRoot;
@@ -55,9 +56,11 @@ public sealed class Re1RoomMaps : IRoomMapSource
             try
             {
                 var info = new FileInfo(path);
-                return info.Exists && info.Length is >= HeaderSize and <= MaxFileSize
+                var map = info.Exists && info.Length is >= HeaderSize and <= MaxFileSize
                     ? Parse(File.ReadAllBytes(path), room, _itemName)
                     : null;
+                // Jill's room files list ink ribbons the game never places for her (Re1ProgressTracker.InkRibbon).
+                return map is not null && variant == 1 ? map with { Items = [.. map.Items.Where(i => i.ItemId != InkRibbon)] } : map;
             }
             catch (IOException)
             {

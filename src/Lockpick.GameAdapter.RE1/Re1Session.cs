@@ -47,9 +47,19 @@ internal sealed class Re1Session : IGameSession
     private const int PickupHandler = 4;
     private static readonly TimeSpan PlacedRefresh = TimeSpan.FromSeconds(1);
 
-    public Re1Session(IProcessMemory memory, VersionProfile profile)
+    // Enemy/NPC slots (live 2026-10-14, the dev combat tests: +0x00 bit 0 active, +0x01 type, +0x34/+0x3C X/Z as i32,
+    // +0x74 facing, +0x88 HP as i16; a dead enemy's HP goes to −1 or below).
+    internal const ulong ActorSlots = 0xBE6464;
+    internal const int ActorSize = 0x18C;
+    internal const int ActorCount = 30;
+    private const int FirstNpcType = 0x20;
+    private readonly Func<int, (string Name, ActorKind Kind)> _actorInfo;
+    private readonly byte[] _actorBuffer = new byte[ActorSize * ActorCount];
+
+    public Re1Session(IProcessMemory memory, VersionProfile profile, Func<int, (string Name, ActorKind Kind)>? actorInfo = null)
     {
         _memory = memory;
+        _actorInfo = actorInfo ?? (type => ($"type {type}", type >= FirstNpcType ? ActorKind.Npc : ActorKind.Enemy));
         Profile = profile;
         _fields = profile.Fields;
         _trusted = new HashSet<string>(profile.Fields.Where(f => f.IsTrusted).Select(f => f.Name), StringComparer.OrdinalIgnoreCase);
@@ -105,7 +115,8 @@ internal sealed class Re1Session : IGameSession
                 _placedAt = now;
             }
 
-            snapshot = snapshot with { PlacedItems = _placed };
+            calls++;
+            snapshot = snapshot with { PlacedItems = _placed, Actors = ReadActors() };
         }
         if (CaptureRegions && Profile.CaptureRegions.Count > 0)
         {
@@ -126,6 +137,34 @@ internal sealed class Re1Session : IGameSession
         LastReadCalls = calls;
         _previous = snapshot;
         return snapshot;
+    }
+
+    private Field<IReadOnlyList<LiveActor>> ReadActors()
+    {
+        if (!_memory.TryRead(ActorSlots, _actorBuffer))
+        {
+            return Field<IReadOnlyList<LiveActor>>.Unavailable;
+        }
+
+        var actors = new List<LiveActor>();
+        for (var i = 0; i < ActorCount; i++)
+        {
+            var e = _actorBuffer.AsSpan(i * ActorSize, ActorSize);
+            var type = e[1];
+            var hp = System.Buffers.Binary.BinaryPrimitives.ReadInt16LittleEndian(e[0x88..]);
+            // Inactive slots, and dead enemies (NPCs keep HP 0 or −1 and stay drawn while active).
+            if ((e[0] & 1) == 0 || (type < FirstNpcType && hp <= 0))
+            {
+                continue;
+            }
+
+            var (name, kind) = _actorInfo(type);
+            actors.Add(new LiveActor(i, type, name, kind, System.Buffers.Binary.BinaryPrimitives.ReadInt32LittleEndian(e[0x34..]),
+                System.Buffers.Binary.BinaryPrimitives.ReadInt32LittleEndian(e[0x3C..]),
+                System.Buffers.Binary.BinaryPrimitives.ReadInt16LittleEndian(e[0x74..]), hp));
+        }
+
+        return Field<IReadOnlyList<LiveActor>>.Valid(actors);
     }
 
     private Field<IReadOnlyList<PlacedItem>> ReadPlacedItems(ref int calls)

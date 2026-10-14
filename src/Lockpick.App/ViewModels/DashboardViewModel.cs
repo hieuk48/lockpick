@@ -62,10 +62,13 @@ public sealed partial class DashboardViewModel : PageViewModel
         GameTime = Field<TimeSpan>.Unavailable,
     };
 
-    public DashboardViewModel(LiveState state)
+    private readonly Func<string, string?> _roomName;
+
+    public DashboardViewModel(LiveState state, Func<string, string?>? roomName = null)
         : base("Dashboard", "Icon.LayoutDashboard")
     {
         State = state;
+        _roomName = roomName ?? (_ => null);
         state.PropertyChanged += OnStateChanged;
         Refresh();
     }
@@ -145,7 +148,9 @@ public sealed partial class DashboardViewModel : PageViewModel
         Gameplay.Set(s.InGameplay, v => v ? "In game" : "Title / not started");
         Character.Set(s.Character, v => v.ToString());
         Health.Set(s.Health, v => v.ToString());
-        Room.Set(s.Location, v => $"Stage {v.Stage} · Room {v.Room:X2} ({v.Id})");
+        Room.Set(s.Location, v => _roomName(v.Id) is { } name
+            ? $"{v.Id} {name} (stage {v.Stage})"
+            : $"Stage {v.Stage} · Room {v.Room:X2} ({v.Id})");
         Camera.Set(s.Camera, v => v.ToString(Inv));
         Position.Set(s.Position, v => v.ToString());
         GameTime.Set(s.GameTime, v => $"{(int)v.TotalHours:D2}:{v.Minutes:D2}:{v.Seconds:D2}.{v.Milliseconds / 10:D2}");

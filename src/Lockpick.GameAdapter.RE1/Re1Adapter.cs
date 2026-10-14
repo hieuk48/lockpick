@@ -53,7 +53,7 @@ public sealed class Re1Adapter : IGameAdapter
             throw new AttachRejectedException($"Running image does not match profile {profile.Id}: {string.Join("; ", problems)}");
         }
 
-        return new Re1Session(new ValidatedMemory(process, ImageVerifier.AllowedRanges(profile)), profile);
+        return new Re1Session(new ValidatedMemory(process, ImageVerifier.AllowedRanges(profile)), profile, ActorInfo);
     }
 
     public Core.Insight.IChangeExplainer CreateChangeExplainer(VersionProfile profile) =>
@@ -61,6 +61,16 @@ public sealed class Re1Adapter : IGameAdapter
 
     public Core.Insight.IProgressTracker CreateProgressTracker(VersionProfile profile) =>
         new Re1ProgressTracker(Re1Knowledge.LoadEmbedded());
+
+    private static readonly Lazy<Re1Knowledge> Knowledge = new(Re1Knowledge.LoadEmbedded);
+
+    // Bosses by enemy type (names.json): Black Tiger, Plant 42, Neptune, Tyrant, Yawn, final Tyrant, Yawn's second fight.
+    private static readonly HashSet<int> Bosses = [4, 8, 11, 12, 13, 16, 18];
+
+    internal static (string Name, Core.State.ActorKind Kind) ActorInfo(int type) =>
+        (Knowledge.Value.Enemy(type), type >= 0x20 ? Core.State.ActorKind.Npc : Bosses.Contains(type) ? Core.State.ActorKind.Boss : Core.State.ActorKind.Enemy);
+
+    public string? RoomName(string roomId) => Knowledge.Value.RoomNames.TryGetValue(roomId, out var name) ? name : null;
 
     public Core.Maps.IRoomMapSource CreateRoomMaps(string installDirectory)
     {

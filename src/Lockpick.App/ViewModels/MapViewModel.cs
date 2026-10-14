@@ -46,6 +46,14 @@ public sealed partial class MapViewModel : PageViewModel
     [ObservableProperty]
     public partial bool HasPlayer { get; private set; }
 
+    /// <summary>Enemies and NPCs in the room right now (null when the game doesn't report them).</summary>
+    [ObservableProperty]
+    public partial IReadOnlyList<LiveActor>? Actors { get; private set; }
+
+    /// <summary>Door label per target room ("106 Main hall"), falling back to the room id.</summary>
+    [ObservableProperty]
+    public partial IReadOnlyDictionary<string, string>? DoorNames { get; private set; }
+
     /// <summary>Room-file items already taken in this game.</summary>
     [ObservableProperty]
     public partial IReadOnlySet<MapItem>? TakenItems { get; private set; }
@@ -123,13 +131,17 @@ public sealed partial class MapViewModel : PageViewModel
         if (!ReferenceEquals(map, Map))
         {
             Map = map;
+            DoorNames = map is null ? null : map.Doors.Select(d => d.Target).Distinct()
+                .ToDictionary(t => t, t => _services.Adapter.RoomName(t) is { } n ? $"{t} {n}" : t);
             Details = map is null
                 ? string.Empty
                 : string.Create(CultureInfo.InvariantCulture,
                     $"{map.Doors.Count} doors · {map.Items.Count} item spots · {map.Cameras.Count} cameras · from your install's room files");
         }
 
-        Heading = map is null ? $"Room {room.Id} — no map for this room" : $"Room {room.Id}";
+        var name = _services.Adapter.RoomName(room.Id);
+        var title = name is null ? $"Room {room.Id}" : $"Room {room.Id} · {name}";
+        Heading = map is null ? $"{title} — no map for this room" : title;
         if (map is not null)
         {
             var taken = map.Items.Where(i => maps.IsTaken(i, s) == true).ToHashSet();
@@ -143,6 +155,12 @@ public sealed partial class MapViewModel : PageViewModel
             {
                 FilledSockets = filled;
             }
+        }
+
+        var actors = s.Actors.TryGet(out var live) ? live : null;
+        if (actors is null != Actors is null || (actors is not null && Actors is not null && !actors.SequenceEqual(Actors)))
+        {
+            Actors = actors;
         }
 
         var placed = s.PlacedItems.TryGet(out var items) ? items : null;
