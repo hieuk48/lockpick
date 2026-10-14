@@ -250,6 +250,10 @@ Used by the developer-only autoplay harness (`tools/Lockpick.Autoplay`), never b
 | `0x441F0C`–`0x441F75` | main-loop limiter: when `[0x4D46D8]` != 0 and `[0x4BCB48]` == 1, `main_loop` runs once per `[0x4BCB54]` ms (33 = 30 ticks/s) | disassembly; live: `[0x4BCB54]` read 33 with mode 1, writing a smaller interval fast-forwards cutscenes (measured from a capture of the 2026-10-14 run: with 4 ms the game clock ran up to 8.2× real time in the opening — the full 33/4 — and 3–6× in rooms, presumably render-bound) |
 | `0xBF0A04` | raw pad word — see "Focus and input" | live |
 
+Item names (static, decoded 2026-10-14): `0x4BF0A0` is the item-name pointer table, entry *i* = item id *i* + 1
+(index 0 = combat knife); strings use the game's text encoding (`0x00` space, `0x0C`–`0x15` digits, `0x1D`–`0x36`
+A–Z, `0x3D`–`0x56` a–z, `0x79` `.`, `0x01`/`0x07` end). `data/games/re1/names.json` was checked against it.
+
 Event-script slots (lead): `0xBF084C`, 8 × `0x34` bytes, `+0x00` state, `+0x02` active — one slot stays active
 during free movement, several during the opening cutscene.
 
