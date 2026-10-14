@@ -152,7 +152,8 @@
           "evidence": [
             "first aid spray (full heal) seen",
             "2026-10-13: id 0x44 consumed while HP went 54 → 86 (+32, Jill) — likely green herb (BioRand id 68)",
-            "2026-10-13 (live session 4, Jill, memory log): id 0x47 (made from two 0x44) consumed while HP went 71 → 96 (capped at max) — likely mixed herb (green + green)"
+            "2026-10-13 (live session 4, Jill, memory log): id 0x47 (made from two 0x44) consumed while HP went 71 → 96 (capped at max) — likely mixed herb (green + green)",
+            "evidence in 2026-10-13 live session 7 (Jill, ask mode, mansion to guardhouse): HP 56 → 96 — needs review"
           ],
           "detector": "healing"
         },
@@ -199,7 +200,8 @@
           "status": "partial",
           "detector": "full_inventory",
           "evidence": [
-            "2026-10-13 (live session 5, Jill): refused pickup with all 8 of Jill's slots full (blue gem, dining room 105): stateFlags 0x800 (interacting) + 0x8000 (message) with no inventory or room-item flag change. After combining the empty Beretta with a clip freed slot 8, the same action picked the gem up into it. Chris's 6-slot limit not yet observed"
+            "2026-10-13 (live session 5, Jill): refused pickup with all 8 of Jill's slots full (blue gem, dining room 105): stateFlags 0x800 (interacting) + 0x8000 (message) with no inventory or room-item flag change. After combining the empty Beretta with a clip freed slot 8, the same action picked the gem up into it. Chris's 6-slot limit not yet observed",
+            "evidence in 2026-10-13 live session 7 (Jill, ask mode, mansion to guardhouse): all 8 inventory slots filled — needs review"
           ]
         },
         {
@@ -245,7 +247,7 @@
           "verifies": "Room ids, cameras per room, door connections",
           "status": "partial",
           "evidence": [
-            "rooms seen: 104 105 106 107 108 109 10A 10B 10F 113 115 116 117 118 11A"
+            "rooms seen: 100 101 102 103 104 105 106 107 108 109 10A 10B 10C 10D 10E 10F 111 112 113 115 116 117 118 11A 11B"
           ],
           "detector": "rooms_stage_1"
         },
@@ -255,7 +257,7 @@
           "verifies": "Same",
           "status": "partial",
           "evidence": [
-            "rooms seen: 203 204 206 207 20B"
+            "rooms seen: 201 202 203 204 205 206 207 208 209 20A 20B 20D 20E 20F 210 211 212"
           ],
           "detector": "rooms_stage_2"
         },
@@ -263,15 +265,21 @@
           "id": "B303",
           "task": "Visit every reachable room in **stage 3**",
           "verifies": "Same; stage identity",
-          "status": "needed",
-          "detector": "rooms_stage_3"
+          "status": "partial",
+          "detector": "rooms_stage_3",
+          "evidence": [
+            "rooms seen: 300 301 302 304"
+          ]
         },
         {
           "id": "B304",
           "task": "Visit every reachable room in **stage 4**",
           "verifies": "Same; stage identity",
-          "status": "needed",
-          "detector": "rooms_stage_4"
+          "status": "partial",
+          "detector": "rooms_stage_4",
+          "evidence": [
+            "rooms seen: 400 401 403"
+          ]
         },
         {
           "id": "B305",
@@ -334,8 +342,11 @@
           "id": "B314",
           "task": "Boss fights: **Yawn** (both), **Plant 42**, **Neptune**, **Black Tiger**, **Tyrant** (both)",
           "verifies": "Boss ids and HP",
-          "status": "needed",
-          "detector": "enemies_boss"
+          "status": "partial",
+          "detector": "enemies_boss",
+          "evidence": [
+            "2026-10-13 live session 7 (Jill, ask mode, owner's answers): Yawn is enemy type 13 (appeared in 210, player confirmed); its poison made Jill faint (story flags named). Plant 42, Neptune, Black Tiger, Tyrant not yet seen"
+          ]
         }
       ]
     },
@@ -371,7 +382,8 @@
           "status": "partial",
           "detector": "lock_flags",
           "evidence": [
-            "2026-10-13 (live session 4, Jill, memory log): flagLocks0 gained one bit at each of four door unlocks (rooms 207, 206, 103 twice) with no item used — which bit is which door still needs mapping"
+            "2026-10-13 (live session 4, Jill, memory log): flagLocks0 gained one bit at each of four door unlocks (rooms 207, 206, 103 twice) with no item used — which bit is which door still needs mapping",
+            "evidence in 2026-10-13 live session 7 (Jill, ask mode, mansion to guardhouse): 1 flag word(s) changed: flagLocks0 — needs review"
           ]
         },
         {
@@ -382,7 +394,8 @@
           "detector": "scenario_flags",
           "evidence": [
             "2026-10-13 (live session 4, Jill, memory log) and 2026-10-13 (live session 5: new Jill game, then new Chris game): blue gem chain — statue pushed in 202 (A0 bit 0x100000), gem (id 0x21) picked up in the dining room 105, placed in the lion head in 10D (A0 bit 0x10000), wind crest (id 0x29) received (A0 bit 0x40000), wind crest used in 11A (A3 bit 0x80000)",
-            "2026-10-13 (live session 5: new Jill game, then new Chris game): gallery in 117 — A0 bit 0x10000000 set, then id 0x2D picked up there and used in 11A (A3 bit 0x200000); likely the painting puzzle and its crest (unconfirmed)"
+            "2026-10-13 (live session 5: new Jill game, then new Chris game): gallery in 117 — A0 bit 0x10000000 set, then id 0x2D picked up there and used in 11A (A3 bit 0x200000); likely the painting puzzle and its crest (unconfirmed)",
+            "2026-10-13 live session 7 (Jill, ask mode, owner's answers): each puzzle's flag named by the player — gallery (star crest), crests in the 11A door (star, sun, wind, moon), chemical in the pump (plant), piano → gold emblem and the emblem swap, clock → shield key, floor switch (sun crest), lighter on the fireplace (2F map), candles (bookcase), bug-case switch (aquarium), water gate, statue over the guardhouse hole. Still needed: armor room, V-Jolt, computer/MO disk"
           ]
         },
         {
@@ -393,7 +406,8 @@
           "detector": "enemy_killed",
           "evidence": [
             "2026-10-13 (live session 4, Jill, memory log): 13 zombie kills, each set exactly one new bit in flagEnemies (kill flags persist); crow kills set none",
-            "2026-10-13 (live session 5: new Jill game, then new Chris game): 20 zombies and 3 dogs killed (Jill and Chris), each setting one flagEnemies bit — set when the enemy first falls, even if it gets back up; a new game clears them all. Other enemy types not yet killed"
+            "2026-10-13 (live session 5: new Jill game, then new Chris game): 20 zombies and 3 dogs killed (Jill and Chris), each setting one flagEnemies bit — set when the enemy first falls, even if it gets back up; a new game clears them all. Other enemy types not yet killed",
+            "evidence in 2026-10-13 live session 7 (Jill, ask mode, mansion to guardhouse): type 0 (Zombie) ×13, type 2 (Cerberus (dog)) ×9, type 5 (Crow) ×3, type 15 ×6, type 17 (Zombie (researcher)) ×9 — needs review"
           ]
         },
         {
@@ -405,7 +419,8 @@
           "evidence": [
             "2026-10-13 (live session 5: new Jill game, then new Chris game): statue push in room 202, seen three times (session 4, and both new games in session 5): stateFlags bit 0x40 is set while pushing (slow straight-line movement), then scenario flag A0 bit 0x100000 and stateFlags 0x100000 (camera cut) as the statue falls; it drops the blue gem in the dining room (105). Shelves/boxes not yet seen",
             "2026-10-13 (live session 5: new Jill game, then new Chris game): stairs in room 107 pushed to reach the map, by Jill and by Chris (owner + capture): push bit 0x40 during each push; picking up the map then cleared flagRoomItems4 bit 0x4000 and set flagRoom3 bit 0x8, with no inventory change. The pushed object's own position is not in the recorded memory (no word moves with the push), so object positions need another region",
-            "2026-10-13 (live session 4, Jill, memory log): flagRoom0/1 are rooms-visited bits (bit 31 − room number, one word per stage), not object state"
+            "2026-10-13 (live session 4, Jill, memory log): flagRoom0/1 are rooms-visited bits (bit 31 − room number, one word per stage), not object state",
+            "evidence in 2026-10-13 live session 7 (Jill, ask mode, mansion to guardhouse): 13 flag word(s) changed: flagRoom0, flagRoom1, flagRoom2, flagRoom3, flagRoom4, flagRoomItems0, flagRoomItems1, flagRoomItems2 … — needs review"
           ]
         }
       ]
@@ -428,7 +443,10 @@
           "id": "B602",
           "task": "Trigger partner/cutscene events (Barry, Rebecca, Richard, Wesker)",
           "verifies": "Event flags and cutscene detection",
-          "status": "needed"
+          "status": "partial",
+          "evidence": [
+            "2026-10-13 live session 7 (Jill, ask mode, owner's answers): partner/cutscene events named by the player — Barry (blood, Kenneth, the zombie, the ceiling-trap rescue, the lockpick), Wesker's disappearance, Richard (found poisoned, the serum errand, his radio), Forest, Yawn's poison and the rescue. Rebecca (Chris's scenario) still needed"
+          ]
         },
         {
           "id": "B603",
@@ -472,7 +490,8 @@
           "verifies": "Reset detection",
           "status": "partial",
           "evidence": [
-            "quit to title and game restart seen"
+            "quit to title and game restart seen",
+            "evidence in 2026-10-13 live session 7 (Jill, ask mode, mansion to guardhouse): 1 restart(s) / reload(s) — needs review"
           ],
           "detector": "resets"
         }
