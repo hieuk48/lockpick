@@ -7,7 +7,9 @@ namespace Lockpick.Autoplay;
 /// <summary>
 /// DEV RUNS ONLY. Empties inventory slots so automated pickup tests never hit "no room": the 8 u16 slots at
 /// 0xBE9944 (profile fields inv0–inv7: item id, quantity in the high byte). Only slots from the given index up are
-/// cleared (the starting weapons stay), never the equipped one; the game is suspended for the write, which is read back.
+/// cleared (the starting weapons stay), never the equipped one, and the rest are compacted to the front: the status
+/// screen stops at the first empty slot (2026-10-14: a gap hid the music notes). The game is suspended for the write,
+/// which is read back.
 /// </summary>
 internal sealed partial class InventorySlots : IDisposable
 {
@@ -45,22 +47,38 @@ internal sealed partial class InventorySlots : IDisposable
         try
         {
             var equipped = Read(EquippedSlot, 1)[0];
+            var slots = Read(Slots, Count * 2);
+            var kept = new List<ushort>();
             var cleared = 0;
-            for (var slot = from; slot < Count; slot++)
+            for (var slot = 0; slot < Count; slot++)
             {
-                if (slot == equipped)
+                var value = BitConverter.ToUInt16(slots, slot * 2);
+                if (slot < from || slot == equipped)
                 {
-                    continue;
+                    if (value != 0)
+                    {
+                        kept.Add(value);
+                    }
                 }
-
-                var address = Slots + (ulong)(slot * 2);
-                if (BitConverter.ToUInt16(Read(address, 2)) != 0)
+                else if (value != 0)
                 {
-                    Write(address, [0, 0]);
                     cleared++;
                 }
             }
 
+            if (equipped < Count && from <= equipped)
+            {
+                // Compacting would move the equipped item; leave the layout alone in that case.
+                return 0;
+            }
+
+            var compacted = new byte[Count * 2];
+            for (var i = 0; i < kept.Count; i++)
+            {
+                BitConverter.GetBytes(kept[i]).CopyTo(compacted, i * 2);
+            }
+
+            Write(Slots, compacted);
             return cleared;
         }
         finally

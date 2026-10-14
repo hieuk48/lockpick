@@ -241,7 +241,12 @@ STATE_FLAGS = 0xBE41C0
 # transition, fade. The script bits 0x0C are not "busy": room 104's script leaves 0x4 set while the player walks.
 BUSY = 0x80 | 0xFF00 | 0x10000 | 0x20000 | 0x40000 | 0x100000 | 0x01000000 | 0x04000000 | 0x20000000
 DEAD = 0x01000000
-MESSAGE = 0x8000
+MESSAGE = 0x8000  # state flags: menu/message mode (the status screen sets it too)
+MESSAGE_FLAGS = 0xBEBCC0  # u16; bit 0x100 is clear while an on-screen message waits for a press (live 2026-10-14)
+
+
+def message_waiting() -> bool:
+    return not int.from_bytes(peek(MESSAGE_FLAGS, 2), "little") & 0x100
 CUTSCENE = 0x100000 | 0x20000 | 0x10000 | 0x40000
 
 
@@ -277,11 +282,16 @@ def settle(timeout: float = 120, fast_ms: int = 4) -> bool:
         speed = f"speed {fast_ms}" if f & CUTSCENE else "speed normal"
         # Messages, the pickup screen (0x100: also documents and maps, page by page) and the item viewer (0x800) wait
         # for a press; a document read on pickup sets camera lock and ramp too, so it looks like a cutscene otherwise.
-        if f & (MESSAGE | 0x100 | 0x800):
-            # Documents can loop their pages (2026-10-14: the researcher's will in 20A); cancel (X) closes them.
+        if message_waiting() or f & (0x100 | 0x800):
+            # A waiting message, the pickup/document screen or the item viewer: A advances. Documents can loop their
+            # pages (2026-10-14: the researcher's will in 20A); cancel (X) closes them.
             screen_presses = screen_presses + 1 if f & 0x100 else 0
             key = "X" if screen_presses > 8 and screen_presses % 2 == 0 else "A"
             send(speed, f"press {key} 120", "wait 250")
+        elif f & MESSAGE and peek(MENU_INPUT, 1)[0]:
+            # The status screen sets the same state bit as messages; A there would pick an item (2026-10-14: it
+            # opened the knife's submenu at the fireplace). Close it instead.
+            send(speed, "press X 120", "wait 400")
         else:
             send(speed, "wait 300")
     send("speed normal")
@@ -316,8 +326,18 @@ MENU_INPUT, MENU_CURSOR, MENU_ITEM = 0xAE9F20, 0xAE9F23, 0xAE9F1B
 INVENTORY_SLOTS = 0xBE9944
 
 
+def close_menu() -> None:
+    """Backs out of the status screen and any submenu (X), whatever state it's in."""
+    for _ in range(4):
+        if not peek(MENU_INPUT, 1)[0] and not flags() & MESSAGE:
+            return
+        send("press X 120", "wait 600")
+
+
 def use_item(item: int, timeout: float = 30) -> dict:
-    """Opens the status screen, moves to the item's slot, confirms and chooses USE (the first submenu entry)."""
+    """Opens the status screen, moves to the item's slot, confirms and chooses USE (the first submenu entry). Every
+    press is checked: the cursor must move (the menu ignores input while it opens), the selected item must be the
+    target before A, and the menu is closed again if anything goes wrong."""
     import time
     raw = peek(INVENTORY_SLOTS, 16)
     slots = [raw[i * 2] for i in range(8)]
@@ -325,21 +345,31 @@ def use_item(item: int, timeout: float = 30) -> dict:
         raise Failed(f"item {item} is not in the inventory ({slots})")
     target = 8 + 2 * slots.index(item)
     send("press Y")
-    if not wait_for(lambda: peek(MENU_INPUT, 1)[0] == 1, 10):
-        raise Failed("the status screen didn't open")
-    end = time.time() + timeout
-    while time.time() < end:
-        cursor = peek(MENU_CURSOR, 1)[0]
-        if cursor == target:
-            break
-        if (cursor & ~2) < (target & ~2):
-            send("press Down 100", "wait 250")
-        elif (cursor & ~2) > (target & ~2):
-            send("press Up 100", "wait 250")
-        else:
-            send("press Right 100", "wait 250")
-    else:
-        raise Failed(f"cursor never reached slot {slots.index(item)}")
-    selected = peek(MENU_ITEM, 1)[0]
-    send("press A 120", "wait 700", "press A 120", "wait 1500")
-    return {"slot": slots.index(item), "selected": selected}
+    try:
+        if not wait_for(lambda: peek(MENU_INPUT, 1)[0] == 1, 10):
+            raise Failed("the status screen didn't open")
+        send("wait 800")  # the opening animation ignores input
+        end = time.time() + timeout
+        while (cursor := peek(MENU_CURSOR, 1)[0]) != target:
+            if time.time() > end:
+                raise Failed(f"cursor never reached slot {slots.index(item)} (at {cursor})")
+            if (cursor & ~2) < (target & ~2):
+                key = "Down"
+            elif (cursor & ~2) > (target & ~2):
+                key = "Up"
+            else:
+                key = "Right"
+            send(f"press {key} 100")
+            wait_for(lambda: peek(MENU_CURSOR, 1)[0] != cursor, 1.0)
+        selected = peek(MENU_ITEM, 1)[0]
+        if selected != item:
+            raise Failed(f"the menu selected item {selected}, not {item}")
+        send("press A 120")
+        # The submenu (USE / CHECK / COMBN) takes input once the menu state reads 2; USE is its first entry.
+        if not wait_for(lambda: peek(MENU_INPUT, 1)[0] == 2, 5):
+            raise Failed("the item submenu didn't open")
+        send("wait 400", "press A 120", "wait 1500")
+        return {"slot": slots.index(item), "selected": selected}
+    except Failed:
+        close_menu()
+        raise

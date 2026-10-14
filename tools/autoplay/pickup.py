@@ -116,9 +116,11 @@ def obstructed(room: rdt_map.Room, sx: float, sz: float, tx: float, tz: float) -
     return any(room.blocked(round(sx + (tx - sx) * i / steps), round(sz + (tz - sz) * i / steps), 0) for i in range(1, steps + 1))
 
 
-def try_pickup(item: dict, room: rdt_map.Room) -> dict:
+def try_pickup(item: dict, room: rdt_map.Room, clear_inventory: bool = True) -> dict:
+    """Picks the item up. Sweeps clear spare slots first; routes keep the inventory (clear_inventory=False)."""
     result: dict = {"triggered": None, "prompts": 0}
-    ap.send(f"inv-clear {KEEP_SLOTS}")
+    if clear_inventory:
+        ap.send(f"inv-clear {KEEP_SLOTS}")
     inv_before, flags_before = inventory(), ap.peek(ITEM_FLAGS, 32)
     candidates = spots(item, room)
     result["clearSpots"] = sum(1 for c in candidates if not c[3])
