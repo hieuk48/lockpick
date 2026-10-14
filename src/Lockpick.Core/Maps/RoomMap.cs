@@ -22,6 +22,16 @@ public sealed record MapItem(int X, int Z, int Width, int Depth, int ItemId, str
 /// <summary>A spot where an item is used and stays (e.g. an emblem slot): the item shows there once it's in place.</summary>
 public sealed record MapSocket(int X, int Z, int Width, int Depth, int ItemId, string Name);
 
+/// <summary>A save-room fixture the player uses.</summary>
+public enum FixtureKind
+{
+    ItemBox,
+    Typewriter,
+}
+
+/// <summary>Where the player uses an item box or a typewriter (the zone the action key tests).</summary>
+public sealed record MapFixture(int X, int Z, int Width, int Depth, FixtureKind Kind);
+
 /// <summary>A fixed camera: where it stands and the point it looks at.</summary>
 public sealed record MapCamera(int Id, int X, int Z, int TargetX, int TargetZ);
 
@@ -35,7 +45,8 @@ public sealed record RoomMap(
     IReadOnlyList<MapDoor> Doors,
     IReadOnlyList<MapItem> Items,
     IReadOnlyList<MapCamera> Cameras,
-    IReadOnlyList<MapSocket> Sockets)
+    IReadOnlyList<MapSocket> Sockets,
+    IReadOnlyList<MapFixture> Fixtures)
 {
     /// <summary>Bounds of the walls and doors (very large shapes, e.g. whole-room floor zones, are ignored).</summary>
     public (int X0, int Z0, int X1, int Z1) Bounds

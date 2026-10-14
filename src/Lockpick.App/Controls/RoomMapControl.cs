@@ -131,6 +131,17 @@ public sealed class RoomMapControl : Control
             DrawLabel(context, DoorNames?.GetValueOrDefault(d.Target) ?? d.Target, rect.Center, DoorBrush, 12);
         }
 
+        foreach (var f in map.Fixtures)
+        {
+            var (fill, label) = f.Kind == FixtureKind.ItemBox
+                ? (Color.Parse("#A1887F"), "Item box")
+                : (Color.Parse("#4DB6AC"), "Typewriter");
+            var rect = R(f.X, f.Z, f.X + f.Width, f.Z + f.Depth);
+            var brush = new SolidColorBrush(fill, 0.35);
+            context.DrawRectangle(brush, new Pen(new SolidColorBrush(fill), 1.5), rect);
+            DrawLabel(context, label, rect.Center, new SolidColorBrush(fill), 11);
+        }
+
         var placed = PlacedItems;
         var filled = FilledSockets ?? new HashSet<MapSocket>();
         foreach (var item in map.Items)

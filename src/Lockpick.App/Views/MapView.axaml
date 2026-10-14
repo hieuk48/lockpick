@@ -15,7 +15,7 @@
         <TextBlock Classes="headline" Text="{Binding Heading}" TextWrapping="Wrap" />
         <TextBlock TextWrapping="Wrap" Foreground="{StaticResource LpMutedBrush}" Text="{Binding Details}" />
         <TextBlock TextWrapping="Wrap" Foreground="{StaticResource LpMutedBrush}"
-                   Text="Walls and furniture from the room's collision; green = doors (to room), amber = items in the room now (dashed = put in place), faint = items you've taken, or that appear later in the story. Enemies: Z zombie, D dog, H hunter, C crow/chimera, W wasp, S spider/snake; stars are bosses, blue squares people. The arrow is you." />
+                   Text="Walls and furniture from the room's collision; green = doors (to room), amber = items in the room now (dashed = put in place), faint = items you've taken, or that appear later in the story. Brown = item box, teal = typewriter. Enemies: Z zombie, D dog, H hunter, C crow/chimera, W wasp, S spider/snake; stars are bosses, blue squares people. The arrow is you." />
       </StackPanel>
     </Border>
 

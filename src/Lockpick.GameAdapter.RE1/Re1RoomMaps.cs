@@ -29,6 +29,11 @@ public sealed class Re1RoomMaps : IRoomMapSource
 
     private const int HeaderSize = 0x94;
     private const int InkRibbon = 0x2F;
+
+    // Room action handlers (opcode 0x0D +0x0A): 8 item box, 16 typewriter (live 2026-10-14: the zones in the save rooms
+    // open the item box / ask to save).
+    private const int ItemBoxHandler = 8;
+    private const int TypewriterHandler = 16;
     private const int MaxFileSize = 4 * 1024 * 1024;
 
     private readonly string _stageRoot;
@@ -149,6 +154,7 @@ public sealed class Re1RoomMaps : IRoomMapSource
             var doors = new List<MapDoor>();
             var items = new List<MapItem>();
             var sockets = new List<MapSocket>();
+            var fixtures = new List<MapFixture>();
             foreach (var pointerOffset in new[] { 0x60, 0x64 })
             {
                 var block = (int)U32(data, pointerOffset);
@@ -160,12 +166,12 @@ public sealed class Re1RoomMaps : IRoomMapSource
                         break;
                     }
 
-                    ReadScript(data.Slice(block + 2, length - 2), room, doors, items, sockets, itemName);
+                    ReadScript(data.Slice(block + 2, length - 2), room, doors, items, sockets, fixtures, itemName);
                     block += length;
                 }
             }
 
-            return new RoomMap($"{room.Stage}{room.Room:X2}", shapes, doors, items, cameras, sockets);
+            return new RoomMap($"{room.Stage}{room.Room:X2}", shapes, doors, items, cameras, sockets, fixtures);
         }
         catch (ArgumentOutOfRangeException)
         {
@@ -174,7 +180,7 @@ public sealed class Re1RoomMaps : IRoomMapSource
     }
 
     private static void ReadScript(ReadOnlySpan<byte> script, RoomLocation room, List<MapDoor> doors, List<MapItem> items,
-        List<MapSocket> sockets, Func<int, string> itemName)
+        List<MapSocket> sockets, List<MapFixture> fixtures, Func<int, string> itemName)
     {
         var pos = 0;
         while (pos < script.Length)
@@ -205,6 +211,15 @@ public sealed class Re1RoomMaps : IRoomMapSource
                 }
             }
 
+            else if (op == 0x0D && b[0x0A] is ItemBoxHandler or TypewriterHandler)
+            {
+                var kind = b[0x0A] == ItemBoxHandler ? FixtureKind.ItemBox : FixtureKind.Typewriter;
+                int x = I16(b, 2), z = I16(b, 4);
+                if (!fixtures.Exists(f => f.Kind == kind && f.X == x && f.Z == z))
+                {
+                    fixtures.Add(new MapFixture(x, z, U16(b, 6), U16(b, 8), kind));
+                }
+            }
             else if (op == 0x0D && b[0x0A] == 7 && U16(b, 0x0C) == 9)
             {
                 int x = I16(b, 2), z = I16(b, 4), w = U16(b, 6), d = U16(b, 8), id = U16(b, 0x0E) + 0x1B;

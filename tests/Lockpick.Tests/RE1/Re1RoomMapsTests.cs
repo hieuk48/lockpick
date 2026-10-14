@@ -57,6 +57,13 @@ public class Re1RoomMapsTests
         data[s + 0x0A] = 7;
         U16(s + 0x0C, 9); U16(s + 0x0E, 32 - 0x1B); U16(s + 0x10, 1);
         s += 18;
+        foreach (var (handler, x) in new[] { (8, 6200), (16, 2300) }) // item box, typewriter
+        {
+            data[s] = 0x0D;
+            U16(s + 2, x); U16(s + 4, 2100); U16(s + 6, 2000); U16(s + 8, 1400);
+            data[s + 0x0A] = (byte)handler;
+            s += 18;
+        }
         U16(0x200, s - 0x200); // block length includes its own two bytes
         return data;
     }
@@ -115,6 +122,14 @@ public class Re1RoomMapsTests
         Assert.False(maps.IsFilled(map, socket, Flags(("flagScenarioB5", 0))));
         Assert.True(maps.IsFilled(map, socket, Flags(("flagScenarioB5", 0x00100000)))); // B171
         Assert.Null(maps.IsFilled(map, socket with { ItemId = 60 }, Flags(("flagScenarioB5", -1))));
+    }
+
+    [Fact]
+    public void Item_boxes_and_typewriters_are_read()
+    {
+        Assert.Equal(
+            [new MapFixture(6200, 2100, 2000, 1400, FixtureKind.ItemBox), new MapFixture(2300, 2100, 2000, 1400, FixtureKind.Typewriter)],
+            Parse().Fixtures);
     }
 
     [Fact]
