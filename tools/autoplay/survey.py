@@ -60,6 +60,13 @@ def check_saves(backup: Path, log) -> None:
             log(f"!! new file SAVE/{path.name} appeared during the run (left in place)")
 
 
+def room_file_ok(room: str, character: str) -> bool:
+    """False for door targets without a real room file: 110, 119, 20C, 214, 215, 21C, 51D ship as 4-byte stubs (their
+    rooms exist only in the return-mansion stages) and loading one crashes the game."""
+    path = INSTALL / "USA" / f"Stage{room[0]}" / f"ROOM{room}{'1' if character == 'jill' else '0'}.RDT"
+    return path.exists() and path.stat().st_size >= 0x94
+
+
 def enemies() -> list[dict]:
     raw = ap.peek(ENEMY_BASE, ENEMY_STRIDE * 8)
     found = []
@@ -156,8 +163,7 @@ def survey(character: str, out: Path, backup: Path, table: list[dict], only: set
         logfile.flush()
 
     rooms = sorted({d["to"] for d in table if d["character"] == character}, key=lambda r: (r[0], r[1:]))
-    rooms = [r for r in rooms if (only is None or r in only) and r not in done
-             and any(INSTALL.joinpath("USA", f"Stage{r[0]}", f"ROOM{r}{'1' if character == 'jill' else '0'}.RDT").exists() for _ in [0])]
+    rooms = [r for r in rooms if (only is None or r in only) and r not in done and room_file_ok(r, character)]
     log(f"surveying {len(rooms)} rooms for {character}")
     fresh_game(character, log)
     for room in rooms:
