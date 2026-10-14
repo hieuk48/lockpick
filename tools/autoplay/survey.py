@@ -94,6 +94,9 @@ def fresh_game(character: str, log) -> None:
                     took = library.load_slot(1)
                 finally:
                     library.restore_slot1(START["backup"])
+                live = ap.state().get("char", "").lower()
+                if live != character:
+                    raise ap.Failed(f"loaded a {live or 'unknown'} game, expected {character} (slot 1 not the borrowed save?)")
                 log(f"loaded {START['save'].name} ({character}) in control after {took:.0f} s")
             else:
                 took = ap.new_game(character)
