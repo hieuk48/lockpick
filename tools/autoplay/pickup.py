@@ -11,6 +11,7 @@ the zone centre, "Will you take the EMBLEM?", A → inventory 0x011F (item 31) a
 from __future__ import annotations
 
 import json
+import math
 import struct
 import sys
 import time
@@ -46,31 +47,91 @@ def cleared_flags(before: bytes, after: bytes) -> list[int]:
 
 
 # Facing: angle 0 walks along +X, 1024 along −Z (live 2026-10-14), i.e. direction (cos θ, −sin θ), θ = angle·2π/4096.
-DIRECTION = {0: (1, 0), 1024: (0, -1), 2048: (-1, 0), 3072: (0, 1)}
-OUTSIDE = 250  # how far outside the zone's edge to stand when approaching it
+# The action press probes the point 600 units straight ahead (check_action_object 0x41C150; entries with flag 0x40
+# test the player's own position instead).
+REACH = 600
+ANGLES = tuple(range(0, 4096, 512))
 
 
-def spots(item: dict) -> list[tuple[int, int, int]]:
-    """Where to stand and which way to face: the zone centre (four facings), then just outside each edge facing in."""
-    x, z, w, d = item["zone"]
-    cx, cz = x + w // 2, z + d // 2
-    found = [(cx, cz, a) for a in FACINGS]
-    for a, (dx, dz) in DIRECTION.items():
-        reach = (w if dx else d) // 2 + OUTSIDE
-        found.append((cx - dx * reach, cz - dz * reach, a))
+def direction(angle: int) -> tuple[float, float]:
+    theta = angle * 2 * math.pi / 4096
+    return math.cos(theta), -math.sin(theta)
+
+
+ACTIONS, ACTIONS_TAIL, PICKUP_ACTION = 0xD91AA0, 0xD91BC0, 4
+PLAYER_RADIUS = 120
+
+
+def active_items() -> list[dict]:
+    """The item pickups the game has armed in this room right now: g_RoomActionTable (0xD91AA0, 12-byte entries up to
+    the tail pointer at 0xD91BC0; decomp), action 4 = set_key_flag (item pickup); +6 item flag; +8 → the item record
+    (x, z, width, depth, then the item id at +8)."""
+    table, tail = ap.peek(ACTIONS, 288), struct.unpack("<I", ap.peek(ACTIONS_TAIL, 4))[0]
+    count = (tail - ACTIONS) // 12 + 1 if ACTIONS <= tail < ACTIONS + 288 else 0
+    found = []
+    for i in range(count):
+        entry = table[i * 12:(i + 1) * 12]
+        if entry[0] != PICKUP_ACTION:
+            continue
+        record = ap.peek(struct.unpack_from("<I", entry, 8)[0], 0x0C)
+        x, z, w, d = struct.unpack_from("<hhHH", record, 0)
+        found.append({"item": record[8], "flag": struct.unpack_from("<H", entry, 6)[0], "zone": [x, z, w, d],
+                      "entryFlags": entry[1]})
     return found
+
+
+def spots(item: dict, room: rdt_map.Room, limit: int = 10) -> list[tuple[int, int, int]]:
+    """Where to stand and which way to face so the action probe (600 units ahead) lands inside the zone. Targets are
+    spread over the zone, not just its centre — furniture often covers most of a zone (105's emblem zone is mostly
+    inside the fireplace) — and standing spots inside walls or furniture are skipped: a press there can set off
+    scenery (2026-10-14: standing inside the dining-room clock moved the clock). Targets nearest the zone's centre
+    first, at most one spot per facing. Entries with flag 0x40 test the player's own position: stand in the zone."""
+    x, z, w, d = item["zone"]
+    cx, cz = x + w / 2, z + d / 2
+    targets = sorted(((x + w * fx, z + d * fz) for fx in (0.5, 0.3, 0.7, 0.15, 0.85) for fz in (0.5, 0.3, 0.7, 0.15, 0.85)),
+                     key=lambda t: (t[0] - cx) ** 2 + (t[1] - cz) ** 2)
+    found, used = [], set()
+    for tx, tz in targets:
+        for a in ANGLES:
+            if a in used:
+                continue
+            if item.get("entryFlags", 0) & 0x40:
+                sx, sz = tx, tz
+            else:
+                dx, dz = direction(a)
+                sx, sz = tx - dx * REACH, tz - dz * REACH
+            if not room.blocked(round(sx), round(sz), PLAYER_RADIUS):
+                found.append((round(sx), round(sz), a, obstructed(room, sx, sz, tx, tz)))
+                used.add(a)
+        if len(found) >= limit:
+            break
+    return sorted(found, key=lambda f: f[3])  # clear lines of reach first
+
+
+def obstructed(room: rdt_map.Room, sx: float, sz: float, tx: float, tz: float) -> bool:
+    """True when the line from the player to the probe target passes through blocking collision — the item is behind
+    or inside scenery (a clock, a fireplace, a painting's wall)."""
+    steps = max(1, int(math.hypot(tx - sx, tz - sz) // 50))
+    return any(room.blocked(round(sx + (tx - sx) * i / steps), round(sz + (tz - sz) * i / steps), 0) for i in range(1, steps + 1))
 
 
 def try_pickup(item: dict, room: rdt_map.Room) -> dict:
     result: dict = {"triggered": None, "prompts": 0}
     ap.send(f"inv-clear {KEEP_SLOTS}")
     inv_before, flags_before = inventory(), ap.peek(ITEM_FLAGS, 32)
-    for x, z, angle in spots(item):
+    candidates = spots(item, room)
+    result["clearSpots"] = sum(1 for c in candidates if not c[3])
+    if not candidates:
+        result["note"] = "every spot around the zone is inside collision (not reachable in this state)"
+        return result
+    for x, z, angle, through in candidates:
         camera = room.camera_for(x, z)
-        cut = [f"camera {camera}", "wait 600"] if camera is not None else []
+        locked = ap.flags() & 0x100000  # a cutscene holds the camera: don't cut
+        cut = [f"camera {camera}", "wait 600"] if camera is not None and not locked else []
         ap.send(f"place {x} {z} {angle}", "wait 300", *cut, "press A 150", "wait 900")
         if ap.flags() & INTERACTING:
             result["triggered"] = [x, z, angle]
+            result["throughScenery"] = through
             break
     if result["triggered"] is not None:
         # Examine text, "Will you take …?" (Yes is the default), document pages: A until control returns.
@@ -129,7 +190,7 @@ def run(character: str, out: Path, backup: Path, table: list[dict], only: set[st
         items.append(it)
     log(f"{len(items)} item zones for {character}")
     survey.fresh_game(character, log)
-    current = None
+    current, armed = None, []
     for it in items:
         entry = {"room": it["room"], "character": character, "item": it["item"], "quantity": it["quantity"],
                  "flag": it["flag"], "zone": it["zone"], "at": time.strftime("%Y-%m-%dT%H:%M:%S")}
@@ -145,7 +206,16 @@ def run(character: str, out: Path, backup: Path, table: list[dict], only: set[st
                     if current != it["room"]:
                         enter(it["room"], character, table)
                         current = it["room"]
-                    entry.update(try_pickup(it, rdt_map.load(survey.INSTALL, it["room"], character)))
+                        armed = active_items()
+                    live = [a for a in armed if a["item"] == it["item"] and a["flag"] == it["flag"]]
+                    if not live:
+                        entry["note"] = "not armed in this state (the room script hasn't placed it, or it was taken)"
+                    elif live[0]["zone"][2] == 0:
+                        entry["note"] = "armed without a zone (an event hands it over)"
+                    else:
+                        entry["liveZone"] = live[0]["zone"]
+                        entry.update(try_pickup({**it, "zone": live[0]["zone"], "entryFlags": live[0]["entryFlags"]},
+                                                rdt_map.load(survey.INSTALL, it["room"], character)))
                     entry.pop("error", None)
                     break
                 except (ap.Failed, KeyError, ValueError, OSError) as e:
