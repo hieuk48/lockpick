@@ -24,7 +24,8 @@
                         PlayerAngle="{Binding PlayerAngle}" HasPlayer="{Binding HasPlayer}"
                         WallBrush="{StaticResource LpMutedBrush}" SoftBrush="{StaticResource LpBorderBrush}"
                         DoorBrush="{StaticResource LpGreenBrush}" ItemBrush="{StaticResource LpAmberBrush}"
-                        PlayerBrush="{StaticResource LpRedBrush}" />
+                        PlayerBrush="{StaticResource LpRedBrush}" FaintTextBrush="{StaticResource LpMutedBrush}"
+                        LabelPlateBrush="{StaticResource LpBgBrush}" />
     </Border>
   </Grid>
 </UserControl>

@@ -30,13 +30,16 @@ public sealed class RoomMapControl : Control
     public static readonly StyledProperty<IBrush?> DoorBrushProperty = AvaloniaProperty.Register<RoomMapControl, IBrush?>(nameof(DoorBrush));
     public static readonly StyledProperty<IBrush?> ItemBrushProperty = AvaloniaProperty.Register<RoomMapControl, IBrush?>(nameof(ItemBrush));
     public static readonly StyledProperty<IBrush?> PlayerBrushProperty = AvaloniaProperty.Register<RoomMapControl, IBrush?>(nameof(PlayerBrush));
+    public static readonly StyledProperty<IBrush?> FaintTextBrushProperty = AvaloniaProperty.Register<RoomMapControl, IBrush?>(nameof(FaintTextBrush));
+    public static readonly StyledProperty<IBrush?> LabelPlateBrushProperty = AvaloniaProperty.Register<RoomMapControl, IBrush?>(nameof(LabelPlateBrush));
 
     private const double Inset = 12;
 
     static RoomMapControl()
     {
         AffectsRender<RoomMapControl>(MapProperty, PlacedItemsProperty, TakenItemsProperty, FilledSocketsProperty, PlayerXProperty, PlayerZProperty, PlayerAngleProperty, HasPlayerProperty,
-            WallBrushProperty, SoftBrushProperty, DoorBrushProperty, ItemBrushProperty, PlayerBrushProperty);
+            WallBrushProperty, SoftBrushProperty, DoorBrushProperty, ItemBrushProperty, PlayerBrushProperty,
+            FaintTextBrushProperty, LabelPlateBrushProperty);
     }
 
     public RoomMap? Map { get => GetValue(MapProperty); set => SetValue(MapProperty, value); }
@@ -70,6 +73,12 @@ public sealed class RoomMapControl : Control
     public IBrush? ItemBrush { get => GetValue(ItemBrushProperty); set => SetValue(ItemBrushProperty, value); }
 
     public IBrush? PlayerBrush { get => GetValue(PlayerBrushProperty); set => SetValue(PlayerBrushProperty, value); }
+
+    /// <summary>Text of labels for taken and later items (their outlines use the soft brush).</summary>
+    public IBrush? FaintTextBrush { get => GetValue(FaintTextBrushProperty); set => SetValue(FaintTextBrushProperty, value); }
+
+    /// <summary>Plate drawn behind labels so they read over walls and furniture.</summary>
+    public IBrush? LabelPlateBrush { get => GetValue(LabelPlateBrushProperty); set => SetValue(LabelPlateBrushProperty, value); }
 
     public override void Render(DrawingContext context)
     {
@@ -109,7 +118,7 @@ public sealed class RoomMapControl : Control
         {
             var rect = R(d.X, d.Z, d.X + d.Width, d.Z + d.Depth);
             context.DrawRectangle(null, doorPen, rect);
-            DrawLabel(context, d.Target, rect.Center, DoorBrush, 11);
+            DrawLabel(context, d.Target, rect.Center, DoorBrush, 12);
         }
 
         var placed = PlacedItems;
@@ -126,14 +135,14 @@ public sealed class RoomMapControl : Control
             if (present)
             {
                 context.DrawRectangle(null, ItemBrush is null ? null : new Pen(ItemBrush, 1.5), rect);
-                DrawLabel(context, item.Name, rect.TopLeft + new Vector(rect.Width / 2, -8), ItemBrush, 10);
+                DrawLabel(context, item.Name, rect.TopLeft + new Vector(rect.Width / 2, -10), ItemBrush, 12);
             }
             else if (SoftBrush is not null)
             {
                 // In the room files but not placed now: already taken, or not placed until a story event.
                 var taken = TakenItems?.Contains(item) == true;
                 context.DrawRectangle(null, new Pen(SoftBrush, 1, new DashStyle(taken ? [1, 4] : [3, 3], 0)), rect);
-                DrawLabel(context, item.Name + (taken ? " (taken)" : " (later)"), rect.TopLeft + new Vector(rect.Width / 2, -8), SoftBrush, 9);
+                DrawLabel(context, item.Name + (taken ? " (taken)" : " (later)"), rect.TopLeft + new Vector(rect.Width / 2, -10), FaintTextBrush ?? SoftBrush, 11);
             }
         }
 
@@ -142,7 +151,7 @@ public sealed class RoomMapControl : Control
         {
             var rect = R(socket.X, socket.Z, socket.X + socket.Width, socket.Z + socket.Depth);
             context.DrawRectangle(null, ItemBrush is null ? null : new Pen(ItemBrush, 1.5, new DashStyle([6, 2], 0)), rect);
-            DrawLabel(context, socket.Name + " (in place)", rect.TopLeft + new Vector(rect.Width / 2, -8), ItemBrush, 10);
+            DrawLabel(context, socket.Name + " (in place)", rect.TopLeft + new Vector(rect.Width / 2, -10), ItemBrush, 12);
         }
 
         if (placed is not null)
@@ -153,7 +162,7 @@ public sealed class RoomMapControl : Control
                 var rect = R(p.X, p.Z, p.X + p.Width, p.Z + p.Depth);
                 context.DrawRectangle(null, ItemBrush is null ? null : new Pen(ItemBrush, 1.5), rect);
                 var name = map.Items.FirstOrDefault(i => i.ItemId == p.ItemId)?.Name ?? $"item {p.ItemId}";
-                DrawLabel(context, name, rect.TopLeft + new Vector(rect.Width / 2, -8), ItemBrush, 10);
+                DrawLabel(context, name, rect.TopLeft + new Vector(rect.Width / 2, -10), ItemBrush, 12);
             }
         }
 
@@ -179,7 +188,7 @@ public sealed class RoomMapControl : Control
         }
     }
 
-    private static void DrawLabel(DrawingContext context, string text, Point center, IBrush? brush, double size)
+    private void DrawLabel(DrawingContext context, string text, Point center, IBrush? brush, double size)
     {
         if (brush is null || string.IsNullOrEmpty(text))
         {
@@ -187,6 +196,12 @@ public sealed class RoomMapControl : Control
         }
 
         var formatted = new FormattedText(text, CultureInfo.CurrentCulture, FlowDirection.LeftToRight, Typeface.Default, size, brush);
-        context.DrawText(formatted, center - new Vector(formatted.Width / 2, formatted.Height / 2));
+        var origin = center - new Vector(formatted.Width / 2, formatted.Height / 2);
+        if (LabelPlateBrush is { } plate)
+        {
+            context.DrawRectangle(plate, null, new Rect(origin, new Size(formatted.Width, formatted.Height)).Inflate(new Thickness(4, 1)), 3, 3);
+        }
+
+        context.DrawText(formatted, origin);
     }
 }
