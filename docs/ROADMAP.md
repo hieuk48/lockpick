@@ -111,6 +111,10 @@ Acceptance criteria:
   runtime-verified.
 - Hotkeys (global, configurable) with no effect when the game is not attached.
 - Run record notes whether any write occurred (`RunInvalidated` event).
+- **Save tools** (writes only save files, never the process; always a backup first and an exact restore, never in
+  Challenge Mode): save reader (done as `tools/bounties/saves.py`: a save is a copy of the state block — offset +
+  `0xBE9620`), a **scene library / practice mode** (put any practice save into a spare slot: Plant 42, Lab Tyrant,
+  Rebecca…), and a **save editor** (inventory, item box, story flags) once it is known whether saves carry a checksum.
 - All writable addresses runtime-verified on the GOG build; tests with fake memory for every write path.
 
 ## 0.3.0 — Overlay and HUD
@@ -131,7 +135,14 @@ Acceptance criteria:
   player's voice files by SHA-256), shown in the overlay while a line plays. Needs: which voice file is playing
   (captures / cutscene scripts).
 - Investigate rendering while the game is unfocused (the game blacks out when inactive): requires an
-  opt-in in-process patch; must be isolated, reversible and never used in Challenge Mode.
+  opt-in in-process patch; must be isolated, reversible and never used in Challenge Mode. **Chosen by the owner
+  (2026-10-13)** as the way to run the game in the background: patch the game's focus handling so it keeps running,
+  and supply controller input by writing the game's input state in memory (no keystrokes, no focus needed).
+- **Background play and automated testing** (builds on the above and 0.2 writes): load a scene (save library), drive
+  the game through memory input, capture and screenshot, check expected flags/items/rooms — regression tests for
+  addresses and rules, and capture bounties that need precise actions. A first keyboard-driven experiment
+  (2026-10-13) launched the game, reached the load screen and took screenshots, but focus can't be held while the PC is
+  in use and arrow keys didn't register — hence the in-game approach.
 
 ## 0.4.0 — World database
 
@@ -158,6 +169,9 @@ Acceptance criteria:
 - Teleport, movement speed, enemy freeze/health, event-flag editor, game speed.
 - The event-flag editor shows the named flags (story, puzzles, locks, items, rooms) instead of raw bits, with
   story-state presets ("start at the courtyard").
+- Give or remove any item; put pickups back into the world (set their pickup bit), reset puzzles (clear their named
+  flags), respawn enemies (clear kill flags), reset the map's explored rooms; teleport (room + position).
+- Challenge setups (knife-only, no herbs, start with nothing) and a light item randomizer, built on the same writes.
 
 ## 0.7.0 — Contextual guidance
 
