@@ -5,15 +5,19 @@ using Microsoft.Win32.SafeHandles;
 namespace Lockpick.Autoplay;
 
 /// <summary>
-/// DEV RUNS ONLY. Stands the player at a position in the current room (e.g. an item's pickup zone from the room
-/// file) for automated tests. Writes only the player's X and Z (i32, profile fields positionX 0xBE6318 / positionZ
-/// 0xBE6320) and facing (i16, yaw 0xBE6358), with the game suspended, and reads them back.
+/// DEV RUNS ONLY. Player writes for automated tests: <see cref="Place"/> stands the player at a position in the
+/// current room (e.g. an item's pickup zone from the room file) — X and Z (i32, profile fields positionX 0xBE6318 /
+/// positionZ 0xBE6320) and facing (i16, yaw 0xBE6358); <see cref="Heal"/> sets HP (i16, hp 0xBE636C) to the
+/// character's maximum (u8, maxHp 0xBE6459) so long survey runs don't end in deaths. The game is suspended for the
+/// writes and every write is read back.
 /// </summary>
 internal sealed partial class PlayerPlacement : IDisposable
 {
     private const ulong PositionX = 0xBE6318;
     private const ulong PositionZ = 0xBE6320;
     private const ulong Yaw = 0xBE6358;
+    private const ulong Health = 0xBE636C;
+    private const ulong MaxHealth = 0xBE6459;
 
     private readonly SafeProcessHandle _process;
     private readonly int _processId;
@@ -57,7 +61,48 @@ internal sealed partial class PlayerPlacement : IDisposable
         }
     }
 
+    /// <summary>Restores HP to the maximum (only when the player is alive, so death scenes aren't undone).</summary>
+    public short Heal()
+    {
+        var max = Read(MaxHealth, 1)[0];
+        if (max is 0 or > 200)
+        {
+            throw new InvalidOperationException($"implausible max HP {max}");
+        }
+
+        if (ProcessSuspender.Suspend(_processId) is { } error)
+        {
+            throw new InvalidOperationException("suspend failed: " + error);
+        }
+
+        try
+        {
+            var hp = BitConverter.ToInt16(Read(Health, 2));
+            if (hp > 0 && hp < max)
+            {
+                Write(Health, BitConverter.GetBytes((short)max));
+            }
+
+            return BitConverter.ToInt16(Read(Health, 2));
+        }
+        finally
+        {
+            ProcessSuspender.Resume(_processId);
+        }
+    }
+
     public void Dispose() => _process.Dispose();
+
+    private byte[] Read(ulong address, int length)
+    {
+        var buffer = new byte[length];
+        if (!ReadProcessMemory(_process, (nint)address, buffer, (nuint)length, out var read) || read != (nuint)length)
+        {
+            throw new InvalidOperationException($"read 0x{address:X} failed");
+        }
+
+        return buffer;
+    }
 
     private void Write(ulong address, byte[] bytes)
     {

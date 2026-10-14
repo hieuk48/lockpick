@@ -186,6 +186,7 @@ STATE_FLAGS = 0xBE41C0
 BUSY = 0x80 | 0xFF00 | 0x10000 | 0x20000 | 0x40000 | 0x100000 | 0x01000000 | 0x04000000 | 0x20000000
 DEAD = 0x01000000
 MESSAGE = 0x8000
+CUTSCENE = 0x100000 | 0x20000 | 0x10000 | 0x40000
 
 
 def flags() -> int:
@@ -212,11 +213,14 @@ def settle(timeout: float = 120, fast_ms: int = 4) -> bool:
             send("wait 300")
             continue
         calm = 0
-        # Fast-forward; press A only to close a message box (0x8000), never otherwise — a stray press can carry
-        # into control in front of a typewriter or item.
-        if flags() & MESSAGE:
-            send(f"speed {fast_ms}", "press A 120", "wait 250")
+        # Fast-forward only real cutscenes (camera lock, voice, ramp, FMV) — not damage reactions, which would speed
+        # up the attack. Press A only to close a message box (0x8000): a stray press can carry into control in front
+        # of a typewriter or item.
+        f = flags()
+        speed = f"speed {fast_ms}" if f & CUTSCENE else "speed normal"
+        if f & MESSAGE:
+            send(speed, "press A 120", "wait 250")
         else:
-            send(f"speed {fast_ms}", "wait 300")
+            send(speed, "wait 300")
     send("speed normal")
     return False

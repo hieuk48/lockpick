@@ -105,6 +105,7 @@ def visit(room: str, character: str, table: list[dict], out: Path, log) -> dict:
         else:
             raise ap.Failed(f"did not arrive; now {ap.state()}")
         entry["entered"] = True
+        ap.send("heal")
         entry["control"] = ap.settle(90)
         s = ap.state()
         entry.update({"hp": s.get("hp"), "pos": s.get("pos"), "now": s.get("room"),
@@ -119,6 +120,7 @@ def visit(room: str, character: str, table: list[dict], out: Path, log) -> dict:
         kept.parent.mkdir(exist_ok=True)
         shutil.copy2(shot, kept)
         entry["shot"] = str(kept)
+        ap.send("heal")
         entry.pop("error", None)
         log(f"{room}: control={entry['control']} hp={entry['hp']} enemies={[e['type'] for e in entry['enemies']]} — {entry['seen'][:120]}")
     except (ap.Failed, KeyError, ValueError, OSError) as e:
