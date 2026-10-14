@@ -153,12 +153,12 @@ players play the game themselves; Lockpick enhances their play.
     the game with either character.
 - **First overnight run (2026-10-14):** every door-reachable room entered from a new game for both characters (162
   of 165 door targets each; the other 3 are stub room files that crash the game), phase surveys from practice saves
-  (guardhouse, return mansion, caves, lab), and 75 saves loaded with Lockpick's live room/character matching the
-  offline save decode (73 of 75; the two saves just before the Tyrant's release crashed the game while
-  fast-forwarding). Results, captures and an atlas stay local (`%LOCALAPPDATA%\Lockpick\research\night-20261014`).
+  (guardhouse 35, return mansion 58, caves 17, lab 22 rooms — all entered, both characters; 588 room visits in all),
+  and 75 saves loaded with Lockpick's live room/character matching the offline save decode (73 of 75; the other two,
+  a pair of practice saves at the same spot in 513 with camera 5, crash the game on load even at normal speed). Results, captures and an atlas stay local (`%LOCALAPPDATA%\Lockpick\research\night-20261014`).
 - Next: regression scripts (expected flags/items per scene, run after changes to addresses or event rules), item
-  pickups at their zones (camera re-cut after placement), capture bounties that need precise actions, the Tyrant
-  fast-forward crash.
+  pickups at their zones (camera re-cut after placement), capture bounties that need precise actions, why the first
+  door handoff after a save load is ignored.
 - Unattended runs — **done 2026-10-14:** `--background` applies the focus patch inside the harness (dev runs only)
   and blanks the keyboard map; the game ran, read the virtual pad and rendered behind other windows. Memory input
   (`0x497BF7`) isn't needed for testing. During runs `SAVE/*.dat` are read-only and hash-checked after every step.
