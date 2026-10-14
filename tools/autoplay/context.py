@@ -16,6 +16,7 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).parent))
 import ap  # noqa: E402
+import rag  # noqa: E402
 
 DATA = Path(__file__).resolve().parents[2] / "data" / "games" / "re1"
 _names = json.loads((DATA / "names.json").read_text(encoding="utf-8"))
@@ -57,7 +58,7 @@ def facts() -> dict:
             "status": status or ["the player has control"]}
 
 
-def prompt(question: str, f: dict) -> str:
+def prompt(question: str, f: dict, notes: list[str] | None = None) -> str:
     lines = [f"Known game state (read from the game's memory and data tables — treat as reliable):",
              f"- Room {f['room']}" + (f" ({f['roomName']})" if f["roomName"] else "") + (f", {f['area']}" if f["area"] else "")
              + f", camera {f['camera']}",
@@ -67,6 +68,8 @@ def prompt(question: str, f: dict) -> str:
              f"{', '.join(f['itemsPlacedByRoomFiles']) or 'none'}",
              f"- Doors lead to rooms: {', '.join(f['doorsLeadTo']) or 'none'}",
              f"- Status: {'; '.join(f['status'])}",
+             *(["Related notes from earlier runs and Lockpick's tables (may be about other story phases):"]
+               + [f"- {n[:400]}" for n in notes] if notes else []),
              "Use these facts to interpret the image. Do not invent creatures, items or menus that the facts and the image "
              "don't support. If the image clearly contradicts a fact, say 'MISMATCH:' and what differs.",
              "", question]
@@ -75,4 +78,9 @@ def prompt(question: str, f: dict) -> str:
 
 def ask_grounded(image: Path, question: str, max_tokens: int = 250) -> tuple[str, dict]:
     f = facts()
-    return ap.describe(image, prompt(question, f), max_tokens), f
+    try:
+        notes = rag.retrieve(f"room {f['room']} {f.get('roomName') or ''} {question}", k=3, room=f["room"])
+    except OSError:
+        notes = []  # the retrieval service is optional
+    f["notes"] = notes
+    return ap.describe(image, prompt(question, f, notes), max_tokens), f
