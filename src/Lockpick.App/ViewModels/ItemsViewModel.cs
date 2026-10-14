@@ -6,8 +6,11 @@ using Lockpick.Core.State;
 
 namespace Lockpick.App.ViewModels;
 
-/// <summary>One row of the inventory or item box: the item's name and its quantity or load.</summary>
-public sealed record ItemRow(string Name, string Detail, bool Equipped);
+/// <summary>One inventory slot or item-box entry: the item's name and its quantity or load (empty slots have no name).</summary>
+public sealed record ItemRow(string Name, string Detail, bool Equipped)
+{
+    public bool IsEmpty => Name.Length == 0;
+}
 
 /// <summary>
 /// Items page: what the player carries and what is in the item box, read from the game (read-only). Names come from
@@ -91,10 +94,15 @@ public sealed partial class ItemsViewModel : PageViewModel
             _lastInventory = inventory;
             _lastEquipped = equipped;
             Inventory.Clear();
-            foreach (var item in inventory)
+            // The status screen's grid: 2 columns, 8 slots for Jill and 6 for Chris or Rebecca; empty slots shown.
+            var slots = s.Character.TryGet(out var who) && who == PlayableCharacter.Jill ? 8 : 6;
+            for (var slot = 0; slot < slots; slot++)
             {
+                var item = inventory.FirstOrDefault(i => i.Slot == slot);
                 // The equipped slot is 1-based (0 = nothing equipped).
-                Inventory.Add(new ItemRow(Name(item.ItemId), Detail(item), item.Slot + 1 == equipped));
+                Inventory.Add(item is null
+                    ? new ItemRow(string.Empty, string.Empty, false)
+                    : new ItemRow(Name(item.ItemId), Detail(item), item.Slot + 1 == equipped));
             }
 
             InventoryHeading = inventory.Count == 0 ? "Nothing carried" : $"{inventory.Count} items carried";

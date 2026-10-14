@@ -26,7 +26,36 @@
             <TextBlock Classes="caption" Text="INVENTORY" />
           </StackPanel>
           <TextBlock Classes="headline" Text="{Binding InventoryHeading}" TextWrapping="Wrap" />
-          <ItemsControl ItemsSource="{Binding Inventory}" ItemTemplate="{StaticResource ItemRowTemplate}" />
+          <ItemsControl ItemsSource="{Binding Inventory}" MaxWidth="460" HorizontalAlignment="Left">
+            <ItemsControl.ItemsPanel>
+              <ItemsPanelTemplate>
+                <UniformGrid Columns="2" />
+              </ItemsPanelTemplate>
+            </ItemsControl.ItemsPanel>
+            <ItemsControl.ItemTemplate>
+              <DataTemplate x:DataType="vm:ItemRow">
+                <Border Margin="3" Padding="8,6" MinHeight="58" CornerRadius="4"
+                        Background="{StaticResource LpPanelAltBrush}"
+                        BorderBrush="{StaticResource LpBorderBrush}" BorderThickness="1"
+                        Classes.equipped="{Binding Equipped}">
+                  <Border.Styles>
+                    <Style Selector="Border.equipped">
+                      <Setter Property="BorderBrush" Value="{StaticResource LpGreenBrush}" />
+                      <Setter Property="BorderThickness" Value="2" />
+                    </Style>
+                  </Border.Styles>
+                  <Grid RowDefinitions="*,Auto">
+                    <TextBlock Text="{Binding Name}" TextWrapping="Wrap" FontWeight="SemiBold" />
+                    <TextBlock Text="empty" Foreground="{StaticResource LpMutedBrush}" IsVisible="{Binding IsEmpty}" />
+                    <StackPanel Grid.Row="1" Orientation="Horizontal" Spacing="6">
+                      <TextBlock Text="{Binding Detail}" Foreground="{StaticResource LpMutedBrush}" />
+                      <TextBlock Text="equipped" Foreground="{StaticResource LpGreenBrush}" IsVisible="{Binding Equipped}" />
+                    </StackPanel>
+                  </Grid>
+                </Border>
+              </DataTemplate>
+            </ItemsControl.ItemTemplate>
+          </ItemsControl>
         </StackPanel>
       </Border>
 
