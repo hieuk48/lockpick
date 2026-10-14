@@ -117,18 +117,27 @@ def visit(room: str, character: str, table: list[dict], out: Path, log) -> dict:
             fresh_game(character, log)
         ap.send(f"mark survey {character} enter {room}")
         record = doors.record_to(table, room, character)
-        ap.send("door " + record.hex(), "wait 800", timeout=60)
-        for _ in range(60):
-            now = ap.state().get("room")
-            if now == room:
+        # After loading a save the game ignores the first door handoff (2026-10-14: every phase survey's first
+        # targets "did not arrive", the next ones in the same game did) — so hand it over again, up to 3 times.
+        for handoff in range(3):
+            ap.send("door " + record.hex(), "wait 800", timeout=60)
+            arrived = False
+            for _ in range(25):
+                now = ap.state().get("room")
+                if now == room:
+                    arrived = True
+                    break
+                # Scenario flag 0 remaps stages 1/2 to their return versions 6/7 (room_transition_load).
+                if now and now[1:] == room[1:] and int(now[0]) == int(room[0]) + 5:
+                    entry["redirectedTo"] = now
+                    raise ap.Failed(f"redirected to {now} (stage-variant flag set in this game)")
+                ap.send("wait 300")
+            if arrived:
+                entry["handoffs"] = handoff + 1
                 break
-            # Scenario flag 0 remaps stages 1/2 to their return versions 6/7 (room_transition_load).
-            if now and now[1:] == room[1:] and int(now[0]) == int(room[0]) + 5:
-                entry["redirectedTo"] = now
-                raise ap.Failed(f"redirected to {now} (stage-variant flag set in this game)")
-            ap.send("wait 300")
+            ap.settle(15)
         else:
-            raise ap.Failed(f"did not arrive; now {ap.state()}")
+            raise ap.Failed(f"did not arrive after 3 handoffs; now {ap.state()}")
         entry["entered"] = True
         ap.send("heal")
         entry["control"] = ap.settle(90)
