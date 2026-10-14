@@ -77,6 +77,8 @@ Unless noted, bounties are for the supported build (GOG, USA, 1.0 hotfix4).
 |---|---|---|---|
 | B201 | Play windowed at a few window sizes and positions; alt-tab away and back | Game window tracking, focus handling | 🛠️ needs window geometry in captures |
 | B202 | Play in fullscreen | Overlay behavior in fullscreen | 🛠️ |
+| B203 | Examine objects, read documents and pick up items with a capture running | Which on-screen message is shown (text buffer at 0xD91A00, pointer 0xD226A4) — for a text log | ⬜ |
+| B204 | Open the status screen while Fine, Caution, Danger and poisoned | HP bands as the game rates them; a poison status flag (poison is only seen as −2 HP ticks so far) | ⬜ |
 
 ---
 
@@ -96,6 +98,8 @@ Unless noted, bounties are for the supported build (GOG, USA, 1.0 hotfix4).
 | B312 | Encounter **Hunters** and **Chimeras** | Enemy type ids | 🟡 2026-10-13 live session 8 (Jill, ask mode): Hunters are type 6 (introduction cutscene in 60A named by the player; 8 killed in the mansion revisited). Chimeras not yet seen |
 | B313 | Encounter **spiders**, **wasps** and **sharks** | Enemy type ids | ✅ 2026-10-13 live session 8 (player confirmed): giant spiders are type 3 (two killed in 404; each bursts into small spiders that bite for 2), wasps type 7 (beehive passage 408), sharks type 11 in 40E (one big — Neptune — and two smaller) |
 | B314 | Boss fights: **Yawn** (both), **Plant 42**, **Neptune**, **Black Tiger**, **Tyrant** (both) | Boss ids and HP | 🟡 2026-10-13 live session 7 (Jill, ask mode, owner's answers): Yawn is enemy type 13 (appeared in 210, player confirmed); its poison made Jill faint (story flags named). Plant 42, Neptune, Black Tiger, Tyrant not yet seen; 2026-10-13 live session 8 (Jill, ask mode): Yawn's second fight is type 18, killed in 70C (player); Plant 42 is type 8 in 40C after V-Jolt on its roots (type 14) in 40F. Neptune, Black Tiger and Tyrant not yet seen; 2026-10-13 live session 8 (player confirmed): Neptune (the big shark, type 11) encountered in 40E, not killed |
+| B308 | Watch cutscenes in full (don't skip) with ask mode on | Event scripts: story flags set by cutscenes, items handed over, which voice line plays when (subtitles timing) | ⬜ |
+| B309 | Play **Chris's** scenario with ask mode on | Chris-only events (Rebecca, Richard's fate, the flamethrower) named; Chris's item and inventory differences | ⬜ |
 
 ---
 
@@ -126,6 +130,7 @@ Unless noted, bounties are for the supported build (GOG, USA, 1.0 hotfix4).
 | B601 | Pick up items, leave the room and come back | Per-room item pickup flags `0xBE989C` | ✅ 2026-10-13 (live session 4, Jill, memory log): each of 9 pickups cleared exactly one bit in flagRoomItems at the moment the item entered the inventory, and the bits stayed cleared across rooms (1 = item still in the world) |
 | B602 | Trigger partner/cutscene events (Barry, Rebecca, Richard, Wesker) | Event flags and cutscene detection | 🟡 2026-10-13 live session 7 (Jill, ask mode, owner's answers): partner/cutscene events named by the player — Barry (blood, Kenneth, the zombie, the ceiling-trap rescue, the lockpick), Wesker's disappearance, Richard (found poisoned, the serum errand, his radio), Forest, Yawn's poison and the rescue. Rebecca (Chris's scenario) still needed; 2026-10-13 live session 8 (player confirmed): Wesker appears in 405 shooting at the wasps; Barry arrives in 70C with the rope |
 | B603 | Skip vs. watch cutscenes | Cutscene state | ⬜ |
+| B604 | Timed events: Richard's serum errand (let it run long), the lab self-destruct | Where the game keeps the countdowns, for HUD timers | ⬜ |
 
 ---
 
@@ -138,6 +143,7 @@ Unless noted, bounties are for the supported build (GOG, USA, 1.0 hotfix4).
 | B703 | Reach each **ending** and the results screen | End-of-game detection, final IGT, rank | ⬜ |
 | B704 | Knife-only section | Weapon-use tracking | ⬜ |
 | B705 | Resets mid-run (quit to title; restart the game) | Reset detection | ✅ quit to title and game restart seen; evidence in 2026-10-13 live session 7 (Jill, ask mode, mansion to guardhouse): 1 restart(s) / reload(s) — needs review; 2026-10-13 re-check of sessions 4-7: quit to title and a new game (session 5: Jill run, then Chris), loads and game restarts are all detected as separate segments; timers jumping back reset the event detector |
+| B706 | Press the marker key at each speedrun split during a run | Split points as story flags / room transitions, for built-in autosplits | ⬜ |
 
 ---
 

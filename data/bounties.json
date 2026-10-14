@@ -245,6 +245,18 @@
           "task": "Play in fullscreen",
           "verifies": "Overlay behavior in fullscreen",
           "status": "blocked"
+        },
+        {
+          "id": "B203",
+          "task": "Examine objects, read documents and pick up items with a capture running",
+          "verifies": "Which on-screen message is shown (text buffer at 0xD91A00, pointer 0xD226A4) — for a text log",
+          "status": "needed"
+        },
+        {
+          "id": "B204",
+          "task": "Open the status screen while Fine, Caution, Danger and poisoned",
+          "verifies": "HP bands as the game rates them; a poison status flag (poison is only seen as −2 HP ticks so far)",
+          "status": "needed"
         }
       ]
     },
@@ -371,6 +383,18 @@
             "2026-10-13 live session 8 (Jill, ask mode): Yawn's second fight is type 18, killed in 70C (player); Plant 42 is type 8 in 40C after V-Jolt on its roots (type 14) in 40F. Neptune, Black Tiger and Tyrant not yet seen",
             "2026-10-13 live session 8 (player confirmed): Neptune (the big shark, type 11) encountered in 40E, not killed"
           ]
+        },
+        {
+          "id": "B308",
+          "task": "Watch cutscenes in full (don't skip) with ask mode on",
+          "verifies": "Event scripts: story flags set by cutscenes, items handed over, which voice line plays when (subtitles timing)",
+          "status": "needed"
+        },
+        {
+          "id": "B309",
+          "task": "Play **Chris's** scenario with ask mode on",
+          "verifies": "Chris-only events (Rebecca, Richard's fate, the flamethrower) named; Chris's item and inventory differences",
+          "status": "needed"
         }
       ]
     },
@@ -484,6 +508,12 @@
           "task": "Skip vs. watch cutscenes",
           "verifies": "Cutscene state",
           "status": "needed"
+        },
+        {
+          "id": "B604",
+          "task": "Timed events: Richard's serum errand (let it run long), the lab self-destruct",
+          "verifies": "Where the game keeps the countdowns, for HUD timers",
+          "status": "needed"
         }
       ]
     },
@@ -526,6 +556,12 @@
             "2026-10-13 re-check of sessions 4-7: quit to title and a new game (session 5: Jill run, then Chris), loads and game restarts are all detected as separate segments; timers jumping back reset the event detector"
           ],
           "detector": "resets"
+        },
+        {
+          "id": "B706",
+          "task": "Press the marker key at each speedrun split during a run",
+          "verifies": "Split points as story flags / room transitions, for built-in autosplits",
+          "status": "needed"
         }
       ]
     },

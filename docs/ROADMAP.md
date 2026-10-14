@@ -13,6 +13,7 @@ Status legend: ✅ done and verified · 🟡 done, partially verified · ⬜ not
 | 0.1.2 | In-app credits, capture bounties, community setup | ✅ released 2026-10-13 (first update path 0.1.1 → 0.1.2) |
 | 0.1.3 | Bounty automation, capture fixes from live testing (compact recordings, mid-session start) | ✅ released 2026-10-13 |
 | 0.1.4 | Captures record the game-state memory; enemy and flag detection; grouped reads | ✅ released 2026-10-13 |
+| 0.1.5 | Research tooling: capture markers, ask mode, room index, capture timeline, subtitles pack | 🟡 built and used live; not released |
 | 0.2.0 | Core trainer functionality and memory modification | ⬜ |
 | 0.3.0 | Real-time overlay and customizable HUD | ⬜ |
 | 0.4.0 | Room, camera, item and enemy database | ⬜ |
@@ -63,6 +64,22 @@ character id 1, max HP 96 and the Jill RDT bit.
 
 ---
 
+## 0.1.5 — Research tooling (built, ready to release)
+
+Built and used in live sessions 6–8 (2026-10-13); see CHANGELOG `[Unreleased]`.
+
+- Capture markers: Ctrl+Shift+M (configurable) or the Debug page; notes saved in the capture.
+- Ask mode: pauses the game and asks about events Lockpick can't explain; predicts rooms, maps, documents,
+  room-script events and action-driven events, so it asks only about cutscenes, surprises and switch puzzles
+  (session 8: 10 questions in ~90 minutes). ~85 story/puzzle events named so far (`data/games/re1/flag-labels.json`).
+- Room index from the game's room files (`tools/rdt`): items, enemies, doors and story flags per room — the core of
+  the 0.4.0 world database, as a research tool.
+- Capture timeline (`tools/bounties/timeline.py`): rooms, pickups, documents, kills, attacks by name, pushes, item
+  use, saves, markers and answers.
+- Voice-over transcription (`tools/voice`) and the separate subtitles pack (data for 0.3.0).
+
+---
+
 ## 0.2.0 — Core trainer (next)
 
 Goal: deliberate, validated memory modification in Trainer Mode, with Challenge Mode enforcing no writes.
@@ -73,7 +90,9 @@ Acceptance criteria:
 - Trainer action log (persisted) with timestamp, field, old → new value.
 - Features: set/lock HP, infinite ammo, inventory viewer/editor (8 slots, id + quantity at `0xBE9944`), item box viewer.
   Inventory layout, ammo semantics and equipped slot are already runtime-verified (read side); the item box is not.
-- Item id table (from biorand, MIT, with attribution) verified against the in-game inventory.
+- Item id table (from biorand, MIT, with attribution) verified against the in-game inventory — about 60 ids
+  confirmed in play so far (`data/games/re1/names.json`; the bazooka ids 7/8 corrected from play). The item box is
+  runtime-verified.
 - Hotkeys (global, configurable) with no effect when the game is not attached.
 - Run record notes whether any write occurred (`RunInvalidated` event).
 - All writable addresses runtime-verified on the GOG build; tests with fake memory for every write path.
@@ -83,6 +102,14 @@ Acceptance criteria:
 - Transparent, click-through overlay window tracking the game window (position, size, DPI).
 - Game-window placement helper (move/resize the game window to a chosen monitor/position).
 - Configurable HUD widgets (HP, room, timer, events) with < 2% game frame-time impact (measured).
+- HUD data that is already understood (read-only):
+  - HP status as the game rates it — Jill Fine 73–96 / Caution 25–48 / Danger 0–24, Chris 106 / 36 / 0
+    thresholds (speedrun damage chart, matches the GOG build);
+  - poisoned indicator (poison shows as −2 HP every 4 s; a status flag would be better — research);
+  - enemy health in the current room (enemy slots: type, HP, active);
+  - what just happened: an event feed in plain words (picked up the Emblem, Zombie ankle bite (6), first visit to
+    room 11D, Barry gives Jill the lockpick) — the capture timeline's logic in the app;
+  - current room and area by name (areas from the game's room table; names as they are confirmed).
 - Subtitles for the voice-over (accessibility): optional download of the separate
   [lockpick-subtitles](https://github.com/mscrnt/lockpick-subtitles) pack (off by default; checked against the
   player's voice files by SHA-256), shown in the overlay while a line plays. Needs: which voice file is playing
@@ -93,9 +120,18 @@ Acceptance criteria:
 ## 0.4.0 — World database
 
 - RDT parser for the user's own installation (no assets redistributed): cameras, doors (`door_aot_set`),
-  items (`item_aot_set`), enemies (`SceEmSet`).
-- Room/camera names database in `data/games/re1/` (JSON), keyed by room id.
-- Enemy array reader (30 × 0x18C at `0xBE6464`) runtime-verified.
+  items (`item_aot_set`), enemies (`SceEmSet`). **Done as a research tool** (`tools/rdt`, every retail room file,
+  committed as `room-index.json` with ids and numbers only); still to do: port to C# for in-app use, and cameras.
+- **Event-script parser** (RDT `offsets[8]`): cutscene scripts set the story flags room scripts don't, hand over items
+  (Barry's lockpick, Richard's radio) and play voice lines — parsing them names events without asking and tells the
+  subtitles which line plays when.
+- Room/camera names database in `data/games/re1/` (JSON), keyed by room id — areas done (`rooms.json`), names so far
+  for rooms identified in play; the rest via ask mode / community.
+- Rooms-visited and map/document flags: done (the game's table at `0x4D31E0`; maps = item + 46, documents = item + 35).
+- Enemy array reader (30 × 0x18C at `0xBE6464`) runtime-verified — types, HP and active flag behave as expected in
+  every capture (static anchor still needed); most enemy types identified in play.
+- On-screen text: which message is shown (pointer at `0xD226A4`, text buffer recorded in captures) and the room files'
+  MSG section decoded locally — for a text log and examine/pickup messages.
 
 ## 0.5.0 — Highlighting and ESP
 
@@ -104,26 +140,42 @@ Acceptance criteria:
 ## 0.6.0 — Advanced trainer
 
 - Teleport, movement speed, enemy freeze/health, event-flag editor, game speed.
+- The event-flag editor shows the named flags (story, puzzles, locks, items, rooms) instead of raw bits, with
+  story-state presets ("start at the courtyard").
 
 ## 0.7.0 — Contextual guidance
 
 - Missed-item warnings, puzzle-state tracking, route guidance, warnings under 100 ms.
+- **Progress tracker** (read-only, Challenge-safe — can ship before 0.7, it needs no new memory research): per room
+  and area, items still there vs taken (room index + item flags), documents and maps collected, rooms explored (the
+  map's own flags), enemies killed for good, and story/puzzle progress from the named flags.
+- Timed events: countdowns the game keeps silently (Richard's serum errand, 15 min; later the self-destruct).
+- Missed-item warning when leaving a room or area with items left (from the same data).
 
 ## Event candidates found in live traces
 
 - ~~`GameLoaded` / new game~~ — implemented (timer discontinuities), tested against both live fixtures.
-- `ItemCollected` / `ItemUsed`: inventory slot diffs (runtime-verified layout) — 0.2.
+- Worked out in the research tools (timeline / ask mode), to move into the app's `EventDetector`: item picked up,
+  put back, used, received, combined, loaded; document/map taken; first visit to a room; door/desk unlocked; enemy
+  killed (kill flags) and getting back up; attack by name (damage per hit); poison ticks; object pushed; named story
+  and puzzle events.
 - `PlayerDied`: `stateFlags & 0x01000000` with HP ≤ 0 — needs a gated raw-field path.
+- `GameSaved`: from the save files (#37); ink ribbon use is visible in the inventory (Chris).
 
 ## 0.8.0 — Speedrun and challenges
 
 - Run timer, LiveSplit integration, autosplits, no-damage/no-heal/knife-only challenges, PB tracking,
   trainer-modification detection (records, not anti-cheat claims).
+- Autosplits from the named story flags and room transitions, matching the community's segment templates (Yawn 1,
+  Mansion 1, Courtyard 1, … End — speedrun.com); in-game time from the game timer; the capture timeline as a run
+  review (where time went, damage taken, items used).
 
 ## 0.9.0 — Optional AI, performance, compatibility
 
 - Optional ONNX inference (< 200 ms, CPU fallback) only where deterministic data is unavailable.
 - Additional builds (other GOG revisions, languages) as fingerprinted profiles.
+- Community labelling: ask-mode answers and `auto` markers from submitted captures become suggested flag labels
+  (reviewed before merging), like the bounty automation does for evidence.
 
 ## 1.0.0 — Stable RE1
 
@@ -134,5 +186,7 @@ Acceptance criteria:
 ## Backlog / ideas
 
 - Lockpick window: remember size/position per monitor; "compact" always-on-top mode for a side screen.
+- Music track lead (`0xD226A0`: changes when enemies burst in) — a "danger" cue for the HUD if confirmed.
+- Ask mode with a controller button instead of the keyboard (the owner plays with a DualSense).
 - Debug: one-click "export support bundle" (log + recording + fingerprint, no game files).
 - Investigate why the game window cannot be dragged (window style `0x14C80000` has a caption; the 1997 window procedure likely swallows the move).
