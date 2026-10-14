@@ -83,6 +83,10 @@ Acceptance criteria:
 - Transparent, click-through overlay window tracking the game window (position, size, DPI).
 - Game-window placement helper (move/resize the game window to a chosen monitor/position).
 - Configurable HUD widgets (HP, room, timer, events) with < 2% game frame-time impact (measured).
+- Subtitles for the voice-over (accessibility): optional download of the separate
+  [lockpick-subtitles](https://github.com/mscrnt/lockpick-subtitles) pack (off by default; checked against the
+  player's voice files by SHA-256), shown in the overlay while a line plays. Needs: which voice file is playing
+  (captures / cutscene scripts).
 - Investigate rendering while the game is unfocused (the game blacks out when inactive): requires an
   opt-in in-process patch; must be isolated, reversible and never used in Challenge Mode.
 

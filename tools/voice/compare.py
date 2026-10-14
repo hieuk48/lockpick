@@ -57,9 +57,13 @@ def wer(a: list[str], b: list[str]) -> float:
 
 def merge(texts: dict[str, str], order: list[str]) -> tuple[str, str]:
     real = {n: t for n, t in texts.items() if words(t) and not INVENTED.search(t)}
-    for n in order:
-        if n in real and any(m != n and wer(words(real[n]), words(real[m])) <= DISAGREE for m in real):
-            return real[n], "agreed"
+    # Among versions another pass agrees with, take the one closest to all the others (so one pass's extra words
+    # don't slip in); ties go to the name-aware Whisper passes.
+    agreeing = [n for n in order if n in real
+                and any(m != n and wer(words(real[n]), words(real[m])) <= DISAGREE for m in real)]
+    if agreeing:
+        best = min(agreeing, key=lambda n: (sum(wer(words(real[n]), words(real[m])) for m in real if m != n), order.index(n)))
+        return real[best], "agreed"
     if any(SCREAM.match(t) for t in texts.values()):
         return "[screams]", "scream"
     # Canary returns nothing (or just "Transcript") when there is no speech, where Whisper invents text.

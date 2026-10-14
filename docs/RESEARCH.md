@@ -38,8 +38,13 @@ Research date: 2026-10-12. No third-party code was copied into Lockpick.
 named `vSSS_LL.wav` (31 groups; the group looks like a story scene, LL a line, hex). `USA\Movie` holds 27 AVI videos
 (Capcom logo, intro, endings). Only one room script plays a voice directly (`xa_on` in 704); cutscene voices come from
 the event scripts (`offsets[8]`, not parsed yet) — or can be identified in captures if the playing sound shows in the
-system block's 0x24-stride arrays. Plan: transcribe locally (speech-to-text) into the player's data folder; transcripts
-are the game's script, so like the game's text they stay local and are never committed (CI rejects audio/video files).
+system block's 0x24-stride arrays. Transcribed 2026-10-13 (`tools/voice/`: Whisper large-v3 greedy + beam search with
+character names as a prompt, NVIDIA Canary-Qwen 2.5B under WSL, merged by `compare.py`): 540 dialogue lines on which
+at least two passes agree, 9 screams, the rest without speech (the `vb00_*` sounds and all 27 videos). Canary
+misspells names (Whisker, Jail) but returns nothing on silence where Whisper invents text — together they catch
+both failure modes. The dialogue is Capcom's, so it is never committed here: the subtitles are published separately as
+[lockpick-subtitles](https://github.com/mscrnt/lockpick-subtitles) (fan transcription for accessibility, no license
+granted, removed on request) by `tools/voice/export_pack.py`; CI rejects audio/video files in this repository.
 
 ## 0b. Room files (RDT) — what each game flag means
 
