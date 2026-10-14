@@ -46,6 +46,10 @@ public sealed partial class MapViewModel : PageViewModel
     [ObservableProperty]
     public partial bool HasPlayer { get; private set; }
 
+    /// <summary>Item boxes and typewriters the game has active now (null when the game doesn't report them).</summary>
+    [ObservableProperty]
+    public partial IReadOnlyList<PlacedFixture>? LiveFixtures { get; private set; }
+
     /// <summary>Enemies and NPCs in the room right now (null when the game doesn't report them).</summary>
     [ObservableProperty]
     public partial IReadOnlyList<LiveActor>? Actors { get; private set; }
@@ -155,6 +159,12 @@ public sealed partial class MapViewModel : PageViewModel
             {
                 FilledSockets = filled;
             }
+        }
+
+        var fixtures = s.PlacedFixtures.TryGet(out var active) ? active : null;
+        if (fixtures is null != LiveFixtures is null || (fixtures is not null && LiveFixtures is not null && !fixtures.SequenceEqual(LiveFixtures)))
+        {
+            LiveFixtures = fixtures;
         }
 
         var actors = s.Actors.TryGet(out var live) ? live : null;

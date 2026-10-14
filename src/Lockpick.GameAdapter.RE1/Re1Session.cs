@@ -35,6 +35,7 @@ internal sealed class Re1Session : IGameSession
     private readonly Cluster[] _clusters;
     private GameSnapshot? _previous;
     private Field<IReadOnlyList<PlacedItem>> _placed = Field<IReadOnlyList<PlacedItem>>.Unavailable;
+    private Field<IReadOnlyList<PlacedFixture>> _fixtures = Field<IReadOnlyList<PlacedFixture>>.Unavailable;
     private RoomLocation? _placedRoom;
     private DateTimeOffset _placedAt;
 
@@ -45,6 +46,12 @@ internal sealed class Re1Session : IGameSession
     internal const ulong ActionTail = 0xD91BC0;
     private const int ActionEntries = 24;
     private const int PickupHandler = 4;
+
+    // Room action handlers 8 (item box) and 16 (typewriter): live 2026-10-14 the zones in 100/118/30E opened the item
+    // box and asked to save. Room files also list handler-16 zones the game doesn't arm in every state (106, 307), so
+    // the map shows the ones in the live table.
+    private const int ItemBoxHandler = 8;
+    private const int TypewriterHandler = 16;
     private static readonly TimeSpan PlacedRefresh = TimeSpan.FromSeconds(1);
 
     // Enemy/NPC slots (live 2026-10-14, the dev combat tests: +0x00 bit 0 active, +0x01 type, +0x34/+0x3C X/Z as i32,
@@ -116,7 +123,7 @@ internal sealed class Re1Session : IGameSession
             }
 
             calls++;
-            snapshot = snapshot with { PlacedItems = _placed, Actors = ReadActors() };
+            snapshot = snapshot with { PlacedItems = _placed, PlacedFixtures = _fixtures, Actors = ReadActors() };
         }
         if (CaptureRegions && Profile.CaptureRegions.Count > 0)
         {
@@ -180,10 +187,26 @@ internal sealed class Re1Session : IGameSession
             ? (int)((tailAddress - ActionTable) / 12) + 1
             : 0;
         var items = new List<PlacedItem>();
+        var fixtures = new List<PlacedFixture>();
         Span<byte> record = stackalloc byte[12];
         for (var i = 0; i < used; i++)
         {
             var entry = table.Slice(i * 12, 12);
+            if (entry[0] is ItemBoxHandler or TypewriterHandler)
+            {
+                calls++;
+                if (_memory.TryRead(System.Buffers.Binary.BinaryPrimitives.ReadUInt32LittleEndian(entry[8..]), record))
+                {
+                    fixtures.Add(new PlacedFixture(entry[0] == ItemBoxHandler ? Core.Maps.FixtureKind.ItemBox : Core.Maps.FixtureKind.Typewriter,
+                        System.Buffers.Binary.BinaryPrimitives.ReadInt16LittleEndian(record),
+                        System.Buffers.Binary.BinaryPrimitives.ReadInt16LittleEndian(record[2..]),
+                        System.Buffers.Binary.BinaryPrimitives.ReadUInt16LittleEndian(record[4..]),
+                        System.Buffers.Binary.BinaryPrimitives.ReadUInt16LittleEndian(record[6..])));
+                }
+
+                continue;
+            }
+
             if (entry[0] != PickupHandler)
             {
                 continue;
@@ -203,6 +226,7 @@ internal sealed class Re1Session : IGameSession
             }
         }
 
+        _fixtures = Field<IReadOnlyList<PlacedFixture>>.Valid(fixtures);
         return Field<IReadOnlyList<PlacedItem>>.Valid(items);
     }
 

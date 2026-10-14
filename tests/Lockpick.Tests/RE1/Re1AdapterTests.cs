@@ -53,7 +53,15 @@ public class Re1AdapterTests
         BitConverter.GetBytes((uint)record).CopyTo(bytes, 20);
         bytes[24] = 4;  // pickup with a zero-size zone (handed over by an event)
         BitConverter.GetBytes((uint)(record + 0x20)).CopyTo(bytes, 32);
-        _memory.Write(table, bytes).Write(0xD91BC0, BitConverter.GetBytes((uint)(table + 24)));
+        bytes[36] = 16; // typewriter → record + 0x40
+        BitConverter.GetBytes((uint)(record + 0x40)).CopyTo(bytes, 44);
+        _memory.Write(table, bytes).Write(0xD91BC0, BitConverter.GetBytes((uint)(table + 36)));
+        var typewriter = new byte[12];
+        BitConverter.GetBytes((short)2300).CopyTo(typewriter, 0);
+        BitConverter.GetBytes((short)8750).CopyTo(typewriter, 2);
+        BitConverter.GetBytes((ushort)1600).CopyTo(typewriter, 4);
+        BitConverter.GetBytes((ushort)2000).CopyTo(typewriter, 6);
+        _memory.Write(record + 0x40, typewriter);
         var item = new byte[12];
         BitConverter.GetBytes((short)pickupItemX).CopyTo(item, 0);
         BitConverter.GetBytes((short)16000).CopyTo(item, 2);
@@ -73,6 +81,17 @@ public class Re1AdapterTests
 
         Assert.Equal(FieldStatus.Valid, placed.Status);
         Assert.Equal(new PlacedItem(47, 13000, 16000, 2000, 2000), Assert.Single(placed.Value));
+    }
+
+    [Fact]
+    public void Active_typewriters_and_item_boxes_come_from_the_live_action_table()
+    {
+        NewChrisGameInMainHall();
+        ActionTable(13000);
+
+        var fixtures = _session.Read(1, T0).PlacedFixtures;
+
+        Assert.Equal(new PlacedFixture(Lockpick.Core.Maps.FixtureKind.Typewriter, 2300, 8750, 1600, 2000), Assert.Single(fixtures.Value));
     }
 
     [Fact]

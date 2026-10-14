@@ -20,7 +20,7 @@
     </Border>
 
     <Border Classes="card" Grid.Row="1" MinHeight="240">
-      <c:RoomMapControl Map="{Binding Map}" PlacedItems="{Binding PlacedItems}" TakenItems="{Binding TakenItems}" FilledSockets="{Binding FilledSockets}" DoorNames="{Binding DoorNames}" Actors="{Binding Actors}" PlayerX="{Binding PlayerX}" PlayerZ="{Binding PlayerZ}"
+      <c:RoomMapControl Map="{Binding Map}" PlacedItems="{Binding PlacedItems}" TakenItems="{Binding TakenItems}" FilledSockets="{Binding FilledSockets}" DoorNames="{Binding DoorNames}" Actors="{Binding Actors}" LiveFixtures="{Binding LiveFixtures}" PlayerX="{Binding PlayerX}" PlayerZ="{Binding PlayerZ}"
                         PlayerAngle="{Binding PlayerAngle}" HasPlayer="{Binding HasPlayer}"
                         WallBrush="{StaticResource LpMutedBrush}" SoftBrush="{StaticResource LpBorderBrush}"
                         DoorBrush="{StaticResource LpGreenBrush}" ItemBrush="{StaticResource LpAmberBrush}"

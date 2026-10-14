@@ -28,6 +28,8 @@ public sealed class RoomMapControl : Control
         AvaloniaProperty.Register<RoomMapControl, IReadOnlyDictionary<string, string>?>(nameof(DoorNames));
     public static readonly StyledProperty<IReadOnlyList<LiveActor>?> ActorsProperty =
         AvaloniaProperty.Register<RoomMapControl, IReadOnlyList<LiveActor>?>(nameof(Actors));
+    public static readonly StyledProperty<IReadOnlyList<PlacedFixture>?> LiveFixturesProperty =
+        AvaloniaProperty.Register<RoomMapControl, IReadOnlyList<PlacedFixture>?>(nameof(LiveFixtures));
     public static readonly StyledProperty<bool> HasPlayerProperty = AvaloniaProperty.Register<RoomMapControl, bool>(nameof(HasPlayer));
     public static readonly StyledProperty<IBrush?> WallBrushProperty = AvaloniaProperty.Register<RoomMapControl, IBrush?>(nameof(WallBrush));
     public static readonly StyledProperty<IBrush?> SoftBrushProperty = AvaloniaProperty.Register<RoomMapControl, IBrush?>(nameof(SoftBrush));
@@ -41,7 +43,7 @@ public sealed class RoomMapControl : Control
 
     static RoomMapControl()
     {
-        AffectsRender<RoomMapControl>(MapProperty, PlacedItemsProperty, TakenItemsProperty, FilledSocketsProperty, DoorNamesProperty, ActorsProperty, PlayerXProperty, PlayerZProperty, PlayerAngleProperty, HasPlayerProperty,
+        AffectsRender<RoomMapControl>(MapProperty, PlacedItemsProperty, TakenItemsProperty, FilledSocketsProperty, DoorNamesProperty, ActorsProperty, LiveFixturesProperty, PlayerXProperty, PlayerZProperty, PlayerAngleProperty, HasPlayerProperty,
             WallBrushProperty, SoftBrushProperty, DoorBrushProperty, ItemBrushProperty, PlayerBrushProperty,
             FaintTextBrushProperty, LabelPlateBrushProperty);
     }
@@ -64,6 +66,9 @@ public sealed class RoomMapControl : Control
 
     /// <summary>Room-file items the player has already taken (labelled "taken" rather than "later").</summary>
     public IReadOnlySet<MapItem>? TakenItems { get => GetValue(TakenItemsProperty); set => SetValue(TakenItemsProperty, value); }
+
+    /// <summary>Item boxes and typewriters the game has active now; when set, only those room-file ones are drawn.</summary>
+    public IReadOnlyList<PlacedFixture>? LiveFixtures { get => GetValue(LiveFixturesProperty); set => SetValue(LiveFixturesProperty, value); }
 
     /// <summary>Enemies and NPCs in the room right now.</summary>
     public IReadOnlyList<LiveActor>? Actors { get => GetValue(ActorsProperty); set => SetValue(ActorsProperty, value); }
@@ -131,7 +136,8 @@ public sealed class RoomMapControl : Control
             DrawLabel(context, DoorNames?.GetValueOrDefault(d.Target) ?? d.Target, rect.Center, DoorBrush, 12);
         }
 
-        foreach (var f in map.Fixtures)
+        var live = LiveFixtures;
+        foreach (var f in map.Fixtures.Where(f => live is null || live.Any(l => l.Kind == f.Kind && l.X == f.X && l.Z == f.Z)))
         {
             var (fill, label) = f.Kind == FixtureKind.ItemBox
                 ? (Color.Parse("#A1887F"), "Item box")

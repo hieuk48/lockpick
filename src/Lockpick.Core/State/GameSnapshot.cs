@@ -30,6 +30,9 @@ public readonly record struct RoomLocation(int Stage, int Room)
 /// <summary>An item the game has placed in the current room right now (adapter-specific id; zone in room units).</summary>
 public sealed record PlacedItem(int ItemId, int X, int Z, int Width, int Depth);
 
+/// <summary>An item box or typewriter the game has active in the current room right now (zone in room units).</summary>
+public sealed record PlacedFixture(Maps.FixtureKind Kind, int X, int Z, int Width, int Depth);
+
 /// <summary>What a live actor is, for drawing: an ordinary enemy, a boss, or a non-player character (partners etc.).</summary>
 public enum ActorKind
 {
@@ -98,6 +101,10 @@ public sealed record GameSnapshot
     /// </summary>
     [JsonIgnore]
     public Field<IReadOnlyList<PlacedItem>> PlacedItems { get; init; } = Field<IReadOnlyList<PlacedItem>>.Unsupported;
+
+    /// <summary>Item boxes and typewriters the game has active in this room (null-equivalent when unknown).</summary>
+    [JsonIgnore]
+    public Field<IReadOnlyList<PlacedFixture>> PlacedFixtures { get; init; } = Field<IReadOnlyList<PlacedFixture>>.Unsupported;
 
     /// <summary>Enemies and NPCs active in the current room (for the map; not recorded in captures, whose regions hold
     /// the raw slots).</summary>
