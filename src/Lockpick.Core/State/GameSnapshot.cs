@@ -30,6 +30,9 @@ public readonly record struct RoomLocation(int Stage, int Room)
 /// <summary>An item the game has placed in the current room right now (adapter-specific id; zone in room units).</summary>
 public sealed record PlacedItem(int ItemId, int X, int Z, int Width, int Depth);
 
+/// <summary>One inventory or item-box slot: adapter-specific item id and quantity (a weapon's quantity is its load).</summary>
+public sealed record HeldItem(int Slot, int ItemId, int Quantity);
+
 /// <summary>An item box or typewriter the game has active in the current room right now (zone in room units).</summary>
 public sealed record PlacedFixture(Maps.FixtureKind Kind, int X, int Z, int Width, int Depth);
 
@@ -101,6 +104,14 @@ public sealed record GameSnapshot
     /// </summary>
     [JsonIgnore]
     public Field<IReadOnlyList<PlacedItem>> PlacedItems { get; init; } = Field<IReadOnlyList<PlacedItem>>.Unsupported;
+
+    /// <summary>The items the player holds, in slot order (the game's own count; Rebecca's when she plays).</summary>
+    [JsonIgnore]
+    public Field<IReadOnlyList<HeldItem>> Inventory { get; init; } = Field<IReadOnlyList<HeldItem>>.Unsupported;
+
+    /// <summary>The item box's filled entries.</summary>
+    [JsonIgnore]
+    public Field<IReadOnlyList<HeldItem>> ItemBox { get; init; } = Field<IReadOnlyList<HeldItem>>.Unsupported;
 
     /// <summary>Item boxes and typewriters the game has active in this room (null-equivalent when unknown).</summary>
     [JsonIgnore]

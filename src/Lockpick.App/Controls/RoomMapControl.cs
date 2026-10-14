@@ -95,8 +95,13 @@ public sealed class RoomMapControl : Control
     /// <summary>Plate drawn behind labels so they read over walls and furniture.</summary>
     public IBrush? LabelPlateBrush { get => GetValue(LabelPlateBrushProperty); set => SetValue(LabelPlateBrushProperty, value); }
 
+    // Labels drawn so far this frame: a new label moves to the nearest free spot instead of covering one (several
+    // items can share a spot, e.g. 50D's flame rounds and the magnum rounds for later).
+    private readonly List<Rect> _labels = [];
+
     public override void Render(DrawingContext context)
     {
+        _labels.Clear();
         if (Map is not { } map || Bounds.Width < 40 || Bounds.Height < 40)
         {
             return;
@@ -312,13 +317,27 @@ public sealed class RoomMapControl : Control
         }
 
         var formatted = new FormattedText(text, CultureInfo.CurrentCulture, FlowDirection.LeftToRight, Typeface.Default, size, brush);
-        var origin = center - new Vector(formatted.Width / 2, formatted.Height / 2);
-        // Keep labels inside the control (actors can stand outside the room's walls, e.g. a script-placed zombie).
-        origin = new Point(Math.Clamp(origin.X, 4, Math.Max(4, Bounds.Width - formatted.Width - 4)),
-            Math.Clamp(origin.Y, 2, Math.Max(2, Bounds.Height - formatted.Height - 2)));
+        var step = formatted.Height + 3;
+        Rect Place(Vector shift)
+        {
+            var o = center + shift - new Vector(formatted.Width / 2, formatted.Height / 2);
+            // Keep labels inside the control (actors can stand outside the room's walls, e.g. a script-placed zombie).
+            o = new Point(Math.Clamp(o.X, 4, Math.Max(4, Bounds.Width - formatted.Width - 4)),
+                Math.Clamp(o.Y, 2, Math.Max(2, Bounds.Height - formatted.Height - 2)));
+            return new Rect(o, new Size(formatted.Width, formatted.Height)).Inflate(new Thickness(4, 1));
+        }
+
+        Vector[] shifts =
+        [
+            default, new(0, -step), new(0, step), new(0, -2 * step), new(0, 2 * step),
+            new(formatted.Width / 2 + 10, 0), new(-formatted.Width / 2 - 10, 0), new(0, -3 * step), new(0, 3 * step),
+        ];
+        var box = shifts.Select(Place).FirstOrDefault(r => !_labels.Any(r.Intersects), Place(default));
+        _labels.Add(box);
+        var origin = box.Deflate(new Thickness(4, 1)).TopLeft;
         if (LabelPlateBrush is { } plate)
         {
-            context.DrawRectangle(plate, null, new Rect(origin, new Size(formatted.Width, formatted.Height)).Inflate(new Thickness(4, 1)), 3, 3);
+            context.DrawRectangle(plate, null, box, 3, 3);
         }
 
         context.DrawText(formatted, origin);

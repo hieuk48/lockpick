@@ -70,6 +70,8 @@ public sealed class Re1Adapter : IGameAdapter
     internal static (string Name, Core.State.ActorKind Kind) ActorInfo(int type) =>
         (Knowledge.Value.Enemy(type), type >= 0x20 ? Core.State.ActorKind.Npc : Bosses.Contains(type) ? Core.State.ActorKind.Boss : Core.State.ActorKind.Enemy);
 
+    public string? ItemName(int itemId) => Knowledge.Value.ItemNames.TryGetValue(itemId, out var name) ? name : null;
+
     public string? RoomName(string roomId) => Knowledge.Value.RoomNames.TryGetValue(roomId, out var name) ? name : null;
 
     public Core.Maps.IRoomMapSource CreateRoomMaps(string installDirectory)

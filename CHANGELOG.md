@@ -7,6 +7,8 @@ All notable changes to this project are documented here. The format follows
 ## [Unreleased]
 
 ### Added
+- Items page (read-only): what you carry (with the equipped weapon and the rounds loaded) and everything in the
+  item box.
 - Map page (read-only): the room you're in, drawn from your own install's room files — walls and furniture, doors with the room they lead to, item spots for your character — with your position and facing live. Items show as in the room now, taken,
   or coming later in the story, and items put in place (the gold emblem in its slot) show where they sit.
   Enemies and people in the room are drawn live (a shape and colour per kind, bosses as stars, people as blue

@@ -57,6 +57,9 @@ public interface IGameAdapter
 
     /// <summary>A short name for the room (e.g. "Dining room"), or null when the adapter doesn't know it.</summary>
     string? RoomName(string roomId) => null;
+
+    /// <summary>The item's name, or null when the adapter doesn't know it.</summary>
+    string? ItemName(int itemId) => null;
 }
 
 /// <summary>A verified connection to one running game process.</summary>

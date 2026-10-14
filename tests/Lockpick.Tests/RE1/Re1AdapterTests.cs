@@ -84,6 +84,25 @@ public class Re1AdapterTests
     }
 
     [Fact]
+    public void Inventory_follows_the_pointer_and_held_count_and_the_box_lists_filled_entries()
+    {
+        NewChrisGameInMainHall();
+        _memory.Write(Re1Session.InventoryPointer, BitConverter.GetBytes(0xBE9944u));
+        _memory.WriteU8(Re1Session.HeldCount, 2);
+        _memory.Write(0xBE9944, [0x01, 0x00, 0x02, 0x0F, 0x35, 0x01]); // knife, Beretta 15, a Shield key past the count
+        var box = new byte[96];
+        box[0] = 0x0B; box[1] = 15;   // clip ×15
+        box[10] = 0x44; box[11] = 1;  // green herb (entry 5)
+        _memory.Write(Re1Session.ItemBoxSlots, box);
+
+        var s = _session.Read(1, T0);
+
+        Assert.Equal([new HeldItem(0, 1, 0), new HeldItem(1, 2, 15)], s.Inventory.Value);
+        Assert.Equal([new HeldItem(0, 0x0B, 15), new HeldItem(5, 0x44, 1)], s.ItemBox.Value);
+        Assert.Equal("Green herb", new Re1Adapter().ItemName(0x44));
+    }
+
+    [Fact]
     public void Active_typewriters_and_item_boxes_come_from_the_live_action_table()
     {
         NewChrisGameInMainHall();
@@ -319,9 +338,10 @@ public class Re1AdapterTests
         var session = new Re1Session(new ValidatedMemory(_memory, [_profile.ImageRange]), _profile);
         var s = session.Read(1, T0);
 
-        // A few block reads for the fields, plus the room's placed items (the action table; the fake has no
-        // entries, so no record reads) - refreshed once a second - and one block for the enemy/NPC slots.
-        Assert.InRange(session.LastReadCalls, 1, 6);
+        // A few block reads for the fields, plus - once a second - the room's placed items (the action table; the fake
+        // has no entries, so no record reads), the inventory (pointer, held count, slots) and the item box, and one
+        // block for the enemy/NPC slots.
+        Assert.InRange(session.LastReadCalls, 1, 10);
         Assert.Equal(new Health(140, 140), s.Health.Value);
         Assert.Equal("106", s.Location.Value.Id);
         Assert.Equal(0x0F02, s.RawFields["inv1"].Value);

@@ -36,6 +36,16 @@ internal sealed class Re1Session : IGameSession
     private GameSnapshot? _previous;
     private Field<IReadOnlyList<PlacedItem>> _placed = Field<IReadOnlyList<PlacedItem>>.Unavailable;
     private Field<IReadOnlyList<PlacedFixture>> _fixtures = Field<IReadOnlyList<PlacedFixture>>.Unavailable;
+    private Field<IReadOnlyList<HeldItem>> _inventory = Field<IReadOnlyList<HeldItem>>.Unavailable;
+    private Field<IReadOnlyList<HeldItem>> _box = Field<IReadOnlyList<HeldItem>>.Unavailable;
+
+    // Inventory (docs/MEMORY_MAP.md): the game reaches the held items through the pointer at 0xD22768 — 0xBE9944
+    // (Chris/Jill) or 0xBE9950 (Rebecca) — and treats slots at or past the held count 0xBE9827 as empty (live
+    // 2026-10-14). Item box: 48 entries at 0xBE98E4, each low byte id, high byte quantity (live 2026-10-13).
+    internal const ulong InventoryPointer = 0xD22768;
+    internal const ulong HeldCount = 0xBE9827;
+    internal const ulong ItemBoxSlots = 0xBE98E4;
+    private const int ItemBoxCount = 48;
     private RoomLocation? _placedRoom;
     private DateTimeOffset _placedAt;
 
@@ -118,12 +128,16 @@ internal sealed class Re1Session : IGameSession
             if (_placedRoom != room || now - _placedAt >= PlacedRefresh)
             {
                 _placed = ReadPlacedItems(ref calls);
+                (_inventory, _box) = ReadItems(ref calls);
                 _placedRoom = room;
                 _placedAt = now;
             }
 
             calls++;
-            snapshot = snapshot with { PlacedItems = _placed, PlacedFixtures = _fixtures, Actors = ReadActors() };
+            snapshot = snapshot with
+            {
+                PlacedItems = _placed, PlacedFixtures = _fixtures, Actors = ReadActors(), Inventory = _inventory, ItemBox = _box,
+            };
         }
         if (CaptureRegions && Profile.CaptureRegions.Count > 0)
         {
@@ -144,6 +158,47 @@ internal sealed class Re1Session : IGameSession
         LastReadCalls = calls;
         _previous = snapshot;
         return snapshot;
+    }
+
+    private (Field<IReadOnlyList<HeldItem>> Inventory, Field<IReadOnlyList<HeldItem>> Box) ReadItems(ref int calls)
+    {
+        var inventory = Field<IReadOnlyList<HeldItem>>.Unavailable;
+        calls += 3;
+        Span<byte> slots = stackalloc byte[16];
+        Span<byte> count = stackalloc byte[1];
+        if (_memory.TryReadU32(InventoryPointer, out var pointer) && pointer is 0xBE9944 or 0xBE9950
+            && _memory.TryRead(HeldCount, count) && _memory.TryRead(pointer, slots))
+        {
+            var held = new List<HeldItem>();
+            for (var i = 0; i < Math.Min((int)count[0], 8); i++)
+            {
+                if (slots[i * 2] != 0)
+                {
+                    held.Add(new HeldItem(i, slots[i * 2], slots[i * 2 + 1]));
+                }
+            }
+
+            inventory = Field<IReadOnlyList<HeldItem>>.Valid(held);
+        }
+
+        var box = Field<IReadOnlyList<HeldItem>>.Unavailable;
+        calls++;
+        Span<byte> entries = stackalloc byte[ItemBoxCount * 2];
+        if (_memory.TryRead(ItemBoxSlots, entries))
+        {
+            var stored = new List<HeldItem>();
+            for (var i = 0; i < ItemBoxCount; i++)
+            {
+                if (entries[i * 2] != 0)
+                {
+                    stored.Add(new HeldItem(i, entries[i * 2], entries[i * 2 + 1]));
+                }
+            }
+
+            box = Field<IReadOnlyList<HeldItem>>.Valid(stored);
+        }
+
+        return (inventory, box);
     }
 
     private Field<IReadOnlyList<LiveActor>> ReadActors()

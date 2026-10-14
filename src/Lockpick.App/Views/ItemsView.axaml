@@ -1,0 +1,47 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:vm="using:Lockpick.App.ViewModels"
+             xmlns:c="using:Lockpick.App.Controls"
+             x:Class="Lockpick.App.Views.ItemsView"
+             x:DataType="vm:ItemsViewModel">
+
+  <UserControl.Resources>
+    <DataTemplate x:Key="ItemRowTemplate" x:DataType="vm:ItemRow">
+      <Grid ColumnDefinitions="*,Auto" Margin="0,2">
+        <StackPanel Orientation="Horizontal" Spacing="6">
+          <TextBlock Text="{Binding Name}" TextWrapping="Wrap" />
+          <TextBlock Text="equipped" Foreground="{StaticResource LpGreenBrush}" IsVisible="{Binding Equipped}" />
+        </StackPanel>
+        <TextBlock Grid.Column="1" Text="{Binding Detail}" Foreground="{StaticResource LpMutedBrush}" Margin="12,0,0,0" />
+      </Grid>
+    </DataTemplate>
+  </UserControl.Resources>
+
+  <ScrollViewer>
+    <StackPanel Spacing="12" MaxWidth="700" HorizontalAlignment="Left">
+      <Border Classes="card">
+        <StackPanel Spacing="6">
+          <StackPanel Classes="cardhead">
+            <c:LucideIcon Data="{StaticResource Icon.Package}" />
+            <TextBlock Classes="caption" Text="INVENTORY" />
+          </StackPanel>
+          <TextBlock Classes="headline" Text="{Binding InventoryHeading}" TextWrapping="Wrap" />
+          <ItemsControl ItemsSource="{Binding Inventory}" ItemTemplate="{StaticResource ItemRowTemplate}" />
+        </StackPanel>
+      </Border>
+
+      <Border Classes="card">
+        <StackPanel Spacing="6">
+          <StackPanel Classes="cardhead">
+            <c:LucideIcon Data="{StaticResource Icon.Package}" />
+            <TextBlock Classes="caption" Text="ITEM BOX" />
+          </StackPanel>
+          <TextBlock Classes="headline" Text="{Binding BoxHeading}" TextWrapping="Wrap" />
+          <TextBlock TextWrapping="Wrap" Foreground="{StaticResource LpMutedBrush}"
+                     Text="Read from the game (read-only); the box is shared by every item box in the game." />
+          <ItemsControl ItemsSource="{Binding Box}" ItemTemplate="{StaticResource ItemRowTemplate}" />
+        </StackPanel>
+      </Border>
+    </StackPanel>
+  </ScrollViewer>
+</UserControl>
