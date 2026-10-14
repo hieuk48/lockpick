@@ -67,6 +67,7 @@ from a third-party source, diagnostics only.
 | `0x0B` | Consumed by Beretta reloads; item box starts with two stacks of 15 | Handgun bullets |
 | `0x41` | Consumed while HP went 46 → 96 (full heal) | First aid spray |
 | `0x03` | Quantity drops by 1 per shot (7 → 0), equipped as a weapon | Shotgun |
+| `0x0C` | Loaded into the shotgun: a reload takes exactly the missing rounds (capacity 7) | **Shotgun shells** |
 | `0x44` | Consumed while HP rose 54 → 86 (+32, Jill) | Green herb? (BioRand id 68) |
 | `0x07` | Picked up with 6 rounds, −1 per shot, 201 damage per hit | Bazooka? (BioRand id 7) |
 | `0x11` | Loaded into an empty `0x07` (×6), which became `0x08` ×6 — not shotgun shells | Bazooka rounds |

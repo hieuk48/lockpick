@@ -112,9 +112,10 @@
           "id": "B103",
           "task": "Pick up, fire and reload the **shotgun**",
           "verifies": "Shotgun id, shell ammo id, capacity",
-          "status": "partial",
+          "status": "done",
           "evidence": [
-            "2026-10-13: shotgun (id 0x03) fired 7 → 0, one shell per shot; reload not yet observed (id 0x11 is not shotgun shells: it loads into the bazooka, see B105)"
+            "2026-10-13: shotgun (id 0x03) fired 7 → 0, one shell per shot; reload not yet observed (id 0x11 is not shotgun shells: it loads into the bazooka, see B105)",
+            "2026-10-13 live session 7 (Jill; owner: reloaded a bunch): shells are id 0x0C (BioRand: Shells); the shotgun (0x03) holds 7 and a reload takes exactly the missing rounds — 0→7 (shells 7→0), 5→7 (14→12, 12→10, 17→15)"
           ]
         },
         {
