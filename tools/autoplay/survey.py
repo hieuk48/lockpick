@@ -3,6 +3,7 @@ records what is there, per character, from a new game. Never saves; the SAVE fol
 restored from the verified backup if anything changed.
 
     python -I tools/autoplay/survey.py <out-dir> <save-backup-dir> [jill|chris ...] [--rooms 105,106]
+        [--from-save <file.dat> --tag <phase>]     # start from a save (later story phase) instead of a new game
 
 Writes <out-dir>/survey-<character>.jsonl (one line per room) and a Lockpick capture of the whole run.
 """
@@ -70,12 +71,26 @@ def enemies() -> list[dict]:
     return found
 
 
+# --from-save: start every attempt from this save (borrowed into slot 1) instead of a new game, to survey rooms in a
+# later story phase. Set by main().
+START: dict = {"save": None, "backup": None, "tag": ""}
+
+
 def fresh_game(character: str, log) -> None:
     for attempt in range(3):
         try:
             ap.send("restart", "wait 2000", timeout=120)
-            took = ap.new_game(character)
-            log(f"new game ({character}) in control after {took:.0f} s")
+            if START["save"]:
+                import library  # imports this module; loaded lazily to avoid a cycle
+                library.borrow(START["save"], START["backup"])
+                try:
+                    took = library.load_slot(1)
+                finally:
+                    library.restore_slot1(START["backup"])
+                log(f"loaded {START['save'].name} ({character}) in control after {took:.0f} s")
+            else:
+                took = ap.new_game(character)
+                log(f"new game ({character}) in control after {took:.0f} s")
             return
         except ap.Failed as e:
             log(f"new game attempt {attempt + 1} failed: {str(e)[-200:]}")
@@ -129,10 +144,10 @@ def visit(room: str, character: str, table: list[dict], out: Path, log) -> dict:
 
 
 def survey(character: str, out: Path, backup: Path, table: list[dict], only: set[str] | None) -> None:
-    results = out / f"survey-{character}.jsonl"
+    results = out / f"survey-{character}{START['tag']}.jsonl"
     done = {e["room"] for e in map(json.loads, results.read_text(encoding="utf-8").splitlines())
             if not e.get("error")} if results.exists() else set()
-    logfile = (out / f"survey-{character}.log").open("a", encoding="utf-8")
+    logfile = (out / f"survey-{character}{START['tag']}.log").open("a", encoding="utf-8")
 
     def log(text: str) -> None:
         line = f"{time.strftime('%H:%M:%S')} {text}"
@@ -170,7 +185,13 @@ def main(argv: list[str]) -> int:
     only = None
     if "--rooms" in argv:
         only = set(argv[argv.index("--rooms") + 1].upper().split(","))
+    if "--stages" in argv:
+        stages = set(argv[argv.index("--stages") + 1].split(","))
+        only = {d["to"] for d in doors.build(INSTALL) if d["to"][0] in stages} & (only or {d["to"] for d in doors.build(INSTALL)})
     characters = [a for a in argv[2:] if a in ("jill", "chris")] or ["jill", "chris"]
+    if "--from-save" in argv:
+        START.update(save=Path(argv[argv.index("--from-save") + 1]), backup=backup,
+                     tag="-" + (argv[argv.index("--tag") + 1] if "--tag" in argv else "phase"))
     out.mkdir(parents=True, exist_ok=True)
     table = doors.build(INSTALL)
     protect_saves()
