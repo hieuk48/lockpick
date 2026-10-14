@@ -58,7 +58,7 @@ def main(argv: list[str]) -> int:
     for r in all_rooms:
         by_area[rooms["rooms"].get(r, {}).get("area") or rooms["areas"].get(r[0], f"Stage {r[0]}")].append(r)
 
-    totals = {c: (len(survey[c]), sum(1 for e in survey[c].values() if e.get("entered")),
+    totals = {c: (len(survey[c]), sum(1 for e in survey[c].values() if e.get("entered") and not e.get("error")),
                   sum(1 for e in survey[c].values() if e.get("control"))) for c in survey}
     lines += ["| Character | Rooms tried | Entered | Player in control after |", "|---|---|---|---|"]
     lines += [f"| {c.title()} | {t[0]} | {t[1]} | {t[2]} |" for c, t in totals.items()]
