@@ -159,6 +159,7 @@ def enter(room: str, character: str, table: list[dict]) -> None:
             if now == room:
                 ap.send("heal")
                 ap.settle(60)
+                ap.send("freeze-enemies")  # sweeps don't need the room's enemies acting (count 0 until the next room)
                 return
             if now and now[1:] == room[1:] and int(now[0]) == int(room[0]) + 5:
                 raise ap.Failed(f"redirected to {now}")
