@@ -30,7 +30,8 @@ Projects:
 | `Lockpick.GameAdapter.RE1` | RE1 build profiles and interpretation of raw values. **The only place that knows RE1 addresses.** | Core |
 | `Lockpick.App` | Avalonia desktop UI and composition root; first-time setup; Velopack self-update; Debug page with capture | all of the above |
 | `tools/Lockpick.Probe` | Headless identify / watch / trace / record | Core, Platform, RE1 |
-| `tools/Lockpick.Autoplay` | **Developer only, never shipped:** virtual-controller test harness (ViGEmBus) | Core, Platform, RE1 |
+| `tools/Lockpick.Autoplay` | **Developer only, never shipped:** virtual-controller test harness (ViGEmBus), room warp, fast-forward, captures | Core, Platform, RE1 |
+| `tools/autoplay` | **Developer only:** Python runners for the harness (room survey, save library, scene launcher, report) | harness, tools/rdt, tools/bounties |
 | `tests/Lockpick.Tests` | Unit, fixture playback, Win32 integration | Core, Platform, RE1 |
 | `benchmarks/Lockpick.Benchmarks` | BenchmarkDotNet suites | Core, Platform, RE1 |
 
