@@ -19,6 +19,7 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).parent))
 import ap  # noqa: E402
+import context  # noqa: E402
 import doors  # noqa: E402
 
 INSTALL = Path(r"G:\GOG Games\Resident Evil")
@@ -146,7 +147,7 @@ def visit(room: str, character: str, table: list[dict], out: Path, log) -> dict:
                       "flags": f"{ap.flags():08X}", "enemies": enemies()})
         for _ in range(2):
             shot = ap.shot(f"survey-{character}-{room}.png", 480)
-            entry["seen"] = ap.describe(shot, DESCRIBE)
+            entry["seen"] = context.ask_grounded(shot, DESCRIBE)[0]
             if entry["seen"].strip().lower().strip(".") != "black":
                 break
             ap.send("wait 1500")  # a fade was still running

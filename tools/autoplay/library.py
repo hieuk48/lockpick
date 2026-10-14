@@ -20,6 +20,7 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).parent))
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "bounties"))
 import ap  # noqa: E402
+import context  # noqa: E402
 import saves  # noqa: E402
 import survey  # noqa: E402
 import timeline  # noqa: E402
@@ -44,11 +45,10 @@ def restore_slot1(backup: Path) -> bool:
 def load_slot(slot: int) -> float:
     """From a fresh launch: title → LOAD GAME → slot → in control. Returns seconds."""
     t = time.time()
-    ap.wait_screen({"title", "newload"}, 60, press="A")
-    if ap.screen() != "newload":
-        ap.send("press A")
-        ap.wait_screen({"newload"}, 15)
-    ap.send("press A")  # LOAD GAME is highlighted when saves exist
+    ap.open_title_menu()
+    if not ap.wait_for(lambda: ap.title()[0] == 2, 10, press="Down", every=0.8):
+        raise ap.Failed(f"cursor never reached LOAD GAME (title state {ap.title()})")
+    ap.send("wait 300", "press A")
     ap.wait_screen({"loadmenu"}, 30)
     ap.send("wait 800", *["press Down" for _ in range(slot - 1)], "wait 400", "press A")
     ap.send("wait 3000")
@@ -112,7 +112,7 @@ def run(entries: list[tuple[str, Path, int | None]], out: Path, backup: Path) ->
             kept.parent.mkdir(exist_ok=True)
             shutil.copy2(shot, kept)
             entry["shot"] = str(kept)
-            entry["seen"] = ap.describe(shot, survey.DESCRIBE)
+            entry["seen"] = context.ask_grounded(shot, survey.DESCRIBE)[0]
             entry["statusScreen"] = read_status()
             log(f"{name}: room {s.get('room')} (save says {want['room']}) {s.get('char')} — "
                 f"{'OK' if entry['roomMatches'] and entry['characterMatches'] else 'MISMATCH'}")

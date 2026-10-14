@@ -131,40 +131,90 @@ def wait_screen(wanted: set[str], timeout: float = 60, press: str | None = None)
     raise Failed(f"screen never became {wanted}")
 
 
+# Title and character select state (ecruells/resident-evil-pc-decomp TitleScreen.cpp / CharacterSelectionScreen.cpp;
+# traced live 2026-10-14): loop 0xD22777 = 1 once the title runs (its cursor 0xD22774 is preset to LOAD GAME = 2 when
+# saves exist); 0xD22775 = 1 only while the NEW GAME / LOAD GAME menu is shown; Up/Down move the cursor (1 NEW, 2 LOAD).
+TITLE_CURSOR, MENU_SHOWN, TITLE_LOOP = 0xD22774, 0xD22775, 0xD22777
+SELECT_STATE, SELECT_CHARACTER = 0xAC9880, 0xAC93F0                  # 1 = waiting for input; 0 Chris, 1 Jill
+CHARACTERS = {"chris": 0, "jill": 1}
+
+
+def title() -> tuple[int, int, int]:
+    """(cursor, menu shown, title loop)."""
+    raw = peek(TITLE_CURSOR, 4)
+    return raw[0], raw[1], raw[3]
+
+
+def wait_for(check, timeout: float, press: str | None = None, every: float = 1.5) -> bool:
+    import time
+    end, last = time.time() + timeout, 0.0
+    while time.time() < end:
+        if check():
+            return True
+        if press and time.time() - last > every:
+            send(f"press {press}")
+            last = time.time()
+        send("wait 200")
+    return False
+
+
+def open_title_menu(timeout: float = 90) -> None:
+    """Presses through the logos and title until NEW GAME / LOAD GAME is shown. Presses only while the menu isn't
+    shown, so a press can never land on the menu and choose an entry."""
+    import time
+    end, last = time.time() + timeout, 0.0
+    while time.time() < end:
+        cursor, shown, loop = title()
+        if shown == 1 and cursor in (1, 2):
+            send("wait 400")
+            return
+        if shown == 0 and time.time() - last > 1.5:
+            send("press A")
+            last = time.time()
+        send("wait 200")
+    raise Failed(f"menu never opened (title state {title()})")
+
+
 def new_game(character: str = "chris", fast_ms: int = 4) -> float:
-    """From a fresh launch to player control in a new game; returns seconds taken. Never touches save files."""
+    """From a fresh launch to player control in a new game; returns seconds taken. Reads the game's own title and
+    character-select state instead of guessing from screenshots, so presses only land where they should. Never
+    touches save files."""
     import time
     t = time.time()
-    wait_screen({"title", "newload"}, 60, press="A")
-    if screen() != "newload":
-        send("press A")
-        wait_screen({"newload"}, 15)
-    # LOAD GAME is highlighted when saves exist; Up selects NEW GAME.
-    send("press Up", "wait 400", "press A")
-    wait_screen({"card"}, 30)
-    question = "Whose name is printed on the front ID card: answer exactly chris, jill or none."
-    name = ""
-    for attempt in range(8):
-        send("wait 1000")
-        name = look(question).strip().lower()
-        if character in name:
+    open_title_menu()
+    if not wait_for(lambda: title()[0] == 1, 10, press="Up", every=0.8):
+        raise Failed(f"cursor never reached NEW GAME (title state {title()})")
+    send("wait 300", "press A")
+    # Character select: wait until it takes input, then move to the right card.
+    want = CHARACTERS[character]
+    if not wait_for(lambda: peek(SELECT_STATE, 1)[0] == 1, 40):
+        raise Failed(f"character select never became ready (state {peek(SELECT_STATE, 1)[0]})")
+    for _ in range(3):
+        if peek(SELECT_CHARACTER, 1)[0] == want:
             break
-        if name in ("chris", "jill") and attempt % 2 == 0:
-            send("press Right", "wait 1000")
-    else:
-        raise Failed(f"could not select {character} (card shows {name})")
-    send("press A", "wait 1500")
-    if fast_ms == 0:
-        return time.time() - t
-    send(f"speed {fast_ms}")
-    # Past the ID card there is no menu left to misfire on: press through the opening text and movie.
+        send("press Right")
+        wait_for(lambda: peek(SELECT_STATE, 1)[0] == 1, 10)
+    if peek(SELECT_CHARACTER, 1)[0] != want:
+        raise Failed(f"could not select {character}")
+    send("press A")
+    # Past the card there is no menu left to misfire on: press through the opening text and movie.
     for _ in range(240):
         if state().get("gameplay") == "True":
             break
         send("press A", "wait 500")
-    send("wait 3000")
-    if settle(240, fast_ms) and state().get("char", "").lower() == character:
-        return time.time() - t
+    # The opening has calm gaps between its scenes (2026-10-14: a gap passed for control at 33 s, then the main-hall
+    # scene resumed), so control is confirmed by pushing the player, not only by the flags.
+    end = time.time() + 300
+    while time.time() < end:
+        send("wait 1500")
+        if not settle(120, fast_ms):
+            continue
+        send("wait 2500")
+        # Calm and still isn't proof (the opening idles before its main-hall scene): the player must also move when
+        # pushed — controllable() — and still have no busy flags.
+        if in_control() and controllable() and state().get("char", "").lower() == character:
+            return time.time() - t
+        send("press A 120")  # an idle scene or a message may be waiting for a button
     raise Failed(f"no control after the intro: {state()}")
 
 

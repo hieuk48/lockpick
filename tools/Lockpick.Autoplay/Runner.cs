@@ -9,6 +9,8 @@ namespace Lockpick.Autoplay;
 ///   restart                      close the game and start it again (keeps 'background' on)
 ///   speed [ms|normal]            show or set the game's tick interval (normal 33 ms; smaller = fast-forward)
 ///   place x z [angle]            stand the player at a spot in the current room (PlayerPlacement.cs)
+///   camera id                    cut to a camera of the room (must have a switch-zone group; CameraCut.cs)
+///   inv-clear from               empty inventory slots from..7 (not the equipped one; InventorySlots.cs)
 ///   heal                         HP back to the maximum (alive players only)
 ///   door hex48                   enter a room through a door record (RoomWarp.cs; dev runs only)
 ///   focus                        bring the game to the front (only when nobody is using the PC)
@@ -39,6 +41,8 @@ internal sealed class Runner(Pad pad, TextWriter log) : IDisposable
     private GameSpeed? _speed;
     private Recorder? _recorder;
     private PlayerPlacement? _placement;
+    private InventorySlots? _inventory;
+    private CameraCut? _camera;
 
     public Game Game => _game ?? throw new InvalidOperationException("the game is not attached (add 'launch' first)");
 
@@ -165,6 +169,15 @@ internal sealed class Runner(Pad pad, TextWriter log) : IDisposable
                 _placement.Place(int.Parse(w[1], CultureInfo.InvariantCulture), int.Parse(w[2], CultureInfo.InvariantCulture),
                     w.Length > 3 ? short.Parse(w[3], CultureInfo.InvariantCulture) : null);
                 Log($"  placed ({Describe(Game.Read())})");
+                break;
+            case "camera":
+                _camera ??= new CameraCut(Game.ProcessId);
+                _camera.Cut(byte.Parse(w[1], CultureInfo.InvariantCulture));
+                Log($"  cut to camera {w[1]}");
+                break;
+            case "inv-clear":
+                _inventory ??= new InventorySlots(Game.ProcessId);
+                Log($"  cleared {_inventory.ClearFrom(int.Parse(w[1], CultureInfo.InvariantCulture))} inventory slots");
                 break;
             case "heal":
                 _placement ??= new PlayerPlacement(Game.ProcessId);
@@ -411,6 +424,10 @@ internal sealed class Runner(Pad pad, TextWriter log) : IDisposable
         _speed = null;
         _placement?.Dispose();
         _placement = null;
+        _inventory?.Dispose();
+        _inventory = null;
+        _camera?.Dispose();
+        _camera = null;
         _game?.Dispose();
         _game = null;
     }
