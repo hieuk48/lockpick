@@ -260,6 +260,7 @@ def settle(timeout: float = 120, fast_ms: int = 4) -> bool:
     end = time.time() + timeout
     send("wait 1500")  # a door animation or fade may still be starting
     calm = 0
+    screen_presses = 0
     while time.time() < end:
         if in_control():
             calm += 1
@@ -277,7 +278,10 @@ def settle(timeout: float = 120, fast_ms: int = 4) -> bool:
         # Messages, the pickup screen (0x100: also documents and maps, page by page) and the item viewer (0x800) wait
         # for a press; a document read on pickup sets camera lock and ramp too, so it looks like a cutscene otherwise.
         if f & (MESSAGE | 0x100 | 0x800):
-            send(speed, "press A 120", "wait 250")
+            # Documents can loop their pages (2026-10-14: the researcher's will in 20A); cancel (X) closes them.
+            screen_presses = screen_presses + 1 if f & 0x100 else 0
+            key = "X" if screen_presses > 8 and screen_presses % 2 == 0 else "A"
+            send(speed, f"press {key} 120", "wait 250")
         else:
             send(speed, "wait 300")
     send("speed normal")

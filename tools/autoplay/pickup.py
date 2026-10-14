@@ -135,10 +135,10 @@ def try_pickup(item: dict, room: rdt_map.Room) -> dict:
             break
     if result["triggered"] is not None:
         # Examine text, "Will you take …?" (Yes is the default), document pages: A until control returns.
-        for _ in range(40):  # documents can run to many pages
+        for press in range(40):  # documents can run to many pages, and some loop: cancel (X) closes them
             if not ap.flags() & INTERACTING:
                 break
-            ap.send("press A 150", "wait 900")
+            ap.send(f"press {'X' if press >= 10 and press % 2 else 'A'} 150", "wait 900")
             result["prompts"] += 1
         ap.settle(30)
     inv_after, flags_after = inventory(), ap.peek(ITEM_FLAGS, 32)
