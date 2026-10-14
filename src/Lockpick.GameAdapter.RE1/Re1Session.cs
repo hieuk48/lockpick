@@ -34,6 +34,18 @@ internal sealed class Re1Session : IGameSession
     private readonly Dictionary<string, Field<long>> _lastRaw = new(StringComparer.OrdinalIgnoreCase);
     private readonly Cluster[] _clusters;
     private GameSnapshot? _previous;
+    private Field<IReadOnlyList<PlacedItem>> _placed = Field<IReadOnlyList<PlacedItem>>.Unavailable;
+    private RoomLocation? _placedRoom;
+    private DateTimeOffset _placedAt;
+
+    // The room action table (static: decomp g_RoomActionTable; live 2026-10-14: the pickups it lists match the
+    // room files and the pickups made). 24 entries of 12 bytes; [0] handler (4 = item pickup), +8 the record
+    // (zone x/z/width/depth as i16/i16/u16/u16, item id at +8). The tail pointer marks the last entry in use.
+    internal const ulong ActionTable = 0xD91AA0;
+    internal const ulong ActionTail = 0xD91BC0;
+    private const int ActionEntries = 24;
+    private const int PickupHandler = 4;
+    private static readonly TimeSpan PlacedRefresh = TimeSpan.FromSeconds(1);
 
     public Re1Session(IProcessMemory memory, VersionProfile profile)
     {
@@ -84,6 +96,17 @@ internal sealed class Re1Session : IGameSession
         }
 
         var snapshot = Interpret(raw, sequence, now);
+        if (snapshot.Location.TryGet(out var room) && snapshot.InGameplay is { HasValue: true, Value: true })
+        {
+            if (_placedRoom != room || now - _placedAt >= PlacedRefresh)
+            {
+                _placed = ReadPlacedItems(ref calls);
+                _placedRoom = room;
+                _placedAt = now;
+            }
+
+            snapshot = snapshot with { PlacedItems = _placed };
+        }
         if (CaptureRegions && Profile.CaptureRegions.Count > 0)
         {
             var regions = new List<RegionData>(Profile.CaptureRegions.Count);
@@ -103,6 +126,45 @@ internal sealed class Re1Session : IGameSession
         LastReadCalls = calls;
         _previous = snapshot;
         return snapshot;
+    }
+
+    private Field<IReadOnlyList<PlacedItem>> ReadPlacedItems(ref int calls)
+    {
+        Span<byte> table = stackalloc byte[ActionEntries * 12];
+        calls++;
+        if (!_memory.TryRead(ActionTable, table) || !_memory.TryReadU32(ActionTail, out var tailAddress))
+        {
+            return Field<IReadOnlyList<PlacedItem>>.Unavailable;
+        }
+
+        var used = tailAddress >= ActionTable && tailAddress < ActionTable + (ulong)table.Length
+            ? (int)((tailAddress - ActionTable) / 12) + 1
+            : 0;
+        var items = new List<PlacedItem>();
+        Span<byte> record = stackalloc byte[12];
+        for (var i = 0; i < used; i++)
+        {
+            var entry = table.Slice(i * 12, 12);
+            if (entry[0] != PickupHandler)
+            {
+                continue;
+            }
+
+            calls++;
+            if (_memory.TryRead(System.Buffers.Binary.BinaryPrimitives.ReadUInt32LittleEndian(entry[8..]), record))
+            {
+                var width = System.Buffers.Binary.BinaryPrimitives.ReadUInt16LittleEndian(record[4..]);
+                var depth = System.Buffers.Binary.BinaryPrimitives.ReadUInt16LittleEndian(record[6..]);
+                if (width > 0 && depth > 0)
+                {
+                    items.Add(new PlacedItem(record[8],
+                        System.Buffers.Binary.BinaryPrimitives.ReadInt16LittleEndian(record),
+                        System.Buffers.Binary.BinaryPrimitives.ReadInt16LittleEndian(record[2..]), width, depth));
+                }
+            }
+        }
+
+        return Field<IReadOnlyList<PlacedItem>>.Valid(items);
     }
 
     /// <summary>A contiguous span covering nearby profile fields, read with a single process read.</summary>

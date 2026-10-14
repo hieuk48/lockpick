@@ -43,6 +43,54 @@ public class Re1AdapterTests
             .WriteU8(Addr("mainMenu"), 0);
     }
 
+    /// <summary>The live room action table: a door, an item pickup and an event-placed item (zero-size zone).</summary>
+    private void ActionTable(ushort pickupItemX)
+    {
+        const ulong table = 0xD91AA0, record = 0xC4EE00;
+        var bytes = new byte[288]; // the whole table is read; entries past the tail are ignored
+        bytes[0] = 1;   // door
+        bytes[12] = 4;  // pickup → record
+        BitConverter.GetBytes((uint)record).CopyTo(bytes, 20);
+        bytes[24] = 4;  // pickup with a zero-size zone (handed over by an event)
+        BitConverter.GetBytes((uint)(record + 0x20)).CopyTo(bytes, 32);
+        _memory.Write(table, bytes).Write(0xD91BC0, BitConverter.GetBytes((uint)(table + 24)));
+        var item = new byte[12];
+        BitConverter.GetBytes((short)pickupItemX).CopyTo(item, 0);
+        BitConverter.GetBytes((short)16000).CopyTo(item, 2);
+        BitConverter.GetBytes((ushort)2000).CopyTo(item, 4);
+        BitConverter.GetBytes((ushort)2000).CopyTo(item, 6);
+        item[8] = 47;
+        _memory.Write(record, item).Write(record + 0x20, new byte[12]);
+    }
+
+    [Fact]
+    public void Placed_items_come_from_the_live_action_table()
+    {
+        NewChrisGameInMainHall();
+        ActionTable(13000);
+
+        var placed = _session.Read(1, T0).PlacedItems;
+
+        Assert.Equal(FieldStatus.Valid, placed.Status);
+        Assert.Equal(new PlacedItem(47, 13000, 16000, 2000, 2000), Assert.Single(placed.Value));
+    }
+
+    [Fact]
+    public void Placed_items_are_reread_once_a_second_and_on_room_change()
+    {
+        NewChrisGameInMainHall();
+        ActionTable(13000);
+        _session.Read(1, T0);
+
+        ActionTable(14000);
+        Assert.Equal(13000, Assert.Single(_session.Read(2, T0.AddMilliseconds(500)).PlacedItems.Value).X);
+        Assert.Equal(14000, Assert.Single(_session.Read(3, T0.AddMilliseconds(1100)).PlacedItems.Value).X);
+
+        ActionTable(15000);
+        _memory.WriteU8(Addr("room"), 0x05);
+        Assert.Equal(15000, Assert.Single(_session.Read(4, T0.AddMilliseconds(1200)).PlacedItems.Value).X);
+    }
+
     [Fact]
     public void Reads_and_normalizes_a_live_like_game_state()
     {
@@ -220,7 +268,9 @@ public class Re1AdapterTests
         var session = new Re1Session(new ValidatedMemory(_memory, [_profile.ImageRange]), _profile);
         var s = session.Read(1, T0);
 
-        Assert.InRange(session.LastReadCalls, 1, 4);
+        // A few block reads for the fields, plus the room's placed items (the action table; the fake has no
+        // entries, so no record reads) - refreshed once a second.
+        Assert.InRange(session.LastReadCalls, 1, 5);
         Assert.Equal(new Health(140, 140), s.Health.Value);
         Assert.Equal("106", s.Location.Value.Id);
         Assert.Equal(0x0F02, s.RawFields["inv1"].Value);

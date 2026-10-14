@@ -46,6 +46,10 @@ public sealed partial class MapViewModel : PageViewModel
     [ObservableProperty]
     public partial bool HasPlayer { get; private set; }
 
+    /// <summary>Items the game has placed in this room right now (null when the game doesn't report them).</summary>
+    [ObservableProperty]
+    public partial IReadOnlyList<PlacedItem>? PlacedItems { get; private set; }
+
     [ObservableProperty]
     public partial string Heading { get; private set; } = "Start or load a game to see the room you're in.";
 
@@ -118,6 +122,11 @@ public sealed partial class MapViewModel : PageViewModel
         }
 
         Heading = map is null ? $"Room {room.Id} — no map for this room" : $"Room {room.Id}";
+        var placed = s.PlacedItems.TryGet(out var items) ? items : null;
+        if (placed is null != PlacedItems is null || (placed is not null && PlacedItems is not null && !placed.SequenceEqual(PlacedItems)))
+        {
+            PlacedItems = placed;
+        }
         if (s.Position.TryGet(out var p))
         {
             PlayerX = p.X;

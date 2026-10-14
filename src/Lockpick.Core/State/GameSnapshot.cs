@@ -27,6 +27,9 @@ public readonly record struct RoomLocation(int Stage, int Room)
     public override string ToString() => Id;
 }
 
+/// <summary>An item the game has placed in the current room right now (adapter-specific id; zone in room units).</summary>
+public sealed record PlacedItem(int ItemId, int X, int Z, int Width, int Depth);
+
 /// <summary>World position in game units. Orientation is kept raw because units differ per game.</summary>
 public readonly record struct Position(int X, int Y, int Z)
 {
@@ -77,6 +80,13 @@ public sealed record GameSnapshot
 
     /// <summary>Raw values of profile fields keyed by field name, for diagnostics only.</summary>
     public IReadOnlyDictionary<string, Field<long>> RawFields { get; init; } = new Dictionary<string, Field<long>>();
+
+    /// <summary>
+    /// Items the game has actually placed in the current room (story conditions applied, taken ones gone), when the
+    /// adapter can read them; not recorded.
+    /// </summary>
+    [JsonIgnore]
+    public Field<IReadOnlyList<PlacedItem>> PlacedItems { get; init; } = Field<IReadOnlyList<PlacedItem>>.Unsupported;
 
     /// <summary>
     /// Compares the game-facing content of two snapshots, ignoring sequence, timestamp and raw diagnostics.

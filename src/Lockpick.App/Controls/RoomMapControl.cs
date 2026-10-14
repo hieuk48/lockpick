@@ -3,6 +3,7 @@ using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Media;
 using Lockpick.Core.Maps;
+using Lockpick.Core.State;
 
 namespace Lockpick.App.Controls;
 
@@ -17,6 +18,8 @@ public sealed class RoomMapControl : Control
     public static readonly StyledProperty<double> PlayerXProperty = AvaloniaProperty.Register<RoomMapControl, double>(nameof(PlayerX));
     public static readonly StyledProperty<double> PlayerZProperty = AvaloniaProperty.Register<RoomMapControl, double>(nameof(PlayerZ));
     public static readonly StyledProperty<double> PlayerAngleProperty = AvaloniaProperty.Register<RoomMapControl, double>(nameof(PlayerAngle));
+    public static readonly StyledProperty<IReadOnlyList<PlacedItem>?> PlacedItemsProperty =
+        AvaloniaProperty.Register<RoomMapControl, IReadOnlyList<PlacedItem>?>(nameof(PlacedItems));
     public static readonly StyledProperty<bool> HasPlayerProperty = AvaloniaProperty.Register<RoomMapControl, bool>(nameof(HasPlayer));
     public static readonly StyledProperty<IBrush?> WallBrushProperty = AvaloniaProperty.Register<RoomMapControl, IBrush?>(nameof(WallBrush));
     public static readonly StyledProperty<IBrush?> SoftBrushProperty = AvaloniaProperty.Register<RoomMapControl, IBrush?>(nameof(SoftBrush));
@@ -28,7 +31,7 @@ public sealed class RoomMapControl : Control
 
     static RoomMapControl()
     {
-        AffectsRender<RoomMapControl>(MapProperty, PlayerXProperty, PlayerZProperty, PlayerAngleProperty, HasPlayerProperty,
+        AffectsRender<RoomMapControl>(MapProperty, PlacedItemsProperty, PlayerXProperty, PlayerZProperty, PlayerAngleProperty, HasPlayerProperty,
             WallBrushProperty, SoftBrushProperty, DoorBrushProperty, ItemBrushProperty, PlayerBrushProperty);
     }
 
@@ -41,6 +44,12 @@ public sealed class RoomMapControl : Control
     public double PlayerAngle { get => GetValue(PlayerAngleProperty); set => SetValue(PlayerAngleProperty, value); }
 
     public bool HasPlayer { get => GetValue(HasPlayerProperty); set => SetValue(HasPlayerProperty, value); }
+
+    /// <summary>
+    /// Items the game has placed right now; when set, only these are drawn as present and the room files' other items
+    /// are drawn faintly as "later" (story-gated or already taken).
+    /// </summary>
+    public IReadOnlyList<PlacedItem>? PlacedItems { get => GetValue(PlacedItemsProperty); set => SetValue(PlacedItemsProperty, value); }
 
     public IBrush? WallBrush { get => GetValue(WallBrushProperty); set => SetValue(WallBrushProperty, value); }
 
@@ -93,11 +102,34 @@ public sealed class RoomMapControl : Control
             DrawLabel(context, d.Target, rect.Center, DoorBrush, 11);
         }
 
+        var placed = PlacedItems;
         foreach (var item in map.Items)
         {
+            var present = placed is null || placed.Any(p => p.ItemId == item.ItemId && p.X == item.X && p.Z == item.Z);
             var rect = R(item.X, item.Z, item.X + item.Width, item.Z + item.Depth);
-            context.DrawRectangle(null, ItemBrush is null ? null : new Pen(ItemBrush, 1.5), rect);
-            DrawLabel(context, item.Name, rect.TopLeft + new Vector(rect.Width / 2, -8), ItemBrush, 10);
+            if (present)
+            {
+                context.DrawRectangle(null, ItemBrush is null ? null : new Pen(ItemBrush, 1.5), rect);
+                DrawLabel(context, item.Name, rect.TopLeft + new Vector(rect.Width / 2, -8), ItemBrush, 10);
+            }
+            else if (SoftBrush is not null)
+            {
+                // In the room files but not placed now: after a story event, or already taken.
+                context.DrawRectangle(null, new Pen(SoftBrush, 1, new DashStyle([3, 3], 0)), rect);
+                DrawLabel(context, item.Name + " (later)", rect.TopLeft + new Vector(rect.Width / 2, -8), SoftBrush, 9);
+            }
+        }
+
+        if (placed is not null)
+        {
+            // Placed by the game but not in the room files at that spot (e.g. moved by a script): draw them too.
+            foreach (var p in placed.Where(p => !map.Items.Any(i => i.ItemId == p.ItemId && i.X == p.X && i.Z == p.Z)))
+            {
+                var rect = R(p.X, p.Z, p.X + p.Width, p.Z + p.Depth);
+                context.DrawRectangle(null, ItemBrush is null ? null : new Pen(ItemBrush, 1.5), rect);
+                var name = map.Items.FirstOrDefault(i => i.ItemId == p.ItemId)?.Name ?? $"item {p.ItemId}";
+                DrawLabel(context, name, rect.TopLeft + new Vector(rect.Width / 2, -8), ItemBrush, 10);
+            }
         }
 
         if (HasPlayer && PlayerBrush is not null)
