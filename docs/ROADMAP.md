@@ -143,17 +143,27 @@ Acceptance criteria:
 Automated play is for the owner's development and testing only — never in the app, its installer or a release:
 players play the game themselves; Lockpick enhances their play.
 
-- **Automated testing harness** (`tools/Lockpick.Autoplay`, started 2026-10-14): a virtual Xbox 360 controller
-  (ViGEmBus) plus Lockpick's read-only state — scripts launch the game, press inputs, wait for rooms/flags, check
-  expectations and take screenshots; `calibrate` reports the controller → PSX mapping the game reads.
-  Next: load a scene from the save library (backed-up slot), regression scripts for addresses and event rules, capture
-  bounties that need precise actions, optional screen labelling by a local vision model. Keyboard injection was
-  dropped (2026-10-13): focus can't be held while the PC is in use and the owner's key table is remapped.
+- **Automated testing harness** (`tools/Lockpick.Autoplay` + `tools/autoplay`, 2026-10-14) — **working:**
+  - virtual Xbox 360 controller (ViGEmBus); menus driven by a local vision model's screen labels; new games for
+    either character;
+  - **enter any room** through a real door record (the game's own door handoff, fade and arrival spot);
+  - **fast-forward cutscenes** (tick interval; every effect kept); control detected from the state flags;
+  - **stand at a spot** (e.g. an item's pickup zone) and **heal**; read-only `peek`; captures of whole runs;
+  - `scene.py <character> <room>`: load a practice save at the right story stage, then enter the room — any part of
+    the game with either character.
+- **First overnight run (2026-10-14):** every door-reachable room entered from a new game for both characters (162
+  of 165 door targets each; the other 3 are stub room files that crash the game), phase surveys from practice saves
+  (guardhouse, return mansion, caves, lab), and 75 saves loaded with Lockpick's live room/character matching the
+  offline save decode (73 of 75; the two saves just before the Tyrant's release crashed the game while
+  fast-forwarding). Results, captures and an atlas stay local (`%LOCALAPPDATA%\Lockpick\research\night-20261014`).
+- Next: regression scripts (expected flags/items per scene, run after changes to addresses or event rules), item
+  pickups at their zones (camera re-cut after placement), capture bounties that need precise actions, the Tyrant
+  fast-forward crash.
 - Unattended runs — **done 2026-10-14:** `--background` applies the focus patch inside the harness (dev runs only)
   and blanks the keyboard map; the game ran, read the virtual pad and rendered behind other windows. Memory input
-  (`0x497BF7`) isn't needed for testing.
-- Vision labels — **working 2026-10-14:** `look` sends a screenshot to a local OpenAI-compatible vision model; it
-  named the title screen and quoted its text verbatim (a lead for on-screen text research too).
+  (`0x497BF7`) isn't needed for testing. During runs `SAVE/*.dat` are read-only and hash-checked after every step.
+- Vision labels — **working 2026-10-14:** describes screenshots and labels menus; not reliable for reading the
+  status screen (invents item lists), so item names were checked against the game's own name table instead.
 
 ## 0.4.0 — World database
 
