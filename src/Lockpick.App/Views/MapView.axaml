@@ -1,0 +1,30 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:vm="using:Lockpick.App.ViewModels"
+             xmlns:c="using:Lockpick.App.Controls"
+             x:Class="Lockpick.App.Views.MapView"
+             x:DataType="vm:MapViewModel">
+
+  <Grid RowDefinitions="Auto,*">
+    <Border Classes="card" Grid.Row="0" Margin="0,0,0,12">
+      <StackPanel Spacing="4">
+        <StackPanel Classes="cardhead">
+          <c:LucideIcon Data="{StaticResource Icon.Map}" />
+          <TextBlock Classes="caption" Text="MAP" />
+        </StackPanel>
+        <TextBlock Classes="headline" Text="{Binding Heading}" TextWrapping="Wrap" />
+        <TextBlock TextWrapping="Wrap" Foreground="{StaticResource LpMutedBrush}" Text="{Binding Details}" />
+        <TextBlock TextWrapping="Wrap" Foreground="{StaticResource LpMutedBrush}"
+                   Text="Walls and furniture from the room's collision; green = doors (to room), amber = item spots for your character (some appear only after story events). The arrow is you." />
+      </StackPanel>
+    </Border>
+
+    <Border Classes="card" Grid.Row="1" MinHeight="240">
+      <c:RoomMapControl Map="{Binding Map}" PlayerX="{Binding PlayerX}" PlayerZ="{Binding PlayerZ}"
+                        PlayerAngle="{Binding PlayerAngle}" HasPlayer="{Binding HasPlayer}"
+                        WallBrush="{StaticResource LpMutedBrush}" SoftBrush="{StaticResource LpBorderBrush}"
+                        DoorBrush="{StaticResource LpGreenBrush}" ItemBrush="{StaticResource LpAmberBrush}"
+                        PlayerBrush="{StaticResource LpRedBrush}" />
+    </Border>
+  </Grid>
+</UserControl>

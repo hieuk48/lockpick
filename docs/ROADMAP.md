@@ -119,6 +119,7 @@ Acceptance criteria:
 
 ## 0.3.0 — Overlay and HUD
 
+- **Room map — started 2026-10-14:** a Map page draws the current room from the player's room files (collision, doors, item spots) with the player live (`Re1RoomMaps`, `RoomMapControl`). Next: enemies on the map, script-placed objects (the dining-room clock) and the whole-floor view (tools/rdt/floor_map.py), then the overlay.
 - Transparent, click-through overlay window tracking the game window (position, size, DPI).
 - Game-window placement helper (move/resize the game window to a chosen monitor/position).
 - Configurable HUD widgets (HP, room, timer, events) with < 2% game frame-time impact (measured).

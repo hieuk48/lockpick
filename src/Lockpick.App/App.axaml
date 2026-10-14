@@ -47,6 +47,9 @@
     <DataTemplate DataType="vm:ProgressViewModel">
       <views:ProgressView />
     </DataTemplate>
+    <DataTemplate DataType="vm:MapViewModel">
+      <views:MapView />
+    </DataTemplate>
     <DataTemplate DataType="vm:DebugViewModel">
       <views:DebugView />
     </DataTemplate>
