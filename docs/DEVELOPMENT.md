@@ -86,7 +86,12 @@ conditions), `state`, `peek addr len`, `calibrate`, `shot file.png [width]`, `lo
 - `camera <id>` — cut to a camera of the room (memory trigger; the camera must have a switch-zone group —
   `rdt_map.camera_for(x, z)` picks one) (`CameraCut.cs`).
 - `freeze-enemies` — stop the room's enemies until the next room load (`EnemyFreeze.cs`); `heal`; `inv-clear <from>`
-  (empty spare inventory slots).
+  (empty spare inventory slots); `give <item> [qty]` (add an item after the held ones so a route can start mid-way; the
+  held count is kept in step — the grid icon stays wrong until a save load, names/CHECK/doors are right).
+- Reading the screen from memory (`ap.py`): `message_state()` / `message_text()` / `dismiss()` / `answer(yes)` use the
+  game's own message state, `inventory()` gives names as the game shows them, `examine(item)` turns an item in the
+  viewer until it says something, `use_item(item)` checks every menu step. Never press A on the strength of the state
+  flags alone: messages don't show there.
 - `speed <ms>` / `speed normal` — the game's tick interval (normal 33 ms); smaller values fast-forward cutscenes and
   scripted waits with every effect intact (`GameSpeed.cs`; restored on exit).
 - `record [folder]` / `mark <note>` / `record stop` — a Lockpick capture of the run (trace, events, memory regions,

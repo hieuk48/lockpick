@@ -242,11 +242,30 @@ STATE_FLAGS = 0xBE41C0
 BUSY = 0x80 | 0xFF00 | 0x10000 | 0x20000 | 0x40000 | 0x100000 | 0x01000000 | 0x04000000 | 0x20000000
 DEAD = 0x01000000
 MESSAGE = 0x8000  # state flags: menu/message mode (the status screen sets it too)
-MESSAGE_FLAGS = 0xBEBCC0  # u16; bit 0x100 is clear while an on-screen message waits for a press (live 2026-10-14)
+MESSAGE_FLAGS = 0xBEBCC0  # g_message_flags (u16)
+# The game's own message state (decomp UpdateMessageDisplay 0x004557b0, checked live 2026-10-14): g_menu_choice_id
+# (0xBE9825) bit 0x80 is set while a message is up and bit 0 is the yes/no choice (0 Yes, 1 No); the state byte
+# (0xBF0A16) is 1 while text types out, 2 waiting on a page (the ▼), 3 after a line break, 4 a yes/no prompt, 5 waiting
+# for a press to close, 6 closing by itself. "It's locked." leaves the state flags at plain control (0x80800000), so
+# the flags alone can't tell a message is up.
+MESSAGE_ACTIVE, MESSAGE_STATE = 0xBE9825, 0xBF0A16
+TYPING, PAGE, PROMPT, WAITING, AUTO = 1, 2, 4, 5, 6
+
+
+def message_active() -> bool:
+    return bool(peek(MESSAGE_ACTIVE, 1)[0] & 0x80)
+
+
+def message_state() -> int:
+    """0 when no message is up, otherwise the message state (TYPING, PAGE, PROMPT, WAITING, AUTO)."""
+    return peek(MESSAGE_STATE, 1)[0] if message_active() else 0
 
 
 def message_waiting() -> bool:
-    return not int.from_bytes(peek(MESSAGE_FLAGS, 2), "little") & 0x100
+    """A message is up and waiting for A (a page or the end; prompts are separate: see answer())."""
+    return message_state() in (PAGE, WAITING)
+
+
 CUTSCENE = 0x100000 | 0x20000 | 0x10000 | 0x40000
 
 
@@ -256,7 +275,7 @@ def flags() -> int:
 
 def in_control() -> bool:
     s = state()
-    return s.get("gameplay") == "True" and flags() & BUSY == 0
+    return s.get("gameplay") == "True" and flags() & BUSY == 0 and not message_active()
 
 
 def settle(timeout: float = 120, fast_ms: int = 4) -> bool:
@@ -282,6 +301,10 @@ def settle(timeout: float = 120, fast_ms: int = 4) -> bool:
         speed = f"speed {fast_ms}" if f & CUTSCENE else "speed normal"
         # Messages, the pickup screen (0x100: also documents and maps, page by page) and the item viewer (0x800) wait
         # for a press; a document read on pickup sets camera lock and ramp too, so it looks like a cutscene otherwise.
+        if message_state() == PROMPT:
+            # A yes/no question is the caller's decision (e.g. "Discard?" for a used-up key); settle never answers.
+            send("speed normal")
+            return False
         if message_waiting() or f & (0x100 | 0x800):
             # A waiting message, the pickup/document screen or the item viewer: A advances. Documents can loop their
             # pages (2026-10-14: the researcher's will in 20A); cancel (X) closes them.
@@ -327,49 +350,235 @@ INVENTORY_SLOTS = 0xBE9944
 
 
 def close_menu() -> None:
-    """Backs out of the status screen and any submenu (X), whatever state it's in."""
-    for _ in range(4):
-        if not peek(MENU_INPUT, 1)[0] and not flags() & MESSAGE:
+    """Backs out of the status screen and any submenu (X), reading first: messages are read and closed with dismiss(),
+    a yes/no prompt is left for the caller (Failed), and X is pressed only while the status screen is open."""
+    for _ in range(8):
+        if message_state() == PROMPT:
+            raise Failed(f"a prompt is open: {message_text()!r}")
+        if message_active():
+            dismiss()
+            continue
+        if not status_open():
             return
-        send("press X 120", "wait 600")
+        input_before = peek(MENU_INPUT, 1)[0]
+        send("press X 120")
+        wait_for(lambda: not status_open() or peek(MENU_INPUT, 1)[0] != input_before, 2)
+    raise Failed("the status screen didn't close")
 
 
-def use_item(item: int, timeout: float = 30) -> dict:
-    """Opens the status screen, moves to the item's slot, confirms and chooses USE (the first submenu entry). Every
-    press is checked: the cursor must move (the menu ignores input while it opens), the selected item must be the
-    target before A, and the menu is closed again if anything goes wrong."""
+SUBMENU_CURSOR = 0xAE9F24          # item submenu: 0 USE, 1 CHECK, 2 COMBN (live 2026-10-14)
+MESSAGE_START, MESSAGE_END = 0xBF0A1C, 0xBF0A20  # current message text: start, revealed-so-far (pointers)
+ITEM_EXAMINED = 0xBE98BC           # 4 bytes, MSB-first: examined items show their real name
+ITEM_LOOKUP, ITEM_NAMES, GENERIC_NAMES = 0x4BD81D, 0x4BF0A0, 0x4BF260
+NOTHING_IMPORTANT = "Nothing important."
+
+# The game's text encoding (docs/MEMORY_MAP.md, "Text"): glyph bytes and the message tags that matter here.
+_GLYPHS = {0x00: " ", 0x1A: "!", 0x19: '"', 0x78: '"', 0x18: ",", 0x79: ".", 0x16: ":", 0x17: ";", 0x1B: "?",
+           0x3A: "'", 0x37: "(", 0x39: ")", 0x3B: "-", 0x38: "/"}
+_GLYPHS.update({0x0C + i: str(i) for i in range(10)})
+_GLYPHS.update({0x1D + i: chr(65 + i) for i in range(26)})
+_GLYPHS.update({0x3D + i: chr(97 + i) for i in range(26)})
+
+
+def decode_text(raw: bytes, selected: int = 0) -> str:
+    """Decodes a message: 0x01 ends it, 0x02/0x03 break lines, 0x05 n sets a colour, 0x06 n inserts an item's name
+    as the game shows it (n = 0: the selected item), 0x08 is a yes/no prompt."""
+    out, i = [], 0
+    while i < len(raw):
+        b = raw[i]
+        if b in (0x01, 0x07):
+            break
+        if b in (0x02, 0x03):
+            out.append("\n")
+        elif b == 0x05:
+            i += 1
+        elif b == 0x06 and i + 1 < len(raw):
+            i += 1
+            out.append(item_name(raw[i] or selected))
+        elif b == 0x08:
+            out.append(" [yes/no]")
+        else:
+            out.append(_GLYPHS.get(b, f"<{b:02x}>"))
+        i += 1
+    return "".join(out).strip()
+
+
+def _u32(address: int) -> int:
+    return int.from_bytes(peek(address, 4), "little")
+
+
+def message_pointer() -> int:
+    """Start of the message text the game shows (changes with each new message)."""
+    return _u32(MESSAGE_START)
+
+
+def status_open() -> bool:
+    """The status screen (inventory) is open."""
+    return bool(flags() & 0x8000) and peek(MENU_INPUT, 1)[0] != 0
+
+
+def message_text() -> str:
+    """The text of the message on screen (or the last one shown)."""
+    start = _u32(MESSAGE_START)
+    return decode_text(peek(start, 400), peek(MENU_ITEM, 1)[0]) if start else ""
+
+
+def dismiss(timeout: float = 10) -> list[str]:
+    """Reads and closes the message on screen page by page: A only while it waits (PAGE/WAITING), never during a
+    prompt; each press must change the state or the text. Returns the pages read."""
     import time
-    raw = peek(INVENTORY_SLOTS, 16)
-    slots = [raw[i * 2] for i in range(8)]
+    pages, end = [], time.time() + timeout
+    while message_active() and time.time() < end:
+        state_now = message_state()
+        if state_now == PROMPT:
+            break
+        if state_now in (PAGE, WAITING):
+            text, pointer = message_text(), message_pointer()
+            if not pages or pages[-1] != text:
+                pages.append(text)
+            send("press A 120")
+            wait_for(lambda: message_state() != state_now or message_pointer() != pointer, 2)
+        else:
+            send("wait 150")
+    return pages
+
+
+def answer(yes: bool, timeout: float = 10) -> bool:
+    """Answers the yes/no prompt on screen: moves the choice (bit 0 of 0xBE9825: 0 Yes, 1 No) until it reads the
+    wanted answer, then confirms; True once the prompt has closed."""
+    import time
+    end = time.time() + timeout
+    if message_state() != PROMPT:
+        return False
+    want = 0 if yes else 1
+    while peek(MESSAGE_ACTIVE, 1)[0] & 1 != want:
+        if time.time() > end:
+            return False
+        before = peek(MESSAGE_ACTIVE, 1)[0] & 1
+        send("press Right 100")
+        wait_for(lambda: peek(MESSAGE_ACTIVE, 1)[0] & 1 != before, 1)
+    send("press A 120")
+    return wait_for(lambda: message_state() != PROMPT, 5)
+
+
+def examined_index(item: int) -> int | None:
+    """Index into the examined bank for items that show a generic name until examined (keys, cranks, books)."""
+    if not 1 <= item <= 0x4D:
+        return None
+    index = peek(ITEM_LOOKUP + item * 4 + 2, 1)[0]
+    return None if index & 0x80 else index
+
+
+def examined(item: int) -> bool | None:
+    index = examined_index(item)
+    return None if index is None else bool(_u32(ITEM_EXAMINED) & (0x80000000 >> index))
+
+
+def item_name(item: int, shown: bool = True) -> str:
+    """The item's name from the game's own table — as the inventory shows it now (generic until examined), or the
+    real one with shown=False."""
+    if not 1 <= item <= 0x80:
+        return f"item {item}"
+    pointer = _u32(ITEM_NAMES + (item - 1) * 4)
+    index = examined_index(item)
+    if shown and index is not None and not examined(item):
+        pointer = _u32(GENERIC_NAMES + index * 4)
+    raw = peek(pointer, 32)
+    return decode_text(raw[: raw.index(0x07)] if 0x07 in raw else raw)
+
+
+HELD_COUNT = 0xBE9827  # g_TotalHeldItems: the game ignores slots at or past it
+
+
+def inventory() -> list[tuple[int, int, str]]:
+    """(item, quantity, name as shown) per held slot — only the first HELD_COUNT slots count, as in the game."""
+    raw, held = peek(INVENTORY_SLOTS, 16), peek(HELD_COUNT, 1)[0]
+    return [(raw[i * 2], raw[i * 2 + 1], item_name(raw[i * 2])) for i in range(min(held, 8)) if raw[i * 2]]
+
+
+def _open_submenu(item: int, timeout: float) -> int:
+    """Opens the status screen on the item's slot and its submenu (USE / CHECK / COMBN); returns the slot. Every press
+    is checked: the cursor must move (the menu ignores input while it opens) and the selected item must be the target
+    before A."""
+    import time
+    raw, held = peek(INVENTORY_SLOTS, 16), peek(HELD_COUNT, 1)[0]
+    slots = [raw[i * 2] if i < held else 0 for i in range(8)]
     if item not in slots:
         raise Failed(f"item {item} is not in the inventory ({slots})")
     target = 8 + 2 * slots.index(item)
+    if message_active():
+        dismiss()
+    if not in_control():
+        raise Failed(f"not in control (message state {message_state()}, flags {flags():#x}): the menu won't open")
     send("press Y")
+    if not wait_for(lambda: status_open() and peek(MENU_INPUT, 1)[0] == 1, 10):
+        raise Failed("the status screen didn't open")
+    send("wait 800")  # the opening animation ignores input
+    end = time.time() + timeout
+    while (cursor := peek(MENU_CURSOR, 1)[0]) != target:
+        if time.time() > end:
+            raise Failed(f"cursor never reached slot {slots.index(item)} (at {cursor})")
+        if (cursor & ~2) < (target & ~2):
+            key = "Down"
+        elif (cursor & ~2) > (target & ~2):
+            key = "Up"
+        else:
+            key = "Right"
+        send(f"press {key} 100")
+        wait_for(lambda: peek(MENU_CURSOR, 1)[0] != cursor, 1.0)
+    # The selected-item byte follows the cursor a few frames later.
+    wait_for(lambda: peek(MENU_ITEM, 1)[0] == item, 2)
+    selected = peek(MENU_ITEM, 1)[0]
+    if selected != item:
+        raise Failed(f"the menu selected item {selected}, not {item}")
+    send("press A 120")
+    if not wait_for(lambda: peek(MENU_INPUT, 1)[0] == 2, 5):
+        raise Failed("the item submenu didn't open")
+    send("wait 400")
+    return slots.index(item)
+
+
+def _choose(entry: int) -> None:
+    for _ in range(4):
+        cursor = peek(SUBMENU_CURSOR, 1)[0]
+        if cursor == entry:
+            send("press A 120")
+            return
+        send(f"press {'Down' if cursor < entry else 'Up'} 100")
+        wait_for(lambda: peek(SUBMENU_CURSOR, 1)[0] != cursor, 1.0)
+    raise Failed(f"submenu cursor never reached entry {entry}")
+
+
+def use_item(item: int, timeout: float = 30) -> dict:
+    """Chooses USE on the item (closing the menu again if anything goes wrong)."""
     try:
-        if not wait_for(lambda: peek(MENU_INPUT, 1)[0] == 1, 10):
-            raise Failed("the status screen didn't open")
-        send("wait 800")  # the opening animation ignores input
-        end = time.time() + timeout
-        while (cursor := peek(MENU_CURSOR, 1)[0]) != target:
-            if time.time() > end:
-                raise Failed(f"cursor never reached slot {slots.index(item)} (at {cursor})")
-            if (cursor & ~2) < (target & ~2):
-                key = "Down"
-            elif (cursor & ~2) > (target & ~2):
-                key = "Up"
-            else:
-                key = "Right"
-            send(f"press {key} 100")
-            wait_for(lambda: peek(MENU_CURSOR, 1)[0] != cursor, 1.0)
-        selected = peek(MENU_ITEM, 1)[0]
-        if selected != item:
-            raise Failed(f"the menu selected item {selected}, not {item}")
-        send("press A 120")
-        # The submenu (USE / CHECK / COMBN) takes input once the menu state reads 2; USE is its first entry.
-        if not wait_for(lambda: peek(MENU_INPUT, 1)[0] == 2, 5):
-            raise Failed("the item submenu didn't open")
-        send("wait 400", "press A 120", "wait 1500")
-        return {"slot": slots.index(item), "selected": selected}
+        slot = _open_submenu(item, timeout)
+        name = item_name(item)
+        _choose(0)
+        send("wait 1500")
+        return {"slot": slot, "selected": item, "name": name}
     except Failed:
         close_menu()
         raise
+
+
+def examine(item: int, turns: int = 24) -> dict:
+    """CHECK on the item, then turns it in the viewer and presses A at each angle until the game says something other
+    than "Nothing important." (keys show their carving and get their real name). Closes the menu afterwards."""
+    try:
+        _open_submenu(item, 30)
+        before = item_name(item)
+        _choose(1)
+        send("wait 1500")
+        notes = []
+        for turn in range(turns):
+            send("press A 120", "wait 1500")
+            text = message_text()
+            if text and text != NOTHING_IMPORTANT:
+                notes.append(text)
+                send("press A 120", "wait 1000")
+                break
+            send("press A 120", "wait 500", f"press {'Left' if turn < 16 else 'Up'} 250", "wait 250")
+        return {"item": item, "before": before, "after": item_name(item), "examined": examined(item), "said": notes}
+    finally:
+        close_menu()

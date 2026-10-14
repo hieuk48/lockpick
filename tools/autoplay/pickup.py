@@ -32,8 +32,9 @@ INTERACTING = 0x800 | ap.MESSAGE | 0x0400 | 0x0100
 
 
 def inventory() -> list[int]:
-    raw = ap.peek(INVENTORY, 16)
-    return [struct.unpack_from("<H", raw, i * 2)[0] for i in range(8)]
+    """Slot words (item | quantity << 8); slots past the game's held count read 0, as the game treats them."""
+    raw, held = ap.peek(INVENTORY, 16), ap.peek(ap.HELD_COUNT, 1)[0]
+    return [struct.unpack_from("<H", raw, i * 2)[0] if i < held else 0 for i in range(8)]
 
 
 def cleared_flags(before: bytes, after: bytes) -> list[int]:

@@ -277,8 +277,20 @@ are entered with door records instead.
 | `0xBE41E2` (u8) | Enemy count; `update_entities` (`0x48F0F0`) returns when 0 → enemies stop and aren't drawn until the next room load | disassembly + live (101's zombies) |
 | `0xD22774` / `0xD22775` / `0xD22777` | Title: cursor (1 NEW GAME, 2 LOAD GAME, preset to 2 when saves exist), menu shown, title loop | live trace |
 | `0xAC9880` / `0xAC93F0` | Character select: state (1 = waiting for input, 6 = start), selection (0 Chris, 1 Jill) | decomp + live (new games for both) |
-| `0xAE9F20` / `0xAE9F23` / `0xAE9F1B` | Inventory menu: grid takes input when 1; cursor (8 + 2·slot); selected item id | decomp (USE path to be live-checked) |
+| `0xAE9F20` / `0xAE9F23` / `0xAE9F1B` | Inventory menu: grid takes input when 1 (submenu 2); cursor (8 + 2·slot); selected item id — follows the cursor a few frames late, 0 on a slot at or past the held count | decomp + live (USE and CHECK) |
+| `0xAE9F24` | Item submenu cursor: 0 USE, 1 CHECK, 2 COMBN | live diff |
+| `0xBE9827` (u8) | Held-item count (`g_TotalHeldItems`): the game ignores slots at or past it — the menu shows them empty and doors don't see a key there; recounted from the slots only on game start/load (Jill 8 slots max, Chris 6) | decomp + live: a Shield key written to slot 3 with the count left at 3 was invisible ("It's locked.") |
+| `0xD21CD0` (8 B) / `0xD22734` | Per-slot icon index / icon bitmask: the grid icon comes from the slot's index; icons load on pickup, game start/load and item-box/combine swaps — not on room changes | decomp + live (an item added by memory shows the knife icon until then) |
+| `0xBE9825` (u8) | `g_menu_choice_id`: bit `0x80` = a message is up; bit 0 = yes/no choice (0 Yes, 1 No) | decomp + live ("It's locked." reads 0x80; the Discard prompt read 0, answered Yes) |
+| `0xBF0A16` (u8) | Message state: 1 typing, 2 waiting on a page (▼), 3 after a line break, 4 yes/no prompt, 5 waiting to close, 6 closing by itself. **The state flags don't show messages**: "It's locked." leaves `0xBE41C0` at plain control `0x80800000` | decomp + live |
+| `0xBF0A1C` / `0xBF0A20` | Message text: start pointer / revealed-so-far pointer (into the exe's text tables or the room file); text encoding in the decomp's docs/TEXT_ENCODING.md (`0x01` end, `0x02`/`0x03` page/line, `0x05 n` colour, `0x06 n` item name, `0x08` yes/no) | decomp + live ("Nothing important.", "A carving of a shield.", "This key is useless now. Discard?") |
+| `0xBE98BC` (4 B, MSB-first) | Items examined: keys, cranks, the herbicide and the books show a generic name ("MANSION KEY", "CRANK", "CHEMICAL", "RED BOOK"…) until examined; flag index = byte at `0x4BD81D + id·4 + 2` (none when bit 7 set), generic names at `0x4BF260[index]` | decomp + live: CHECK, turn the Shield key until "A carving of a shield." → bit 5 set, name SHIELD KEY |
 | `0xD213A0` | Item-use flags (bank 9): a room's "flag set" action raises the bit (item − 0x1B) while the player stands at the spot; USE checks it | decomp + room scripts (105 fireplace: items 31/32) |
+
+Keys: a door that takes a key opens only once the key has been **examined** — holding an unexamined Shield key gave
+"It's locked. / A carving of a shield."; examined, the door unlocked (lock bit 7 in `flagLocks0`), the game asked
+"This key is useless now. Discard?" in the status screen, and the next press went through (20E → 210, live
+2026-10-14).
 
 Room scripts (`tools/rdt/scd.py`) and event scripts (`tools/rdt/events.py`) read every room's conditions: e.g. 105
 places the blue jewel only once "the statue falls" (A11), always arms the shield key (only the clock — a

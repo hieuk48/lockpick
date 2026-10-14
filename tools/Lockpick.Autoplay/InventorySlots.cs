@@ -5,16 +5,19 @@ using Microsoft.Win32.SafeHandles;
 namespace Lockpick.Autoplay;
 
 /// <summary>
-/// DEV RUNS ONLY. Empties inventory slots so automated pickup tests never hit "no room": the 8 u16 slots at
+/// DEV RUNS ONLY. Empties inventory slots, or adds an item, so automated pickup tests never hit "no room": the 8 u16 slots at
 /// 0xBE9944 (profile fields inv0–inv7: item id, quantity in the high byte). Only slots from the given index up are
 /// cleared (the starting weapons stay), never the equipped one, and the rest are compacted to the front: the status
-/// screen stops at the first empty slot (2026-10-14: a gap hid the music notes). The game is suspended for the write,
-/// which is read back.
+/// screen stops at the first empty slot (2026-10-14: a gap hid the music notes). The held-item count at 0xBE9827
+/// (g_TotalHeldItems, decomp) is kept in step: the game ignores slots at or past it — the menu shows them empty and
+/// doors don't see a key there (2026-10-14: a given Shield key was invisible until the count was raised). The game is
+/// suspended for the writes, which are read back.
 /// </summary>
 internal sealed partial class InventorySlots : IDisposable
 {
     private const ulong Slots = 0xBE9944;
     private const ulong EquippedSlot = 0xBE9849;
+    private const ulong HeldCount = 0xBE9827; // g_TotalHeldItems: slots at or past it count as empty (menu, keys)
     private const int Count = 8;
 
     private readonly SafeProcessHandle _process;
@@ -79,7 +82,48 @@ internal sealed partial class InventorySlots : IDisposable
             }
 
             Write(Slots, compacted);
+            Write(HeldCount, [(byte)kept.Count]);
             return cleared;
+        }
+        finally
+        {
+            ProcessSuspender.Resume(_processId);
+        }
+    }
+
+    /// <summary>
+    /// Puts <paramref name="item"/> × <paramref name="quantity"/> in the slot after the held ones and raises the held
+    /// count; returns the slot. Lets a route start from a step without replaying the ones before
+    /// it. Ids are the game's own (1–0x4D; names in data/games/re1/names.json).
+    /// </summary>
+    public int Give(int item, int quantity)
+    {
+        if (item is < 1 or > 0x4D)
+        {
+            throw new ArgumentOutOfRangeException(nameof(item), "item ids are 1–0x4D");
+        }
+
+        if (quantity is < 0 or > 255)
+        {
+            throw new ArgumentOutOfRangeException(nameof(quantity), "quantity is one byte");
+        }
+
+        if (ProcessSuspender.Suspend(_processId) is { } error)
+        {
+            throw new InvalidOperationException("suspend failed: " + error);
+        }
+
+        try
+        {
+            var slot = Read(HeldCount, 1)[0];
+            if (slot >= Count)
+            {
+                throw new InvalidOperationException("the inventory is full");
+            }
+
+            Write(Slots + (ulong)(slot * 2), BitConverter.GetBytes((ushort)(item | (quantity << 8))));
+            Write(HeldCount, [(byte)(slot + 1)]);
+            return slot;
         }
         finally
         {

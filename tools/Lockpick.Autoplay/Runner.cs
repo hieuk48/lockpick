@@ -12,6 +12,7 @@ namespace Lockpick.Autoplay;
 ///   freeze-enemies               stop this room's enemies acting (count 0 until the next room; EnemyFreeze.cs)
 ///   camera id                    cut to a camera of the room (must have a switch-zone group; CameraCut.cs)
 ///   inv-clear from               empty inventory slots from..7 (not the equipped one; InventorySlots.cs)
+///   give item [qty]              put an item in the first empty inventory slot (default qty 1; InventorySlots.cs)
 ///   heal                         HP back to the maximum (alive players only)
 ///   door hex48                   enter a room through a door record (RoomWarp.cs; dev runs only)
 ///   focus                        bring the game to the front (only when nobody is using the PC)
@@ -184,6 +185,12 @@ internal sealed class Runner(Pad pad, TextWriter log) : IDisposable
             case "inv-clear":
                 _inventory ??= new InventorySlots(Game.ProcessId);
                 Log($"  cleared {_inventory.ClearFrom(int.Parse(w[1], CultureInfo.InvariantCulture))} inventory slots");
+                break;
+            case "give":
+                _inventory ??= new InventorySlots(Game.ProcessId);
+                var given = int.Parse(w[1], CultureInfo.InvariantCulture);
+                var slot = _inventory.Give(given, w.Length > 2 ? int.Parse(w[2], CultureInfo.InvariantCulture) : 1);
+                Log($"  item {given} in slot {slot}");
                 break;
             case "heal":
                 _placement ??= new PlayerPlacement(Game.ProcessId);

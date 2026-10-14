@@ -27,11 +27,18 @@ import survey  # noqa: E402
 
 ITEM_USE = 0xD213A0
 STORY_A, STORY_B = 0xBE98C0, 0xBE9854
+LOCKS = 0xBE9874  # flagLocks0-1: a bit per unlocked door
 
 
 def flag(bank: int, n: int) -> bool:
     raw = ap.peek(bank + (n // 32) * 4, 4)
     return bool(struct.unpack("<I", raw)[0] & (0x80000000 >> (n % 32)))
+
+
+def set_flags(raw: bytes) -> set[int]:
+    """Flag numbers set in a bank: flag n is bit 31 − n % 32 of little-endian word n / 32."""
+    return {w * 32 + b for w in range(len(raw) // 4) for b in range(32)
+            if struct.unpack_from("<I", raw, w * 4)[0] & (0x80000000 >> b)}
 
 
 def use_spots(room: str, character: str, item: int) -> list[list[int]]:
@@ -106,6 +113,70 @@ class Route:
         self.log(f"  use {item}: no spot raised its use bit")
         return False
 
+    def open_door(self, target: str, discard: bool = True) -> bool:
+        """Stands at the door to `target`, presses A once and follows the game's message state: pages are read and
+        closed, the "This key is useless now. Discard?" prompt is answered (`discard`), any other prompt stops the step,
+        and the status screen it opens is closed only once no message is up — nothing is pressed blindly (2026-10-14:
+        presses during that prompt discarded the Shield key and then picked the knife). Passes when the room changes to
+        `target`."""
+        import time
+        room = rdt_map.load(survey.INSTALL, self.room, self.character)
+        door = next((d for d in room.doors if d["to"] == target), None)
+        if door is None:
+            self.log(f"  no door to {target} in {self.room}")
+            return False
+        locks = set_flags(ap.peek(LOCKS, 8))
+        for x, z, angle, _ in pickup.spots({"zone": list(door["zone"])}, room):
+            camera = room.camera_for(x, z)
+            ap.send(f"place {x} {z} {angle}", "wait 400", *([f"camera {camera}", "wait 500"] if camera is not None else []))
+            if not ap.in_control():
+                self.log(f"  door to {target}: not in control before pressing ({ap.message_state()=}, {ap.flags():#x})")
+                return False
+            ap.send("press A 150", "wait 300")
+            said, stopped, end, pressed_again = [], None, time.time() + 20, False
+            while time.time() < end:
+                if ap.state().get("room") == target:
+                    break
+                state = ap.message_state()
+                if state == ap.PROMPT:
+                    text = ap.message_text()
+                    said.append(text)
+                    if "Discard" in text:
+                        ap.answer(discard)
+                        continue
+                    stopped = "prompt"
+                    break
+                if state in (ap.PAGE, ap.WAITING):
+                    said += ap.dismiss()
+                    continue
+                if state:
+                    ap.send("wait 150")
+                    continue
+                if ap.status_open():
+                    # The discard prompt opens the status screen a moment before its message starts: give it time.
+                    if not ap.wait_for(lambda: ap.message_active(), 2):
+                        ap.close_menu()
+                    continue
+                if said and ap.in_control():
+                    if set_flags(ap.peek(LOCKS, 8)) - locks and not pressed_again:
+                        # Unlocking takes the press; the next one opens the door.
+                        pressed_again = True
+                        ap.send("press A 150", "wait 300")
+                        continue
+                    break  # the game answered with messages and handed control back: the door didn't open
+                ap.send("wait 300")
+            now = ap.state().get("room")
+            changed = sorted(set_flags(ap.peek(LOCKS, 8)) - locks)
+            if said or stopped or changed or now != self.room:
+                self.log(f"  door to {target} from ({x},{z}) facing {angle}: said {said}; stopped at {stopped}; now in "
+                         f"{now}; lock bits set {changed}; inventory {[n for _, _, n in ap.inventory()]}")
+                if now == target:
+                    self.room = target
+                    ap.settle(60)
+                    return True
+                return False
+        self.log(f"  door to {target}: no spot reached it")
+        return False
 
 def shield_key(r: Route) -> list[tuple[str, bool]]:
     checks = []
