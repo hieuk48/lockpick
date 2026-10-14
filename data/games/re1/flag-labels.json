@@ -432,6 +432,66 @@
    "mask": "0x00004000",
    "label": "statue pushed over the hole (400)",
    "source": "owner, ask mode 2026-10-13 (Jill, mansion → guardhouse)"
+  },
+  {
+   "bank": "flagScenarioA2",
+   "mask": "0x10000000",
+   "label": "bathtub drained: the control-room key is revealed (402)",
+   "source": "owner, ask mode 2026-10-13 (Jill, guardhouse → mansion revisited)"
+  },
+  {
+   "bank": "flagScenarioA1",
+   "mask": "0x10000000",
+   "label": "water drained with the lever in the control room (411)",
+   "source": "owner, ask mode 2026-10-13 (Jill, guardhouse → mansion revisited)"
+  },
+  {
+   "bank": "flagScenarioA1",
+   "mask": "0x80000000",
+   "label": "at the door keypad in the beehive passage (408)",
+   "source": "owner, ask mode 2026-10-13 (Jill, guardhouse → mansion revisited)"
+  },
+  {
+   "bank": "flagScenarioA1",
+   "mask": "0x40000000",
+   "label": "entered the drug storeroom (from 408)",
+   "source": "owner, ask mode 2026-10-13 (Jill, guardhouse → mansion revisited)"
+  },
+  {
+   "bank": "flagScenarioA0",
+   "mask": "0x00001000",
+   "label": "V-Jolt poured on Plant 42's roots (40F)",
+   "source": "owner, ask mode 2026-10-13 (Jill, guardhouse → mansion revisited)"
+  },
+  {
+   "bank": "flagScenarioB1",
+   "mask": "0x00800000",
+   "label": "Hunter introduction cutscene (60A)",
+   "source": "owner, ask mode 2026-10-13 (Jill, guardhouse → mansion revisited)"
+  },
+  {
+   "bank": "flagScenarioA1",
+   "mask": "0x01000000",
+   "label": "Yawn appears again (70C)",
+   "source": "owner, ask mode 2026-10-13 (Jill, guardhouse → mansion revisited)"
+  },
+  {
+   "bank": "flagScenarioB1",
+   "mask": "0x02000000",
+   "label": "after Yawn's defeat: the hole by the piano (cutscene, 70C)",
+   "source": "owner, ask mode 2026-10-13 (Jill, guardhouse → mansion revisited)"
+  },
+  {
+   "bank": "flagScenarioA1",
+   "mask": "0x00800000",
+   "label": "tombstone switch reveals the secret passage (70C)",
+   "source": "owner, ask mode 2026-10-13 (Jill, guardhouse → mansion revisited)"
+  },
+  {
+   "bank": "flagScenarioB1",
+   "mask": "0x04000000",
+   "label": "Barry arrives in 70C (player unsure)",
+   "source": "owner, ask mode 2026-10-13 (Jill, guardhouse → mansion revisited)"
   }
  ]
 }
