@@ -186,8 +186,9 @@ What changes during play but isn't explained yet — candidates for markers in f
 2690 bytes, starting `53 43 13 01`. Offsets `0x04`–`0x41B` are a copy of the game-state block: save offset +
 `0xBE9620` = memory address (found 2026-10-13 by matching a save written during a live capture against the memory
 recorded 48 ms earlier) — so stage/room/camera, every flag bank, the item box and the inventory decode with the
-profile's addresses. Byte `0x212` is `0x2F` (the ink ribbon's id: what a save costs) in every Chris save and `0` in
-every Jill save. `tools/bounties/saves.py` reads saves offline (character, room, inventory, box, progress, story); it
+profile's addresses. The character is the low bit of `0xBE9829` (save offset `0x209`; field `saveCharacter`):
+0 Chris, 1 Jill in all 75 saves checked; bit `0x4` is set only in the underground caves and the lab (the autosplitter's
+"Jill's character ID changes in a few spots"). Byte `0x212` agrees (`0x2F`, the ink ribbon a save costs, for Chris). `tools/bounties/saves.py` reads saves offline (character, room, inventory, box, progress, story); it
 decoded 67 community practice saves and the owner's 8 into the rooms their names describe.
 
 ## Leads (unverified)

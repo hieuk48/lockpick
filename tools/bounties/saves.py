@@ -4,8 +4,10 @@
 
 A save is a copy of the game-state block: save offset + 0xBE9620 = memory address for offsets 0x04–0x41B (stage, room
 and camera at 0xBE9820, every flag bank, the item box at 0xBE98E4, the inventory at 0xBE9944) — found by matching a
-save written during a live capture against the memory recorded at that moment (2026-10-13). Byte 0x212 is 0x2F (the
-ink ribbon's id: saving costs a ribbon) in every Chris save and 0 in every Jill save, so it tells the characters apart.
+save written during a live capture against the memory recorded at that moment (2026-10-13). The character is the low
+bit of 0xBE9829 (offset 0x209: Chris 0, Jill 1; bit 0x4 is set in the underground caves and the lab — lead from the
+RE1aio autosplitter's characterID, checked against 75 saves); byte 0x212 agrees (0x2F, the ink ribbon a save costs,
+for Chris; 0 for Jill).
 Read-only: save files are only read.
 """
 from __future__ import annotations
@@ -23,7 +25,7 @@ import timeline  # noqa: E402
 SAVE_SIZE = 2690
 BLOCK = 0xBE9620
 BLOCK_END = BLOCK + 0x41C
-CHARACTER_BYTE = 0x212
+CHARACTER_BYTE = 0x209  # 0xBE9829: bit 0 = Jill, bit 0x4 = underground/lab section
 
 
 def read_save(path: Path) -> dict | None:
@@ -36,7 +38,7 @@ def read_save(path: Path) -> dict | None:
         if BLOCK + 4 <= f["address"] and f["address"] + width <= BLOCK_END:
             (v,) = struct.unpack_from(bounties.FORMATS[f["type"]], data, f["address"] - BLOCK)
             state[f["name"]] = v & f["mask"] if f["mask"] is not None else v
-    state["character"] = 0 if data[CHARACTER_BYTE] == 0x2F else 1
+    state["character"] = data[CHARACTER_BYTE] & 1
     return state
 
 

@@ -27,6 +27,13 @@ Research date: 2026-10-12. No third-party code was copied into Lockpick.
   (6xx/7xx). The plans agree with the door links in `room-index.json` (e.g. 2F room 2, the balcony around the dining
   room, is where the statue falls from). `data/games/re1/rooms.json` holds the areas, and names only for rooms whose
   identity live captures or the player confirmed.
+- **Key-item routes** (owner-supplied split package, July 2024: RE1aio.asl + LiveSplit files): Jill and Chris Any% NMG
+  split on each key item in route order — Jill: Emblem, Chemical, Armor Key, Music Notes, Gold Emblem, Blue Jewel,
+  Shield Key, Wind Crest, Serum, Moon/Sun/Star Crests, Square Crank, Control Room Key, Red Book, 002/003 Keys, Helmet
+  Key, Doom Books, Batteries, Hex Crank, Power Room Key, Master Key, Flare, End (the Jill file carries a 49:01 personal
+  best with per-segment times). Facts used as leads for route guidance and autosplits; the files and their icons are
+  not included. The autosplitter also gives `characterID` 0xBE9829 (verified in saves), previous room 0xAC9CF4 and a
+  new-game byte 0xC26E2F (unverified).
 - **Speedrun segments** (LiveSplit templates from speedrun.com, no times): Chris/Jill × good/bad ending × MG/NMG share
   Yawn 1 › Mansion 1 › Courtyard 1 › Boxes › Guardhouse › Courtyard 2 › Yawn 2 › Basement › Mansion 2 › Courtyard 3 ›
   Black Tiger › Underground › Loud Room › (Lab) Tyrant › [Orgy Room, good ending] › End; the first split is
