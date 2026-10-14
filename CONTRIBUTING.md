@@ -36,6 +36,14 @@ Details and privacy: [docs/CAPTURE.md](docs/CAPTURE.md).
 Code is never a bounty and is never paid; it's volunteer work like everything else here.
 Please write your own changes — AI-generated or automated pull requests are closed.
 
+How pull requests are handled:
+- `main` is protected: changes from contributors arrive as pull requests, need passing CI (build, tests, data checks)
+  and the maintainer's review before they can be merged. CI for outside contributors runs only after the maintainer
+  approves it.
+- Pull requests that ask for payment (wallet addresses, payout or "bounty claim" requests) are closed automatically
+  and labelled `spam`; there is nothing to pay.
+- Pull requests that delete large parts of the documentation or data, or don't match their description, are closed.
+
 
 - Read [docs/DEVELOPMENT.md](docs/DEVELOPMENT.md) (build, test, verifying addresses) and
   [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) (structure and decisions).

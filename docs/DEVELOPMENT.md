@@ -163,6 +163,12 @@ the format version and keep the analyzer able to read old captures.
 | `benchmarks.yml` | manual, weekly | BenchmarkDotNet short run, results artifact |
 | `release.yml` | tag `v*.*.*` or manual | Test, publish the app, Velopack `pack` (Setup.exe, portable zip, update packages + feed, deltas against the previous release), `upload github` with CHANGELOG notes; attaches the probe zip |
 | `dependabot.yml` | weekly | NuGet and GitHub Actions updates |
+| `pr-guard.yml` | outside PRs (`pull_request_target`) | Closes and labels `spam` pull requests asking for payment; reads only the title and description, never the PR's code |
+
+Repository protection (GitHub settings): the **Protect main** ruleset blocks deleting or force-pushing `main` and
+requires a pull request with both CI jobs passing and a code-owner review (`.github/CODEOWNERS`) — repository admins
+bypass it, so the maintainer can push directly. Fork pull requests need approval before CI runs (all outside
+contributors). Secret scanning with push protection and Dependabot security updates are on.
 
 ## Release process
 
