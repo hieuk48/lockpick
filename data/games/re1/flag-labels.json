@@ -490,8 +490,14 @@
   {
    "bank": "flagScenarioB1",
    "mask": "0x04000000",
-   "label": "Barry arrives in 70C (player unsure)",
-   "source": "owner, ask mode 2026-10-13 (Jill, guardhouse → mansion revisited)"
+   "label": "Barry arrives with a rope to pull Jill back up (70C)",
+   "source": "owner, 2026-10-13 (session 8 follow-up)"
+  },
+  {
+   "bank": "flagScenarioB5",
+   "mask": "0x00010000",
+   "label": "Wesker appears in a cutscene, shooting at the wasps (405)",
+   "source": "owner, 2026-10-13 (session 8 follow-up)"
   }
  ]
 }

@@ -354,10 +354,10 @@
           "id": "B313",
           "task": "Encounter **spiders**, **wasps** and **sharks**",
           "verifies": "Enemy type ids",
-          "status": "partial",
+          "status": "done",
           "detector": "enemies_spider_wasp_shark",
           "evidence": [
-            "2026-10-13 live session 8 (Jill, ask mode): by room — type 3 in 404 (two killed; small spiders then bite for 2), type 7 in 408 (the beehive passage, player), type 11 ×3 in 40E (sharks). Spiders and sharks need the player's confirmation"
+            "2026-10-13 live session 8 (player confirmed): giant spiders are type 3 (two killed in 404; each bursts into small spiders that bite for 2), wasps type 7 (beehive passage 408), sharks type 11 in 40E (one big — Neptune — and two smaller)"
           ]
         },
         {
@@ -368,7 +368,8 @@
           "detector": "enemies_boss",
           "evidence": [
             "2026-10-13 live session 7 (Jill, ask mode, owner's answers): Yawn is enemy type 13 (appeared in 210, player confirmed); its poison made Jill faint (story flags named). Plant 42, Neptune, Black Tiger, Tyrant not yet seen",
-            "2026-10-13 live session 8 (Jill, ask mode): Yawn's second fight is type 18, killed in 70C (player); Plant 42 is type 8 in 40C after V-Jolt on its roots (type 14) in 40F. Neptune, Black Tiger and Tyrant not yet seen"
+            "2026-10-13 live session 8 (Jill, ask mode): Yawn's second fight is type 18, killed in 70C (player); Plant 42 is type 8 in 40C after V-Jolt on its roots (type 14) in 40F. Neptune, Black Tiger and Tyrant not yet seen",
+            "2026-10-13 live session 8 (player confirmed): Neptune (the big shark, type 11) encountered in 40E, not killed"
           ]
         }
       ]
@@ -474,7 +475,8 @@
           "verifies": "Event flags and cutscene detection",
           "status": "partial",
           "evidence": [
-            "2026-10-13 live session 7 (Jill, ask mode, owner's answers): partner/cutscene events named by the player — Barry (blood, Kenneth, the zombie, the ceiling-trap rescue, the lockpick), Wesker's disappearance, Richard (found poisoned, the serum errand, his radio), Forest, Yawn's poison and the rescue. Rebecca (Chris's scenario) still needed"
+            "2026-10-13 live session 7 (Jill, ask mode, owner's answers): partner/cutscene events named by the player — Barry (blood, Kenneth, the zombie, the ceiling-trap rescue, the lockpick), Wesker's disappearance, Richard (found poisoned, the serum errand, his radio), Forest, Yawn's poison and the rescue. Rebecca (Chris's scenario) still needed",
+            "2026-10-13 live session 8 (player confirmed): Wesker appears in 405 shooting at the wasps; Barry arrives in 70C with the rope"
           ]
         },
         {
