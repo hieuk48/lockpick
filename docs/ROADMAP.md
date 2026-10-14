@@ -157,6 +157,7 @@ players play the game themselves; Lockpick enhances their play.
   (guardhouse 35, return mansion 58, caves 17, lab 22 rooms — all entered, both characters; 588 room visits in all),
   and 75 saves loaded with Lockpick's live room/character matching the offline save decode (73 of 75; the other two,
   a pair of practice saves at the same spot in 513 with camera 5, crash the game on load even at normal speed). Results, captures and an atlas stay local (`%LOCALAPPDATA%\Lockpick\research\night-20261014`).
+- **Item pickup verification (2026-10-14):** every armed item zone of a new game, both characters: 295 items picked up (Jill 138, Chris 157), each giving the item and clearing the flag the room index names; the only differences are 104/604's two clips stacked on one spot and 719's battery hand-over spot next to its rounds — both in the room scripts. Not-yet-placed items (story-gated), event hand-overs and unreachable spots are listed per room.
 - Next: regression scripts (expected flags/items per scene, run after changes to addresses or event rules), item
   pickups at their zones (camera re-cut after placement), capture bounties that need precise actions, why the first
   door handoff after a save load is ignored.
