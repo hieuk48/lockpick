@@ -1,5 +1,5 @@
 {
- "comment": "Stage areas from deserteagle417's autosplitter room-ID maps (lead, credited); room names only where live captures or the player confirmed what the room is (docs/MEMORY_MAP.md).",
+ "comment": "Stage areas from deserteagle417's autosplitter room-ID maps (lead, credited). Room names: the first 15 confirmed by live captures or the player; the rest from the 2026-10-14 survey (each room's screenshot and description, its items, enemies, doors and messages in the room files, and confirmed flag events) - nameConfidence 'low' marks names still to check in play; 6xx/7xx revisits share their 1xx/2xx names.",
  "areas": {
   "1": "Mansion 1F",
   "2": "Mansion 2F",
@@ -10,171 +10,828 @@
   "7": "Mansion 2F (return)"
  },
  "rooms": {
-  "100": {"area": "Mansion 1F", "name": "Item box room (west)"},
-  "101": {"area": "Mansion 1F"},
-  "102": {"area": "Mansion 1F"},
-  "103": {"area": "Mansion 1F"},
-  "104": {"area": "Mansion 1F", "name": "Corridor (Kenneth)"},
-  "105": {"area": "Mansion 1F", "name": "Dining room"},
-  "106": {"area": "Mansion 1F", "name": "Main hall"},
-  "107": {"area": "Mansion 1F", "name": "Stairs room (1F map)"},
-  "108": {"area": "Mansion 1F", "name": "L-corridor (dogs)"},
-  "109": {"area": "Mansion 1F"},
-  "10A": {"area": "Mansion 1F"},
-  "10B": {"area": "Mansion 1F"},
-  "10C": {"area": "Mansion 1F"},
-  "10D": {"area": "Mansion 1F", "name": "Lion head room"},
-  "10E": {"area": "Mansion 1F"},
-  "10F": {"area": "Mansion 1F"},
-  "110": {"area": "Mansion 1F"},
-  "111": {"area": "Mansion 1F"},
-  "112": {"area": "Mansion 1F"},
-  "113": {"area": "Mansion 1F"},
-  "114": {"area": "Mansion 1F"},
-  "115": {"area": "Mansion 1F"},
-  "116": {"area": "Mansion 1F", "name": "Shotgun room (trap)"},
-  "117": {"area": "Mansion 1F", "name": "Gallery (crows)"},
-  "118": {"area": "Mansion 1F", "name": "Item box room (east)"},
-  "119": {"area": "Mansion 1F"},
-  "11A": {"area": "Mansion 1F", "name": "Crest door corridor"},
-  "11B": {"area": "Mansion 1F"},
-  "11C": {"area": "Mansion 1F"},
-  "201": {"area": "Mansion 2F"},
-  "202": {"area": "Mansion 2F", "name": "Dining room balcony (statue)"},
-  "203": {"area": "Mansion 2F", "name": "Main hall 2F"},
-  "204": {"area": "Mansion 2F"},
-  "205": {"area": "Mansion 2F"},
-  "206": {"area": "Mansion 2F", "name": "Room with a document"},
-  "207": {"area": "Mansion 2F"},
-  "208": {"area": "Mansion 2F"},
-  "209": {"area": "Mansion 2F"},
-  "20A": {"area": "Mansion 2F"},
-  "20B": {"area": "Mansion 2F"},
-  "20C": {"area": "Mansion 2F"},
-  "20D": {"area": "Mansion 2F"},
-  "20E": {"area": "Mansion 2F"},
-  "20F": {"area": "Mansion 2F"},
-  "210": {"area": "Mansion 2F"},
-  "211": {"area": "Mansion 2F"},
-  "212": {"area": "Mansion 2F", "name": "Balcony (Forest)"},
-  "214": {"area": "Mansion 2F"},
-  "215": {"area": "Mansion 2F"},
-  "21C": {"area": "Mansion 2F"},
-  "300": {"area": "Courtyard & underground"},
-  "301": {"area": "Courtyard & underground"},
-  "302": {"area": "Courtyard & underground"},
-  "303": {"area": "Courtyard & underground"},
-  "304": {"area": "Courtyard & underground"},
-  "305": {"area": "Courtyard & underground"},
-  "306": {"area": "Courtyard & underground"},
-  "307": {"area": "Courtyard & underground"},
-  "308": {"area": "Courtyard & underground"},
-  "309": {"area": "Courtyard & underground"},
-  "30A": {"area": "Courtyard & underground"},
-  "30B": {"area": "Courtyard & underground"},
-  "30C": {"area": "Courtyard & underground"},
-  "30D": {"area": "Courtyard & underground"},
-  "30E": {"area": "Courtyard & underground"},
-  "30F": {"area": "Courtyard & underground"},
-  "310": {"area": "Courtyard & underground"},
-  "400": {"area": "Guardhouse"},
-  "401": {"area": "Guardhouse"},
-  "402": {"area": "Guardhouse"},
-  "403": {"area": "Guardhouse"},
-  "404": {"area": "Guardhouse"},
-  "405": {"area": "Guardhouse"},
-  "406": {"area": "Guardhouse"},
-  "407": {"area": "Guardhouse"},
-  "408": {"area": "Guardhouse"},
-  "409": {"area": "Guardhouse"},
-  "40A": {"area": "Guardhouse"},
-  "40B": {"area": "Guardhouse"},
-  "40C": {"area": "Guardhouse"},
-  "40D": {"area": "Guardhouse"},
-  "40E": {"area": "Guardhouse"},
-  "40F": {"area": "Guardhouse"},
-  "410": {"area": "Guardhouse"},
-  "411": {"area": "Guardhouse"},
-  "500": {"area": "Laboratory"},
-  "501": {"area": "Laboratory"},
-  "502": {"area": "Laboratory"},
-  "503": {"area": "Laboratory"},
-  "504": {"area": "Laboratory"},
-  "505": {"area": "Laboratory"},
-  "506": {"area": "Laboratory"},
-  "507": {"area": "Laboratory"},
-  "508": {"area": "Laboratory"},
-  "509": {"area": "Laboratory"},
-  "50A": {"area": "Laboratory"},
-  "50B": {"area": "Laboratory"},
-  "50C": {"area": "Laboratory"},
-  "50D": {"area": "Laboratory"},
-  "50E": {"area": "Laboratory"},
-  "50F": {"area": "Laboratory"},
-  "510": {"area": "Laboratory"},
-  "511": {"area": "Laboratory"},
-  "512": {"area": "Laboratory"},
-  "513": {"area": "Laboratory"},
-  "514": {"area": "Laboratory"},
-  "515": {"area": "Laboratory"},
-  "51D": {"area": "Laboratory"},
-  "600": {"area": "Mansion 1F (return)"},
-  "601": {"area": "Mansion 1F (return)"},
-  "602": {"area": "Mansion 1F (return)"},
-  "603": {"area": "Mansion 1F (return)"},
-  "604": {"area": "Mansion 1F (return)"},
-  "605": {"area": "Mansion 1F (return)"},
-  "606": {"area": "Mansion 1F (return)"},
-  "607": {"area": "Mansion 1F (return)"},
-  "608": {"area": "Mansion 1F (return)"},
-  "609": {"area": "Mansion 1F (return)"},
-  "60A": {"area": "Mansion 1F (return)"},
-  "60B": {"area": "Mansion 1F (return)"},
-  "60C": {"area": "Mansion 1F (return)"},
-  "60D": {"area": "Mansion 1F (return)"},
-  "60E": {"area": "Mansion 1F (return)"},
-  "60F": {"area": "Mansion 1F (return)"},
-  "610": {"area": "Mansion 1F (return)"},
-  "611": {"area": "Mansion 1F (return)"},
-  "612": {"area": "Mansion 1F (return)"},
-  "613": {"area": "Mansion 1F (return)"},
-  "614": {"area": "Mansion 1F (return)"},
-  "615": {"area": "Mansion 1F (return)"},
-  "616": {"area": "Mansion 1F (return)"},
-  "617": {"area": "Mansion 1F (return)"},
-  "618": {"area": "Mansion 1F (return)"},
-  "619": {"area": "Mansion 1F (return)"},
-  "61A": {"area": "Mansion 1F (return)"},
-  "61B": {"area": "Mansion 1F (return)"},
-  "61C": {"area": "Mansion 1F (return)"},
-  "700": {"area": "Mansion 2F (return)"},
-  "701": {"area": "Mansion 2F (return)"},
-  "702": {"area": "Mansion 2F (return)"},
-  "703": {"area": "Mansion 2F (return)"},
-  "704": {"area": "Mansion 2F (return)"},
-  "705": {"area": "Mansion 2F (return)"},
-  "706": {"area": "Mansion 2F (return)"},
-  "707": {"area": "Mansion 2F (return)"},
-  "708": {"area": "Mansion 2F (return)"},
-  "709": {"area": "Mansion 2F (return)"},
-  "70A": {"area": "Mansion 2F (return)"},
-  "70B": {"area": "Mansion 2F (return)"},
-  "70C": {"area": "Mansion 2F (return)"},
-  "70D": {"area": "Mansion 2F (return)"},
-  "70E": {"area": "Mansion 2F (return)"},
-  "70F": {"area": "Mansion 2F (return)"},
-  "710": {"area": "Mansion 2F (return)"},
-  "711": {"area": "Mansion 2F (return)"},
-  "712": {"area": "Mansion 2F (return)"},
-  "713": {"area": "Mansion 2F (return)"},
-  "714": {"area": "Mansion 2F (return)"},
-  "715": {"area": "Mansion 2F (return)"},
-  "716": {"area": "Mansion 2F (return)"},
-  "717": {"area": "Mansion 2F (return)"},
-  "718": {"area": "Mansion 2F (return)"},
-  "719": {"area": "Mansion 2F (return)"},
-  "71A": {"area": "Mansion 2F (return)"},
-  "71B": {"area": "Mansion 2F (return)"},
-  "71C": {"area": "Mansion 2F (return)"}
+  "100": {
+   "area": "Mansion 1F",
+   "name": "Item box room (west)"
+  },
+  "101": {
+   "area": "Mansion 1F",
+   "name": "West stairway",
+   "nameSource": "survey 2026-10-14 (screenshot, room contents, scripts)"
+  },
+  "102": {
+   "area": "Mansion 1F",
+   "name": "Storeroom (broken shotgun)",
+   "nameSource": "survey 2026-10-14 (screenshot, room contents, scripts)"
+  },
+  "103": {
+   "area": "Mansion 1F",
+   "name": "West corridor",
+   "nameSource": "survey 2026-10-14 (screenshot, room contents, scripts)"
+  },
+  "104": {
+   "area": "Mansion 1F",
+   "name": "Corridor (Kenneth)"
+  },
+  "105": {
+   "area": "Mansion 1F",
+   "name": "Dining room"
+  },
+  "106": {
+   "area": "Mansion 1F",
+   "name": "Main hall"
+  },
+  "107": {
+   "area": "Mansion 1F",
+   "name": "Stairs room (1F map)"
+  },
+  "108": {
+   "area": "Mansion 1F",
+   "name": "L-corridor (dogs)"
+  },
+  "109": {
+   "area": "Mansion 1F",
+   "name": "Bathroom corridor",
+   "nameSource": "survey 2026-10-14 (screenshot, room contents, scripts)"
+  },
+  "10A": {
+   "area": "Mansion 1F",
+   "name": "Gallery corridor",
+   "nameSource": "survey 2026-10-14 (screenshot, room contents, scripts)"
+  },
+  "10B": {
+   "area": "Mansion 1F",
+   "name": "East stairway",
+   "nameSource": "survey 2026-10-14 (screenshot, room contents, scripts)"
+  },
+  "10C": {
+   "area": "Mansion 1F",
+   "name": "Greenhouse",
+   "nameSource": "survey 2026-10-14 (screenshot, room contents, scripts)"
+  },
+  "10D": {
+   "area": "Mansion 1F",
+   "name": "Lion head room"
+  },
+  "10E": {
+   "area": "Mansion 1F",
+   "name": "Keeper's bedroom",
+   "nameSource": "survey 2026-10-14 (screenshot, room contents, scripts)"
+  },
+  "10F": {
+   "area": "Mansion 1F",
+   "name": "Piano bar",
+   "nameSource": "survey 2026-10-14 (screenshot, room contents, scripts)"
+  },
+  "110": {
+   "area": "Mansion 1F",
+   "name": "Unused room (crashes)",
+   "nameSource": "survey 2026-10-14 (screenshot, room contents, scripts)"
+  },
+  "111": {
+   "area": "Mansion 1F",
+   "name": "Globe room",
+   "nameSource": "survey 2026-10-14 (screenshot, room contents, scripts)"
+  },
+  "112": {
+   "area": "Mansion 1F",
+   "name": "Bedroom (closet)",
+   "nameSource": "survey 2026-10-14 (screenshot, room contents, scripts)"
+  },
+  "113": {
+   "area": "Mansion 1F",
+   "name": "Bathroom",
+   "nameSource": "survey 2026-10-14 (screenshot, room contents, scripts)"
+  },
+  "114": {
+   "area": "Mansion 1F",
+   "name": "Outdoor passage (herbs)",
+   "nameSource": "survey 2026-10-14 (screenshot, room contents, scripts)"
+  },
+  "115": {
+   "area": "Mansion 1F",
+   "name": "Ceiling trap room",
+   "nameSource": "survey 2026-10-14 (screenshot, room contents, scripts)"
+  },
+  "116": {
+   "area": "Mansion 1F",
+   "name": "Shotgun room (trap)"
+  },
+  "117": {
+   "area": "Mansion 1F",
+   "name": "Gallery (crows)"
+  },
+  "118": {
+   "area": "Mansion 1F",
+   "name": "Item box room (east)"
+  },
+  "119": {
+   "area": "Mansion 1F",
+   "name": "Unused room (crashes)",
+   "nameSource": "survey 2026-10-14 (screenshot, room contents, scripts)"
+  },
+  "11A": {
+   "area": "Mansion 1F",
+   "name": "Crest door corridor"
+  },
+  "11B": {
+   "area": "Mansion 1F",
+   "name": "Tool shed (square crank)",
+   "nameSource": "survey 2026-10-14 (screenshot, room contents, scripts)"
+  },
+  "11C": {
+   "area": "Mansion 1F",
+   "name": "Closet (costumes)",
+   "nameSource": "survey 2026-10-14 (screenshot, room contents, scripts)"
+  },
+  "201": {
+   "area": "Mansion 2F",
+   "name": "West stairway 2F",
+   "nameSource": "survey 2026-10-14 (screenshot, room contents, scripts)"
+  },
+  "202": {
+   "area": "Mansion 2F",
+   "name": "Dining room balcony (statue)"
+  },
+  "203": {
+   "area": "Mansion 2F",
+   "name": "Main hall 2F"
+  },
+  "204": {
+   "area": "Mansion 2F",
+   "name": "Red-carpet corridor 2F",
+   "nameSource": "survey 2026-10-14 (screenshot, room contents, scripts)"
+  },
+  "205": {
+   "area": "Mansion 2F",
+   "name": "Armor room",
+   "nameSource": "survey 2026-10-14 (screenshot, room contents, scripts)"
+  },
+  "206": {
+   "area": "Mansion 2F",
+   "name": "Room with a document"
+  },
+  "207": {
+   "area": "Mansion 2F",
+   "name": "East stairway 2F",
+   "nameSource": "survey 2026-10-14 (screenshot, room contents, scripts)"
+  },
+  "208": {
+   "area": "Mansion 2F",
+   "name": "Deer head room",
+   "nameSource": "survey 2026-10-14 (screenshot, room contents, scripts)"
+  },
+  "209": {
+   "area": "Mansion 2F",
+   "name": "Twin bedroom (lighter)",
+   "nameSource": "survey 2026-10-14 (screenshot, room contents, scripts)"
+  },
+  "20A": {
+   "area": "Mansion 2F",
+   "name": "Study (researcher's will)",
+   "nameSource": "survey 2026-10-14 (screenshot, room contents, scripts)"
+  },
+  "20B": {
+   "area": "Mansion 2F",
+   "name": "Fireplace hall (2F map)",
+   "nameSource": "survey 2026-10-14 (screenshot, room contents, scripts)"
+  },
+  "20C": {
+   "area": "Mansion 2F",
+   "name": "Unused room (crashes)",
+   "nameSource": "survey 2026-10-14 (screenshot, room contents, scripts)"
+  },
+  "20D": {
+   "area": "Mansion 2F",
+   "name": "Corridor (Richard)",
+   "nameSource": "survey 2026-10-14 (screenshot, room contents, scripts)"
+  },
+  "20E": {
+   "area": "Mansion 2F",
+   "name": "Back stairs corridor",
+   "nameSource": "survey 2026-10-14 (screenshot, room contents, scripts)"
+  },
+  "20F": {
+   "area": "Mansion 2F",
+   "name": "Small dining room",
+   "nameSource": "survey 2026-10-14 (screenshot, room contents, scripts)"
+  },
+  "210": {
+   "area": "Mansion 2F",
+   "name": "Yawn's room (moon crest)",
+   "nameSource": "survey 2026-10-14 (screenshot, room contents, scripts)"
+  },
+  "211": {
+   "area": "Mansion 2F",
+   "name": "Hallway to balcony",
+   "nameSource": "survey 2026-10-14 (screenshot, room contents, scripts)"
+  },
+  "212": {
+   "area": "Mansion 2F",
+   "name": "Balcony (Forest)"
+  },
+  "214": {
+   "area": "Mansion 2F",
+   "name": "Unused room (crashes)",
+   "nameSource": "survey 2026-10-14 (screenshot, room contents, scripts)"
+  },
+  "215": {
+   "area": "Mansion 2F",
+   "name": "Unused room (crashes)",
+   "nameSource": "survey 2026-10-14 (screenshot, room contents, scripts)"
+  },
+  "21C": {
+   "area": "Mansion 2F",
+   "name": "Unused room (crashes)",
+   "nameSource": "survey 2026-10-14 (screenshot, room contents, scripts)"
+  },
+  "300": {
+   "area": "Courtyard & underground",
+   "name": "Courtyard garden",
+   "nameSource": "survey 2026-10-14 (screenshot, room contents, scripts)"
+  },
+  "301": {
+   "area": "Courtyard & underground",
+   "name": "Water gate (square crank)",
+   "nameSource": "survey 2026-10-14 (screenshot, room contents, scripts)"
+  },
+  "302": {
+   "area": "Courtyard & underground",
+   "name": "Waterfall (ladder down)",
+   "nameSource": "survey 2026-10-14 (screenshot, room contents, scripts)"
+  },
+  "303": {
+   "area": "Courtyard & underground",
+   "name": "Heliport",
+   "nameSource": "survey 2026-10-14 (screenshot, room contents, scripts)"
+  },
+  "304": {
+   "area": "Courtyard & underground",
+   "name": "Path to guardhouse",
+   "nameSource": "survey 2026-10-14 (screenshot, room contents, scripts)"
+  },
+  "305": {
+   "area": "Courtyard & underground",
+   "name": "Fountain (medals)",
+   "nameSource": "survey 2026-10-14 (screenshot, room contents, scripts)"
+  },
+  "306": {
+   "area": "Courtyard & underground",
+   "name": "Statue room (Doom book 2)",
+   "nameSource": "survey 2026-10-14 (screenshot, room contents, scripts)"
+  },
+  "307": {
+   "area": "Courtyard & underground",
+   "name": "Underground entrance",
+   "nameSource": "survey 2026-10-14 (screenshot, room contents, scripts)"
+  },
+  "308": {
+   "area": "Courtyard & underground",
+   "name": "Underground passage",
+   "nameSource": "survey 2026-10-14 (screenshot, room contents, scripts)",
+   "nameConfidence": "low"
+  },
+  "309": {
+   "area": "Courtyard & underground",
+   "name": "Generator room",
+   "nameSource": "survey 2026-10-14 (screenshot, room contents, scripts)"
+  },
+  "30A": {
+   "area": "Courtyard & underground",
+   "name": "Enrico's room (hex crank)",
+   "nameSource": "survey 2026-10-14 (screenshot, room contents, scripts)"
+  },
+  "30B": {
+   "area": "Courtyard & underground",
+   "name": "Hook door passage",
+   "nameSource": "survey 2026-10-14 (screenshot, room contents, scripts)"
+  },
+  "30C": {
+   "area": "Courtyard & underground",
+   "name": "Black Tiger's lair",
+   "nameSource": "survey 2026-10-14 (screenshot, room contents, scripts)"
+  },
+  "30D": {
+   "area": "Courtyard & underground",
+   "name": "Underground corridor (hook)",
+   "nameSource": "survey 2026-10-14 (screenshot, room contents, scripts)"
+  },
+  "30E": {
+   "area": "Courtyard & underground",
+   "name": "Underground save room",
+   "nameSource": "survey 2026-10-14 (screenshot, room contents, scripts)"
+  },
+  "30F": {
+   "area": "Courtyard & underground",
+   "name": "Crank passage (map)",
+   "nameSource": "survey 2026-10-14 (screenshot, room contents, scripts)"
+  },
+  "310": {
+   "area": "Courtyard & underground",
+   "name": "Spiral stairs to lab",
+   "nameSource": "survey 2026-10-14 (screenshot, room contents, scripts)"
+  },
+  "400": {
+   "area": "Guardhouse",
+   "name": "Guardhouse entrance",
+   "nameSource": "survey 2026-10-14 (screenshot, room contents, scripts)"
+  },
+  "401": {
+   "area": "Guardhouse",
+   "name": "Dorm room (red book)",
+   "nameSource": "survey 2026-10-14 (screenshot, room contents, scripts)"
+  },
+  "402": {
+   "area": "Guardhouse",
+   "name": "Dorm bathroom (control key)",
+   "nameSource": "survey 2026-10-14 (screenshot, room contents, scripts)"
+  },
+  "403": {
+   "area": "Guardhouse",
+   "name": "Item box room (guardhouse)",
+   "nameSource": "survey 2026-10-14 (screenshot, room contents, scripts)"
+  },
+  "404": {
+   "area": "Guardhouse",
+   "name": "Billiard bar",
+   "nameSource": "survey 2026-10-14 (screenshot, room contents, scripts)"
+  },
+  "405": {
+   "area": "Guardhouse",
+   "name": "Vine corridor",
+   "nameSource": "survey 2026-10-14 (screenshot, room contents, scripts)"
+  },
+  "406": {
+   "area": "Guardhouse",
+   "name": "Room 002 (ladder)",
+   "nameSource": "survey 2026-10-14 (screenshot, room contents, scripts)"
+  },
+  "407": {
+   "area": "Guardhouse",
+   "name": "Room 002 bathroom",
+   "nameSource": "survey 2026-10-14 (screenshot, room contents, scripts)"
+  },
+  "408": {
+   "area": "Guardhouse",
+   "name": "Beehive passage (keypad)",
+   "nameSource": "survey 2026-10-14 (screenshot, room contents, scripts)"
+  },
+  "409": {
+   "area": "Guardhouse",
+   "name": "Drug storeroom",
+   "nameSource": "survey 2026-10-14 (screenshot, room contents, scripts)"
+  },
+  "40A": {
+   "area": "Guardhouse",
+   "name": "Room 003 (red books)",
+   "nameSource": "survey 2026-10-14 (screenshot, room contents, scripts)"
+  },
+  "40B": {
+   "area": "Guardhouse",
+   "name": "Room 003 bathroom",
+   "nameSource": "survey 2026-10-14 (screenshot, room contents, scripts)"
+  },
+  "40C": {
+   "area": "Guardhouse",
+   "name": "Plant 42 room",
+   "nameSource": "survey 2026-10-14 (screenshot, room contents, scripts)"
+  },
+  "40D": {
+   "area": "Guardhouse",
+   "name": "Basement ladder corridor",
+   "nameSource": "survey 2026-10-14 (screenshot, room contents, scripts)"
+  },
+  "40E": {
+   "area": "Guardhouse",
+   "name": "Aqua ring (Neptune)",
+   "nameSource": "survey 2026-10-14 (screenshot, room contents, scripts)"
+  },
+  "40F": {
+   "area": "Guardhouse",
+   "name": "Plant 42 roots room",
+   "nameSource": "survey 2026-10-14 (screenshot, room contents, scripts)"
+  },
+  "410": {
+   "area": "Guardhouse",
+   "name": "Storeroom (dorm key 003)",
+   "nameSource": "survey 2026-10-14 (screenshot, room contents, scripts)"
+  },
+  "411": {
+   "area": "Guardhouse",
+   "name": "Control room",
+   "nameSource": "survey 2026-10-14 (screenshot, room contents, scripts)"
+  },
+  "500": {
+   "area": "Laboratory",
+   "name": "Lab entrance",
+   "nameSource": "survey 2026-10-14 (screenshot, room contents, scripts)"
+  },
+  "501": {
+   "area": "Laboratory",
+   "name": "Heliport elevator corridor",
+   "nameSource": "survey 2026-10-14 (screenshot, room contents, scripts)"
+  },
+  "502": {
+   "area": "Laboratory",
+   "name": "Ladder room",
+   "nameSource": "survey 2026-10-14 (screenshot, room contents, scripts)"
+  },
+  "503": {
+   "area": "Laboratory",
+   "name": "Lab corridor (MO disk)",
+   "nameSource": "survey 2026-10-14 (screenshot, room contents, scripts)"
+  },
+  "504": {
+   "area": "Laboratory",
+   "name": "Visual data room",
+   "nameSource": "survey 2026-10-14 (screenshot, room contents, scripts)"
+  },
+  "505": {
+   "area": "Laboratory",
+   "name": "Dark corridor",
+   "nameSource": "survey 2026-10-14 (screenshot, room contents, scripts)"
+  },
+  "506": {
+   "area": "Laboratory",
+   "name": "Computer room",
+   "nameSource": "survey 2026-10-14 (screenshot, room contents, scripts)"
+  },
+  "507": {
+   "area": "Laboratory",
+   "name": "Morgue",
+   "nameSource": "survey 2026-10-14 (screenshot, room contents, scripts)"
+  },
+  "508": {
+   "area": "Laboratory",
+   "name": "Pass code door corridor",
+   "nameSource": "survey 2026-10-14 (screenshot, room contents, scripts)"
+  },
+  "509": {
+   "area": "Laboratory",
+   "name": "Staff lounge (pass code)",
+   "nameSource": "survey 2026-10-14 (screenshot, room contents, scripts)",
+   "nameConfidence": "low"
+  },
+  "50A": {
+   "area": "Laboratory",
+   "name": "Staff bedroom",
+   "nameSource": "survey 2026-10-14 (screenshot, room contents, scripts)",
+   "nameConfidence": "low"
+  },
+  "50B": {
+   "area": "Laboratory",
+   "name": "Corridor to holding cell",
+   "nameSource": "survey 2026-10-14 (screenshot, room contents, scripts)"
+  },
+  "50C": {
+   "area": "Laboratory",
+   "name": "Lab elevator hall",
+   "nameSource": "survey 2026-10-14 (screenshot, room contents, scripts)"
+  },
+  "50D": {
+   "area": "Laboratory",
+   "name": "Heliport elevator",
+   "nameSource": "survey 2026-10-14 (screenshot, room contents, scripts)"
+  },
+  "50E": {
+   "area": "Laboratory",
+   "name": "Lab save room",
+   "nameSource": "survey 2026-10-14 (screenshot, room contents, scripts)"
+  },
+  "50F": {
+   "area": "Laboratory",
+   "name": "Power room",
+   "nameSource": "survey 2026-10-14 (screenshot, room contents, scripts)"
+  },
+  "510": {
+   "area": "Laboratory",
+   "name": "Chimera corridor (pass code)",
+   "nameSource": "survey 2026-10-14 (screenshot, room contents, scripts)"
+  },
+  "511": {
+   "area": "Laboratory",
+   "name": "Self-destruct room",
+   "nameSource": "survey 2026-10-14 (screenshot, room contents, scripts)"
+  },
+  "512": {
+   "area": "Laboratory",
+   "name": "Holding cell",
+   "nameSource": "survey 2026-10-14 (screenshot, room contents, scripts)"
+  },
+  "513": {
+   "area": "Laboratory",
+   "name": "Main lab (Tyrant)",
+   "nameSource": "survey 2026-10-14 (screenshot, room contents, scripts)"
+  },
+  "514": {
+   "area": "Laboratory",
+   "name": "Main lab entrance",
+   "nameSource": "survey 2026-10-14 (screenshot, room contents, scripts)"
+  },
+  "515": {
+   "area": "Laboratory",
+   "name": "Lower lab corridor",
+   "nameSource": "survey 2026-10-14 (screenshot, room contents, scripts)",
+   "nameConfidence": "low"
+  },
+  "51D": {
+   "area": "Laboratory",
+   "name": "Unused room (crashes)",
+   "nameSource": "survey 2026-10-14 (screenshot, room contents, scripts)"
+  },
+  "600": {
+   "area": "Mansion 1F (return)",
+   "name": "Item box room (west)",
+   "nameSource": "survey 2026-10-14 (screenshot, room contents, scripts)"
+  },
+  "601": {
+   "area": "Mansion 1F (return)",
+   "name": "West stairway",
+   "nameSource": "survey 2026-10-14 (screenshot, room contents, scripts)"
+  },
+  "602": {
+   "area": "Mansion 1F (return)",
+   "name": "Storeroom (broken shotgun)",
+   "nameSource": "survey 2026-10-14 (screenshot, room contents, scripts)"
+  },
+  "603": {
+   "area": "Mansion 1F (return)",
+   "name": "West corridor",
+   "nameSource": "survey 2026-10-14 (screenshot, room contents, scripts)"
+  },
+  "604": {
+   "area": "Mansion 1F (return)",
+   "name": "Corridor (Kenneth)",
+   "nameSource": "survey 2026-10-14 (screenshot, room contents, scripts)"
+  },
+  "605": {
+   "area": "Mansion 1F (return)",
+   "name": "Dining room",
+   "nameSource": "survey 2026-10-14 (screenshot, room contents, scripts)"
+  },
+  "606": {
+   "area": "Mansion 1F (return)",
+   "name": "Main hall",
+   "nameSource": "survey 2026-10-14 (screenshot, room contents, scripts)"
+  },
+  "607": {
+   "area": "Mansion 1F (return)",
+   "name": "Stairs room (1F map)",
+   "nameSource": "survey 2026-10-14 (screenshot, room contents, scripts)"
+  },
+  "608": {
+   "area": "Mansion 1F (return)",
+   "name": "L-corridor (spiders)",
+   "nameSource": "survey 2026-10-14 (screenshot, room contents, scripts)"
+  },
+  "609": {
+   "area": "Mansion 1F (return)",
+   "name": "Bathroom corridor",
+   "nameSource": "survey 2026-10-14 (screenshot, room contents, scripts)"
+  },
+  "60A": {
+   "area": "Mansion 1F (return)",
+   "name": "Gallery corridor",
+   "nameSource": "survey 2026-10-14 (screenshot, room contents, scripts)"
+  },
+  "60B": {
+   "area": "Mansion 1F (return)",
+   "name": "East stairway",
+   "nameSource": "survey 2026-10-14 (screenshot, room contents, scripts)"
+  },
+  "60C": {
+   "area": "Mansion 1F (return)",
+   "name": "Greenhouse",
+   "nameSource": "survey 2026-10-14 (screenshot, room contents, scripts)"
+  },
+  "60D": {
+   "area": "Mansion 1F (return)",
+   "name": "Lion head room",
+   "nameSource": "survey 2026-10-14 (screenshot, room contents, scripts)"
+  },
+  "60E": {
+   "area": "Mansion 1F (return)",
+   "name": "Keeper's bedroom",
+   "nameSource": "survey 2026-10-14 (screenshot, room contents, scripts)"
+  },
+  "60F": {
+   "area": "Mansion 1F (return)",
+   "name": "Piano bar",
+   "nameSource": "survey 2026-10-14 (screenshot, room contents, scripts)"
+  },
+  "610": {
+   "area": "Mansion 1F (return)",
+   "name": "Corridor to kitchen",
+   "nameSource": "survey 2026-10-14 (screenshot, room contents, scripts)"
+  },
+  "611": {
+   "area": "Mansion 1F (return)",
+   "name": "Globe room",
+   "nameSource": "survey 2026-10-14 (screenshot, room contents, scripts)"
+  },
+  "612": {
+   "area": "Mansion 1F (return)",
+   "name": "Bedroom (closet)",
+   "nameSource": "survey 2026-10-14 (screenshot, room contents, scripts)"
+  },
+  "613": {
+   "area": "Mansion 1F (return)",
+   "name": "Bathroom",
+   "nameSource": "survey 2026-10-14 (screenshot, room contents, scripts)"
+  },
+  "614": {
+   "area": "Mansion 1F (return)",
+   "name": "Outdoor passage (herbs)",
+   "nameSource": "survey 2026-10-14 (screenshot, room contents, scripts)"
+  },
+  "615": {
+   "area": "Mansion 1F (return)",
+   "name": "Ceiling trap room",
+   "nameSource": "survey 2026-10-14 (screenshot, room contents, scripts)"
+  },
+  "616": {
+   "area": "Mansion 1F (return)",
+   "name": "Shotgun room (trap)",
+   "nameSource": "survey 2026-10-14 (screenshot, room contents, scripts)"
+  },
+  "617": {
+   "area": "Mansion 1F (return)",
+   "name": "Gallery (crows)",
+   "nameSource": "survey 2026-10-14 (screenshot, room contents, scripts)"
+  },
+  "618": {
+   "area": "Mansion 1F (return)",
+   "name": "Item box room (east)",
+   "nameSource": "survey 2026-10-14 (screenshot, room contents, scripts)"
+  },
+  "619": {
+   "area": "Mansion 1F (return)",
+   "name": "Study (Doom book 1)",
+   "nameSource": "survey 2026-10-14 (screenshot, room contents, scripts)"
+  },
+  "61A": {
+   "area": "Mansion 1F (return)",
+   "name": "Crest door corridor",
+   "nameSource": "survey 2026-10-14 (screenshot, room contents, scripts)"
+  },
+  "61B": {
+   "area": "Mansion 1F (return)",
+   "name": "Tool shed (square crank)",
+   "nameSource": "survey 2026-10-14 (screenshot, room contents, scripts)"
+  },
+  "61C": {
+   "area": "Mansion 1F (return)",
+   "name": "Closet (costumes)",
+   "nameSource": "survey 2026-10-14 (screenshot, room contents, scripts)"
+  },
+  "700": {
+   "area": "Mansion 2F (return)",
+   "name": "Elevator landing (kitchen)",
+   "nameSource": "survey 2026-10-14 (screenshot, room contents, scripts)",
+   "nameConfidence": "low"
+  },
+  "701": {
+   "area": "Mansion 2F (return)",
+   "name": "West stairway 2F",
+   "nameSource": "survey 2026-10-14 (screenshot, room contents, scripts)"
+  },
+  "702": {
+   "area": "Mansion 2F (return)",
+   "name": "Dining room balcony (statue)",
+   "nameSource": "survey 2026-10-14 (screenshot, room contents, scripts)"
+  },
+  "703": {
+   "area": "Mansion 2F (return)",
+   "name": "Main hall 2F",
+   "nameSource": "survey 2026-10-14 (screenshot, room contents, scripts)"
+  },
+  "704": {
+   "area": "Mansion 2F (return)",
+   "name": "Red-carpet corridor 2F",
+   "nameSource": "survey 2026-10-14 (screenshot, room contents, scripts)"
+  },
+  "705": {
+   "area": "Mansion 2F (return)",
+   "name": "Armor room",
+   "nameSource": "survey 2026-10-14 (screenshot, room contents, scripts)"
+  },
+  "706": {
+   "area": "Mansion 2F (return)",
+   "name": "Room with a document",
+   "nameSource": "survey 2026-10-14 (screenshot, room contents, scripts)"
+  },
+  "707": {
+   "area": "Mansion 2F (return)",
+   "name": "East stairway 2F",
+   "nameSource": "survey 2026-10-14 (screenshot, room contents, scripts)"
+  },
+  "708": {
+   "area": "Mansion 2F (return)",
+   "name": "Deer head room",
+   "nameSource": "survey 2026-10-14 (screenshot, room contents, scripts)"
+  },
+  "709": {
+   "area": "Mansion 2F (return)",
+   "name": "Twin bedroom (lighter)",
+   "nameSource": "survey 2026-10-14 (screenshot, room contents, scripts)"
+  },
+  "70A": {
+   "area": "Mansion 2F (return)",
+   "name": "Study (researcher's will)",
+   "nameSource": "survey 2026-10-14 (screenshot, room contents, scripts)"
+  },
+  "70B": {
+   "area": "Mansion 2F (return)",
+   "name": "Fireplace hall (2F map)",
+   "nameSource": "survey 2026-10-14 (screenshot, room contents, scripts)"
+  },
+  "70C": {
+   "area": "Mansion 2F (return)",
+   "name": "Fireplace room (Yawn 2)",
+   "nameSource": "survey 2026-10-14 (screenshot, room contents, scripts)"
+  },
+  "70D": {
+   "area": "Mansion 2F (return)",
+   "name": "Corridor (Richard)",
+   "nameSource": "survey 2026-10-14 (screenshot, room contents, scripts)"
+  },
+  "70E": {
+   "area": "Mansion 2F (return)",
+   "name": "Back stairs corridor",
+   "nameSource": "survey 2026-10-14 (screenshot, room contents, scripts)"
+  },
+  "70F": {
+   "area": "Mansion 2F (return)",
+   "name": "Small dining room",
+   "nameSource": "survey 2026-10-14 (screenshot, room contents, scripts)"
+  },
+  "710": {
+   "area": "Mansion 2F (return)",
+   "name": "Yawn's room (moon crest)",
+   "nameSource": "survey 2026-10-14 (screenshot, room contents, scripts)"
+  },
+  "711": {
+   "area": "Mansion 2F (return)",
+   "name": "Hallway to balcony",
+   "nameSource": "survey 2026-10-14 (screenshot, room contents, scripts)"
+  },
+  "712": {
+   "area": "Mansion 2F (return)",
+   "name": "Balcony (Forest)",
+   "nameSource": "survey 2026-10-14 (screenshot, room contents, scripts)"
+  },
+  "713": {
+   "area": "Mansion 2F (return)",
+   "name": "Corridor to library",
+   "nameSource": "survey 2026-10-14 (screenshot, room contents, scripts)",
+   "nameConfidence": "low"
+  },
+  "714": {
+   "area": "Mansion 2F (return)",
+   "name": "Corridor behind keypad",
+   "nameSource": "survey 2026-10-14 (screenshot, room contents, scripts)",
+   "nameConfidence": "low"
+  },
+  "715": {
+   "area": "Mansion 2F (return)",
+   "name": "Trophy room (red jewel)",
+   "nameSource": "survey 2026-10-14 (screenshot, room contents, scripts)"
+  },
+  "716": {
+   "area": "Mansion 2F (return)",
+   "name": "Library",
+   "nameSource": "survey 2026-10-14 (screenshot, room contents, scripts)"
+  },
+  "717": {
+   "area": "Mansion 2F (return)",
+   "name": "Inner library (MO disk)",
+   "nameSource": "survey 2026-10-14 (screenshot, room contents, scripts)"
+  },
+  "718": {
+   "area": "Mansion 2F (return)",
+   "name": "Study (courtyard view)",
+   "nameSource": "survey 2026-10-14 (screenshot, room contents, scripts)"
+  },
+  "719": {
+   "area": "Mansion 2F (return)",
+   "name": "Storeroom (battery)",
+   "nameSource": "survey 2026-10-14 (screenshot, room contents, scripts)"
+  },
+  "71A": {
+   "area": "Mansion 2F (return)",
+   "name": "Ladder corridor",
+   "nameSource": "survey 2026-10-14 (screenshot, room contents, scripts)"
+  },
+  "71B": {
+   "area": "Mansion 2F (return)",
+   "name": "Back passage (to kitchen)",
+   "nameSource": "survey 2026-10-14 (screenshot, room contents, scripts)",
+   "nameConfidence": "low"
+  },
+  "71C": {
+   "area": "Mansion 2F (return)",
+   "name": "Kitchen",
+   "nameSource": "survey 2026-10-14 (screenshot, room contents, scripts)"
+  }
  }
 }
