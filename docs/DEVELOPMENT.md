@@ -160,13 +160,13 @@ held-input word `0xBE9840`, so each frame becomes a state → buttons pair. Bits
 `0x02` / right `0x08` (2,549 facing units/s standing), aim `0x0500` (RT), action/fire `0x00C0` (A).
 
 ```powershell
-$py = "$env:LOCALAPPDATA\Lockpickesearch\.venv\Scripts\python.exe"   # has torch (CUDA) and numpy
-$out = "$env:LOCALAPPDATA\Lockpickesearchl"
+$py = "$env:LOCALAPPDATA\Lockpick\research\.venv\Scripts\python.exe"   # has torch (CUDA) and numpy
+$out = "$env:LOCALAPPDATA\Lockpick\research\rl"
 & $py -I tools/rl/captures.py <capture.zip>...                 # frames, rate, rooms per capture
 & $py -I tools/rl/inputs.py <capture.zip>...                   # what each input bit does
-& $py -I tools/rl/dataset.py $outc.npz <capture.zip>...      # state -> buttons rows
-& $py -I tools/rl/train_bc.py $outc.npz $outc.pt --holdout <capture name>
-& $py -I tools/rl/play.py $outc.pt <target room> [seconds]   # drive the pad (harness running)
+& $py -I tools/rl/dataset.py $out\bc.npz <capture.zip>...      # state -> buttons rows
+& $py -I tools/rl/train_bc.py $out\bc.npz $out\bc.pt --holdout <capture name>
+& $py -I tools/rl/play.py $out\bc.pt <target room> [seconds]   # drive the pad (harness running)
 ```
 
 The state is goal-conditioned: the door the player went through next (hindsight), 8 clearance rays from the room's
