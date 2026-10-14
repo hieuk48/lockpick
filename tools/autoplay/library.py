@@ -79,7 +79,8 @@ def expected(path: Path, names) -> dict:
 def run(entries: list[tuple[str, Path, int | None]], out: Path, backup: Path) -> None:
     names = timeline.Names()
     results = out / "library.jsonl"
-    done = {json.loads(l)["name"] for l in results.read_text(encoding="utf-8").splitlines()} if results.exists() else set()
+    done = {e["name"] for e in map(json.loads, results.read_text(encoding="utf-8").splitlines())
+            if not e.get("error")} if results.exists() else set()
     logfile = (out / "library.log").open("a", encoding="utf-8")
 
     def log(text: str) -> None:
@@ -106,7 +107,7 @@ def run(entries: list[tuple[str, Path, int | None]], out: Path, backup: Path) ->
             entry["roomMatches"] = s.get("room") == want["room"]
             entry["characterMatches"] = (s.get("char") or "").lower() == want["character"].lower()
             entry["enemies"] = survey.enemies()
-            shot = ap.shot(f"library-{path.stem}.png", 480)
+            shot = ap.shot("library-" + "".join(c if c.isalnum() else "_" for c in path.stem) + ".png", 480)
             kept = out / "shots" / shot.name
             kept.parent.mkdir(exist_ok=True)
             shutil.copy2(shot, kept)
