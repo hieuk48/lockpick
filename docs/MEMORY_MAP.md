@@ -254,6 +254,10 @@ Item names (static, decoded 2026-10-14): `0x4BF0A0` is the item-name pointer tab
 (index 0 = combat knife); strings use the game's text encoding (`0x00` space, `0x0C`–`0x15` digits, `0x1D`–`0x36`
 A–Z, `0x3D`–`0x56` a–z, `0x79` `.`, `0x01`/`0x07` end). `data/games/re1/names.json` was checked against it.
 
+After loading a save, the game ignores the **first** door handoff (the byte is consumed, no room change); the next
+one works (live 2026-10-14: every phase survey's first targets failed until a second handoff, e.g. 600 took 2, 601
+took 1). Cause not analysed — likely a first-frame state after the load path. The harness hands the door over again.
+
 Event-script slots (lead): `0xBF084C`, 8 × `0x34` bytes, `+0x00` state, `+0x02` active — one slot stays active
 during free movement, several during the opening cutscene.
 
