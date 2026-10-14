@@ -498,6 +498,24 @@
    "mask": "0x00010000",
    "label": "Wesker appears in a cutscene, shooting at the wasps (405)",
    "source": "owner, 2026-10-13 (session 8 follow-up)"
+  },
+  {
+   "bank": "flagScenarioA1",
+   "mask": "0x00400000",
+   "label": "Plant 42 defeated (guardhouse)",
+   "source": "static lead (ecruells/resident-evil-pc-decomp SCENARIO_FLAGS.md) + 75 saves ordered by progress, 2026-10-14: clear in every save up to 'Chris Plant42' (40A), set in every later save of both characters"
+  },
+  {
+   "bank": "flagScenarioA0",
+   "mask": "0x80000000",
+   "label": "the return to the mansion begins: mansion doors now lead to its later version",
+   "source": "static lead (ecruells/resident-evil-pc-decomp SCENARIO_FLAGS.md) + 75 saves ordered by progress, 2026-10-14: set from the guardhouse after Plant 42 onward; live: a door to 104 then loaded 604 (room_transition_load remaps stages 1/2 to 6/7)"
+  },
+  {
+   "bank": "flagScenarioA1",
+   "mask": "0x00000100",
+   "label": "after the first Tyrant fight (Wesker's later scenes)",
+   "source": "static lead (ecruells/resident-evil-pc-decomp SCENARIO_FLAGS.md) + 75 saves ordered by progress, 2026-10-14: clear at 'Tyrant1' (513), set at 'Lab Escape' and every later lab save"
   }
  ]
 }
