@@ -122,41 +122,52 @@
           "id": "B104",
           "task": "Same for the **Colt Python / magnum**",
           "verifies": "Magnum + magnum rounds ids",
-          "status": "needed"
+          "status": "done",
+          "evidence": [
+            "2026-10-14 owner's dev test suite (tools/autoplay/suite.py; setups by dev-only memory writes, results read from memory): Colt Python = item 5 (DumDum Colt 4 unused), magnum rounds = 14; given, equipped and fired — 130 per hit on the spider stand-in = the damage table (0x4BB698)."
+          ]
         },
         {
           "id": "B105",
           "task": "Same for the **bazooka** with each round type (explosive, acid, flame)",
           "verifies": "Bazooka ids and round types",
-          "status": "partial",
+          "status": "done",
           "evidence": [
-            "2026-10-13 re-check of sessions 4-7: 0x07 is the bazooka with explosive rounds (as found by Forest; 201 damage per hit, 15 hits), 0x08 the bazooka with acid rounds (an empty 0x07 loaded with acid rounds 0x11; 95 damage, the speedrun chart's acid grenade). BioRand's names for 7/8 are swapped; 0x10 (explosive rounds) picked up but never loaded. Flame rounds not seen"
+            "2026-10-13 re-check of sessions 4-7: 0x07 is the bazooka with explosive rounds (as found by Forest; 201 damage per hit, 15 hits), 0x08 the bazooka with acid rounds (an empty 0x07 loaded with acid rounds 0x11; 95 damage, the speedrun chart's acid grenade). BioRand's names for 7/8 are swapped; 0x10 (explosive rounds) picked up but never loaded. Flame rounds not seen",
+            "2026-10-14 owner's dev test suite (tools/autoplay/suite.py; setups by dev-only memory writes, results read from memory): flame rounds = item 18, bazooka loaded with them = item 9: 205 per hit on Black Tiger (30C, live), 200 on the spider type, 95 on zombies — all equal to the damage table."
           ]
         },
         {
           "id": "B106",
           "task": "Use the **flamethrower** (Chris)",
           "verifies": "Flamethrower id and fuel",
-          "status": "needed"
+          "status": "done",
+          "evidence": [
+            "2026-10-14 owner's dev test suite (tools/autoplay/suite.py; setups by dev-only memory writes, results read from memory): flamethrower = item 6, quantity = fuel; 20 per hit on zombies, spiders, Black Tiger (table 20). Jill can carry and fire it in the dev test."
+          ]
         },
         {
           "id": "B107",
           "task": "Use the **rocket launcher** (ending)",
           "verifies": "Rocket launcher id",
-          "status": "needed"
+          "status": "done",
+          "evidence": [
+            "2026-10-14 owner's dev test suite (tools/autoplay/suite.py; setups by dev-only memory writes, results read from memory): rocket launcher = item 10: 900 per hit (a dog 121 -> -779 in 108; every stand-in type), = the table."
+          ]
         },
         {
           "id": "B108",
           "task": "Use each healing item: green, red+green, blue herb, mixed herbs, first aid spray",
           "verifies": "Item ids, heal amounts, herb combining",
-          "status": "partial",
+          "status": "done",
           "evidence": [
             "first aid spray (full heal) seen",
             "2026-10-13: id 0x44 consumed while HP went 54 → 86 (+32, Jill) — likely green herb (BioRand id 68)",
             "2026-10-13 (live session 4, Jill, memory log): id 0x47 (made from two 0x44) consumed while HP went 71 → 96 (capped at max) — likely mixed herb (green + green)",
             "evidence in 2026-10-13 live session 7 (Jill, ask mode, mansion to guardhouse): HP 56 → 96 — needs review",
             "2026-10-13 re-check of sessions 4-7 (session 7): green herb +32; G+G used (+40, capped); red+green and red+green+blue mixed but not used. Still needed: red+green, blue herb, green+blue and three-herb mixes used",
-            "evidence in 2026-10-13 live session 8 (Jill, ask mode, guardhouse to mansion revisited): HP 64 → 96 — needs review"
+            "evidence in 2026-10-13 live session 8 (Jill, ask mode, guardhouse to mansion revisited): HP 64 → 96 — needs review",
+            "2026-10-14 owner's dev test suite (tools/autoplay/suite.py; setups by dev-only memory writes, results read from memory) (Jill, from HP 10): green herb +32 (1/3 of max), G+G and G+G+B +64 (2/3), G+G+G, G+R, G+R+B and the first aid spray full, G+B +32 and cures poison; red or blue alone: 'You don't need to use this item at the moment.' Mixing: G+G 0x47, R+G 0x46, G+B 0x48, GG+G 0x4A, GG+B 0x4B, GR+B / GB+R 0x49, GB+G 0x4B; GGG+G 'Mixing these does not seem to work.'"
           ],
           "detector": "healing"
         },
@@ -164,9 +175,10 @@
           "id": "B109",
           "task": "Get **poisoned** (snake/Yawn/spider) and cure it with a blue herb or serum",
           "verifies": "Status flags (player +0xDC)",
-          "status": "partial",
+          "status": "done",
           "evidence": [
-            "2026-10-13 re-check of sessions 4-7 (session 7): poisoned by Yawn in 210 — after a 10 HP bite, HP fell 2 at a time every few seconds (the chart's poison: -2 HP every 4 s) until Jill fainted and was rescued (story flags named). Cure with a blue herb or serum not yet seen"
+            "2026-10-13 re-check of sessions 4-7 (session 7): poisoned by Yawn in 210 — after a 10 HP bite, HP fell 2 at a time every few seconds (the chart's poison: -2 HP every 4 s) until Jill fainted and was rescued (story flags named). Cure with a blue herb or serum not yet seen",
+            "2026-10-14 owner's dev test suite (tools/autoplay/suite.py; setups by dev-only memory writes, results read from memory): wasp stings (408) poison: status byte 0xBE63C0 bit 0x02, -2 HP each time the poison timer 0xBE6458 runs out (~120 frames), status screen band 4; the serum doesn't cure it ('You don't need to use this item at the moment.'), the blue herb does."
           ]
         },
         {
@@ -185,12 +197,13 @@
           "id": "B111",
           "task": "Pick up each **key item** (keys, crests, MO disk, emblems, etc.)",
           "verifies": "Key item ids → item name table",
-          "status": "partial",
+          "status": "done",
           "evidence": [
             "2026-10-13 (live session 4, Jill, memory log): blue gem = id 0x21, wind crest = id 0x29 (both owner-confirmed): gem from the dining room 105, placed in the lion head in 10D, crest received",
             "2026-10-13 (live session 5: new Jill game, then new Chris game): id 0x2D received in the gallery 117 and used in 11A like the wind crest — likely another crest",
             "2026-10-13 re-check of sessions 4-7 (session 7, player's answers): gold emblem 0x20, music notes 0x23 (piano), moon crest 0x2C, sun crest 0x2E, shield key 0x35, armor key 0x34, lighter 0x30, serum 0x42 — each used where the player said. Square crank 0x1D picked up; MO disk, V-Jolt and lab keys not yet seen",
-            "2026-10-13 live session 8 (Jill, ask mode): dorm keys 002 (0x39) and 003 (0x3A), control room key (0x3B) and red book (0x3E) used where they open things; V-Jolt chemistry items 0x13–0x1B"
+            "2026-10-13 live session 8 (Jill, ask mode): dorm keys 002 (0x39) and 003 (0x3A), control room key (0x3B) and red book (0x3E) used where they open things; V-Jolt chemistry items 0x13–0x1B",
+            "2026-10-14 pickup sweep (dev harness, both characters): 295 room pickups taken, each clearing the item flag the room index names; key items named from the game's own item-name table 0x4BF0A0 (names.json checked against it). Keys show a generic name until examined (examined bank 0xBE98BC)."
           ]
         },
         {
@@ -250,13 +263,19 @@
           "id": "B203",
           "task": "Examine objects, read documents and pick up items with a capture running",
           "verifies": "Which on-screen message is shown (text buffer at 0xD91A00, pointer 0xD226A4) — for a text log",
-          "status": "needed"
+          "status": "done",
+          "evidence": [
+            "2026-10-14 owner's dev test suite (tools/autoplay/suite.py; setups by dev-only memory writes, results read from memory): the message on screen: start pointer 0xBF0A1C, revealed-so-far 0xBF0A20 (into the exe's text tables or the room file), state 0xBF0A16 (1 typing, 2 page, 4 yes/no prompt, 5 waiting, 6 closing), active/choice 0xBE9825 (bit 0x80 up, bit 0 = No). Read live for examine text, documents, door messages and prompts. (Not 0xD91A00/0xD226A4.)"
+          ]
         },
         {
           "id": "B204",
           "task": "Open the status screen while Fine, Caution, Danger and poisoned",
           "verifies": "HP bands as the game rates them; a poison status flag (poison is only seen as −2 HP ticks so far)",
-          "status": "needed"
+          "status": "done",
+          "evidence": [
+            "2026-10-14 owner's dev test suite (tools/autoplay/suite.py; setups by dev-only memory writes, results read from memory): status-screen band 0xAE9F2F = (HP-1)/(maxHP>>2): Jill HP 1-24 Danger, 25-48 Caution, 49-96 Fine (bands 2-3); 4 while poisoned (bit 0x02 of 0xBE63C0)."
+          ]
         }
       ]
     },
@@ -268,9 +287,10 @@
           "id": "B301",
           "task": "Visit every reachable room in **stage 1** (mansion 1F)",
           "verifies": "Room ids, cameras per room, door connections",
-          "status": "partial",
+          "status": "done",
           "evidence": [
-            "rooms seen: 100 101 102 103 104 105 106 107 108 109 10A 10B 10C 10D 10E 10F 111 112 113 115 116 117 118 11A 11B"
+            "rooms seen: 100 101 102 103 104 105 106 107 108 109 10A 10B 10C 10D 10E 10F 111 112 113 115 116 117 118 11A 11B",
+            "2026-10-14 overnight survey (dev harness, door warps, both characters, every story phase): every non-stub stage-1 room entered (106 at every new game); stubs 110 119 crash the game."
           ],
           "detector": "rooms_stage_1"
         },
@@ -278,9 +298,10 @@
           "id": "B302",
           "task": "Visit every reachable room in **stage 2** (mansion 2F)",
           "verifies": "Same",
-          "status": "partial",
+          "status": "done",
           "evidence": [
-            "rooms seen: 201 202 203 204 205 206 207 208 209 20A 20B 20D 20E 20F 210 211 212"
+            "rooms seen: 201 202 203 204 205 206 207 208 209 20A 20B 20D 20E 20F 210 211 212",
+            "2026-10-14 overnight survey: every non-stub stage-2 room entered; stubs 20C 214 215 21C crash the game."
           ],
           "detector": "rooms_stage_2"
         },
@@ -288,10 +309,11 @@
           "id": "B303",
           "task": "Visit every reachable room in **stage 3**",
           "verifies": "Same; stage identity",
-          "status": "partial",
+          "status": "done",
           "detector": "rooms_stage_3",
           "evidence": [
-            "rooms seen: 300 301 302 304"
+            "rooms seen: 300 301 302 304",
+            "2026-10-14 overnight survey: all 17 stage-3 rooms entered."
           ]
         },
         {
@@ -309,18 +331,22 @@
           "id": "B305",
           "task": "Visit every reachable room in **stage 5**",
           "verifies": "Same; stage identity",
-          "status": "needed",
-          "detector": "rooms_stage_5"
+          "status": "done",
+          "detector": "rooms_stage_5",
+          "evidence": [
+            "2026-10-14 overnight survey: 21 of 22 stage-5 rooms entered — 512 (the holding cell) stays locked; 51D is a stub."
+          ]
         },
         {
           "id": "B306",
           "task": "Visit every reachable room in **stages 6 and 7**",
           "verifies": "Same; which rooms are revisits",
-          "status": "partial",
+          "status": "done",
           "detector": "rooms_stage_6_7",
           "evidence": [
             "rooms seen: 600 601 603 604 609 60A 60B 60C 610 614 618 619 61A 61B 700 707 70B 70C 713 71A 71B 71C",
-            "2026-10-13 live session 8 (Jill, ask mode): mansion revisited — 14 rooms of stage 6 and 8 of stage 7 so far"
+            "2026-10-13 live session 8 (Jill, ask mode): mansion revisited — 14 rooms of stage 6 and 8 of stage 7 so far",
+            "2026-10-14 overnight survey: all 29 stage-6 and 29 stage-7 rooms entered; 6xx/7xx are the mansion revisited (stage 1/2 room files with the same doors)."
           ]
         },
         {
@@ -356,10 +382,11 @@
           "id": "B312",
           "task": "Encounter **Hunters** and **Chimeras**",
           "verifies": "Enemy type ids",
-          "status": "partial",
+          "status": "done",
           "detector": "enemies_hunter_chimera",
           "evidence": [
-            "2026-10-13 live session 8 (Jill, ask mode): Hunters are type 6 (introduction cutscene in 60A named by the player; 8 killed in the mansion revisited). Chimeras not yet seen"
+            "2026-10-13 live session 8 (Jill, ask mode): Hunters are type 6 (introduction cutscene in 60A named by the player; 8 killed in the mansion revisited). Chimeras not yet seen",
+            "2026-10-14 overnight survey (live enemy slots): Hunters type 6 (30B, 601, 604, 60A, 701...), Chimeras type 9 (50F, 510); names from the decomp's enemy table."
           ]
         },
         {
@@ -376,12 +403,13 @@
           "id": "B314",
           "task": "Boss fights: **Yawn** (both), **Plant 42**, **Neptune**, **Black Tiger**, **Tyrant** (both)",
           "verifies": "Boss ids and HP",
-          "status": "partial",
+          "status": "done",
           "detector": "enemies_boss",
           "evidence": [
             "2026-10-13 live session 7 (Jill, ask mode, owner's answers): Yawn is enemy type 13 (appeared in 210, player confirmed); its poison made Jill faint (story flags named). Plant 42, Neptune, Black Tiger, Tyrant not yet seen",
             "2026-10-13 live session 8 (Jill, ask mode): Yawn's second fight is type 18, killed in 70C (player); Plant 42 is type 8 in 40C after V-Jolt on its roots (type 14) in 40F. Neptune, Black Tiger and Tyrant not yet seen",
-            "2026-10-13 live session 8 (player confirmed): Neptune (the big shark, type 11) encountered in 40E, not killed"
+            "2026-10-13 live session 8 (player confirmed): Neptune (the big shark, type 11) encountered in 40E, not killed",
+            "2026-10-14 overnight survey (live enemy slots on entering): Yawn 13 (210, HP 3050 before it wakes), Yawn's second fight 18 (70C, HP 300), Plant 42 8 (40C, HP 140; roots 14), Neptune 11 (40E), Black Tiger 4 (30C, HP 204), Tyrant 12 (513, HP 220), final Tyrant 16 (heliport 303, HP 600)."
           ]
         },
         {
