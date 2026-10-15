@@ -121,7 +121,8 @@ def reload_room(log=print, then: tuple[str, ...] = ()) -> None:
 
 
 def spawn(kind: int, x: int | None = None, z: int | None = None, slot: int = 2, hold: bool = False, log=print,
-          kill_flag: int = 0xFF, extra: tuple[str, ...] = (), pin: bool = False, position_only: bool = False) -> dict:
+          kill_flag: int = 0xFF, extra: tuple[str, ...] = (), pin: bool = False, position_only: bool = False,
+          behaviour: int | None = None) -> dict:
     """Reloads the room with `kind` added in `slot` at (x, z) facing the player (default: 2000 units in front)."""
     p = ap.pos()
     if x is None or z is None:
@@ -130,7 +131,7 @@ def spawn(kind: int, x: int | None = None, z: int | None = None, slot: int = 2, 
         theta = yaw * 2 * math.pi / 4096
         x, z = int(p[0] + math.cos(theta) * 2000), int(p[2] - math.sin(theta) * 2000)
     facing = (ap.angle_to(x, z, p[0], p[2]) + FACING_OFFSET.get(kind, 0)) % 4096
-    record = enemy_set(kind, slot, x, z, facing, kill_flag)
+    record = enemy_set(kind, slot, x, z, facing, kill_flag, behaviour)
     holding = hold
     # The room load empties the effect sprites a foreign enemy may need within its first frames: the harness keeps
     # them filled from here on (effect-guard; one-off effect-fill after the load came too late for a spitting spider).

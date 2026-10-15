@@ -69,11 +69,16 @@ def bank(address: int, words: int) -> set[int]:
             if int.from_bytes(raw[w * 4:w * 4 + 4], "little") >> b & 1}
 
 
+class NotAiming(ap.Failed):
+    pass
+
+
 class Lab:
     def __init__(self, out: Path, character: str = "jill", log=print, arena: str = "108"):
         self.out, self.character, self.log = out, character, log
         self.a = ARENAS[arena]
         self.dog_hold: tuple[str, ...] = ()
+        self.reboot = False
 
     def arena(self) -> None:
         """Fresh boot to the arena spot with the arena's camera; the room's awake enemies held."""
@@ -101,17 +106,18 @@ class Lab:
         ap.send(f"place {x} {z} {facing}", f"camera {self.a['camera']}", "wait 400")
 
     def ensure(self) -> None:
-        if not alive() or ap.state().get("room") != self.a["room"] or not ap.in_control():
+        if self.reboot or not alive() or ap.state().get("room") != self.a["room"] or not ap.in_control():
+            self.reboot = False
             self.arena()
 
     def spawn(self, kind: int, at: tuple[int, int] | None = None, hold: bool = True, kill_flag: int = 0xFF,
-              pin: bool = False, position_only: bool = False) -> dict | None:
+              pin: bool = False, position_only: bool = False, behaviour: int | None = None) -> dict | None:
         self.ensure()
         self.stand()
         ap.send("heal")
         x, z = at or self.a["enemy"]
         r = spawn.spawn(kind, x, z, slot=SLOT, hold=hold, kill_flag=kill_flag, extra=self.dog_hold, log=self.log, pin=pin,
-                        position_only=position_only)
+                        position_only=position_only, behaviour=behaviour)
         self.stand()
         return r["enemy"]
 
@@ -121,10 +127,21 @@ class Lab:
         took (2026-10-15): the gun is raised first. Returns the player's spot and aim byte at the shot."""
         if ap.equipped() == 0:
             raise ap.Failed("nothing equipped: the shot would not fire")
+        held = [(i, q) for i, q, _ in ap.inventory() if i == ap.equipped()]
+        if held and held[0][0] != 1 and held[0][1] == 0:
+            # The aim rerun emptied its 15 rounds five types in and recorded every later shot as a miss (2026-10-15).
+            raise ap.Failed("the gun in hand is empty")
         ap.send("hold RT", "wait 1300")
         if aim:
             ap.send(f"hold {aim}", "wait 400")
         at = {"player": ap.pos(), "aimByte": ap.peek(AIM, 1)[0]}
+        if at["aimByte"] == 0:
+            # A whole run's shots (headkill, 2026-10-15) went with the aim byte 0: holding RT never raised the gun in
+            # that game, the up/down key walked the player instead, and every case read as a miss. A fresh boot fixed
+            # it; the case is retried there.
+            ap.send(*((f"release {aim}",) if aim else ()), "release RT", "wait 300")
+            self.reboot = True
+            raise NotAiming("the gun wasn't raised (aim byte 0)")
         ap.send("press A 120", f"wait {int(settle * 1000)}")
         if aim:
             ap.send(f"release {aim}")
@@ -200,6 +217,7 @@ class Lab:
                 # Only its position pinned: its AI runs and sets the aim-height bits (0xE0 of the first byte) a shot
                 # needs, as it would in play (a full pin rewrites its AI state every millisecond, and spiders and
                 # snakes never noticed the player under it: flags stayed 0x01, 2026-10-14).
+                self.arm(2, 15)
                 e = self.spawn(kind, at=self.a["near"], hold=True, position_only=True)
                 end = time.time() + 4    # time to notice the player
                 while time.time() < end and not slot_bytes(SLOT, 0, 1)[0] & 0xE0:
@@ -377,17 +395,23 @@ class Lab:
         for kind in types:
             for weapon, quantity, d, aim in cases:
                 row = {"type": kind, "weapon": weapon, "distance": d, "aim": aim}
-                try:
-                    self.ensure()
-                    self.arm(weapon, quantity)
-                    self.spawn(kind, at=self.at_distance(d), hold=True, pin=True)
-                    time.sleep(1.0)
-                    ap.send(f"enemy-hp {SLOT} 3000", f"enemy-clear-hit {SLOT}", f"enemy-targetable {SLOT}", "heal")
-                    row["at"] = self.shot(keys[aim], settle=0.3)
-                    hp = (enemy() or {}).get("hp")
-                    row.update(hp=hp, damage=None if hp is None else 3000 - hp, headKill=hp == -300)
-                except Exception as e:  # noqa: BLE001
-                    row["error"] = str(e)[-300:]
+                for attempt in range(2):
+                    row.pop("error", None)
+                    try:
+                        self.ensure()
+                        self.arm(weapon, quantity)
+                        self.spawn(kind, at=self.at_distance(d), hold=True, pin=True)
+                        time.sleep(1.0)
+                        ap.send(f"enemy-hp {SLOT} 3000", f"enemy-clear-hit {SLOT}", f"enemy-targetable {SLOT}", "heal")
+                        row["at"] = self.shot(keys[aim], settle=0.3)
+                        hp = (enemy() or {}).get("hp")
+                        row.update(hp=hp, damage=None if hp is None else 3000 - hp, headKill=hp == -300)
+                        break
+                    except NotAiming as e:
+                        row["error"] = str(e)
+                    except Exception as e:  # noqa: BLE001
+                        row["error"] = str(e)[-300:]
+                        break
                 self.log(f"type {kind} weapon {weapon} at {d} aimed {aim}: {row.get('damage')} {row.get('error', '')}")
                 rows.append(row)
                 self.save_partial("special", rows)
@@ -451,20 +475,26 @@ class Lab:
         rows = []
         for weapon, d, aim in cases:
             row = {"type": kind, "weapon": weapon, "distance": d, "aim": aim}
-            try:
-                self.ensure()
-                self.arm(weapon, 30)
-                self.spawn(kind, at=self.at_distance(d), hold=True, pin=True)
-                time.sleep(1.0)
-                ap.send(f"enemy-hp {SLOT} 3000", f"enemy-clear-hit {SLOT}", f"enemy-targetable {SLOT}", "heal")
-                row["at"] = self.shot(keys[aim], settle=0.3)
-                hp = (enemy() or {}).get("hp")
-                e = enemy()
-                p = ap.pos()
-                row.update(hp=hp, damage=None if hp is None else 3000 - hp, headKill=hp == -300,
-                           measured=p and e and round(((p[0] - e["x"]) ** 2 + (p[2] - e["z"]) ** 2) ** 0.5))
-            except Exception as e:  # noqa: BLE001
-                row["error"] = str(e)[-300:]
+            for attempt in range(2):
+                row.pop("error", None)
+                try:
+                    self.ensure()
+                    self.arm(weapon, 30)
+                    self.spawn(kind, at=self.at_distance(d), hold=True, pin=True)
+                    time.sleep(1.0)
+                    ap.send(f"enemy-hp {SLOT} 3000", f"enemy-clear-hit {SLOT}", f"enemy-targetable {SLOT}", "heal")
+                    row["at"] = self.shot(keys[aim], settle=0.3)
+                    hp = (enemy() or {}).get("hp")
+                    e = enemy()
+                    p = ap.pos()
+                    row.update(hp=hp, damage=None if hp is None else 3000 - hp, headKill=hp == -300,
+                               measured=p and e and round(((p[0] - e["x"]) ** 2 + (p[2] - e["z"]) ** 2) ** 0.5))
+                    break
+                except NotAiming as e:
+                    row["error"] = str(e)
+                except Exception as e:  # noqa: BLE001
+                    row["error"] = str(e)[-300:]
+                    break
             self.log(f"weapon {weapon} at {d} aimed {aim}: {row.get('damage')} {row.get('error', '')}")
             rows.append(row)
             self.save_partial("falloff", rows)
@@ -561,6 +591,152 @@ class Lab:
             self.save_partial("linger", rows)
         return rows
 
+    DECAP_FLAG = 0x4BD2B0          # 1 while a hunter's leap holds the player (decomp; the death screen clears it)
+
+    def decap(self, tries: int = 3, seconds: float = 60) -> list[dict]:
+        """The hunter's leap (the decapitation), never seen in deaths/attacks: the decomp gates it on the player under
+        105 HP (Jill; Chris 72), the hunter itself under 79 (a 4-in-16 roll each decision) and, while the player has
+        more than 15 HP, 5500-6400 units away. Two setups: the player at 12 HP at mid range, and at 60 HP at 6000.
+        Swipes (10) before the leap are healed back to the start HP. What does the leap do to the player's HP?"""
+        rows = []
+        for start, distance in ((12, 3500), (60, 6000)):
+            for n in range(tries):
+                row = {"startHp": start, "distance": distance, "try": n, "hps": []}
+                try:
+                    self.ensure()
+                    if not self.spawn(6, at=self.at_distance(distance), hold=False):
+                        raise ap.Failed("not spawned")
+                    ap.send(f"enemy-hp {SLOT} 50", f"hp {start}")
+                    last, end = start, time.time() + seconds
+                    while time.time() < end:
+                        now, flag = ap.hp(), int.from_bytes(ap.peek(self.DECAP_FLAG, 4), "little")
+                        if flag == 1 and "leapAt" not in row:
+                            row["leapAt"] = round(seconds - (end - time.time()), 1)
+                            row["hpAtLeap"] = now
+                        if now != last:
+                            row["hps"].append({"hp": now, "flag": flag, "hunter": list(slot_bytes(SLOT, 0x84, 4)),
+                                               "player": list(ap.peek(PLAYER + 0x84, 4))})
+                            last = now
+                            if now <= 0:
+                                row["died"] = True
+                                time.sleep(3)
+                                row["flagAfter"] = int.from_bytes(ap.peek(self.DECAP_FLAG, 4), "little")
+                                break
+                            if "leapAt" not in row and now < start:
+                                ap.send(f"hp {start}")    # a swipe: back to the start HP, still waiting for the leap
+                                last = start
+                        if "leapAt" in row and time.time() > end - seconds + row["leapAt"] + 15:
+                            break                         # 15 s after the leap without a death
+                        time.sleep(0.03)
+                    row.setdefault("died", False)
+                    row["endHp"] = last
+                except Exception as e:  # noqa: BLE001
+                    row["error"] = str(e)[-300:]
+                self.log(f"decap HP {start} at {distance}: leap {row.get('leapAt')} died {row.get('died')} "
+                         f"HPs {[h['hp'] for h in row['hps']]} {row.get('error', '')}")
+                rows.append(row)
+                self.save_partial("decap", rows)
+                if row.get("died"):
+                    self.arena()
+        return rows
+
+    def wasps(self, samples: int = 16, seconds: float = 60) -> list[dict]:
+        """Normal and big wasps (behaviour bit 2; the nest wasps in 405 are 0x13). The decomp: a big wasp has more HP
+        and is the only one whose sting kills — a normal sting saturates the player at 1 — and drives the player's death
+        pose itself. The hp test's wasps (46-76) were spawned from the 0x13 template, so big ones. HP for each, then a
+        big wasp let loose on a player at HP 1, 8 and 24."""
+        rows = []
+        for name, behaviour in (("normal", 0x20), ("big", 0x22)):
+            row = {"case": f"{name} wasp HP", "behaviour": behaviour, "hp": []}
+            try:
+                self.ensure()
+                if not self.spawn(7, hold=True, behaviour=behaviour):
+                    raise ap.Failed("not spawned")
+                row["hp"].append(enemy()["hp"])
+                for _ in range(samples - 1):
+                    p = ap.pos()
+                    ap.send(f"enemy-pin {SLOT} off",
+                            f"enemy-wake {SLOT} {self.a['enemy'][0]} {self.a['enemy'][1]} "
+                            f"{ap.angle_to(*self.a['enemy'], p[0], p[2])} {behaviour:X} --hold pin")
+                    row["hp"].append(enemy()["hp"])
+                row["range"] = [min(row["hp"]), max(row["hp"])]
+            except Exception as e:  # noqa: BLE001
+                row["error"] = str(e)[-300:]
+            self.log(f"{row['case']}: {row.get('range')} {row['hp']} {row.get('error', '')}")
+            rows.append(row)
+            self.save_partial("wasps", rows)
+        for start in (1, 8, 24):
+            row = {"case": "big wasp kills", "startHp": start, "hps": []}
+            try:
+                self.ensure()
+                if not self.spawn(7, at=self.at_distance(3500), hold=False, behaviour=0x22):
+                    raise ap.Failed("not spawned")
+                ap.send(f"hp {start}")
+                last, end = start, time.time() + seconds
+                while time.time() < end:
+                    now = ap.hp()
+                    if now != last:
+                        row["hps"].append({"hp": now, "wasp": list(slot_bytes(SLOT, 0x84, 4)),
+                                           "player": list(ap.peek(PLAYER + 0x84, 4)),
+                                           "poison": bool(ap.peek(STATUS, 1)[0] & 0x02)})
+                        last = now
+                        if now < 0:
+                            row["died"] = True
+                            time.sleep(2)
+                            break
+                    time.sleep(0.03)
+                row.setdefault("died", False)
+                row["endHp"] = last
+            except Exception as e:  # noqa: BLE001
+                row["error"] = str(e)[-300:]
+            self.log(f"big wasp from HP {start}: died {row.get('died')} HPs {[h['hp'] for h in row['hps']]} "
+                     f"{row.get('error', '')}")
+            rows.append(row)
+            self.save_partial("wasps", rows)
+            if row.get("died"):
+                self.arena()
+        return rows
+
+    def melee(self, types: list[int], seconds: float = 60) -> list[dict]:
+        """Fliers with the knife: held at arm's length a crow kept only its up aim height (its AI rewrote the targetable
+        bits) and was never cut, nor the wasp (2026-10-15). In play they are cut while they swoop in to attack: each one
+        let loose on a player with the knife raised, stabbing level then up, healed as needed, until it dies."""
+        rows = []
+        for kind in types:
+            row = {"type": kind, "name": spawn.scd.Names().enemies.get(str(kind)), "hits": []}
+            try:
+                self.ensure()
+                self.arm(1, 0)
+                e = self.spawn(kind, at=self.at_distance(1500), hold=False)
+                if not e:
+                    raise ap.Failed("not spawned")
+                row["startHp"] = last = e["hp"]
+                end = time.time() + seconds
+                while time.time() < end:
+                    for key in ("", "LUp"):
+                        at = self.shot(key, settle=0.15)
+                        now = (enemy() or {}).get("hp")
+                        if now is not None and now != last:
+                            row["hits"].append({"aim": key or "level", "damage": last - now, "hp": now,
+                                                "enemy": list(slot_bytes(SLOT, 0x84, 4)), "aimByte": at["aimByte"],
+                                                "y": int.from_bytes(slot_bytes(SLOT, 0x38, 4), "little", signed=True)})
+                            last = now
+                        if ap.hp() < 40:
+                            ap.send("heal")
+                    if last is not None and last <= 0:
+                        time.sleep(2)
+                        row["killed"] = True
+                        row["after"] = (enemy() or {}).get("hp")
+                        break
+                row.setdefault("killed", False)
+            except Exception as e:  # noqa: BLE001
+                row["error"] = str(e)[-300:]
+            self.log(f"melee type {kind}: {[(h['aim'], h['damage']) for h in row['hits']]} killed {row.get('killed')} "
+                     f"{row.get('error', '')}")
+            rows.append(row)
+            self.save_partial("melee", rows)
+        return rows
+
     def save_partial(self, name: str, rows: list[dict]) -> None:
         (self.out / f"lab-{name}-{self.character}.json").write_text(json.dumps(rows, indent=1) + "\n", encoding="utf-8")
 
@@ -617,5 +793,7 @@ if __name__ == "__main__":
                                                  if "--pairs" in args else None),
               "poise": lambda: lab.poise(zombies), "special": lambda: lab.special(walkers),
               "deaths": lambda: lab.deaths(types), "falloff": lambda: lab.falloff(),
-              "linger": lambda: lab.linger()}[experiment]()
+              "linger": lambda: lab.linger(), "decap": lambda: lab.decap(),
+              "wasps": lambda: lab.wasps(),
+              "melee": lambda: lab.melee([t for t in types if t in (5, 7, 15)] or [5, 7])}[experiment]()
     (out / f"lab-{experiment}-{character}.json").write_text(json.dumps(result, indent=1) + "\n", encoding="utf-8")
