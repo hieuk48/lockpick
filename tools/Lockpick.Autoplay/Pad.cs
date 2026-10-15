@@ -40,8 +40,12 @@ internal sealed class Pad : IDisposable
         _controller.Connect();
     }
 
-    /// <summary>Every input name, in calibration order.</summary>
-    public static IEnumerable<string> AllInputs => Buttons.Keys.Concat(Triggers.Keys).Concat(Sticks.Keys);
+    /// <summary>
+    /// Every input name, in calibration order, except Start and Back: they open the game's options and key setup, and
+    /// nothing in the runs uses them.
+    /// </summary>
+    public static IEnumerable<string> AllInputs =>
+        Buttons.Keys.Where(b => b is not ("Start" or "Back")).Concat(Triggers.Keys).Concat(Sticks.Keys);
 
     public static bool IsKnown(string combo) =>
         combo.Split('+').All(n => Buttons.ContainsKey(n) || Sticks.ContainsKey(n) || Triggers.ContainsKey(n));

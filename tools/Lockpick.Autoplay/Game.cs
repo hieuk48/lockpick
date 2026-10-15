@@ -88,7 +88,10 @@ internal sealed class Game : IDisposable
 
     public bool IsForeground => Window != 0 && Native.GetForegroundWindow() == Window;
 
-    /// <summary>Brings the game to the front. Only call this when nobody is using the PC.</summary>
+    /// <summary>
+    /// Asks Windows to bring the game to the front; false if it refused. No key is injected to force it: a tapped Alt
+    /// lands in whatever window has focus and opened its menus (2026-10-14: the owner's settings and shortcut pages).
+    /// </summary>
     public bool Focus()
     {
         if (IsForeground)
@@ -98,9 +101,6 @@ internal sealed class Game : IDisposable
 
         var window = Window;
         Native.ShowWindow(window, 9);
-        // Windows lets only the program the user last interacted with change the foreground; a tapped Alt counts.
-        Native.keybd_event(0x12, 0, 0, 0);
-        Native.keybd_event(0x12, 0, 2, 0);
         Native.SetForegroundWindow(window);
         Thread.Sleep(300);
         return IsForeground;

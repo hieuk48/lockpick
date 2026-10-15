@@ -56,7 +56,7 @@ in for a run and unplugged at the end.
 ```powershell
 dotnet build tools/Lockpick.Autoplay -c Release
 $ap = "tools/Lockpick.Autoplay/bin/Release/net10.0-windows/lockpick-autoplay.exe"
-& $ap serve --launch --background  # start the game with the pad plugged in; keep it running in the background
+& $ap serve --launch --background  # start the game with the pad plugged in; keep it running when unfocused
 & $ap send "press A; until gameplay 60000; state; shot room.png"   # commands to the running server
 & $ap send --file test.txt         # a whole script
 & $ap send quit                    # stop: unplugs the pad, removes the focus patch (the game keeps running)
@@ -69,8 +69,9 @@ script's `launch`, `calibrate --launch`); a pad plugged into an already running 
 pad for the game's lifetime, so tests can be sent step by step. Stop the server before rebuilding (DLL lock).
 
 `--background` (or the script command `background`) applies the **dev-only focus patch** (`FocusPatch.cs`): the
-game keeps running and reading the pad while other windows are in front, and its keyboard map is kept blank so keys
-typed elsewhere don't reach it. Bytes are checked before writing, read back, and restored when the harness exits; the
+game keeps running while other windows are in front, and its keyboard map is kept blank so keys typed elsewhere
+don't reach it. It does **not** let input through while the game is behind: the virtual pad is a real controller to
+Windows, and controller-aware windows in front (Xbox Game Bar, the Settings app, browsers) read it too. Bytes are checked before writing, read back, and restored when the harness exits; the
 changes are in the game's memory only and end with the process. Screenshots use PrintWindow, so they work behind
 other windows.
 
@@ -87,7 +88,9 @@ conditions), `state`, `peek addr len`, `calibrate`, `shot file.png [width]`, `lo
   `rdt_map.camera_for(x, z)` picks one) (`CameraCut.cs`).
 - `freeze-enemies` — stop the room's enemies until the next room load (`EnemyFreeze.cs`); `heal`; `inv-clear <from>`
   (empty spare inventory slots); `give <item> [qty]` (add an item after the held ones so a route can start mid-way; the
-  held count is kept in step — the grid icon stays wrong until a save load, names/CHECK/doors are right).
+  held count is kept in step — the grid icon stays wrong until a save load, names/CHECK/doors are right);
+  `give-box <item> [qty]` (put it in the first empty item-box entry: the box screen draws icons from the item ids, and
+  taking it out there makes the game load the right inventory icon).
 - Reading the screen from memory (`ap.py`): `message_state()` / `message_text()` / `dismiss()` / `answer(yes)` use the
   game's own message state, `inventory()` gives names as the game shows them, `examine(item)` turns an item in the
   viewer until it says something, `use_item(item)` checks every menu step. Never press A on the strength of the state
@@ -139,8 +142,11 @@ Environment: `LOCKPICK_VISION_URL` / `LOCKPICK_VISION_MODEL` (OpenAI-compatible 
 descriptions of the game are not committed.
 
 Rules:
-- Without `background`, every press checks the game is the foreground window and the run stops if it isn't
-  (someone is using the PC). Use `focus` only when nobody is.
+- Every press and hold checks the game is the foreground window and the run stops if it isn't (someone is using
+  the PC); a guard lets go of anything held within 50 ms of the game losing focus. The harness never injects keys:
+  `focus` only asks Windows, which may refuse (2026-10-14: an injected Alt opened menus in the owner's windows). Use
+  `focus` and `launch` (the game's window comes to the front) only when nobody is using the PC.
+- `calibrate` skips Start and Back (they open the game's options and key setup).
 - Pressing through the title screen can load the player's saves (it did twice on 2026-10-14): `ap.wait_screen` only
   presses on screens where a press is harmless (logo, title, text, black) and backs out of the load list.
 - The runners make `SAVE/*.dat` read-only for the whole run, so the game can't overwrite a save even if a stray press

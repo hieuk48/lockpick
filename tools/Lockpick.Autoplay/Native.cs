@@ -38,7 +38,4 @@ internal static partial class Native
     [LibraryImport("user32.dll")]
     [return: MarshalAs(UnmanagedType.Bool)]
     public static partial bool PrintWindow(nint window, nint dc, uint flags);
-
-    [LibraryImport("user32.dll")]
-    public static partial void keybd_event(byte virtualKey, byte scanCode, uint flags, nuint extraInfo);
 }

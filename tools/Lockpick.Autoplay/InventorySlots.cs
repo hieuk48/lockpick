@@ -17,7 +17,9 @@ internal sealed partial class InventorySlots : IDisposable
 {
     private const ulong Slots = 0xBE9944;
     private const ulong EquippedSlot = 0xBE9849; // 1-based, 0 = nothing equipped (docs/MEMORY_MAP.md)
-    private const ulong HeldCount = 0xBE9827; // g_TotalHeldItems: slots at or past it count as empty (menu, keys)
+    private const ulong HeldCount = 0xBE9827;
+    private const ulong ItemBox = 0xBE98E4; // 48 entries, item | quantity << 8 (profile box0.., live 2026-10-13)
+    private const int ItemBoxEntries = 48; // g_TotalHeldItems: slots at or past it count as empty (menu, keys)
     private const int Count = 8;
 
     private readonly SafeProcessHandle _process;
@@ -134,6 +136,49 @@ internal sealed partial class InventorySlots : IDisposable
             Write(Slots + (ulong)(slot * 2), BitConverter.GetBytes((ushort)(item | (quantity << 8))));
             Write(HeldCount, [(byte)(slot + 1)]);
             return slot;
+        }
+        finally
+        {
+            ProcessSuspender.Resume(_processId);
+        }
+    }
+
+    /// <summary>
+    /// Puts <paramref name="item"/> × <paramref name="quantity"/> in the first empty item-box entry; returns the entry.
+    /// Unlike <see cref="Give"/> this needs no icon of its own: the item box screen draws each entry's icon from its
+    /// item id, and taking it out through that screen makes the game load the inventory icon for the slot (decomp
+    /// MainMenu item box swap) — the way to give the player an item that looks right.
+    /// </summary>
+    public int GiveToBox(int item, int quantity)
+    {
+        if (item is < 1 or > 0x4D)
+        {
+            throw new ArgumentOutOfRangeException(nameof(item), "item ids are 1–0x4D");
+        }
+
+        if (quantity is < 0 or > 255)
+        {
+            throw new ArgumentOutOfRangeException(nameof(quantity), "quantity is one byte");
+        }
+
+        if (ProcessSuspender.Suspend(_processId) is { } error)
+        {
+            throw new InvalidOperationException("suspend failed: " + error);
+        }
+
+        try
+        {
+            var entries = Read(ItemBox, ItemBoxEntries * 2);
+            for (var entry = 0; entry < ItemBoxEntries; entry++)
+            {
+                if (entries[entry * 2] == 0)
+                {
+                    Write(ItemBox + (ulong)(entry * 2), BitConverter.GetBytes((ushort)(item | (quantity << 8))));
+                    return entry;
+                }
+            }
+
+            throw new InvalidOperationException("the item box is full");
         }
         finally
         {
