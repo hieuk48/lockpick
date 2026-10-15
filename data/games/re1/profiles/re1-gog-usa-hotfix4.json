@@ -100,7 +100,7 @@
       "mask": "0x03",
       "verification": "runtime",
       "description": "Player character id (player entity +0x01). After masking: 0 Chris, 1 Jill, 3 Rebecca. Bit 0x08 = alternate costume.",
-      "evidence": "Live GOG session 2026-10-12: 0 (Chris) in a Chris game; 1 (Jill) in a Jill game. Rebecca (3) not yet observed live. Static: New-game setup at 0x4817B1 stores the select-screen choice here; the room loader copies the character byte from 0xBE9829 (0x4778BD); id 3 triggers the Rebecca swap path (cmp al,3 at 0x4778C2).",
+      "evidence": "Live GOG session 2026-10-12: 0 (Chris) in a Chris game; 1 (Jill) in a Jill game. Rebecca (3) live 2026-10-15 (Chris practice save, B007 capture). Static: New-game setup at 0x4817B1 stores the select-screen choice here; the room loader copies the character byte from 0xBE9829 (0x4778BD); id 3 triggers the Rebecca swap path (cmp al,3 at 0x4778C2).",
       "sources": ["static analysis of this executable", "ecruells/resident-evil-pc-decomp Types.h CHAR_CHRIS/CHAR_JILL/CHAR_REBECCA"]
     },
     {
@@ -117,7 +117,7 @@
       "address": "0xBE9829",
       "type": "u8",
       "verification": "unverified",
-      "evidence": "Save files (a copy of this block): bit 0 is 0 in all 41 Chris saves and 1 in all 34 Jill saves; bit 0x4 is set only in saves from the underground caves (30A/30B/30F) and the lab (5xx). Lead: RE1aio autosplitter characterID (EnglishGOG 0x7E9829 + 0x400000).",
+      "evidence": "Save files (a copy of this block): bit 0 is 0 in all 41 Chris saves and 1 in all 34 Jill saves; bit 0x4 is set only in saves from the underground caves (30A/30B/30F) and the lab (5xx). Lead: RE1aio autosplitter characterID (EnglishGOG 0x7E9829 + 0x400000). Decomp: BioCard characterModelId (state byte 9, which room scripts set with opcode 0x08); room init (around 0x477904) swaps the player to it — 40C event 0 (Chris, Plant 42 room) sets 3, and 302/305/310 set 4/5 in the caves and lab. Live 2026-10-15: set to 3 in a Chris game, the next room load made the player Rebecca (id 3, HP 88/88, inventory pointer 0xBE9950).",
       "description": "Character as kept in the save card: bit 0 = Jill (0 = Chris); bit 0x4 set in the underground / lab section.",
       "sources": ["deserteagle417/RE1-Autosplitter (lead)", "save-file analysis 2026-10-13"]
     },
@@ -260,7 +260,7 @@
       "address": "0xD22768",
       "type": "u32",
       "verification": "runtime",
-      "evidence": "Live Jill session 2026-10-12: 0xBE9944 throughout. Static: mov dword [0xD22768],0xBE9944 at 0x47793F. Rebecca's 0xBE9950 not yet observed.",
+      "evidence": "Live Jill session 2026-10-12: 0xBE9944 throughout. Static: mov dword [0xD22768],0xBE9944 at 0x47793F. Rebecca's 0xBE9950 live 2026-10-15 (B007 capture).",
       "description": "Pointer to the active character's inventory (0xBE9944, or 0xBE9950 for Rebecca).",
       "sources": ["ecruells/resident-evil-pc-decomp Globals.h", "static: mov dword [0xD22768],0xBE9944 at 0x47793F"]
     },

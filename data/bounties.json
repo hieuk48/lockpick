@@ -69,8 +69,11 @@
           "id": "B007",
           "task": "Play the **Rebecca** section (Chris scenario)",
           "verifies": "Character id 3, Rebecca's inventory pointer `0xBE9950`",
-          "status": "needed",
-          "detector": "rebecca"
+          "status": "done",
+          "detector": "rebecca",
+          "evidence": [
+            "2026-10-15 (Chris, practice save before Plant 42; dev harness): character byte 0xBE9829 set to 3 as the end of 40C event 0 does, then a door — the game's own room init swapped in Rebecca: character id 3, HP 88/88, inventory pointer 0xBE9950 (verified automatically from the capture)"
+          ]
         },
         {
           "id": "B008",

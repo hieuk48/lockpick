@@ -45,7 +45,7 @@ Unless noted, bounties are for the supported build (GOG, USA, 1.0 hotfix4).
 | B004 | Take damage until you die | HP decreases, death flag, HP below zero | ✅ 2026-10-12 (Chris and Jill) |
 | B005 | After dying, return to the title and start a New Game | Title flag, session gating, new-game detection | ✅ 2026-10-12 |
 | B006 | Load a save from the title screen | Save-load detection (timer restores) | ✅ 2026-10-12 |
-| B007 | Play the **Rebecca** section (Chris scenario) | Character id 3, Rebecca's inventory pointer `0xBE9950` | ⬜ |
+| B007 | Play the **Rebecca** section (Chris scenario) | Character id 3, Rebecca's inventory pointer `0xBE9950` | ✅ 2026-10-15 (Chris, practice save before Plant 42; dev harness): character byte 0xBE9829 set to 3 as the end of 40C event 0 does, then a door — the game's own room init swapped in Rebecca: character id 3, HP 88/88, inventory pointer 0xBE9950 (verified automatically from the capture) |
 | B008 | Go upstairs from the main hall | Stage 2 = mansion 2F (room 203) | ✅ 2026-10-12 |
 
 ---

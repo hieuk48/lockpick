@@ -19,7 +19,7 @@ from a third-party source, diagnostics only.
 | `0xBE9822` | u8 | camera | Current camera (cut) | runtime |
 | `0xBE636C` | i16 | hp | Player HP (player entity +0x88); goes negative at death | runtime |
 | `0xBE6459` | u8 | maxHp | Player max HP (entity +0x175); 0 until a game starts; Chris 140, Jill 96 | runtime |
-| `0xBE62E5` | u8 & 3 | character | 0 Chris, 1 Jill, 3 Rebecca (entity +0x01; bit 0x08 = alt costume) | runtime (Chris, Jill; Rebecca static) |
+| `0xBE62E5` | u8 & 3 | character | 0 Chris, 1 Jill, 3 Rebecca (entity +0x01; bit 0x08 = alt costume) | runtime (Chris, Jill; Rebecca live 2026-10-15) |
 | `0xD22730` | u32 | gameTimer | In-game time, frames at 30/s; frozen in menus and door transitions | runtime |
 | `0xD22777` | u8 | mainMenu | 1 while the title/main menu is shown | runtime |
 | `0xBE41C0` | u32 | stateFlags | Main state bitfield (diagnostics only, see below) | static |
@@ -29,7 +29,7 @@ from a third-party source, diagnostics only.
 | `0xBE6358` | i16 | yaw | Facing (entity +0x74), units unconfirmed | unverified |
 | `0xBE9944` + 2·i | u16 | inv0..inv7 | Inventory slot: low byte item id, high byte quantity (weapons: loaded rounds). 6 slots (Chris/Rebecca), 8 (Jill); compacts when an item is used | runtime |
 | `0xBE9849` | u8 | equippedSlot | Equipped slot, 1-based (0 = none) | runtime |
-| `0xD22768` | u32 | inventoryPtr | Active inventory (`0xBE9944`; `0xBE9950` for Rebecca) | runtime (Jill) |
+| `0xD22768` | u32 | inventoryPtr | Active inventory (`0xBE9944`; `0xBE9950` for Rebecca) | runtime (Jill; Rebecca live 2026-10-15) |
 | `0xBE98E4` + 2·i | u16 | box0..box3 | Item box entries: low byte id, high byte quantity (48 entries total; first 4 read) | runtime |
 | `0xBE41E2` | u8 | enemyCount | Active enemy count | unverified (changed 2→0→2 across rooms 106/105/104 live) |
 
@@ -200,7 +200,11 @@ game ORs `0xBE41C0 |= 0x10000000` (and `0x800000` for a non-Chris character). Sa
 recorded 48 ms earlier) — so stage/room/camera, every flag bank, the item box and the inventory decode with the
 profile's addresses. The character is the low bit of `0xBE9829` (save offset `0x209`; field `saveCharacter`):
 0 Chris, 1 Jill in all 75 saves checked; bit `0x4` is set only in the underground caves and the lab (the autosplitter's
-"Jill's character ID changes in a few spots"). Byte `0x212` agrees (`0x2F`, the ink ribbon a save costs, for Chris). `tools/bounties/saves.py` reads saves offline (character, room, inventory, box, progress, story); it
+"Jill's character ID changes in a few spots"). The byte is the decomp's `characterModelId`: room scripts set it (state byte 9, opcode `0x08`) and the next room's
+init swaps the player to it. Chris's Plant 42 room (40C) event 0 sets 3, and on the next load the game makes the player
+Rebecca: HP 88/88 (Chris's HP kept aside), the equipped weapon cleared, the inventory pointer `0xD22768` → `0xBE9950`.
+Live 2026-10-15 (B007): the byte set to 3 in a Chris game, then a door, gave exactly that. The caves and lab scripts
+(302/305/310) set 4/5, the bit-`0x4` saves. Byte `0x212` agrees (`0x2F`, the ink ribbon a save costs, for Chris). `tools/bounties/saves.py` reads saves offline (character, room, inventory, box, progress, story); it
 decoded 67 community practice saves and the owner's 8 into the rooms their names describe.
 
 ## Focus and input (static analysis 2026-10-13; live-tested 2026-10-14 with the dev harness)
@@ -401,7 +405,7 @@ From the decomp (GPL-3.0; facts only, no code used) and the RE1 Mod SDK layout, 
 |---|---|---|
 | `0xBE62E4` | Player entity (0x180 bytes) | partially (fields above) |
 | `0xBE6464` | Enemy array, 30 × 0x18C; slot active when `+0x00 & 1` | unverified |
-| `0xBE9950` | Rebecca's inventory | unverified |
+| `0xBE9950` | Rebecca's inventory (6 slots) | live 2026-10-15: the inventory pointer while playing Rebecca |
 | `0xBE98E4` | Item box, 48 × `{id, qty}` | unverified |
 | `0xBE9844` | Saved copy of the game timer | static |
 | `0xBE9620` | Save block ("bio card"), 0x41C bytes | unverified |
