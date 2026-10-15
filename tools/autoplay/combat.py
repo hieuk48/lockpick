@@ -26,7 +26,7 @@ import survey  # noqa: E402
 PLAYER_RADIUS = 450
 
 
-def near_door(room: rdt_map.Room, x: int, z: int, margin: int = 900) -> bool:
+def near_door(room: rdt_map.Room, x: int, z: int, margin: int = 400) -> bool:
     """Within `margin` of a door zone: A there (a shot that didn't fire is a press of the action key) can open it."""
     for door in room.doors:
         dx, dz, w, d = door["zone"]
@@ -133,19 +133,25 @@ def shoot(room: rdt_map.Room, shots: int, log, settle_ms: int = 1500) -> list[di
         weapon = ap.equipped() or 2
         reach = weapon_range(weapon)
         before_ammo = ammo()
+        count = 0
         for attempt in range(2):
             now = next((e for e in ap.enemies(True) if e["slot"] == enemy["slot"]), enemy)
             stand_off(room, now, max(300, int(reach * 0.6)), max(500, int(reach * 0.85)))
-            count = freeze()
+            count = freeze() or count  # 0 when already frozen: keep the count to thaw with
             try:
                 ap.send("hold RT", "wait 1300")
             finally:
                 if count:
                     ap.send(f"thaw-enemies {count}")
-            ap.send("wait 50", "press A 120", f"wait {settle_ms}", "release RT", "wait 200")
+            # Enemies run only for the shot (rounds that fly get time to land), then stay frozen while it's read.
+            ap.send("wait 50", "press A 120", f"wait {900 if weapon in (7, 8, 9, 10) else 150}")
+            count = freeze() or count
+            ap.send("wait 600", "release RT", "wait 200")
             if weapon == 1 or ammo() != before_ammo:
                 break
         after = next((e for e in ap.enemies(True) if e["slot"] == enemy["slot"]), None)
+        if count and ap.peek(0xBE41E2, 1)[0] == 0:
+            ap.send(f"thaw-enemies {count}")
         where = player_xz()
         record = {"type": enemy["type"], "slot": enemy["slot"], "before": enemy["hp"], "after": after and after["hp"],
                   "damage": None if after is None else enemy["hp"] - after["hp"],

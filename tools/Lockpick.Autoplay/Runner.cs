@@ -12,6 +12,11 @@ namespace Lockpick.Autoplay;
 ///   freeze-enemies               stop this room's enemies acting (count 0 until the next room; EnemyFreeze.cs)
 ///   thaw-enemies n               undo freeze-enemies in the same room (n = the count freeze-enemies printed)
 ///   enemy-hp slot n              set an active enemy's HP (1..5000) so a damage test keeps it alive (EnemyHealth.cs)
+///   enemy-place slot x z         move an active enemy (damage tests lock it in front of the player; EnemyHealth.cs)
+///   enemy-type slot t            set an active enemy's type (0..0x13) for a damage stand-in
+///   enemy-clear-hit slot         clear an enemy's hit state so the next shot can hit it
+///   enemy-targetable slot        set an enemy's aim-height bits (it otherwise sets them on noticing the player)
+///   enemy-snapshot slot | enemy-restore slot   keep / put back a copy of an enemy's whole entry
 ///   camera id                    cut to a camera of the room (must have a switch-zone group; CameraCut.cs)
 ///   inv-clear from               empty inventory slots from..7 (not the equipped one; InventorySlots.cs)
 ///   give item [qty]              put an item in the first empty inventory slot (default qty 1; InventorySlots.cs)
@@ -179,6 +184,33 @@ internal sealed class Runner(Pad pad, TextWriter log) : IDisposable
                 _placement.Place(int.Parse(w[1], CultureInfo.InvariantCulture), int.Parse(w[2], CultureInfo.InvariantCulture),
                     w.Length > 3 ? short.Parse(w[3], CultureInfo.InvariantCulture) : null);
                 Log($"  placed ({Describe(Game.Read())})");
+                break;
+            case "enemy-type":
+                _enemyHealth ??= new EnemyHealth(Game.ProcessId);
+                var typeWas = _enemyHealth.SetType(int.Parse(w[1], CultureInfo.InvariantCulture), int.Parse(w[2], CultureInfo.InvariantCulture));
+                Log($"  enemy {w[1]} type {typeWas} -> {w[2]}");
+                break;
+            case "enemy-snapshot":
+                _enemyHealth ??= new EnemyHealth(Game.ProcessId);
+                _enemyHealth.Snapshot(int.Parse(w[1], CultureInfo.InvariantCulture));
+                break;
+            case "enemy-restore":
+                _enemyHealth ??= new EnemyHealth(Game.ProcessId);
+                _enemyHealth.Restore(int.Parse(w[1], CultureInfo.InvariantCulture));
+                break;
+            case "enemy-targetable":
+                _enemyHealth ??= new EnemyHealth(Game.ProcessId);
+                _enemyHealth.SetTargetable(int.Parse(w[1], CultureInfo.InvariantCulture));
+                break;
+            case "enemy-clear-hit":
+                _enemyHealth ??= new EnemyHealth(Game.ProcessId);
+                _enemyHealth.ClearHit(int.Parse(w[1], CultureInfo.InvariantCulture));
+                break;
+            case "enemy-place":
+                _enemyHealth ??= new EnemyHealth(Game.ProcessId);
+                _enemyHealth.Place(int.Parse(w[1], CultureInfo.InvariantCulture), int.Parse(w[2], CultureInfo.InvariantCulture),
+                    int.Parse(w[3], CultureInfo.InvariantCulture));
+                Log($"  enemy {w[1]} placed at {w[2]}, {w[3]}");
                 break;
             case "enemy-hp":
                 _enemyHealth ??= new EnemyHealth(Game.ProcessId);

@@ -390,6 +390,8 @@ def decode_text(raw: bytes, selected: int = 0) -> str:
             break
         if b in (0x02, 0x03):
             out.append("\n")
+        elif b == 0x04:
+            pass  # "skip embedded tags": no glyph
         elif b == 0x05:
             i += 1
         elif b == 0x06 and i + 1 < len(raw):
@@ -512,7 +514,10 @@ def _open_submenu(item: int, timeout: float) -> int:
         raise Failed(f"not in control (message state {message_state()}, flags {flags():#x}): the menu won't open")
     send("press Y")
     if not wait_for(lambda: status_open() and peek(MENU_INPUT, 1)[0] == 1, 10):
-        raise Failed("the status screen didn't open")
+        shot_path = SHOTS / f"menu-failed-{int(time.time())}.png"
+        send(f"shot {shot_path} 640", check=False)
+        raise Failed(f"the status screen didn't open (flags {flags():#x}, message state {message_state()}, "
+                     f"HP {hp()}, menu input {peek(MENU_INPUT, 1)[0]}, shot {shot_path})")
     send("wait 800")  # the opening animation ignores input
     end = time.time() + timeout
     while (cursor := peek(MENU_CURSOR, 1)[0]) != target:

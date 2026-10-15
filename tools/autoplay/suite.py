@@ -34,8 +34,8 @@ DAMAGE_TABLE = 0x4BB698  # first-run weapon damage: 12-byte records, i16 at +6, 
 
 
 class Context:
-    def __init__(self, out: Path, character: str, name: str) -> None:
-        self.out, self.character, self.name = out, character, name
+    def __init__(self, out: Path, character: str, name: str, first_type: int = 0) -> None:
+        self.out, self.character, self.name, self.first_type = out, character, name, first_type
         self.results: list[dict] = []
         self.logfile = (out / "suite.log").open("a", encoding="utf-8")
         self.route = route.Route(character, self.log)
@@ -375,11 +375,13 @@ def t_kills(c: Context) -> None:
 
 # --- doors, send-back, cutscenes ---------------------------------------------------------------------------------------
 
-def t_doors(c: Context, plan: Path) -> None:
+def t_doors(c: Context, plan: Path, only_locks: set[int] | None = None) -> None:
     """One door per lock (the mining plan): give the key(s), examine any key that shows a generic name, open the door,
     record what the game says, the lock bits set and where the player ends up."""
     c.fresh()
     locks = json.loads(plan.read_text(encoding="utf-8"))["byLock"][c.character]
+    if only_locks:
+        locks = [lock for lock in locks if lock["lockFlag"] in only_locks]
     for lock in locks:
         test = lock.get("test")
         if not test:
@@ -389,6 +391,9 @@ def t_doors(c: Context, plan: Path) -> None:
             c.route.enter(test["room"])
             ap.send("inv-clear 3")
             for key in lock.get("keyIds") or []:
+                # Jill opens the Sword-key locks with her lockpick (item 49): with the Sword key the game says
+                # "It's locked. Use the lockpick to open the door." (2026-10-14).
+                key = 49 if c.character == "jill" and key == 51 else key
                 if 1 <= key <= 0x4D:
                     ap.send(f"give {key}")
                     if ap.examined(key) is False:
@@ -471,7 +476,11 @@ def t_send_back(c: Context) -> None:
             result = {"case": case["name"], "room": case["room"], "flags": case["flags"]}
             if case.get("zone"):
                 plan = rdt_map.load(survey.INSTALL, case["room"], c.character)
-                for x, z, angle, _ in pickup.spots({"zone": case["zone"]}, plan):
+                zx, zz, zw, zd = case["zone"]
+                # Inside the zone first (the front door's zone runs along the wall; from outside, the probe can reach a
+                # painting's zone first — 2026-10-14), facing each way, then the usual spots around it.
+                inside = [(int(zx + zw * fx), int(zz + zd / 2), a, False) for fx in (0.5, 0.3, 0.7) for a in (1024, 3072, 0, 2048)]
+                for x, z, angle, _ in inside + pickup.spots({"zone": case["zone"]}, plan):
                     ap.send(f"place {x} {z} {angle}", "wait 400")
                     if not ap.in_control():
                         continue
@@ -533,12 +542,40 @@ def t_cutscenes(c: Context, plan: Path, limit: int | None = None) -> None:
 
 
 MATRIX_HP = 3000
+# The shotgun and magnum can kill a zombie outright whatever its HP (HP set to −300): they go last.
+MATRIX_ORDER = [(2, 15), (1, 0), (6, 100), (7, 6), (8, 6), (9, 6), (10, 4), (3, 7), (5, 6)]
+
+
+def firing_lane(plan: rdt_map.Room, length: int = 1600) -> tuple[int, int, int] | None:
+    """A floor spot and facing with clear floor straight ahead for `length` (where the target gets locked). The spot
+    and every point of the lane must be well inside the room: clear of collision and inside a camera's area with a
+    600-unit margin all round (a spot on the room's edge let the player and the target slip out of the room)."""
+    import math
+    quads = [s["quad"] for s in plan.switches if s["header"]]
+
+    def inside(x: float, z: float) -> bool:
+        return all(any(rdt_map.point_in_quad(int(x + ox), int(z + oz), q) for q in quads)
+                   for ox, oz in ((0, 0), (600, 0), (-600, 0), (0, 600), (0, -600))) and not plan.blocked(int(x), int(z), 450)
+
+    best = None
+    for x, z in combat.floor_spots(plan, 400):
+        if not inside(x, z) or combat.near_door(plan, x, z, 900):
+            continue
+        for angle in range(0, 4096, 512):
+            theta = angle * 2 * math.pi / 4096
+            dx, dz = math.cos(theta), -math.sin(theta)
+            if all(inside(x + dx * d, z + dz * d) for d in range(200, length + 1, 200)):
+                return x, z, angle
+    return best
 
 
 def t_matrix(c: Context) -> None:
-    """Every weapon against each enemy type, on one trapped enemy per room: the room's enemies stay frozen except for
-    the instant of each shot, and the target's HP is set to MATRIX_HP before every shot, so HP after = damage exactly
-    (no kills, no special deaths). Compared with the game's first-run damage table for that type."""
+    """Every weapon against each enemy type, on one trapped enemy (owner's idea, 2026-10-14). The enemy stays where the
+    game put it — moving it by memory left the game's hit check behind — but the room's enemies are frozen except for
+    the instant of each shot, and its HP is set to MATRIX_HP before every shot, so the HP after it is the damage. The
+    player stands at 60% of the weapon's reach facing it to fire, and well away from it while switching weapons and
+    while the room runs a second after each shot (a frozen enemy ignores a second hit until it has reacted to the
+    first). Compared with the game's first-run damage table for that type."""
     c.fresh()
     for room_id, kind in ENEMY_ROOMS:
         def one(room_id=room_id, kind=kind):
@@ -548,40 +585,157 @@ def t_matrix(c: Context) -> None:
             if target is None:
                 c.add({"room": room_id, "expectedType": kind, "error": "no live enemy"})
                 return
+            slot = target["slot"]
             count = combat.freeze()
+
+            def now() -> dict:
+                return next((e for e in ap.enemies(True) if e["slot"] == slot), target)
+
+            def away() -> None:
+                combat.stand_off(plan, now(), 6000, 40000)
+
+            def shot(weapon: int) -> dict:
+                nonlocal count
+                reach = combat.weapon_range(weapon)
+                ap.send("heal", f"enemy-hp {slot} {MATRIX_HP}")
+                spot = combat.stand_off(plan, now(), max(250, int(reach * 0.5)), max(450, int(reach * 0.75)))
+                where = combat.player_xz()
+                d = where and round(combat.distance(*where, now()["x"], now()["z"]))
+                before = combat.ammo()
+                ap.send("hold RT", "wait 1300")
+                if count:
+                    ap.send(f"thaw-enemies {count}")
+                ap.send("wait 50", "press A 120", f"wait {900 if weapon in (7, 8, 9, 10) else 150}")
+                count = combat.freeze() or count
+                ap.send("wait 400", "release RT")
+                hp = now()["hp"]
+                away()
+                if count:
+                    ap.send(f"thaw-enemies {count}", "wait 1000")
+                    count = combat.freeze() or count
+                return {"damage": MATRIX_HP - hp, "fired": weapon == 1 or combat.ammo() != before, "distance": d,
+                        "spot": spot}
+
             rows = []
             try:
-                for weapon, quantity in WEAPON_ORDER:
-                    reach = combat.weapon_range(weapon)
-                    if not combat.reachable(plan, target, int(reach * 0.85)):
-                        rows.append({"weapon": weapon, "note": f"no floor within reach {reach} of the target"})
-                        continue
+                for weapon, quantity in MATRIX_ORDER:
+                    away()
                     ap.send("inv-clear 2")
                     if not combat.equip(weapon, quantity, c.log):
                         rows.append({"weapon": weapon, "error": "not equipped"})
                         continue
-                    hits = []
-                    for _ in range(2):
-                        now = next((e for e in ap.enemies(True) if e["slot"] == target["slot"]), target)
-                        ap.send(f"enemy-hp {target['slot']} {MATRIX_HP}", "heal")
-                        combat.stand_off(plan, now, max(300, int(reach * 0.6)), max(500, int(reach * 0.85)))
-                        before = combat.ammo()
-                        ap.send("hold RT", "wait 1300")
-                        if count:
-                            ap.send(f"thaw-enemies {count}")
-                        ap.send("wait 50", "press A 120", "wait 1500", "release RT")
-                        count = combat.freeze() or count
-                        hp = next((e["hp"] for e in ap.enemies(True) if e["slot"] == target["slot"]), None)
-                        hits.append({"damage": None if hp is None else MATRIX_HP - hp,
-                                     "fired": weapon == 1 or combat.ammo() != before})
-                    rows.append({"weapon": weapon, "table": table_damage(weapon, now["type"]), "hits": hits})
-                    c.log(f"    {room_id} type {now['type']} weapon {weapon}: {[h['damage'] for h in hits]} "
-                          f"(table {table_damage(weapon, now['type'])})")
+                    hits = [shot(weapon) for _ in range(2)]
+                    table = table_damage(weapon, target["type"])
+                    rows.append({"weapon": weapon, "table": table, "hits": hits})
+                    c.log(f"    {room_id} type {target['type']} weapon {weapon}: {[h['damage'] for h in hits]} "
+                          f"at {[h['distance'] for h in hits]} (table {table})")
+                    if now()["hp"] <= 0:
+                        rows.append({"note": "the target died (a head kill sets HP to −300)"})
+                        break
+                # Then finish it (HP 1, one Beretta round): the kill flag it sets (flagEnemies), for bounty B503.
+                if now()["hp"] > 0:
+                    killed_before = bank_flags(ENEMY_FLAGS, 8)
+                    away()
+                    ap.send("inv-clear 2")
+                    combat.equip(2, 15, c.log)
+                    ap.send(f"enemy-hp {slot} 1", "heal")
+                    combat.stand_off(plan, now(), 700, 1000)
+                    ap.send("hold RT", "wait 1300")
+                    if count:
+                        ap.send(f"thaw-enemies {count}")
+                    ap.send("wait 50", "press A 120", "wait 2500")
+                    count = combat.freeze() or count
+                    ap.send("release RT")
+                    rows.append({"kill": {"hp": now()["hp"], "killFlagsSet": sorted(bank_flags(ENEMY_FLAGS, 8) - killed_before)}})
             finally:
                 if count and ap.peek(0xBE41E2, 1)[0] == 0:
                     ap.send(f"thaw-enemies {count}", check=False)
-            c.add({"room": room_id, "type": target["type"], "slot": target["slot"], "weapons": rows})
+            c.add({"room": room_id, "type": target["type"], "slot": slot, "weapons": rows})
         c.step(f"matrix {room_id}", one)
+
+
+STANDIN_ROOM = "20E"   # the one zombie that stays put and takes every shot reliably (202 crashed; 20E, live 2026-10-14)
+STANDIN_TYPES = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19]
+
+
+def t_standin(c: Context) -> None:
+    """The full weapon × enemy-type damage matrix in one room (owner's idea, 2026-10-14). The room's enemies stay
+    frozen except for the instant of each shot (the hit check only sees counted enemies, so the shot itself needs them
+    running); one zombie stands in for each enemy type: its type byte is set to the type for that instant only, then
+    put back — the damage comes from the weapon table row for the target's type (decomp apply_weapon_damage), and
+    the other type's AI runs for a few frames at most. Before each shot its HP is set to MATRIX_HP and its hit state
+    cleared, so the HP after it is the damage. Jill's handgun adds 3 (7 to dogs) on top of the table (decomp
+    weapon post-hit; matches 12 vs 9 and 27 vs 20 live). Measures the table per type, not each enemy's own reactions."""
+    plan = rdt_map.load(survey.INSTALL, STANDIN_ROOM, c.character)
+    setup: dict = {}
+
+    def prepare() -> None:
+        """(Re)enters the room and freezes it with a zombie to stand in — again after a type crashed the game (the
+        crow's AI on a zombie did, 2026-10-14)."""
+        if setup and ap.state().get("room") == STANDIN_ROOM and ap.peek(0xBE41E2, 1)[0] == 0:
+            return
+        if not ap.in_control() or ap.state().get("gameplay") != "True":
+            c.fresh()
+        c.route.enter(STANDIN_ROOM, freeze=False)
+        zombie = next((e for e in ap.enemies() if e["type"] in (0, 1, 17) and e["hp"] > 0 and (e["x"] or e["z"])), None)
+        if zombie is None:
+            raise ap.Failed("no zombie to stand in")
+        setup.update(target=zombie, slot=zombie["slot"], original=zombie["type"], count=combat.freeze())
+        ap.send(f"enemy-targetable {zombie['slot']}", f"enemy-snapshot {zombie['slot']}")
+
+    def me() -> dict:
+        return next((e for e in ap.enemies(True) if e["slot"] == setup["slot"]), setup["target"])
+
+    c.fresh()
+    types = [t for t in STANDIN_TYPES if t >= c.first_type]
+    try:
+        for kind in types:
+            def one(kind=kind):
+                prepare()
+                slot, original = setup["slot"], setup["original"]
+                count = setup["count"]
+                rows = []
+                for weapon, quantity in MATRIX_ORDER:
+                    ap.send("inv-clear 2")
+                    if not combat.equip(weapon, quantity, c.log):
+                        rows.append({"weapon": weapon, "error": "not equipped"})
+                        continue
+                    reach = combat.weapon_range(weapon)
+                    hits = []
+                    for _ in range(2):
+                        # Back to the clean copy taken at setup (another type's AI can scramble the stand-in).
+                        ap.send(f"enemy-restore {slot}", "heal", f"enemy-hp {slot} {MATRIX_HP}", f"enemy-clear-hit {slot}")
+                        combat.stand_off(plan, me(), max(300, int(reach * 0.7)), max(500, int(reach * 0.9)))
+                        # A shot only takes an enemy whose flags (0xE0) allow the player's aim height; a zombie sets
+                        # them once it notices the player (idle 0x41, aware 0xF1 — live 2026-10-14), which means
+                        # letting it close in. The harness sets them on the frozen target instead.
+                        ap.send(f"enemy-targetable {slot}")
+                        where = combat.player_xz()
+                        before = combat.ammo()
+                        ap.send("hold RT", "wait 1300", f"enemy-type {slot} {kind}")
+                        if count:
+                            ap.send(f"thaw-enemies {count}")
+                        ap.send("wait 50", "press A 120", f"wait {900 if weapon in (6, 7, 8, 9, 10) else 150}")
+                        count = combat.freeze() or count
+                        ap.send(f"enemy-type {slot} {original}", "wait 300", "release RT", "wait 200")
+                        hp = me()["hp"]
+                        ap.send(f"enemy-restore {slot}")
+                        hits.append({"damage": MATRIX_HP - hp, "fired": weapon == 1 or combat.ammo() != before,
+                                     "distance": where and round(combat.distance(*where, me()["x"], me()["z"]))})
+                    table = table_damage(weapon, kind)
+                    rows.append({"weapon": weapon, "table": table, "hits": hits})
+                    c.log(f"    type {kind} weapon {weapon}: {[h['damage'] for h in hits]} (table {table})")
+                setup["count"] = count
+                c.add({"type": kind, "standIn": original, "room": STANDIN_ROOM, "weapons": rows})
+            c.step(f"stand-in type {kind}", one)
+    finally:
+        if setup:
+            try:
+                ap.send(f"enemy-type {setup['slot']} {setup['original']}", check=False)
+                if setup["count"] and ap.peek(0xBE41E2, 1)[0] == 0:
+                    ap.send(f"thaw-enemies {setup['count']}", check=False)
+            except ap.Failed:
+                pass
 
 
 FIXTURE_ROOMS = ["100", "118", "106", "307", "30E", "403", "50E"]
@@ -678,7 +832,7 @@ def t_saves(c: Context, backup: Path) -> None:
 TESTS = {
     "timer": t_timer, "bands": t_bands, "healing": t_healing, "combine": t_combine, "full-inventory": t_full_inventory,
     "poison": t_poison, "yawn-poison": t_yawn_poison, "weapons": t_weapons, "enemy-hits": t_enemy_hits,
-    "kills": t_kills, "send-back": t_send_back, "fixtures": t_fixtures, "matrix": t_matrix,
+    "kills": t_kills, "send-back": t_send_back, "fixtures": t_fixtures, "matrix": t_matrix, "standin": t_standin,
 }
 
 
@@ -694,11 +848,13 @@ def main(argv: list[str]) -> int:
     try:
         for character in characters:
             for name in names:
-                c = Context(out, character, name)
+                c = Context(out, character, name,
+                            int(rest[rest.index("--from-type") + 1]) if "--from-type" in rest else 0)
                 c.log("start")
                 try:
                     if name == "doors":
-                        t_doors(c, plans / "key-doors.json")
+                        only = {int(v) for v in rest[rest.index("--locks") + 1].split(",")} if "--locks" in rest else None
+                        t_doors(c, plans / "key-doors.json", only)
                     elif name == "cutscenes":
                         t_cutscenes(c, plans / "cutscene-events.json")
                     elif name == "saves":

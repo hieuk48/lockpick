@@ -140,7 +140,8 @@ class Route:
         locks = set_flags(ap.peek(LOCKS, 8))
         for x, z, angle, _ in pickup.spots({"zone": list(door["zone"])}, room):
             camera = room.camera_for(x, z)
-            ap.send(f"place {x} {z} {angle}", "wait 400", *([f"camera {camera}", "wait 500"] if camera is not None else []))
+            cut = camera is not None and not ap.flags() & 0x100000  # no cuts while a cutscene holds the camera
+            ap.send(f"place {x} {z} {angle}", "wait 400", *([f"camera {camera}", "wait 500"] if cut else []))
             if not ap.in_control():
                 self.log(f"  door to {target}: not in control before pressing ({ap.message_state()=}, {ap.flags():#x})")
                 return False
