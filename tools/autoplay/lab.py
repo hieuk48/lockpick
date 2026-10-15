@@ -110,16 +110,26 @@ class Lab:
         self.stand()
         ap.send("heal")
         x, z = at or self.a["enemy"]
-        r = spawn.spawn(kind, x, z, slot=SLOT, hold=hold, kill_flag=kill_flag, extra=self.dog_hold, log=self.log, pin=pin)
+        r = spawn.spawn(kind, x, z, slot=SLOT, hold=hold, kill_flag=kill_flag, extra=self.dog_hold, log=self.log, pin=pin,
+                        position_only=position_only)
         self.stand()
         return r["enemy"]
 
-    def shot(self, aim: str = "", settle: float = 0.8) -> None:
-        """Raise the gun (with up/down held for an aimed shot), fire once, lower it."""
+    def shot(self, aim: str = "", settle: float = 0.8) -> dict:
+        """Raise the gun, then (aimed shots) hold up/down once the player is aiming, fire once, lower it. Holding the
+        direction with the aim button made the player walk ~1000 units (forward for up, back for down) before the aim
+        took (2026-10-15): the gun is raised first. Returns the player's spot and aim byte at the shot."""
         if ap.equipped() == 0:
             raise ap.Failed("nothing equipped: the shot would not fire")
-        ap.send("hold RT" + (f"+{aim}" if aim else ""), "wait 1300", "press A 120", f"wait {int(settle * 1000)}",
-                "release RT" + (f"+{aim}" if aim else ""), "wait 300")
+        ap.send("hold RT", "wait 1300")
+        if aim:
+            ap.send(f"hold {aim}", "wait 400")
+        at = {"player": ap.pos(), "aimByte": ap.peek(AIM, 1)[0]}
+        ap.send("press A 120", f"wait {int(settle * 1000)}")
+        if aim:
+            ap.send(f"release {aim}")
+        ap.send("release RT", "wait 300")
+        return at
 
     # --- experiments ------------------------------------------------------------------------------------------------
 
@@ -131,7 +141,7 @@ class Lab:
                 if not self.spawn(kind, hold=True):
                     raise ap.Failed("not spawned")
                 row["hp"].append(enemy()["hp"])
-                behaviour = spawn.templates()[kind][2]
+                behaviour = spawn.HUNTING.get(kind, spawn.templates()[kind][2])
                 for _ in range(samples - 1):
                     # Started afresh (its init rolls the HP again) and held again from its first frames.
                     p = ap.pos()
@@ -179,9 +189,9 @@ class Lab:
         rows = []
         readings = {}
         for name, key in (("level", ""), ("up", "LUp"), ("down", "LDown")):
-            ap.send("hold RT" + (f"+{key}" if key else ""), "wait 1300")
-            readings[name] = {"aim": ap.peek(AIM, 1)[0], "flags": ap.peek(PLAYER, 1)[0]}
-            ap.send("release RT" + (f"+{key}" if key else ""), "wait 400")
+            ap.send("hold RT", "wait 1300", *((f"hold {key}", "wait 400") if key else ()))
+            readings[name] = {"aim": ap.peek(AIM, 1)[0], "flags": ap.peek(PLAYER, 1)[0], "player": ap.pos()}
+            ap.send(*((f"release {key}",) if key else ()), "release RT", "wait 400")
         rows.append({"player": readings})
         self.log(f"player aim bytes: {readings}")
         for kind in types:
@@ -197,10 +207,11 @@ class Lab:
                 for name, key in (("level", ""), ("up", "LUp"), ("down", "LDown")):
                     ap.send(f"enemy-hp {SLOT} 3000", f"enemy-clear-hit {SLOT}")
                     flags = slot_bytes(SLOT, 0, 1)[0]
-                    self.shot(key)
+                    at = self.shot(key)
                     hp = (enemy() or {}).get("hp")
                     row["shots"].append({"aim": name, "enemyFlags": flags, "hit": hp is not None and hp < 3000,
-                                         "damage": None if hp is None else 3000 - hp})
+                                         "damage": None if hp is None else 3000 - hp, "aimByte": at["aimByte"],
+                                         "player": at["player"]})
             except Exception as e:  # noqa: BLE001
                 row["error"] = str(e)[-300:]
             self.log(f"type {kind}: {row['shots']} {row.get('error', '')}")
@@ -208,6 +219,22 @@ class Lab:
         return rows
 
     # --- reactions: what each weapon's hit does to each enemy (it stays on its spot; its AI and reactions run) --------
+
+    def arm(self, weapon: int, quantity: int) -> None:
+        """The weapon in hand with `quantity` rounds; the spare slots cleared first (the knife and handgun stay), so
+        giving weapon after weapon never fills the inventory."""
+        if weapon not in [i for i, _, _ in ap.inventory()]:
+            ap.send("inv-clear 2")
+        ap.equip_now(weapon, quantity, log=self.log)
+
+    def aware(self, seconds: float = 4) -> bool:
+        """Waits for the enemy's aim-height bits (it noticed the player); false when they never came."""
+        end = time.time() + seconds
+        while time.time() < end:
+            if slot_bytes(SLOT, 0, 1)[0] & 0xE0:
+                return True
+            time.sleep(0.2)
+        return False
 
     def at_distance(self, d: int) -> tuple[int, int]:
         """The spot `d` units in front of the player (the arena's player faces the enemy side)."""
@@ -235,7 +262,9 @@ class Lab:
         for name, key in (("level", ""), ("down", "LDown"), ("up", "LUp")):
             self.shot(key, settle=0.15)
             e = enemy()
-            if e and (e["hp"] != hp_before or slot_bytes(SLOT, 0x8A, 1)[0]):
+            # Only an HP change counts: the hit-state byte is also set by the enemy's own moves (a zombie grabbing
+            # the player read as a knife hit, 2026-10-15).
+            if e and e["hp"] != hp_before:
                 return name
             ap.send(f"enemy-clear-hit {SLOT}")
         return None
@@ -244,26 +273,57 @@ class Lab:
         byte = ENEMY_FLAGS + flag // 32 * 4 + (31 - flag % 32) // 8
         ap.send(f"state-apply {byte:X}:00:{1 << ((31 - flag % 32) % 8):02X}")
 
-    def reactions(self, types: list[int], weapons: list[tuple[int, int]]) -> list[dict]:
+    # Unused kill flags (no room's enemy_set uses them), rotated: a dying crow sets its flag every frame of its death
+    # (decomp Crow.cpp), so it could set a just-cleared flag again before the next spawn, whose enemy_set then skipped
+    # the enemy as already killed ("slot not active", 2026-10-15).
+    KILL_FLAGS = [16, 17, 18, 250, 251, 252, 253, 254]
+
+    def reactions(self, types: list[int], weapons: list[tuple[int, int]],
+                  pairs: list[tuple[int, int]] | None = None) -> list[dict]:
+        """pairs: only these (type, weapon) combinations (reruns of the ones that crashed)."""
         rows = []
-        for kind in types:
-            for weapon, quantity in weapons:
+        quantities = dict(weapons)
+        todo = [(k, (w, quantities.get(w, 30))) for k, w in pairs] if pairs else             [(k, wq) for k in types for wq in weapons]
+        for kind, (weapon, quantity) in todo:
+            if True:
                 row = {"type": kind, "name": spawn.scd.Names().enemies.get(str(kind)), "weapon": weapon}
                 try:
                     self.ensure()
-                    ap.equip_now(weapon, quantity, log=self.log)
-                    near = self.at_distance(900 if weapon == 1 else 3500)
+                    self.arm(weapon, quantity)
+                    # Spiders, snakes, wasps and the plant never noticed the player at 3500 (aim test, 2026-10-14):
+                    # closer spots are tried when no aim lands.
+                    spots = [700] if weapon == 1 else [3500, 1500, 800]
                     for phase, hp, seconds in (("hit", 3000, 4), ("lethal", 1, 8)):
-                        self.clear_enemy_flag(251)
-                        self.spawn(kind, at=near, hold=True, position_only=True, kill_flag=251)
-                        time.sleep(1.0)    # aware of the player: its aim-height bits set
-                        ap.send(f"enemy-hp {SLOT} {hp}", f"enemy-clear-hit {SLOT}", "heal")
-                        aim = self.fire_until_hit(hp)
+                        aim = None
+                        for d in spots:
+                            flag = 0xFF
+                            if phase == "lethal":
+                                self.flag_turn = getattr(self, "flag_turn", -1) + 1
+                                flag = self.KILL_FLAGS[self.flag_turn % len(self.KILL_FLAGS)]
+                                self.clear_enemy_flag(flag)
+                            if weapon == 1:
+                                # Arm's length: held (do-nothing state, or pinned) so it can't grab the player first,
+                                # and made targetable. A lethal hit still kills (it puts the enemy in its death state);
+                                # a pin is let go just before the killing swing so its death runs.
+                                self.spawn(kind, at=self.at_distance(d), hold=True, kill_flag=flag)
+                                ap.send(f"enemy-targetable {SLOT}")
+                                if phase == "lethal" and kind not in spawn.HOLD_STATE:
+                                    ap.send(f"enemy-pin {SLOT} off")
+                            else:
+                                self.spawn(kind, at=self.at_distance(d), hold=True, position_only=True, kill_flag=flag)
+                                end = time.time() + 4    # aware of the player: its aim-height bits set
+                                while time.time() < end and not slot_bytes(SLOT, 0, 1)[0] & 0xE0:
+                                    time.sleep(0.2)
+                            ap.send(f"enemy-hp {SLOT} {hp}", f"enemy-clear-hit {SLOT}", "heal")
+                            aim = self.fire_until_hit(hp)
+                            if aim:
+                                row.setdefault("distance", {})[phase] = d
+                                break
                         trace = self.trace(seconds)
                         row[phase] = {"aim": aim, "damage": hp - trace[0][1] if trace and aim else None,
                                       "end": trace[-1] if trace else None, "trace": trace,
-                                      "killFlagSet": 251 in bank(ENEMY_FLAGS, 8)}
-                    self.clear_enemy_flag(251)
+                                      "killFlag": flag if flag != 0xFF else None,
+                                      "killFlagSet": flag != 0xFF and flag in bank(ENEMY_FLAGS, 8)}
                 except Exception as e:  # noqa: BLE001
                     row["error"] = str(e)[-300:]
                 ap.send("heal", check=False)
@@ -277,14 +337,16 @@ class Lab:
     def poise(self, types: list[int], rounds: int = 3, shots: int = 14) -> list[dict]:
         """Handgun hits on a zombie (position pinned, HP 3000) until it falls, then whether it gets back up."""
         rows = []
-        self.ensure()
-        ap.equip_now(2, 99, log=self.log)
         for kind in types:
             for n in range(rounds):
                 row = {"type": kind, "round": n, "shots": []}
                 try:
+                    self.ensure()
+                    self.arm(2, 99)
                     self.spawn(kind, at=self.at_distance(3500), hold=True, position_only=True)
-                    time.sleep(1.0)
+                    row["noticed"] = self.aware()
+                    if not row["noticed"]:
+                        ap.send(f"enemy-targetable {SLOT}")
                     ap.send(f"enemy-hp {SLOT} 3000")
                     for i in range(shots):
                         self.shot(settle=0.6)
@@ -294,7 +356,9 @@ class Lab:
                         if b[0x86] in (4, 7) or b[0x84] == 3:   # knocked down / bend down / dying
                             row["fellAt"] = i + 1
                             break
-                    row["after"] = self.trace(10)
+                    # 10 s left the floor knock-downs (action 4) and a leg-blown zombie (action 5) undecided
+                    # (2026-10-15): --long watches 30 s for the get-up, or the crawl.
+                    row["after"] = self.trace(30 if "--long" in sys.argv else 10)
                 except Exception as e:  # noqa: BLE001
                     row["error"] = str(e)[-300:]
                 self.log(f"type {kind} round {n}: fell at {row.get('fellAt')}, end {(row.get('after') or [None])[-1]}")
@@ -315,11 +379,11 @@ class Lab:
                 row = {"type": kind, "weapon": weapon, "distance": d, "aim": aim}
                 try:
                     self.ensure()
-                    ap.equip_now(weapon, quantity, log=self.log)
+                    self.arm(weapon, quantity)
                     self.spawn(kind, at=self.at_distance(d), hold=True, pin=True)
                     time.sleep(1.0)
                     ap.send(f"enemy-hp {SLOT} 3000", f"enemy-clear-hit {SLOT}", f"enemy-targetable {SLOT}", "heal")
-                    self.shot(keys[aim], settle=0.3)
+                    row["at"] = self.shot(keys[aim], settle=0.3)
                     hp = (enemy() or {}).get("hp")
                     row.update(hp=hp, damage=None if hp is None else 3000 - hp, headKill=hp == -300)
                 except Exception as e:  # noqa: BLE001
@@ -350,10 +414,13 @@ class Lab:
                             row["hps"].append({"hp": now, "enemyState": list(slot_bytes(SLOT, 0x84, 4)),
                                                "playerState": list(ap.peek(PLAYER + 0x84, 4))})
                             last = now
-                        if now <= 0 or ap.flags() & 0x01000000:      # dead, or the death fade running
+                        if now <= 0:
+                            # Dead by HP only: state-flag bit 0x01000000 (MSF_PLAYER_DEAD in the decomp) was already set
+                            # at HP 1 with no hit (2026-10-14), so it is only recorded.
                             row["died"] = True
                             row["killedFrom"] = row["hps"][-2]["hp"] if len(row["hps"]) > 1 else start
-                            row["killingMove"] = row["hps"][-1]
+                            row["killingMove"] = row["hps"][-1] if row["hps"] else None
+                            row["deadFlag"] = bool(ap.flags() & 0x01000000)
                             time.sleep(2)
                             break
                         time.sleep(0.03)
@@ -367,6 +434,131 @@ class Lab:
                 self.save_partial("deaths", rows)
                 if row.get("died"):
                     self.arena()     # game over: a fresh boot
+        return rows
+
+    def falloff(self, kind: int = 0) -> list[dict]:
+        """Where the special rules switch, live: the shotgun's 10 HP back already showed at 8500 (the code compares
+        g_playerDisplacement with 9000, so that isn't the plain distance) and its head kill needed aiming up at 2500
+        (level and down didn't), 2026-10-14. Shotgun level every 500 from 4000 to 9000, shotgun up at 2800-3500, the
+        Colt Python down at 2500."""
+        cases = [(3, d, "level") for d in range(4000, 9001, 500)]
+        cases += [(3, d, "up") for d in (2800, 3000, 3200, 3500)]
+        cases += [(5, 2500, "down"), (5, 2500, "level")]
+        if "--headkill" in sys.argv:
+            # The shotgun aimed up killed outright at 2500 and missed from 2800 on (2026-10-14): where the edge is.
+            cases = [(3, d, "up") for d in range(1500, 2800, 200)] + [(3, 1500, "level"), (3, 1500, "down")]
+        keys = {"level": "", "up": "LUp", "down": "LDown"}
+        rows = []
+        for weapon, d, aim in cases:
+            row = {"type": kind, "weapon": weapon, "distance": d, "aim": aim}
+            try:
+                self.ensure()
+                self.arm(weapon, 30)
+                self.spawn(kind, at=self.at_distance(d), hold=True, pin=True)
+                time.sleep(1.0)
+                ap.send(f"enemy-hp {SLOT} 3000", f"enemy-clear-hit {SLOT}", f"enemy-targetable {SLOT}", "heal")
+                row["at"] = self.shot(keys[aim], settle=0.3)
+                hp = (enemy() or {}).get("hp")
+                e = enemy()
+                p = ap.pos()
+                row.update(hp=hp, damage=None if hp is None else 3000 - hp, headKill=hp == -300,
+                           measured=p and e and round(((p[0] - e["x"]) ** 2 + (p[2] - e["z"]) ** 2) ** 0.5))
+            except Exception as e:  # noqa: BLE001
+                row["error"] = str(e)[-300:]
+            self.log(f"weapon {weapon} at {d} aimed {aim}: {row.get('damage')} {row.get('error', '')}")
+            rows.append(row)
+            self.save_partial("falloff", rows)
+        return rows
+
+    def linger(self) -> list[dict]:
+        """Two open questions from the deaths test (2026-10-15): (1) the spider's hits stopped at HP 1 every time (its
+        bite code clamps the player at 1) — does any other spider move kill, given minutes? (2) can poison kill, or does
+        it stop at a floor? A snake bites until the player is poisoned, the enemies are frozen, HP set to 6, and the
+        poison ticks for 90 s."""
+        rows = []
+        # 1: a spider on a player at HP 1 for three minutes, every HP change and the spider's action at the time.
+        row = {"case": "spider at HP 1", "changes": []}
+        try:
+            self.ensure()
+            self.spawn(3, at=self.at_distance(1500), hold=False)
+            ap.send("hp 1")
+            last, end = 1, time.time() + 180
+            while time.time() < end:
+                now = ap.hp()
+                if now != last:
+                    row["changes"].append({"t": round(180 - (end - time.time()), 1), "hp": now,
+                                           "spider": list(slot_bytes(SLOT, 0x84, 4)),
+                                           "poison": bool(ap.peek(STATUS, 1)[0] & 0x02)})
+                    last = now
+                    if now <= 0:
+                        break
+                time.sleep(0.05)
+            row.update(endHp=last, died=last < 0)
+        except Exception as e:  # noqa: BLE001
+            row["error"] = str(e)[-300:]
+        self.log(f"spider at HP 1: {row.get('changes')} end {row.get('endHp')} {row.get('error', '')}")
+        rows.append(row)
+        self.save_partial("linger", rows)
+        if row.get("died"):
+            self.arena()
+        # 2: poison from a snake bite, then nothing but the poison.
+        row = {"case": "poison from HP 6", "ticks": []}
+        try:
+            self.ensure()
+            self.spawn(10, at=self.at_distance(1500), hold=False)
+            end = time.time() + 60
+            while time.time() < end and not ap.peek(STATUS, 1)[0] & 0x02:
+                if ap.hp() < 40:
+                    ap.send("heal")
+                time.sleep(0.1)
+            row["poisoned"] = bool(ap.peek(STATUS, 1)[0] & 0x02)
+            if row["poisoned"]:
+                ap.send("freeze-enemies", "hp 6")
+                last, end = 6, time.time() + 90
+                while time.time() < end:
+                    now = ap.hp()
+                    if now != last:
+                        row["ticks"].append({"t": round(90 - (end - time.time()), 1), "hp": now,
+                                             "poison": bool(ap.peek(STATUS, 1)[0] & 0x02),
+                                             "player": list(ap.peek(PLAYER + 0x84, 4))})
+                        last = now
+                        if now < 0:
+                            break
+                    time.sleep(0.05)
+                row.update(endHp=last, died=last < 0, stillPoisoned=bool(ap.peek(STATUS, 1)[0] & 0x02))
+        except Exception as e:  # noqa: BLE001
+            row["error"] = str(e)[-300:]
+        self.log(f"poison from HP 6: {row.get('ticks')} end {row.get('endHp')} {row.get('error', '')}")
+        rows.append(row)
+        self.save_partial("linger", rows)
+        # 3: the plant never turns and only strikes within 90° of where it faces (decomp); spawned "facing" the player
+        # by the harness's convention (yaw 3072 toward them, checked) it never noticed them (flags 0x01) and the owner
+        # saw the player behind it. Facing as spawned, then turned 180°: which way is its front?
+        for turn in (0, 2048):
+            row = {"case": f"plant turned {turn}", "changes": []}
+            try:
+                self.ensure()
+                ap.send("heal")
+                self.spawn(15, at=self.at_distance(1200), hold=False)
+                e = enemy()
+                p = ap.pos()
+                facing = (ap.angle_to(e["x"], e["z"], p[0], p[2]) + turn) % 4096
+                ap.send(f"enemy-wake {SLOT} {e['x']} {e['z']} {facing} 1")
+                full, last, end = ap.hp(), ap.hp(), time.time() + 30
+                while time.time() < end:
+                    now = ap.hp()
+                    if now != last:
+                        row["changes"].append({"hp": now, "plant": list(slot_bytes(SLOT, 0x84, 4)),
+                                               "poison": bool(ap.peek(STATUS, 1)[0] & 0x02)})
+                        last = now
+                    row["flags"] = slot_bytes(SLOT, 0, 1)[0]
+                    time.sleep(0.1)
+                row.update(facing=facing, attacked=bool(row["changes"]))
+            except Exception as e:  # noqa: BLE001
+                row["error"] = str(e)[-300:]
+            self.log(f"plant turned {turn}: attacked {row.get('attacked')} flags {row.get('flags')} {row.get('error', '')}")
+            rows.append(row)
+            self.save_partial("linger", rows)
         return rows
 
     def save_partial(self, name: str, rows: list[dict]) -> None:
@@ -419,7 +611,11 @@ if __name__ == "__main__":
     zombies = [t for t in types if t in (0, 1, 17)] or [0, 1, 17]
     walkers = [t for t in types if t in (0, 1, 17, 2)] or [0, 1, 17, 2]
     result = {"hp": lambda: lab.hp(types), "killflags": lab.killflags, "aim": lambda: lab.aim(types),
-              "attacks": lambda: lab.attacks(types), "reactions": lambda: lab.reactions(types, weapons),
+              "attacks": lambda: lab.attacks(types),
+              "reactions": lambda: lab.reactions(types, weapons, [tuple(int(v) for v in p.split(":")) for p in
+                                                                  args[args.index("--pairs") + 1].split(",")]
+                                                 if "--pairs" in args else None),
               "poise": lambda: lab.poise(zombies), "special": lambda: lab.special(walkers),
-              "deaths": lambda: lab.deaths(types)}[experiment]()
+              "deaths": lambda: lab.deaths(types), "falloff": lambda: lab.falloff(),
+              "linger": lambda: lab.linger()}[experiment]()
     (out / f"lab-{experiment}-{character}.json").write_text(json.dumps(result, indent=1) + "\n", encoding="utf-8")

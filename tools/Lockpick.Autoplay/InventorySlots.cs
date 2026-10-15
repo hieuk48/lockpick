@@ -26,6 +26,8 @@ internal sealed partial class InventorySlots : IDisposable
     private const ulong MessageActive = 0xBE9825; // bit 0x80 while a message is up
     private const ulong MenuState = 0xAE9F20; // the item box screen takes input on its inventory side when 1
     private const ulong BoxPlayerCursor = 0xAE9F23; // 8 + 2·slot
+    private const ulong IconRows = 0xD21CD0;      // g_ItemSlotIndices: the icon row each slot draws (8 bytes)
+    private const ulong IconRowsInUse = 0xD22734; // g_ItemSlotsBitmask: rows taken; a new item gets the first free one
 
     private readonly SafeProcessHandle _process;
     private readonly int _processId;
@@ -43,8 +45,10 @@ internal sealed partial class InventorySlots : IDisposable
 
     /// <summary>
     /// Clears slots <paramref name="from"/>..7 except the equipped one, compacts the rest to the front (the equipped
-    /// slot follows its weapon) and sets the held count; returns how many were cleared. Grid icons aren't moved (they
-    /// load on game start/load), so they can show the wrong picture until then.
+    /// slot follows its weapon) and sets the held count; returns how many were cleared. The icon bookkeeping follows:
+    /// each kept slot keeps its icon row (moved with it) and the cleared slots' rows are freed. Leaving them taken ran
+    /// the game out of rows after a few weapon changes through the item box, and the next icon was written past its
+    /// buffer (crash at 0x402E1D, 2026-10-15).
     /// </summary>
     public int ClearFrom(int from)
     {
@@ -92,7 +96,24 @@ internal sealed partial class InventorySlots : IDisposable
                 BitConverter.GetBytes(kept[i]).CopyTo(compacted, i * 2);
             }
 
+            // The icon rows move with their slots; rows no kept slot uses are freed.
+            var rows = Read(IconRows, Count);
+            var keptRows = new byte[Count];
+            uint inUse = 0;
+            var next = 0;
+            for (var slot = 0; slot < Count; slot++)
+            {
+                var value = BitConverter.ToUInt16(slots, slot * 2);
+                if ((slot < from || slot == equipped) && value != 0)
+                {
+                    keptRows[next++] = rows[slot];
+                    inUse |= 1u << (rows[slot] & 0x1F);
+                }
+            }
+
             Write(Slots, compacted);
+            Write(IconRows, keptRows);
+            Write(IconRowsInUse, BitConverter.GetBytes(inUse));
             Write(HeldCount, [(byte)kept.Count]);
             if (equippedAt >= 0 && equippedAt != equipped)
             {

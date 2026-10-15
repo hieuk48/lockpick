@@ -26,6 +26,7 @@ internal sealed partial class EnemyPin : IDisposable
     private readonly Lock _lock = new();
     private readonly Thread _thread;
     private volatile bool _stop;
+    private volatile bool _fillEffects;
 
     public EnemyPin(int processId)
     {
@@ -108,6 +109,13 @@ internal sealed partial class EnemyPin : IDisposable
         }
     }
 
+    /// <summary>
+    /// While on, this thread keeps the room's empty effect-sprite entries filled (see StateBlock.FillEffectSprites):
+    /// a room load empties them again and a spawned spider spits within its first frames, before a one-off fill after
+    /// the load (2026-10-14: crash at 0x47BFB6 in the aim test).
+    /// </summary>
+    public void GuardEffects(bool on) => _fillEffects = on;
+
     public bool Unpin(int slot)
     {
         lock (_lock)
@@ -170,6 +178,37 @@ internal sealed partial class EnemyPin : IDisposable
 
     private static ulong Address(int slot, int offset) => Slots + (ulong)(slot * SlotSize + offset);
 
+    private void FillEffects()
+    {
+        const ulong table = 0xBF0A54, anims = 0xBF0B1C;
+        const int count = 50;
+        var raw = Read(table, count * 4);
+        var rawAnims = Read(anims, count * 4);
+        static bool Empty(uint e) => e is 0 or 0xFFFFFFFF;
+        var donor = -1;
+        for (var i = 0; i < count && donor < 0; i++)
+        {
+            if (!Empty(BitConverter.ToUInt32(raw, i * 4)) && !Empty(BitConverter.ToUInt32(rawAnims, i * 4)))
+            {
+                donor = i;
+            }
+        }
+
+        if (donor < 0)
+        {
+            return;
+        }
+
+        for (var i = 0; i < count; i++)
+        {
+            if (Empty(BitConverter.ToUInt32(raw, i * 4)) || Empty(BitConverter.ToUInt32(rawAnims, i * 4)))
+            {
+                WriteProcessMemory(_process, (nint)(table + (ulong)(i * 4)), raw[(donor * 4)..(donor * 4 + 4)], 4, out _);
+                WriteProcessMemory(_process, (nint)(anims + (ulong)(i * 4)), rawAnims[(donor * 4)..(donor * 4 + 4)], 4, out _);
+            }
+        }
+    }
+
     private void Run()
     {
         while (!_stop)
@@ -177,6 +216,10 @@ internal sealed partial class EnemyPin : IDisposable
             try
             {
                 CatchArmed();
+                if (_fillEffects)
+                {
+                    FillEffects();
+                }
             }
             catch (InvalidOperationException)
             {
@@ -198,7 +241,7 @@ internal sealed partial class EnemyPin : IDisposable
                 }
             }
 
-            if (pins.Length == 0 && _armed.Count == 0)
+            if (pins.Length == 0 && _armed.Count == 0 && !_fillEffects)
             {
                 Thread.Sleep(20);
             }

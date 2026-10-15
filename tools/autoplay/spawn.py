@@ -60,11 +60,25 @@ def templates() -> dict[int, bytes]:
     return {t: b for t, (b, _) in found.items()}
 
 
-def enemy_set(kind: int, slot: int, x: int, z: int, angle: int, kill_flag: int = 0xFF) -> bytes:
+# Behaviour bytes that make a spawned enemy hunt the player wherever it is placed (decomp; a template copied from its
+# own room can be a scene pose: a ceiling spider 0x02 keeps its aim bits cleared until it drops, a perched crow 0x00
+# only takes off when the player fires, a nest wasp 0x13 can't be hit while emerging, a snake 0x01 hangs above until
+# the player is under 3000; seen live 2026-10-14 in 108, none of them ever attacked).
+# Zombies too: the type-0 template is 101's lying-down zombie (0x08), which stayed on the floor in its do-nothing state
+# and never took a hit in the reactions test.
+HUNTING = {0: 0x00, 1: 0x00, 17: 0x00, 3: 0x00, 5: 0x10, 7: 0x20, 10: 0x00, 15: 0x01}
+# Facing added to "towards the player" (cos θ, −sin θ, as for the player): the mansion plant's front is the other way,
+# and since it never turns it stayed passive facing "towards" the player and engaged turned 180° (linger, 2026-10-15).
+FACING_OFFSET = {15: 2048}
+
+
+def enemy_set(kind: int, slot: int, x: int, z: int, angle: int, kill_flag: int = 0xFF,
+              behaviour: int | None = None) -> bytes:
     """kill_flag: flagEnemies index the enemy sets when it dies and that keeps it from being placed again (0xFF: none,
-    always placed)."""
+    always placed). behaviour: the record's behaviour byte (default: HUNTING, or the template's)."""
     b = bytearray(templates()[kind])
     b[3] = kill_flag
+    b[2] = behaviour if behaviour is not None else HUNTING.get(kind, b[2])
     b[4] = 1                         # always initialised
     struct.pack_into("<H", b, 0x08, angle & 0xFFFF)
     struct.pack_into("<h", b, 0x0C, x)
@@ -115,8 +129,12 @@ def spawn(kind: int, x: int | None = None, z: int | None = None, slot: int = 2, 
         yaw = int.from_bytes(ap.peek(0xBE6358, 2), "little", signed=True)
         theta = yaw * 2 * math.pi / 4096
         x, z = int(p[0] + math.cos(theta) * 2000), int(p[2] - math.sin(theta) * 2000)
-    record = enemy_set(kind, slot, x, z, ap.angle_to(x, z, p[0], p[2]), kill_flag)
+    facing = (ap.angle_to(x, z, p[0], p[2]) + FACING_OFFSET.get(kind, 0)) % 4096
+    record = enemy_set(kind, slot, x, z, facing, kill_flag)
     holding = hold
+    # The room load empties the effect sprites a foreign enemy may need within its first frames: the harness keeps
+    # them filled from here on (effect-guard; one-off effect-fill after the load came too late for a spitting spider).
+    ap.send("effect-guard on")
     # Armed before the door: the harness catches each enemy's first frames, before it can move.
     ap.send(f"enemy-pin {slot} off", *((hold_command(kind, slot, pin, position_only),) if holding else ()), *extra,
             "room-script " + script(record).hex())

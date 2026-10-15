@@ -572,11 +572,16 @@ def equip_now(item: int, quantity: int = 15, log=print) -> int:
     the item box screen is open. Closing a menu screen (box mode 2 included) runs the game's own
     menu_update_equipped_weapon, which sets the weapon in hand and loads its model and animations (decomp MainMenu,
     0x463C35 path; LoadEquippedWeaponAnimation). Returns the slot."""
-    held = [i for i, _, _ in inventory()]
+    carried = inventory()
+    held = [i for i, _, _ in carried]
     if item not in held:
         return give(item, quantity, log=log, equip=True)
+    slot = held.index(item)
+    if carried[slot][1] < quantity and item != 1:
+        # Topped up to what was asked for: tests that equip a carried gun again had emptied it (2026-10-14).
+        send(f"state-apply {INVENTORY_SLOTS + slot * 2 + 1:X}:{quantity:02X}:{~quantity & 0xFF:02X}")
     if equipped() == item:
-        return held.index(item)
+        return slot
     if not in_control():
         raise Failed(f"the player isn't free to open the item box: {state()}")
     camera = peek(0xBE9822, 1)[0]

@@ -400,6 +400,12 @@ internal sealed class Runner(Pad pad, TextWriter log) : IDisposable
                 }
 
                 break;
+            case "effect-guard":
+                // effect-guard on|off: keep the room's empty effect-sprite entries filled every millisecond (EnemyPin.cs)
+                _pin ??= new EnemyPin(Game.ProcessId);
+                _pin.GuardEffects(w[1] == "on");
+                Log($"  effect guard {w[1]}");
+                break;
             case "effect-fill":
                 using (var block = new StateBlock(Game.ProcessId))
                 {
