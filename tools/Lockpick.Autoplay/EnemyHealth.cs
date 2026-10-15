@@ -245,6 +245,62 @@ internal sealed partial class EnemyHealth : IDisposable
         }
     }
 
+    /// <summary>
+    /// Starts slot <paramref name="slot"/>'s enemy afresh at (<paramref name="x"/>, <paramref name="z"/>) facing
+    /// <paramref name="angle"/>, the way the room script's enemy_set does (decomp cmd_enemy_set 0x4617D0): position (the
+    /// matrix ints +0x34/+0x3C and the shorts +0x6C/+0x70), yaw +0x74, behaviour flags +0x02, then AI state +0x84,
+    /// ignore-player +0x85, action +0x86/+0x87 and hit state +0x8A back to 0 so its own init runs on the next frame.
+    /// The slot must hold an enemy whose model the room loaded (a dormant scene enemy, or one to move).
+    /// </summary>
+    public void Wake(int slot, int x, int z, short angle, byte behavior)
+    {
+        if (slot is < 0 or >= SlotCount)
+        {
+            throw new ArgumentOutOfRangeException(nameof(slot), "0–29");
+        }
+
+        if (x is < -32767 or > 32767 || z is < -32767 or > 32767)
+        {
+            throw new ArgumentOutOfRangeException(nameof(x), "room coordinates are within ±32767");
+        }
+
+        var baseAddress = Slots + (ulong)(slot * SlotSize);
+        if (ProcessSuspender.Suspend(_processId) is { } error)
+        {
+            throw new InvalidOperationException("suspend failed: " + error);
+        }
+
+        try
+        {
+            var flags = new byte[1];
+            if (!ReadProcessMemory(_process, (nint)baseAddress, flags, 1, out _) || (flags[0] & 1) == 0)
+            {
+                throw new InvalidOperationException($"enemy slot {slot} is not active (the room loaded no enemy there)");
+            }
+
+            (ulong Offset, byte[] Bytes)[] writes =
+            [
+                (0x34, BitConverter.GetBytes(x)), (0x3C, BitConverter.GetBytes(z)),
+                (0x6C, BitConverter.GetBytes((short)x)), (0x70, BitConverter.GetBytes((short)z)),
+                (0x74, BitConverter.GetBytes(angle)), (0x02, [behavior]),
+                (0x84, [0, 0, 0, 0]), (0x8A, [0]),
+            ];
+            foreach (var (offset, bytes) in writes)
+            {
+                var back = new byte[bytes.Length];
+                if (!WriteProcessMemory(_process, (nint)(baseAddress + offset), bytes, (nuint)bytes.Length, out var written) || written != (nuint)bytes.Length
+                    || !ReadProcessMemory(_process, (nint)(baseAddress + offset), back, (nuint)back.Length, out _) || !back.AsSpan().SequenceEqual(bytes))
+                {
+                    throw new InvalidOperationException($"writing enemy slot {slot} +0x{offset:X} failed or did not read back");
+                }
+            }
+        }
+        finally
+        {
+            ProcessSuspender.Resume(_processId);
+        }
+    }
+
     public void Dispose() => _process.Dispose();
 
     [LibraryImport("kernel32.dll", SetLastError = true)]

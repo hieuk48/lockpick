@@ -95,7 +95,9 @@ conditions), `state`, `peek addr len`, `calibrate`, `shot file.png [width]`, `lo
   `new-game chris|jill [s] [--skip-opening file] [--dump]` (fresh boot to a new game with no presses, right after
   `launch`: `NewGame.cs`, MEMORY_MAP "Boot and new game"); `scene-stop` (stop a playing scene: event slots idle,
   message closed, cutscene flags off); `state-apply addr:set:clear …` (set/clear bits of saved-state bytes in one
-  suspension).
+  suspension); `enemy-wake <slot> <x> <z> [facing] [behaviour hex]` (start a loaded enemy afresh at a spot, as the
+  room script's `enemy_set` does: position, facing, behaviour flags, AI state 0 — e.g. Jill's dining room keeps a
+  dormant zombie in slot 1 for a later scene; woken by the door pillar it walks to the player).
 - **Cutscene skips** (`scenes.py`): a scene's end is recorded once by watching it — the bits it changes in the saved
   block (`0xBE9620`–`0xBE9E1F`, what a save holds) and where it leaves the player — then applied instead of playing
   it, so the game is left as if the scene had been watched. `scenes.py record-opening|check-opening jill|chris`;
