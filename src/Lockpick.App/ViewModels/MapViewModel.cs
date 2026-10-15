@@ -193,8 +193,7 @@ public sealed partial class MapViewModel : PageViewModel
                 .ToDictionary(t => t, t => _services.Adapter.RoomName(t) is { } n ? $"{t} {n}" : t);
             Details = map is null
                 ? string.Empty
-                : string.Create(CultureInfo.InvariantCulture,
-                    $"{map.Doors.Count} doors · {map.Items.Count} item spots · {map.Cameras.Count} cameras · from your install's room files");
+                : $"{Count(map.Doors.Count, "door")} · {Count(map.Items.Count, "item spot")} · {Count(map.Cameras.Count, "camera")} · from your install's room files";
         }
 
         var name = _services.Adapter.RoomName(room.Id);
@@ -250,4 +249,7 @@ public sealed partial class MapViewModel : PageViewModel
             HasPlayer = false;
         }
     }
+
+    private static string Count(int n, string noun) =>
+        string.Create(CultureInfo.InvariantCulture, $"{n} {noun}{(n == 1 ? string.Empty : "s")}");
 }

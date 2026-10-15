@@ -45,11 +45,15 @@
   <Grid x:Name="Shell" RowDefinitions="Auto,*" c:Responsive.CompactBelow="760">
     <!-- Header -->
     <Border Grid.Row="0" Classes="header" Background="{StaticResource LpPanelBrush}" BorderBrush="{StaticResource LpBorderBrush}" BorderThickness="0,0,0,1">
-      <DockPanel>
-        <Border DockPanel.Dock="Right" VerticalAlignment="Center" CornerRadius="2" Padding="10,4"
+      <!-- The brand keeps its width; the status badge takes what is left and shortens itself in a narrow window. -->
+      <Grid ColumnDefinitions="Auto,*" ColumnSpacing="12">
+        <Border Grid.Column="1" HorizontalAlignment="Right" VerticalAlignment="Center" CornerRadius="2" Padding="10,4"
                 Background="{StaticResource LpPanelAltBrush}"
                 Classes.connected="{Binding IsConnected}" Classes.unsupported="{Binding IsUnsupported}" Classes.replay="{Binding IsReplaying}">
           <Border.Styles>
+            <!-- Defaults as styles, not local values: a local Foreground/Fill would beat the state styles below. -->
+            <Style Selector="TextBlock"><Setter Property="Foreground" Value="{StaticResource LpMutedBrush}" /></Style>
+            <Style Selector="Ellipse"><Setter Property="Fill" Value="{StaticResource LpMutedBrush}" /></Style>
             <Style Selector="Border.connected"><Setter Property="Background" Value="{StaticResource LpGreenDimBrush}" /></Style>
             <Style Selector="Border.connected TextBlock"><Setter Property="Foreground" Value="{StaticResource LpGreenBrush}" /></Style>
             <Style Selector="Border.connected Ellipse"><Setter Property="Fill" Value="{StaticResource LpGreenBrush}" /></Style>
@@ -60,10 +64,11 @@
             <Style Selector="Border.replay TextBlock"><Setter Property="Foreground" Value="{StaticResource LpAmberBrush}" /></Style>
             <Style Selector="Border.replay Ellipse"><Setter Property="Fill" Value="{StaticResource LpAmberBrush}" /></Style>
           </Border.Styles>
-          <StackPanel Orientation="Horizontal" Spacing="8">
-            <Ellipse Width="8" Height="8" Fill="{StaticResource LpMutedBrush}" VerticalAlignment="Center" />
-            <TextBlock Text="{Binding HeaderStatus}" FontSize="11" FontWeight="SemiBold" LetterSpacing="1.4" Foreground="{StaticResource LpMutedBrush}" />
-          </StackPanel>
+          <DockPanel>
+            <Ellipse DockPanel.Dock="Left" Width="8" Height="8" Margin="0,0,8,0" VerticalAlignment="Center" />
+            <TextBlock Text="{Binding HeaderStatus}" FontSize="11" FontWeight="SemiBold" LetterSpacing="1.4"
+                       TextTrimming="CharacterEllipsis" ToolTip.Tip="{Binding HeaderStatus}" />
+          </DockPanel>
         </Border>
         <StackPanel Orientation="Horizontal" Spacing="14" VerticalAlignment="Center">
           <StackPanel Orientation="Horizontal" Spacing="10">
@@ -72,7 +77,7 @@
           </StackPanel>
           <TextBlock Classes="tagline" Text="Master of Unlocking." FontFamily="{StaticResource LpWordmark}" Foreground="{StaticResource LpMutedBrush}" VerticalAlignment="Center" />
         </StackPanel>
-      </DockPanel>
+      </Grid>
     </Border>
 
     <!-- First-time setup replaces the main UI until completed. -->

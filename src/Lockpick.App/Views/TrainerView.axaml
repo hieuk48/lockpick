@@ -83,11 +83,17 @@
           </StackPanel>
           <TextBlock TextWrapping="Wrap" Foreground="{StaticResource LpMutedBrush}"
                      Text="Change the count of what you carry (a weapon's loaded rounds, ammo, ink ribbons). New items go into the item box: take them out at any item box and the game loads them like a pickup." />
+          <!-- Rows share one width (at most 520) so the counts line up; the name wraps in a narrow window and the
+               count and Set stay on its line. -->
+          <Grid>
+            <Grid.ColumnDefinitions>
+              <ColumnDefinition Width="*" MaxWidth="520" />
+              <ColumnDefinition Width="Auto" />
+            </Grid.ColumnDefinitions>
           <ItemsControl ItemsSource="{Binding Slots}">
             <ItemsControl.ItemTemplate>
               <DataTemplate x:DataType="vm:TrainerSlotRow">
-                <!-- The name wraps; the count and Set stay on its line, even in a narrow window. -->
-                <Grid ColumnDefinitions="*,Auto,Auto" ColumnSpacing="8" Margin="0,2" MaxWidth="520" HorizontalAlignment="Left">
+                <Grid ColumnDefinitions="*,Auto,Auto" ColumnSpacing="8" Margin="0,2">
                   <TextBlock Text="{Binding Label}" VerticalAlignment="Center" TextWrapping="Wrap" />
                   <NumericUpDown Grid.Column="1" Value="{Binding Target}" Minimum="0" Maximum="255" Increment="1" FormatString="0" Width="120"
                                  IsVisible="{Binding Editable}" AutomationProperties.Name="{Binding Name, StringFormat='{}{0} count'}" />
@@ -97,6 +103,7 @@
               </DataTemplate>
             </ItemsControl.ItemTemplate>
           </ItemsControl>
+          </Grid>
           <WrapPanel ItemSpacing="8" LineSpacing="8">
             <TextBlock Classes="label" Text="Put in the item box" VerticalAlignment="Center" />
             <ComboBox ItemsSource="{Binding GivableItems}" SelectedItem="{Binding GiveItem}" MinWidth="200"

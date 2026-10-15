@@ -36,6 +36,12 @@ All notable changes to this project are documented here. The format follows
   page keeps the map as large as the window allows; its legend moves beside the map on wide windows and behind a
   button on small ones.
 
+### Fixed
+- The header's status badge is green when connected, red for an unsupported build and amber in replay (it was always
+  grey), and shortens itself instead of running into the wordmark in a narrow window.
+- Trainer inventory rows line up, and keep the count and Set on the item's line in a narrow window.
+- The map's room line says "1 door" / "1 camera" instead of "1 doors".
+
 ## [0.1.6] - 2026-10-15
 
 Read-only pages for what you carry, where you are and how far you've got, and capture markers from the controller.

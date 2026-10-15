@@ -14,6 +14,32 @@ speedrun/challenge suite.
 > **Status: 0.1.x (foundation).** Detection, fingerprinting, safe read-only attachment and live state
 > are working and validated against the real GOG game (Chris and Jill games). See [docs/ROADMAP.md](docs/ROADMAP.md).
 
+## Screenshots
+
+<p align="center">
+  <img src="docs/screenshots/challenges.png" alt="Challenges tab: a no-damage attempt running, still clean" width="49%">
+  <img src="docs/screenshots/trainer.png" alt="Trainer tab with cheats on: health, infinite ammo, inventory counts and the item box" width="49%">
+</p>
+<p align="center"><em>Challenges, step by step (left) and cheats in the Trainer, every change checked and logged (right).</em></p>
+
+<p align="center">
+  <img src="docs/screenshots/progress.png" alt="Progress: items, documents, rooms and enemies per area, read from the game's flags" width="49%">
+  <img src="docs/screenshots/map.png" alt="Map: the current room from the install's room files, with doors, the item box, the typewriter and the player" width="49%">
+</p>
+<p align="center"><em>Progress per area from the game's own flags (left) and the live room map (right).</em></p>
+
+<p align="center">
+  <img src="docs/screenshots/items.png" alt="Items: what you carry and what is in the item box" width="49%">
+  <img src="docs/screenshots/dashboard.png" alt="Dashboard: connection, verified build fingerprint, live game state and event log" width="49%">
+</p>
+<p align="center"><em>Inventory and item box (left) and the dashboard with the verified build and live state (right).</em></p>
+
+<p align="center">
+  <img src="docs/screenshots/progress-wide.png" alt="Progress in a wide window: four columns of areas and the story so far" width="78%">
+  <img src="docs/screenshots/map-narrow.png" alt="Map in a narrow window: the map first, the legend under it" width="19%">
+</p>
+<p align="center"><em>Every page adapts to the window: wide and ultrawide (left), narrow or portrait (right).</em></p>
+
 ## What works in 0.1
 
 - Finds the running game and locates the GOG install via the registry.
@@ -101,6 +127,7 @@ docs/                          architecture, roadmap, research, compatibility, m
 - [Development guide](docs/DEVELOPMENT.md) — build, test, verify addresses, release
 - [Architecture and decisions](docs/ARCHITECTURE.md)
 - [Memory map](docs/MEMORY_MAP.md) · [Research](docs/RESEARCH.md) · [Compatibility](docs/COMPATIBILITY.md) · [Performance](docs/PERFORMANCE.md)
+- [Display modes, capture and overlays](docs/DISPLAY.md) — how the game's window behaves in every mode (for overlays and OBS)
 
 ## Safety and integrity
 
