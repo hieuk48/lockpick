@@ -15,7 +15,7 @@ Status legend: ✅ done and verified · 🟡 done, partially verified · ⬜ not
 | 0.1.4 | Captures record the game-state memory; enemy and flag detection; grouped reads | ✅ released 2026-10-13 |
 | 0.1.5 | Research tooling: capture markers, ask mode, room index, capture timeline, subtitles pack | ✅ released 2026-10-13 |
 | 0.1.6 | Progress tracker (read-only): items left, documents, maps, rooms explored, kills, story progress | 🟡 built; needs the live check |
-| 0.2.0 | Core trainer functionality and memory modification | ⬜ |
+| 0.2.0 | Core trainer functionality and memory modification | ⬜ next — research done (bounties B101–B114) |
 | 0.3.0 | Real-time overlay and customizable HUD | ⬜ |
 | 0.4.0 | Room, camera, item and enemy database | ⬜ |
 | 0.5.0 | Object highlighting and ESP | ⬜ |
@@ -61,13 +61,14 @@ character id 1, max HP 96 and the Jill RDT bit.
 - [x] Live-verify Jill (character id 1, max HP 96, Jill RDT bit).
 - [x] Live-verify the Rebecca partner swap (character id 3) — 2026-10-15, B007 (from a Chris save at Plant 42).
 - [x] Live-verify loading a save from the title screen (session rule holds; see RESEARCH.md §7).
-- [ ] Push to GitHub so `release.yml` publishes the tagged build.
+- [x] Push to GitHub so `release.yml` publishes the tagged build (0.1.0–0.1.5 published by `release.yml`).
+- [x] All 0.1.x capture bounties done (B001–B008; the last, Rebecca, 2026-10-15).
 
 ---
 
 ## 0.1.5 — Research tooling (released)
 
-Built and used in live sessions 6–8 (2026-10-13); see CHANGELOG `[Unreleased]`.
+Built and used in live sessions 6–8 (2026-10-13); see CHANGELOG `[0.1.5]`.
 
 - Capture markers: Ctrl+Shift+M (configurable) or the Debug page; notes saved in the capture.
 - Ask mode: pauses the game and asks about events Lockpick can't explain; predicts rooms, maps, documents,
@@ -99,6 +100,8 @@ Acceptance criteria:
 ## 0.2.0 — Core trainer
 
 Goal: deliberate, validated memory modification in Trainer Mode, with Challenge Mode enforcing no writes.
+
+Research status (2026-10-15): every 0.2.0 capture bounty is done (B101–B114: inventory slots and quantities, the held count, ammo per shot and reload, the item box, the equipped slot, HP and max HP, healing and poison). What is left is building and live-verifying the write side in the app (issues #8–#12, #14, #16, #17, #37).
 
 Acceptance criteria:
 - Separate write-capable handle requested only when Trainer Mode is enabled (`PROCESS_VM_WRITE | PROCESS_VM_OPERATION`); Challenge Mode never opens one.
