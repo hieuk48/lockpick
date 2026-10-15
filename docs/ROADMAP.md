@@ -46,7 +46,7 @@ Goal: identify Resident Evil 1 (GOG), attach safely and read-only, expose live v
 | 3 | Game detection works | ✅ | Running `ResidentEvil.exe` found by name and full path; GOG install located via registry |
 | 4 | Executable fingerprinting works | ✅ | SHA-256 + PE header of the real GOG exe matched profile `re1-gog-usa-hotfix4` |
 | 5 | Process attachment is safe | ✅ | Read-only handle (`PROCESS_VM_READ`, query, synchronize); in-memory PE header and 9 code anchors verified before any read; reads confined to the image range |
-| 6 | Verified memory values are readable and correctly displayed | ✅ | Stage, room, camera, HP, max HP, character, timer, position, main-menu flag observed live in Chris and Jill games (Jill: id 1, max HP 96, Jill RDT bit). Rebecca id remains static-only (documented). |
+| 6 | Verified memory values are readable and correctly displayed | ✅ | Stage, room, camera, HP, max HP, character, timer, position, main-menu flag observed live in Chris and Jill games (Jill: id 1, max HP 96, Jill RDT bit). Rebecca live 2026-10-15 (B007: id 3, max HP 88, inventory pointer 0xBE9950, shown as Rebecca 88/88 by the probe). |
 | 7 | Game-state changes update the interface | ✅ | Live: camera cuts, door transitions, damage, death, return to title, restart |
 | 8 | The application safely handles game termination | ✅ | Live: game closed → `Detached: Game process exited`; relaunch → re-attached automatically |
 | 9 | Unsupported builds are rejected | ✅ | Hash mismatch never opens the process (unit tests); elevated game reports a clear access message (observed live) |
@@ -59,7 +59,7 @@ character id 1, max HP 96 and the Jill RDT bit.
 ### Follow-ups (0.1.x, non-blocking)
 
 - [x] Live-verify Jill (character id 1, max HP 96, Jill RDT bit).
-- [ ] Live-verify the Rebecca partner swap (character id 3).
+- [x] Live-verify the Rebecca partner swap (character id 3) — 2026-10-15, B007 (from a Chris save at Plant 42).
 - [x] Live-verify loading a save from the title screen (session rule holds; see RESEARCH.md §7).
 - [ ] Push to GitHub so `release.yml` publishes the tagged build.
 
