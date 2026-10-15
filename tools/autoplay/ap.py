@@ -176,46 +176,29 @@ def open_title_menu(timeout: float = 90) -> None:
 
 
 def new_game(character: str = "chris", fast_ms: int = 4) -> float:
-    """From a fresh launch to player control in a new game; returns seconds taken. Reads the game's own title and
-    character-select state instead of guessing from screenshots, so presses only land where they should. Never
-    touches save files."""
+    """From a fresh launch to player control in a new game, with no presses; returns seconds taken. The harness hands
+    the title task straight to game_start as the character (NewGame.cs: the path the attract demo takes), the opening
+    plays by itself (fast-forwarded), and control is read from the game's state: both openings hand over in the
+    dining room (105), and the main-hall scene has calm gaps that look like control, so the room is part of the test.
+    Never touches save files."""
     import time
     t = time.time()
-    open_title_menu()
-    if not wait_for(lambda: title()[0] == 1, 10, press="Up", every=0.8):
-        raise Failed(f"cursor never reached NEW GAME (title state {title()})")
-    send("wait 300", "press A")
-    # Character select: wait until it takes input, then move to the right card.
-    want = CHARACTERS[character]
-    if not wait_for(lambda: peek(SELECT_STATE, 1)[0] == 1, 40):
-        raise Failed(f"character select never became ready (state {peek(SELECT_STATE, 1)[0]})")
-    for _ in range(3):
-        if peek(SELECT_CHARACTER, 1)[0] == want:
-            break
-        send("press Right")
-        wait_for(lambda: peek(SELECT_STATE, 1)[0] == 1, 10)
-    if peek(SELECT_CHARACTER, 1)[0] != want:
-        raise Failed(f"could not select {character}")
-    send("press A")
-    # Past the card there is no menu left to misfire on: press through the opening text and movie.
-    for _ in range(240):
-        if state().get("gameplay") == "True":
-            break
-        send("press A", "wait 500")
-    # The opening has calm gaps between its scenes (2026-10-14: a gap passed for control at 33 s, then the main-hall
-    # scene resumed), so control is confirmed by pushing the player, not only by the flags.
-    end = time.time() + 300
-    while time.time() < end:
-        send("wait 1500")
-        if not settle(120, fast_ms):
-            continue
-        send("wait 2500")
-        # Calm and still isn't proof (the opening idles before its main-hall scene): the player must also move when
-        # pushed — controllable() — and still have no busy flags.
-        if in_control() and controllable() and state().get("char", "").lower() == character:
-            return time.time() - t
-        send("press A 120")  # an idle scene or a message may be waiting for a button
-    raise Failed(f"no control after the intro: {state()}")
+    send(f"new-game {character} 120")
+    if fast_ms:
+        send(f"speed {fast_ms}")
+    try:
+        end, since = time.time() + 300, None
+        while time.time() < end:
+            ready = (state().get("room") == "105" and in_control()
+                     and state().get("char", "").lower() == character)
+            since = (since or time.time()) if ready else None
+            if since and time.time() - since >= 1.5:
+                return time.time() - t
+            send("wait 250")
+        raise Failed(f"no control after the opening: {state()} flags 0x{flags():08X}")
+    finally:
+        if fast_ms:
+            send("speed normal", check=False)
 
 
 def peek(address: int, length: int) -> bytes:

@@ -22,6 +22,7 @@ namespace Lockpick.Autoplay;
 ///   give item [qty]              put an item in the first empty inventory slot (default qty 1; InventorySlots.cs)
 ///   give-box item [qty] [--front] put an item in the first empty item-box entry (its icon then shows right);
 ///                                --front: in entry 0, where the box cursor starts
+///   new-game chris|jill [s]      fresh boot to a new game, no presses: hands the title task to game_start (NewGame.cs)
 ///   open-box                     open the item box screen wherever the player is (only when they're free)
 ///   box-cursor slot              move the box screen's inventory cursor to a slot
 ///   heal                         HP back to the maximum (alive players only)
@@ -247,6 +248,14 @@ internal sealed class Runner(Pad pad, TextWriter log) : IDisposable
                 var boxArgs = w.Where(a => a != "--front").ToArray();
                 var entry = _inventory.GiveToBox(boxItem, boxArgs.Length > 2 ? int.Parse(boxArgs[2], CultureInfo.InvariantCulture) : 1, front);
                 Log($"  item {boxItem} in item-box entry {entry}");
+                break;
+            case "new-game":
+                using (var newGame = new NewGame(Game.ProcessId))
+                {
+                    var (title, room, restored) = newGame.Start(w[1], TimeSpan.FromSeconds(w.Length > 2 ? int.Parse(w[2], CultureInfo.InvariantCulture) : 120));
+                    Log($"  title at {title.TotalSeconds:F1} s, handed to game_start as {w[1]}; first room at {room.TotalSeconds:F1} s (room variant put back {restored}x)");
+                }
+
                 break;
             case "open-box":
                 _inventory ??= new InventorySlots(Game.ProcessId);

@@ -289,6 +289,29 @@ are entered with door records instead.
 | `0xBE98BC` (4 B, MSB-first) | Items examined: keys, cranks, the herbicide and the books show a generic name ("MANSION KEY", "CRANK", "CHEMICAL", "RED BOOK"…) until examined; flag index = byte at `0x4BD81D + id·4 + 2` (none when bit 7 set), generic names at `0x4BF260[index]` | decomp + live: CHECK, turn the Shield key until "A carving of a shield." → bit 5 set, name SHIELD KEY |
 | `0xD213A0` | Item-use flags (bank 9): a room's "flag set" action raises the bit (item − 0x1B) while the player stands at the spot; USE checks it | decomp + room scripts (105 fireplace: items 31/32) |
 
+## Boot and new game (static + live, 2026-10-14 — dev harness only)
+
+The game runs its screens as cooperative tasks (decomp TaskScheduler). A screen hands over with `Task_chain`
+(`0x420230`): the next entry goes to `g_TasksEIP[id]` and the task's state to START; the scheduler enters it fresh.
+
+| Address | Meaning | Evidence |
+|---|---|---|
+| `0xD91A80` (3 × u32) / `0xD91A70` | Task entry points / saved stacks; task 0 is the main one (`0x480710` `game_start` in a game) | live read in a game; code bytes at `0x480710` match the decomp |
+| `0xD1FDE4` (3 × 0x7C) | Task blocks: i16 state at +0 (0 dead, 1 sleeping, 2 START), i16 sleep counter at +2 | decomp + live |
+| `0xD91A7C` (u32) | Task being run by the scheduler (3 = none: between passes) | live |
+| `0x442BB0` / `0x430470` / `0x492340` / `0x420060` / `0x480710` | `logos_state` / `title_state` / character select / intro (sounds_reset, intro movie, then `game_start`) / `game_start` | disassembly of this build |
+| `0xBE984B` (u8) | Character for a new game (0 Chris, 1 Jill), written by the character card; `InitializeGame` copies it to the player id, then overwrites it from `bio_card.dat` | decomp + live |
+| `0xD22777` (u8) | Title menu shown: the title sets it on entry (`0x4304E8`), its exit clears it (`0x430E10`) | disassembly + live |
+| `0xD1FDC4` | Room-music table pointer, set to `0x4D0C30` by `sounds_reset` (`0x47EB70` → `0x47EA10`); null until the title's start runs it, and `update_room_bgm` (`0x47F6B7`) crashes on null | disassembly + two live crashes |
+
+The title's start runs `sounds_reset`, loads sound bank 12, sets up the screen and sleeps one frame (`0x43056C`). When
+the title ends with no input the game chains from it straight to `game_start` (the attract demo). The dev harness
+(`NewGame.cs`) does the same once task 0 is in `title_state` and asleep, between scheduler passes, with the game
+suspended: character byte, the Jill room-variant bit `0x800000`, title-menu byte 0, `game_start`, START. With the
+attract bit clear, `InitializeGame` builds a real new game (HP, starting items, clock 0) and the opening plays by
+itself (voiced lines close on their own) until control in the dining room (105). Handing over at the title's START,
+before its setup, crashed in `update_room_bgm` both times.
+
 ## Player status, healing, combat (decomp facts checked live, 2026-10-14 — dev test suite)
 
 | Address / rule | What | Evidence |

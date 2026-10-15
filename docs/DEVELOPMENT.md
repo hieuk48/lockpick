@@ -91,7 +91,9 @@ conditions), `state`, `peek addr len`, `calibrate`, `shot file.png [width]`, `lo
   (empty spare inventory slots); `give-box <item> [qty] [--front]` (into the first empty item-box entry, or entry 0
   where the box cursor starts); `open-box` (open the item box screen in any room: the game opens a menu by itself
   when a mode bit of the state flags' byte 1 is pending, `0x1000` = item box); `box-cursor <slot>`; raw
-  `give <item> [qty]` (writes the slot and held count, but the grid icon stays whatever was loaded for that slot).
+  `give <item> [qty]` (writes the slot and held count, but the grid icon stays whatever was loaded for that slot);
+  `new-game chris|jill [s]` (fresh boot to a new game with no presses, right after `launch`: `NewGame.cs`, MEMORY_MAP
+  "Boot and new game").
 - **Giving items: use `ap.give(item, qty)`**, not raw `give`. It puts the item in box entry 0, opens the box screen,
   points the cursor at the first empty slot and swaps with A, A, then closes with X, checking the screen state before
   each press. The game's own swap loads the slot's icon, so the item looks right in the grid (verified live for Jill
@@ -121,7 +123,9 @@ look Which menu is open, and which entry is highlighted?
 ### Python runners (`tools/autoplay`)
 
 - `ap.py` — client: `serve()`, `send()`, `look()`, `state()`, `screen()` (vision-classified: title, newload, card,
-  loadmenu, …), `new_game("jill"|"chris")` (title → NEW GAME → character card → intro fast-forwarded → control),
+  loadmenu, …), `new_game("jill"|"chris")` (fresh boot → new game with **no presses**: the harness's `new-game`
+  hands the title task to `game_start` as the character, the opening plays by itself fast-forwarded, and control is
+  read from state — room 105, no busy flags or message, held 1.5 s; ~56 s Jill, ~42 s Chris from launch),
   `in_control()` / `settle()` (state-flag busy bits; fast-forwards cutscenes until control returns).
 - `doors.py` — door table from the player's install (every door's 24-byte record); `record_to(table, "105",
   "jill")` picks a real door into a room.
