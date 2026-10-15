@@ -228,6 +228,12 @@ internal sealed class Runner(Pad pad, TextWriter log) : IDisposable
                     w.Length > 5 ? byte.Parse(w[5], NumberStyles.HexNumber, CultureInfo.InvariantCulture) : (byte)0);
                 Log($"  enemy {w[1]} woken at {w[2]}, {w[3]}");
                 break;
+            case "enemy-state":
+                // enemy-state <slot> <state>: zombies 4 = no action (stands still), 1 = back to its behaviour
+                _enemyHealth ??= new EnemyHealth(Game.ProcessId);
+                var stateWas = _enemyHealth.SetState(int.Parse(w[1], CultureInfo.InvariantCulture), byte.Parse(w[2], CultureInfo.InvariantCulture));
+                Log($"  enemy {w[1]} state {stateWas} -> {w[2]}");
+                break;
             case "enemy-hp":
                 _enemyHealth ??= new EnemyHealth(Game.ProcessId);
                 var hpWas = _enemyHealth.Set(int.Parse(w[1], CultureInfo.InvariantCulture), int.Parse(w[2], CultureInfo.InvariantCulture));

@@ -159,6 +159,18 @@ internal sealed partial class EnemyHealth : IDisposable
     /// 0, and with the AI paused nothing clears it after a hit.</summary>
     public void ClearHit(int slot) => WriteByte(slot, 0x8A, 0);
 
+    /// <summary>
+    /// Sets the AI state (+0x84), the index into the type's state table; returns the old one. For zombies state 4 is
+    /// zombie_no_action (a bare RET, decomp zombie_states_table 0x4BB2C8): the zombie stays drawn and hittable but its
+    /// AI does nothing, so it stands still. State 1 hands it back to its behaviour.
+    /// </summary>
+    public byte SetState(int slot, byte state)
+    {
+        var was = ReadByte(slot, 0x84);
+        WriteByte(slot, 0x84, state);
+        return was;
+    }
+
     private byte ReadByte(int slot, int offset)
     {
         if (slot is < 0 or >= SlotCount)

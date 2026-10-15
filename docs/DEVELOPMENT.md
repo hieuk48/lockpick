@@ -97,7 +97,9 @@ conditions), `state`, `peek addr len`, `calibrate`, `shot file.png [width]`, `lo
   message closed, cutscene flags off); `state-apply addr:set:clear …` (set/clear bits of saved-state bytes in one
   suspension); `enemy-wake <slot> <x> <z> [facing] [behaviour hex]` (start a loaded enemy afresh at a spot, as the
   room script's `enemy_set` does: position, facing, behaviour flags, AI state 0 — e.g. Jill's dining room keeps a
-  dormant zombie in slot 1 for a later scene; woken by the door pillar it walks to the player).
+  dormant zombie in slot 1 for a later scene; woken by the door pillar it walks to the player); `enemy-state <slot>
+  <state>` (zombies: 4 = `zombie_no_action`, a bare RET — stands still, still drawn and hittable; 1 = back to its
+  behaviour). `freeze-enemies` (enemy count 0) also stops drawing them.
 - **Cutscene skips** (`scenes.py`): a scene's end is recorded once by watching it — the bits it changes in the saved
   block (`0xBE9620`–`0xBE9E1F`, what a save holds) and where it leaves the player — then applied instead of playing
   it, so the game is left as if the scene had been watched. `scenes.py record-opening|check-opening jill|chris`;
