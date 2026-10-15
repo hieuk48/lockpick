@@ -47,4 +47,5 @@ public sealed record ApiHost(
     IGameAdapter Adapter,
     TrainerService? Trainer,
     ICaptureControl? Capture,
-    string AppVersion);
+    string AppVersion,
+    Lockpick.Core.Challenges.ChallengeService? Challenges = null);

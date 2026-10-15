@@ -7,7 +7,7 @@ namespace Lockpick.GameAdapter.RE1;
 /// RE1's trainer features as profile fields: HP (bounded by max HP) and, for infinite ammo, the quantity byte of the
 /// equipped slot in the inventory the game is using (Chris's and Jill's at 0xBE9944, Rebecca's at 0xBE9950).
 /// </summary>
-internal sealed class Re1Trainer(Func<int, string?> itemName) : IGameTrainer
+internal sealed class Re1Trainer(Func<int, string?> itemName) : IGameTrainer, Lockpick.Core.Challenges.IChallengeRules
 {
     private const int ItemBoxEntries = 48;
     private const int LastItem = 0x4D;      // radio; 0x4E and up are documents and maps
@@ -129,6 +129,40 @@ internal sealed class Re1Trainer(Func<int, string?> itemName) : IGameTrainer
         }
 
         return new FieldWrite($"box{free}", itemId | (quantity << 8));
+    }
+
+    /// <summary>
+    /// A shot: the same gun stays equipped in the same slot and its loaded rounds drop (the knife has none; a reload or a
+    /// bazooka round change raises the count or changes the item, so neither reads as a shot).
+    /// </summary>
+    public string? NonMeleeShot(GameSnapshot previous, GameSnapshot current)
+    {
+        if (Equipped(previous) is not { } before || Equipped(current) is not { } now
+            || before.Slot != now.Slot || before.ItemId != now.ItemId || now.ItemId <= Knife || now.ItemId > LastWeapon)
+        {
+            return null;
+        }
+
+        return now.Rounds < before.Rounds ? itemName(now.ItemId) ?? $"weapon {now.ItemId}" : null;
+    }
+
+    private static (int Slot, int ItemId, int Rounds)? Equipped(GameSnapshot snapshot)
+    {
+        if (snapshot.Inventory is not { HasValue: true, Value: { } held } || Raw(snapshot, "equippedSlot") is not { } equipped || equipped < 1)
+        {
+            return null;
+        }
+
+        var slot = (int)equipped - 1;
+        if (held.FirstOrDefault(h => h.Slot == slot) is not { } item)
+        {
+            return null;
+        }
+
+        // The slot's quantity byte is read every poll; the item list less often.
+        var rebecca = Raw(snapshot, Re1Session.Fields.Character) is { } c && (c & 3) == Rebecca;
+        var rounds = Raw(snapshot, $"{(rebecca ? "rebInv" : "inv")}{slot}Qty") is { } q ? (int)q : item.Quantity;
+        return (slot, item.ItemId, rounds);
     }
 
     private static long? Raw(GameSnapshot snapshot, string field) =>

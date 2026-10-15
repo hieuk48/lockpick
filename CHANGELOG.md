@@ -7,11 +7,15 @@ All notable changes to this project are documented here. The format follows
 ## [Unreleased]
 
 ### Added
-- Trainer page. Lockpick still starts read-only every time; choose **Trainer** to allow changes or **Challenge** for
-  a run that Lockpick can't touch. In Trainer Mode: set HP, fill it, or lock it (put back whenever the game lowers it),
-  and infinite ammo (the equipped weapon's rounds never go down; a reload raises the count). Every change is checked
-  against the game's limits (HP up to max HP), read back and logged with the value before and after
-  (`trainer/actions.jsonl`); a run the trainer changed is marked as such until the next new game or load.
+- **Challenges** tab, step by step: choose a challenge (Speedrun, No damage, Knife only), add rules to it (a no-damage
+  knife run…), start it. While it runs Lockpick can't change your game. The tab shows whether the attempt is still
+  clean or why it failed (a hit, a shot from anything but the knife, cheats switched on) with the in-game time; a new
+  game or a loaded save starts a new attempt. Overlays for a failed challenge come in 0.3.0.
+- **Trainer** tab for cheats. Lockpick starts with cheats off every time and keeps them off while a challenge runs.
+  With cheats on: set HP, fill it, or lock it (put back whenever the game lowers it), and infinite ammo (the equipped
+  weapon's rounds never go down; a reload raises the count). Every change is checked against the game's limits (HP up
+  to max HP), read back and logged with the value before and after (`trainer/actions.jsonl`); a run the trainer
+  changed is marked as such until the next new game or load.
 - Inventory editor (Trainer page, Trainer Mode): change the count of what you carry (a weapon's loaded rounds, ammo,
   ink ribbons), and put any item into the item box — take it out at a box and the game loads it like a pickup.
 - Trainer hotkeys (Settings → Trainer hotkeys, off until you pick keys): fill HP, lock / unlock HP, infinite ammo

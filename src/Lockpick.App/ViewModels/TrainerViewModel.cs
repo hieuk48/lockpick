@@ -52,6 +52,7 @@ public sealed partial class TrainerViewModel : PageViewModel
         }
 
         state.PropertyChanged += OnStateChanged;
+        services.Challenges.StatusChanged += (_, _) => Dispatcher.UIThread.Post(Sync);
         Sync();
     }
 
@@ -169,14 +170,25 @@ public sealed partial class TrainerViewModel : PageViewModel
 
     public bool IsChallenge => Mode == TrainerMode.Challenge;
 
-    [RelayCommand]
-    private void UseReadOnly() => _trainer?.SetMode(TrainerMode.ReadOnly);
+    /// <summary>Cheats on (Trainer Mode, write access) or off (read-only). Not while a challenge runs.</summary>
+    [RelayCommand(CanExecute = nameof(CanToggleCheats))]
+    private void ToggleCheats()
+    {
+        if (_trainer is null || ChallengeActive)
+        {
+            return;
+        }
 
-    [RelayCommand]
-    private void UseTrainer() => _trainer?.SetMode(TrainerMode.Trainer);
+        _trainer.SetMode(Mode == TrainerMode.Trainer ? TrainerMode.ReadOnly : TrainerMode.Trainer);
+    }
 
-    [RelayCommand]
-    private void UseChallenge() => _trainer?.SetMode(TrainerMode.Challenge);
+    private bool CanToggleCheats() => _trainer is not null && !ChallengeActive;
+
+    [ObservableProperty]
+    [NotifyCanExecuteChangedFor(nameof(ToggleCheatsCommand))]
+    public partial bool ChallengeActive { get; private set; }
+
+    public string CheatsButtonText => Mode == TrainerMode.Trainer ? "Turn cheats off" : "Turn cheats on";
 
     [RelayCommand]
     private void SetHealth()
@@ -240,6 +252,7 @@ public sealed partial class TrainerViewModel : PageViewModel
 
     partial void OnModeChanged(TrainerMode value)
     {
+        OnPropertyChanged(nameof(CheatsButtonText));
         OnPropertyChanged(nameof(IsReadOnly));
         OnPropertyChanged(nameof(IsTrainer));
         OnPropertyChanged(nameof(IsChallenge));
@@ -323,15 +336,18 @@ public sealed partial class TrainerViewModel : PageViewModel
 
             Mode = _trainer.Mode;
             CanWrite = Mode == TrainerMode.Trainer && _trainer.HasWriteAccess;
+            var challenge = _services.Challenges.Status;
+            ChallengeActive = challenge.State != Lockpick.Core.Challenges.ChallengeState.Off;
             var attached = State.Status.State == ConnectionState.Attached;
             ModeText = Mode switch
             {
-                TrainerMode.ReadOnly => "Read-only: Lockpick only reads the game. It has no way to change it.",
-                TrainerMode.Challenge => "Challenge Mode: Lockpick has no write access and refuses every change, so this run stays as you played it.",
-                _ when _trainer.HasWriteAccess => "Trainer Mode: Lockpick may change the game. Every change is checked, read back and logged.",
-                _ when _trainer.WriteAccessError is { } error => $"Trainer Mode, but Windows refused write access: {error}",
-                _ when !attached => "Trainer Mode: waiting for the game.",
-                _ => "Trainer Mode: no write access yet.",
+                _ when ChallengeActive => $"A challenge is running ({challenge.Challenge?.Name}). Cheats stay off until you stop it on the Challenges page.",
+                TrainerMode.ReadOnly => "Cheats are off: Lockpick only reads the game and has no way to change it.",
+                TrainerMode.Challenge => "Challenge Mode: Lockpick refuses every change.",
+                _ when _trainer.HasWriteAccess => "Cheats are on. Every change is checked against the game's limits, read back and logged below.",
+                _ when _trainer.WriteAccessError is { } error => $"Cheats are on, but Windows refused to let Lockpick change the game: {error}",
+                _ when !attached => "Cheats are on: start Resident Evil and they'll work as soon as Lockpick finds it.",
+                _ => "Cheats are on, but Lockpick can't change the game yet.",
             };
 
             RunModified = _trainer.RunModified;

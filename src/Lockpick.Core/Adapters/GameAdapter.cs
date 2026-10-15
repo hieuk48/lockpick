@@ -61,6 +61,9 @@ public interface IGameAdapter
     /// <summary>The save slot a file in <see cref="SaveDirectory"/> belongs to, or null for any other file.</summary>
     int? SaveSlot(string fileName) => null;
 
+    /// <summary>What challenges need to know about the game (e.g. what counts as a shot); null when unsupported.</summary>
+    Challenges.IChallengeRules? CreateChallengeRules(VersionProfile profile) => null;
+
     /// <summary>The game's trainer features (what to write for health, ammo, …); null when the adapter has none.</summary>
     Trainer.IGameTrainer? CreateTrainer(VersionProfile profile) => null;
 

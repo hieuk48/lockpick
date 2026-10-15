@@ -102,6 +102,18 @@ public class Re1TrainerTests
     }
 
     [Fact]
+    public void A_shot_is_the_same_gun_losing_rounds_not_a_reload_or_the_knife()
+    {
+        var rules = (Lockpick.Core.Challenges.IChallengeRules)_trainer;
+        var before = Holding(2, 1, new HeldItem(0, 0x01, 0), new HeldItem(1, 0x02, 15));
+        Assert.Equal("Beretta", rules.NonMeleeShot(before, Holding(2, 1, new HeldItem(0, 0x01, 0), new HeldItem(1, 0x02, 14))));
+        Assert.Null(rules.NonMeleeShot(before, Holding(2, 1, new HeldItem(0, 0x01, 0), new HeldItem(1, 0x02, 15))));    // nothing
+        Assert.Null(rules.NonMeleeShot(Holding(2, 1, new HeldItem(1, 0x02, 3)), Holding(2, 1, new HeldItem(1, 0x02, 15)))); // reload
+        Assert.Null(rules.NonMeleeShot(Holding(1, 1, new HeldItem(0, 0x01, 0)), Holding(1, 1, new HeldItem(0, 0x01, 0)))); // knife
+        Assert.Null(rules.NonMeleeShot(before, Holding(1, 1, new HeldItem(0, 0x01, 0), new HeldItem(1, 0x02, 14))));     // switched
+    }
+
+    [Fact]
     public void Rebecca_uses_her_own_inventory()
     {
         var rule = _trainer.CreateInfiniteAmmoRule();

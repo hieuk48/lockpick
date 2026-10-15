@@ -30,13 +30,20 @@ turn it on in **Settings → API for other tools**.
 | `GET /api/v1/events/stream?after=N` | The same as a live [server-sent event](https://html.spec.whatwg.org/multipage/server-sent-events.html) stream: each message has `id` (sequence), `event` (type) and `data` (JSON); a comment every 15 s keeps it open |
 | `GET /api/v1/trainer` | Trainer mode, write access, whether this run was changed, locks, infinite ammo, the last 50 actions |
 
+| `GET /api/v1/challenges` | The ready-made challenges (`id`, `name`, `summary`, `rules`) and the rule names |
+| `GET /api/v1/challenge` | The current challenge: `state` (`off`, `waiting`, `running`, `failed`), `attempt`, `failReason`, `failedAtGameTime` |
+
 Event types: `GameStarted`, `GameStopped`, `GameLoaded`, `GameSaved`, `RoomChanged`, `CameraChanged`,
-`PlayerHealthChanged`, `PlayerDamaged`, `TrainerActionExecuted`, `RunInvalidated`.
+`PlayerHealthChanged`, `PlayerDamaged`, `TrainerActionExecuted`, `RunInvalidated`, `ChallengeStarted`, `ChallengeFailed`
+(the one an overlay shows when a challenge ends).
 
 ## Commands (POST)
 
 | Request | Body | Does |
 |---|---|---|
+| `/api/v1/challenge/start` | `{"id": "no-damage"}`, optional `"rules": ["noDamage", "knifeOnly"]` | Starts a challenge (Lockpick goes into Challenge Mode: no changes to the game) |
+| `/api/v1/challenge/retry` | — | A new attempt |
+| `/api/v1/challenge/stop` | — | Ends the challenge |
 | `/api/v1/capture/start` | — | Starts a capture (as Debug → Start capture) |
 | `/api/v1/capture/marker` | `{"note": "split 1"}` (optional) | Marks the moment in the running capture; returns the marker number |
 | `/api/v1/capture/stop` | — | Stops and saves the capture; returns the file |

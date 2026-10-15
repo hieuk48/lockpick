@@ -51,12 +51,16 @@ public sealed class AppServices : IAsyncDisposable
             Trainer = new TrainerService(source, writeHost, new TrainerActionLog(AppPaths.TrainerLog), loggerFactory.CreateLogger("Trainer"));
         }
 
+        Challenges = new Core.Challenges.ChallengeService(source, Trainer, adapter.CreateChallengeRules);
         TrainerHotkeys = new TrainerHotkeys(_log);
         foreach (var (action, key) in settings.Current.TrainerHotkeys)
         {
             TrainerHotkeys.Set(action, key, MarkerHotkeyName);
         }
     }
+
+    /// <summary>The challenge the player chose (Challenges page, API).</summary>
+    public Core.Challenges.ChallengeService Challenges { get; }
 
     /// <summary>System-wide keys for trainer actions (Settings); presses are acted on by the Trainer page.</summary>
     public TrainerHotkeys TrainerHotkeys { get; }
@@ -69,7 +73,7 @@ public sealed class AppServices : IAsyncDisposable
 
     public void CreateApi(ICaptureControl capture)
     {
-        Api ??= new ApiServer(new ApiHost(Source, Adapter, Trainer, capture, AppVersion), LoggerFactory.CreateLogger("Api"));
+        Api ??= new ApiServer(new ApiHost(Source, Adapter, Trainer, capture, AppVersion, Challenges), LoggerFactory.CreateLogger("Api"));
     }
 
     /// <summary>Starts, restarts or stops the API to match the settings (making a token the first time).</summary>
@@ -275,6 +279,7 @@ public sealed class AppServices : IAsyncDisposable
             await Api.DisposeAsync();
         }
 
+        Challenges.Dispose();
         Trainer?.Dispose();
         await Source.DisposeAsync();
         Updates.Dispose();

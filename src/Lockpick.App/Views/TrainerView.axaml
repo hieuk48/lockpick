@@ -19,21 +19,17 @@
   <ScrollViewer>
     <StackPanel Spacing="12" MaxWidth="760" HorizontalAlignment="Left">
 
-      <!-- Mode -->
+      <!-- Cheats on / off -->
       <Border Classes="card">
         <StackPanel Spacing="8">
           <StackPanel Classes="cardhead">
             <c:LucideIcon Data="{StaticResource Icon.Wrench}" />
-            <TextBlock Classes="caption" Text="MODE" />
+            <TextBlock Classes="caption" Text="CHEATS" />
           </StackPanel>
-          <WrapPanel ItemSpacing="8" LineSpacing="8" IsEnabled="{Binding Available}">
-            <Button Classes="mode" Classes.selected="{Binding IsReadOnly}" Content="Read-only" Command="{Binding UseReadOnlyCommand}"
-                    AutomationProperties.Name="Read-only mode" ToolTip.Tip="Lockpick only reads the game (the default every time it starts)." />
-            <Button Classes="mode" Classes.selected="{Binding IsTrainer}" Content="Trainer" Command="{Binding UseTrainerCommand}"
-                    AutomationProperties.Name="Trainer mode" ToolTip.Tip="Allow checked, logged changes to the game." />
-            <Button Classes="mode" Classes.selected="{Binding IsChallenge}" Content="Challenge" Command="{Binding UseChallengeCommand}"
-                    AutomationProperties.Name="Challenge mode" ToolTip.Tip="No write access at all: the run stays exactly as you played it." />
-          </WrapPanel>
+          <TextBlock TextWrapping="Wrap" Foreground="{StaticResource LpMutedBrush}"
+                     Text="Cheats change your game: health, ammo, items. They're off every time Lockpick starts, and a run you change is marked as changed." />
+          <Button Content="{Binding CheatsButtonText}" Command="{Binding ToggleCheatsCommand}" Classes="accent" HorizontalAlignment="Left"
+                  AutomationProperties.Name="{Binding CheatsButtonText}" />
           <TextBlock Text="{Binding ModeText}" TextWrapping="Wrap" />
           <TextBlock Text="{Binding RunText}" TextWrapping="Wrap" Classes.warning="{Binding RunModified}"
                      Foreground="{StaticResource LpMutedBrush}" />

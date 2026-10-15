@@ -40,7 +40,8 @@ public sealed class ApiServer : IAsyncDisposable
         "POST /capture/start", "POST /capture/stop", "POST /capture/marker {note}",
         "GET /trainer", "POST /trainer/mode {mode}", "POST /trainer/health {value|full, lock}",
         "POST /trainer/health/unlock", "POST /trainer/ammo {enabled}", "GET /trainer/items",
-        "POST /trainer/inventory/quantity {slot, quantity}", "POST /trainer/itembox {itemId, quantity}"
+        "POST /trainer/inventory/quantity {slot, quantity}", "POST /trainer/itembox {itemId, quantity}",
+        "GET /challenges", "GET /challenge", "POST /challenge/start {id, rules}", "POST /challenge/retry", "POST /challenge/stop"
     ];
 
     private readonly ApiHost _host;
@@ -56,6 +57,11 @@ public sealed class ApiServer : IAsyncDisposable
         if (host.Trainer is not null)
         {
             host.Trainer.EventRaised += (_, e) => Events.Add(e);
+        }
+
+        if (host.Challenges is not null)
+        {
+            host.Challenges.EventRaised += (_, e) => Events.Add(e);
         }
     }
 
@@ -166,6 +172,48 @@ public sealed class ApiServer : IAsyncDisposable
             ? Error(404, "captures aren't available")
             : await capture.MarkAsync(request?.Note).ConfigureAwait(false) is { } number ? Ok(new { marker = number }) : Error(409, "no capture is running"));
 
+        app.MapGet(Prefix + "/challenges", () => Ok(new
+        {
+            challenges = Lockpick.Core.Challenges.ChallengeDefinition.Presets,
+            rules = Enum.GetValues<Lockpick.Core.Challenges.ChallengeRule>(),
+        }));
+        app.MapGet(Prefix + "/challenge", () => _host.Challenges is { } challenges ? Ok(challenges.Status) : Error(404, "challenges aren't available"));
+        app.MapPost(Prefix + "/challenge/start", (ChallengeRequest request) =>
+        {
+            if (_host.Challenges is not { } challenges)
+            {
+                return Error(404, "challenges aren't available");
+            }
+
+            if (Lockpick.Core.Challenges.ChallengeDefinition.Presets.FirstOrDefault(p => p.Id == request.Id) is not { } preset)
+            {
+                return Error(400, "unknown challenge id (GET /challenges lists them)");
+            }
+
+            challenges.Start(preset, request.Rules);
+            return Ok(challenges.Status);
+        });
+        app.MapPost(Prefix + "/challenge/retry", () =>
+        {
+            if (_host.Challenges is not { } challenges)
+            {
+                return Error(404, "challenges aren't available");
+            }
+
+            challenges.Retry();
+            return Ok(challenges.Status);
+        });
+        app.MapPost(Prefix + "/challenge/stop", () =>
+        {
+            if (_host.Challenges is not { } challenges)
+            {
+                return Error(404, "challenges aren't available");
+            }
+
+            challenges.Stop();
+            return Ok(challenges.Status);
+        });
+
         app.MapGet(Prefix + "/trainer", () => _host.Trainer is null ? Error(404, "the trainer isn't available") : Ok(Trainer(detail: true)));
         app.MapPost(Prefix + "/trainer/mode", (ModeRequest request) => SetMode(request.Mode));
         app.MapPost(Prefix + "/trainer/health", (HealthRequest request) => Health(request));
@@ -271,6 +319,7 @@ public sealed class ApiServer : IAsyncDisposable
             game = status.Profile?.DisplayName,
             trainer = _host.Trainer is null ? null : Trainer(detail: false),
             capture = new { available = _host.Capture is not null, active = _host.Capture?.IsCapturing ?? false },
+            challenge = _host.Challenges?.Status,
             api = new { version = _host.AppVersion, network = _options?.AllowNetwork ?? false, trainerCommands = _options?.AllowTrainer ?? false },
         };
     }
@@ -408,6 +457,8 @@ public sealed class ApiServer : IAsyncDisposable
     private sealed record ToggleRequest(bool Enabled);
 
     private sealed record QuantityRequest(int Slot, int Quantity);
+
+    private sealed record ChallengeRequest(string? Id, IReadOnlyList<Lockpick.Core.Challenges.ChallengeRule>? Rules);
 
     private sealed record ItemBoxRequest(int ItemId, int? Quantity);
 }

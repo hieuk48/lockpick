@@ -18,6 +18,8 @@ namespace Lockpick.Core.Events;
 [JsonDerivedType(typeof(GameSaved), nameof(GameSaved))]
 [JsonDerivedType(typeof(TrainerActionExecuted), nameof(TrainerActionExecuted))]
 [JsonDerivedType(typeof(RunInvalidated), nameof(RunInvalidated))]
+[JsonDerivedType(typeof(ChallengeStarted), nameof(ChallengeStarted))]
+[JsonDerivedType(typeof(ChallengeFailed), nameof(ChallengeFailed))]
 public abstract record GameEvent(DateTimeOffset Timestamp)
 {
     public abstract string Describe();
@@ -89,4 +91,18 @@ public sealed record TrainerActionExecuted(DateTimeOffset Timestamp, string Desc
 public sealed record RunInvalidated(DateTimeOffset Timestamp, string Reason) : GameEvent(Timestamp)
 {
     public override string Describe() => $"Run modified by the trainer: {Reason}";
+}
+
+/// <summary>A challenge attempt began (the player chose it, retried, or started a new game or loaded a save).</summary>
+public sealed record ChallengeStarted(DateTimeOffset Timestamp, string Challenge, int Attempt) : GameEvent(Timestamp)
+{
+    public override string Describe() => $"Challenge: {Challenge}, attempt {Attempt}";
+}
+
+/// <summary>A challenge rule was broken; the attempt is over. Overlays and other tools show this.</summary>
+public sealed record ChallengeFailed(DateTimeOffset Timestamp, string Challenge, string Reason, TimeSpan? GameTime) : GameEvent(Timestamp)
+{
+    public override string Describe() => GameTime is { } t
+        ? $"Challenge failed ({Challenge}): {Reason} at {(int)t.TotalHours:D2}:{t.Minutes:D2}:{t.Seconds:D2}"
+        : $"Challenge failed ({Challenge}): {Reason}";
 }

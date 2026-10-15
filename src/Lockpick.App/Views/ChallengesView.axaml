@@ -1,0 +1,95 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:vm="using:Lockpick.App.ViewModels"
+             xmlns:c="using:Lockpick.App.Controls"
+             xmlns:ch="using:Lockpick.Core.Challenges"
+             x:Class="Lockpick.App.Views.ChallengesView"
+             x:DataType="vm:ChallengesViewModel">
+
+  <UserControl.Styles>
+    <Style Selector="TextBlock.step">
+      <Setter Property="FontSize" Value="16" />
+      <Setter Property="FontWeight" Value="SemiBold" />
+    </Style>
+    <Style Selector="Border.status.failed">
+      <Setter Property="BorderBrush" Value="{StaticResource LpRedBrush}" />
+      <Setter Property="BorderThickness" Value="2" />
+    </Style>
+    <Style Selector="Border.status.running">
+      <Setter Property="BorderBrush" Value="{StaticResource LpGreenBrush}" />
+      <Setter Property="BorderThickness" Value="2" />
+    </Style>
+  </UserControl.Styles>
+
+  <ScrollViewer>
+    <StackPanel Spacing="12" MaxWidth="760" HorizontalAlignment="Left">
+
+      <!-- Where things stand -->
+      <Border Classes="card status" Classes.running="{Binding IsRunning}" Classes.failed="{Binding IsFailed}">
+        <StackPanel Spacing="8">
+          <StackPanel Classes="cardhead">
+            <c:LucideIcon Data="{StaticResource Icon.Trophy}" />
+            <TextBlock Classes="caption" Text="CHALLENGE" />
+          </StackPanel>
+          <TextBlock Classes="headline" Text="{Binding StatusTitle}" TextWrapping="Wrap" />
+          <TextBlock Text="{Binding StatusDetail}" TextWrapping="Wrap" Foreground="{StaticResource LpMutedBrush}" />
+          <WrapPanel ItemSpacing="8" LineSpacing="8" IsVisible="{Binding IsActive}">
+            <Button Content="Try again" Command="{Binding RetryCommand}" IsVisible="{Binding IsFailed}" Classes="accent"
+                    AutomationProperties.Name="Try the challenge again" />
+            <Button Content="Stop challenge" Command="{Binding StopCommand}" AutomationProperties.Name="Stop the challenge" />
+          </WrapPanel>
+        </StackPanel>
+      </Border>
+
+      <!-- Step 1 -->
+      <Border Classes="card" IsEnabled="{Binding CanChoose}">
+        <StackPanel Spacing="8">
+          <TextBlock Classes="step" Text="1. Choose a challenge" />
+          <ListBox ItemsSource="{Binding Presets}" SelectedItem="{Binding Selected}" Background="Transparent"
+                   AutomationProperties.Name="Challenges">
+            <ListBox.Styles>
+              <Style Selector="ListBoxItem" x:DataType="ch:ChallengeDefinition">
+                <Setter Property="AutomationProperties.Name" Value="{Binding Name}" />
+                <Setter Property="Padding" Value="8,6" />
+              </Style>
+            </ListBox.Styles>
+            <ListBox.ItemTemplate>
+              <DataTemplate x:DataType="ch:ChallengeDefinition">
+                <StackPanel Spacing="2">
+                  <TextBlock Text="{Binding Name}" FontWeight="SemiBold" />
+                  <TextBlock Text="{Binding Summary}" TextWrapping="Wrap" Foreground="{StaticResource LpMutedBrush}" />
+                </StackPanel>
+              </DataTemplate>
+            </ListBox.ItemTemplate>
+          </ListBox>
+        </StackPanel>
+      </Border>
+
+      <!-- Step 2 -->
+      <Border Classes="card" IsEnabled="{Binding CanChoose}">
+        <StackPanel Spacing="8">
+          <TextBlock Classes="step" Text="2. Check the rules" />
+          <TextBlock TextWrapping="Wrap" Foreground="{StaticResource LpMutedBrush}"
+                     Text="Breaking a rule ends the attempt. You can add rules to any challenge (a knife-only speedrun, a no-damage knife run…)." />
+          <CheckBox IsChecked="{Binding NoDamage}" AutomationProperties.Name="No damage rule">
+            <TextBlock TextWrapping="Wrap" Text="No damage — any hit or poison ends the attempt" />
+          </CheckBox>
+          <CheckBox IsChecked="{Binding KnifeOnly}" AutomationProperties.Name="Knife only rule">
+            <TextBlock TextWrapping="Wrap" Text="Knife only — firing any other weapon ends the attempt (carrying one is fine)" />
+          </CheckBox>
+        </StackPanel>
+      </Border>
+
+      <!-- Step 3 -->
+      <Border Classes="card" IsEnabled="{Binding CanChoose}">
+        <StackPanel Spacing="8">
+          <TextBlock Classes="step" Text="3. Start" />
+          <TextBlock TextWrapping="Wrap" Foreground="{StaticResource LpMutedBrush}"
+                     Text="While a challenge runs, Lockpick can't change your game: cheats are off, so the run is exactly as you played it. Then start a new game or load a save in Resident Evil." />
+          <Button Content="Start challenge" Command="{Binding StartCommand}" Classes="accent" HorizontalAlignment="Left"
+                  AutomationProperties.Name="Start the challenge" />
+        </StackPanel>
+      </Border>
+    </StackPanel>
+  </ScrollViewer>
+</UserControl>

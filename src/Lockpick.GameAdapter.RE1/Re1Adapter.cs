@@ -63,6 +63,8 @@ public sealed class Re1Adapter : IGameAdapter
 
     private Re1Trainer? _trainer;
 
+    public Core.Challenges.IChallengeRules CreateChallengeRules(VersionProfile profile) => (Re1Trainer)CreateTrainer(profile);
+
     /// <summary>The GOG game saves to SAVE\savedatN.dat next to the executable (one file per slot, 1–8; B112, #37).</summary>
     public string? SaveDirectory(string executablePath) =>
         Path.GetDirectoryName(executablePath) is { } folder ? Path.Combine(folder, "SAVE") : null;
