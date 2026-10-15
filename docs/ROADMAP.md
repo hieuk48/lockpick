@@ -15,7 +15,7 @@ Status legend: ✅ done and verified · 🟡 done, partially verified · ⬜ not
 | 0.1.4 | Captures record the game-state memory; enemy and flag detection; grouped reads | ✅ released 2026-10-13 |
 | 0.1.5 | Research tooling: capture markers, ask mode, room index, capture timeline, subtitles pack | ✅ released 2026-10-13 |
 | 0.1.6 | Progress tracker (read-only), Items and Map pages, controller capture markers | ✅ released 2026-10-15 |
-| 0.2.0 | Core trainer (Trainer Mode, HP/ammo/inventory, hotkeys), Challenges tab, API for other tools, branding | ✅ done 2026-10-15 — release pending |
+| 0.2.0 | Core trainer (Trainer Mode, HP/ammo/inventory, hotkeys), Challenges tab, API for other tools, branding | ✅ released 2026-10-15 |
 | 0.3.0 | Play and stream with one app: run modes, LiveSplit, overlay + OBS, responsive UI, training captures | ⬜ next — display research done |
 | 0.4.0 | Room, camera, item and enemy database | ⬜ |
 | 0.5.0 | Object highlighting and ESP | ⬜ |
@@ -104,7 +104,7 @@ Read-only throughout (the app's handle has no write rights).
 
 ---
 
-## 0.2.0 — Core trainer (done 2026-10-15)
+## 0.2.0 — Core trainer (released 2026-10-15)
 
 Goal: deliberate, validated memory modification in Trainer Mode, with Challenge Mode enforcing no writes.
 
