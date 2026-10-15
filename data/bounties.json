@@ -220,9 +220,10 @@
           "id": "B113",
           "task": "Try to pick something up with a **full** inventory (Chris 6 / Jill 8 slots)",
           "verifies": "Slot limits per character",
-          "status": "partial",
+          "status": "done",
           "detector": "full_inventory",
           "evidence": [
+            "2026-10-14 owner's dev test suite (tools/autoplay/suite.py full-inventory; setups by dev-only memory writes, results read from memory), both characters: with every slot full (Jill 8, Chris 6) picking up the emblem in 105 shows \"You can't carry any more items.\" and nothing changes; a clip picked up in 102 still stacks onto the clip already carried (5 -> 20)",
             "2026-10-13 (live session 5, Jill): refused pickup with all 8 of Jill's slots full (blue gem, dining room 105): stateFlags 0x800 (interacting) + 0x8000 (message) with no inventory or room-item flag change. After combining the empty Beretta with a clip freed slot 8, the same action picked the gem up into it. Chris's 6-slot limit not yet observed",
             "evidence in 2026-10-13 live session 7 (Jill, ask mode, mansion to guardhouse): all 8 inventory slots filled — needs review",
             "evidence in 2026-10-13 live session 8 (Jill, ask mode, guardhouse to mansion revisited): all 8 inventory slots filled — needs review"

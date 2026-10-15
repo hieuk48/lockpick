@@ -1,5 +1,5 @@
 {
- "comment": "RE1 item and enemy/character ids. Names from IntelOrca's BioRand Re1ItemIds/Re1EnemyIds (MIT); 'observed' = behaviour confirmed in live captures (docs/MEMORY_MAP.md). Ids from 0x4E up are maps and documents. Maps (78+) and documents (95+) were named by the owner in play; their map-bank flags are item + 46 (maps) and item + 35 (documents). Ids 7/8 are named from play (BioRand has them swapped): 7 as found does 201 per hit, 8 = 7 loaded with acid rounds (17) does 95, the speedrun damage chart's acid grenade. Item names were checked against the game's own item-name table (pointers at 0x4BF0A0 in this build, index = id - 1) on 2026-10-14: ids 1-77 agree except 56 (closet key), 61 (desk key), 62 (blank book), now corrected, and 50, which has no name in the table.",
+ "comment": "RE1 item and enemy/character ids. Names from IntelOrca's BioRand Re1ItemIds/Re1EnemyIds (MIT); 'observed' = behaviour confirmed in live captures (docs/MEMORY_MAP.md). Ids from 0x4E up are maps and documents. Maps (78+) and documents (95+) were named by the owner in play; their map-bank flags are item + 46 (maps) and item + 35 (documents). Ids 7/8 are named from play (BioRand has them swapped): 7 as found does 201 per hit, 8 = 7 loaded with acid rounds (17) does 95, the speedrun damage chart's acid grenade. Item names were checked against the game's own item-name table (pointers at 0x4BF0A0 in this build, index = id - 1) on 2026-10-14: ids 1-77 agree except 38 (herbicide), 56 (closet key), 61 (desk key), 62 (blank book), now corrected, and 50, which has no name in the table. Some names say more than the game does (bazooka round, mixed-herb recipe).",
  "items": {
   "1": "Combat knife",
   "2": "Beretta",
@@ -38,7 +38,7 @@
   "35": "Music notes",
   "36": "Wolf medal",
   "37": "Eagle medal",
-  "38": "Chemical",
+  "38": "Herbicide",
   "39": "Battery",
   "40": "MO disk",
   "41": "Wind crest",
