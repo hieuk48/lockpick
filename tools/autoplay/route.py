@@ -11,6 +11,7 @@ raises the item's use bit (bank 9, 0xD213A0) while the player stands there; USE 
 from __future__ import annotations
 
 import json
+import math
 import struct
 import sys
 import time
@@ -138,7 +139,16 @@ class Route:
             self.log(f"  no door to {target} in {self.room}")
             return False
         locks = set_flags(ap.peek(LOCKS, 8))
-        for x, z, angle, _ in pickup.spots({"zone": list(door["zone"])}, room):
+        others = [d["zone"] for d in room.doors if d["to"] != target]
+
+        def lands_on_other_door(x: int, z: int, angle: int) -> bool:
+            """The action key tests the point 600 ahead; skip spots where it lands in a different door's zone
+            (2026-10-14: a spot for 106's door to 111 opened the door to 105)."""
+            theta = angle * 2 * math.pi / 4096
+            px, pz = x + math.cos(theta) * 600, z - math.sin(theta) * 600
+            return any(ox <= px <= ox + ow and oz <= pz <= oz + od for ox, oz, ow, od in others)
+
+        for x, z, angle, _ in [s for s in pickup.spots({"zone": list(door["zone"])}, room) if not lands_on_other_door(*s[:3])]:
             camera = room.camera_for(x, z)
             cut = camera is not None and not ap.flags() & 0x100000  # no cuts while a cutscene holds the camera
             ap.send(f"place {x} {z} {angle}", "wait 400", *([f"camera {camera}", "wait 500"] if cut else []))

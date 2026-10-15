@@ -391,9 +391,12 @@ def t_doors(c: Context, plan: Path, only_locks: set[int] | None = None) -> None:
             c.route.enter(test["room"])
             ap.send("inv-clear 3")
             for key in lock.get("keyIds") or []:
-                # Jill opens the Sword-key locks with her lockpick (item 49): with the Sword key the game says
-                # "It's locked. Use the lockpick to open the door." (2026-10-14).
-                key = 49 if c.character == "jill" and key == 51 else key
+                # Jill opens the Sword-key locks with her lockpick: the door checks story flag A124 ("has the
+                # lockpick", set when Barry hands it over — decomp door logic; label in flag-labels.json), not the
+                # inventory, and says "It's locked. Use the lockpick to open the door." without it (2026-10-14).
+                if c.character == "jill" and key == 51:
+                    ap.send("flag A 124 1")
+                    continue
                 if 1 <= key <= 0x4D:
                     ap.send(f"give {key}")
                     if ap.examined(key) is False:
