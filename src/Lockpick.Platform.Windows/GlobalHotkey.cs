@@ -40,6 +40,16 @@ public sealed class GlobalHotkey : IDisposable
         ["Ctrl+Alt+M"] = (ModControl | ModAlt, 0x4D),
         ["Scroll Lock"] = (0, 0x91),
         ["Pause"] = (0, 0x13),
+        ["Ctrl+Shift+H"] = (ModControl | ModShift, 0x48),
+        ["Ctrl+Shift+J"] = (ModControl | ModShift, 0x4A),
+        ["Ctrl+Shift+K"] = (ModControl | ModShift, 0x4B),
+        ["Ctrl+Shift+L"] = (ModControl | ModShift, 0x4C),
+        ["Ctrl+Shift+1"] = (ModControl | ModShift, 0x31),
+        ["Ctrl+Shift+2"] = (ModControl | ModShift, 0x32),
+        ["Ctrl+Shift+3"] = (ModControl | ModShift, 0x33),
+        ["Ctrl+Alt+H"] = (ModControl | ModAlt, 0x48),
+        ["Ctrl+Alt+J"] = (ModControl | ModAlt, 0x4A),
+        ["Ctrl+Alt+K"] = (ModControl | ModAlt, 0x4B),
     };
 
     /// <summary>Registers one of <see cref="Choices"/>; null for an unknown name.</summary>

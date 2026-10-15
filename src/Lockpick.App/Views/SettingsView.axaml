@@ -62,6 +62,33 @@
         </StackPanel>
       </Border>
 
+      <!-- Trainer hotkeys -->
+      <Border Classes="card">
+        <StackPanel Spacing="8">
+          <StackPanel Classes="cardhead">
+            <c:LucideIcon Data="{StaticResource Icon.Wrench}" />
+            <TextBlock Classes="caption" Text="TRAINER HOTKEYS" />
+          </StackPanel>
+          <TextBlock TextWrapping="Wrap" Foreground="{StaticResource LpMutedBrush}"
+                     Text="Keys for trainer actions while you play. They work only while Trainer Mode is on and Lockpick has write access; otherwise a press does nothing." />
+          <ItemsControl ItemsSource="{Binding TrainerHotkeyRows}">
+            <ItemsControl.ItemTemplate>
+              <DataTemplate x:DataType="vm:TrainerHotkeyRow">
+                <StackPanel Spacing="2" Margin="0,2">
+                  <WrapPanel ItemSpacing="8" LineSpacing="4">
+                    <TextBlock Classes="label" Text="{Binding Name}" VerticalAlignment="Center" MinWidth="180" />
+                    <ComboBox ItemsSource="{Binding Choices}" SelectedItem="{Binding Key}" MinWidth="160"
+                              AutomationProperties.Name="{Binding Name}" />
+                  </WrapPanel>
+                  <TextBlock Text="{Binding Status}" Classes="warning" TextWrapping="Wrap"
+                             IsVisible="{Binding Status, Converter={x:Static StringConverters.IsNotNullOrEmpty}}" />
+                </StackPanel>
+              </DataTemplate>
+            </ItemsControl.ItemTemplate>
+          </ItemsControl>
+        </StackPanel>
+      </Border>
+
       <!-- Game -->
       <Border Classes="card">
         <StackPanel Spacing="8">

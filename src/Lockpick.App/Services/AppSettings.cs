@@ -49,6 +49,12 @@ public sealed record AppSettings
     /// </summary>
     public string MarkerButton { get; init; } = GamepadBinding.L2;
 
+    /// <summary>
+    /// Trainer hotkeys by action (TrainerHotkeys.Actions ids) to a GlobalHotkey.Choices name. Off unless the player sets
+    /// one; they act only while Trainer Mode has write access.
+    /// </summary>
+    public IReadOnlyDictionary<string, string> TrainerHotkeys { get; init; } = new Dictionary<string, string>();
+
     /// <summary>Set only while ask mode has the game frozen; lets the next start unfreeze it after a crash.</summary>
     public PausedGame? PausedGame { get; init; }
 }

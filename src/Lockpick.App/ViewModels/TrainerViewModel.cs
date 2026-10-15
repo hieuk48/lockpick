@@ -48,6 +48,7 @@ public sealed partial class TrainerViewModel : PageViewModel
             _trainer.Log.Added += (_, a) => Dispatcher.UIThread.Post(() => AddRow(a));
             _trainer.StateChanged += (_, _) => Dispatcher.UIThread.Post(Sync);
             _trainer.EventRaised += (_, e) => state.Add(e);
+            services.TrainerHotkeys.Pressed += (_, action) => Dispatcher.UIThread.Post(() => OnHotkey(action));
         }
 
         state.PropertyChanged += OnStateChanged;
@@ -175,6 +176,48 @@ public sealed partial class TrainerViewModel : PageViewModel
         OnPropertyChanged(nameof(IsReadOnly));
         OnPropertyChanged(nameof(IsTrainer));
         OnPropertyChanged(nameof(IsChallenge));
+    }
+
+    /// <summary>A trainer hotkey: ignored unless Trainer Mode has write access (nothing happens, nothing is logged).</summary>
+    private void OnHotkey(string action)
+    {
+        Sync();
+        if (_trainer is null || !CanWrite || Game() is not { } game)
+        {
+            return;
+        }
+
+        switch (action)
+        {
+            case TrainerHotkeys.FillHealth when State.Snapshot?.Health is { HasValue: true, Value.Maximum: { } max }:
+                HealthTarget = max;
+                Show(HealthLocked ? _trainer.Lock(game.HealthField, max, TrainerSource.Hotkey) : _trainer.Write(game.HealthField, max, TrainerSource.Hotkey));
+                break;
+            case TrainerHotkeys.ToggleHealthLock:
+                if (HealthLocked)
+                {
+                    _trainer.Unlock(game.HealthField, TrainerSource.Hotkey);
+                }
+                else if ((HealthTarget ?? (State.Snapshot?.Health is { HasValue: true, Value: var health } ? health.Current : null)) is { } target)
+                {
+                    Show(_trainer.Lock(game.HealthField, (long)target, TrainerSource.Hotkey));
+                }
+
+                break;
+            case TrainerHotkeys.ToggleInfiniteAmmo:
+                if (InfiniteAmmo)
+                {
+                    _trainer.ClearRule(AmmoRule, TrainerSource.Hotkey);
+                }
+                else
+                {
+                    Show(_trainer.SetRule(AmmoRule, "Infinite ammo", game.CreateInfiniteAmmoRule(), TrainerSource.Hotkey));
+                }
+
+                break;
+        }
+
+        Sync();
     }
 
     private IGameTrainer? Game() =>

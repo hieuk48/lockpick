@@ -49,7 +49,16 @@ public sealed class AppServices : IAsyncDisposable
         {
             Trainer = new TrainerService(source, writeHost, new TrainerActionLog(AppPaths.TrainerLog), loggerFactory.CreateLogger("Trainer"));
         }
+
+        TrainerHotkeys = new TrainerHotkeys(_log);
+        foreach (var (action, key) in settings.Current.TrainerHotkeys)
+        {
+            TrainerHotkeys.Set(action, key, MarkerHotkeyName);
+        }
     }
+
+    /// <summary>System-wide keys for trainer actions (Settings); presses are acted on by the Trainer page.</summary>
+    public TrainerHotkeys TrainerHotkeys { get; }
 
     /// <summary>The trainer (live game only; null while replaying). Read-only until the player turns Trainer Mode on.</summary>
     public TrainerService? Trainer { get; }
@@ -223,6 +232,7 @@ public sealed class AppServices : IAsyncDisposable
         Updates.Dispose();
         _markerHotkey?.Dispose();
         _gamepad?.Dispose();
+        TrainerHotkeys.Dispose();
         _wait?.Dispose();
         LoggerFactory.Dispose();
         LogProvider.Dispose();

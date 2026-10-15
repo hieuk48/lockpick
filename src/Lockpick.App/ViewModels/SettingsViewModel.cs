@@ -25,6 +25,18 @@ public sealed partial class SettingsViewModel : PageViewModel
         MarkerHotkey = MarkerHotkeyChoices.Contains(current.MarkerHotkey) ? current.MarkerHotkey : "Off";
         MarkerHotkeyStatus = services.MarkerHotkeyName is null && MarkerHotkey != "Off" ? $"{MarkerHotkey} is used by another program." : string.Empty;
         MarkerButtonName = services.MarkerButton.DisplayName;
+        var registered = services.TrainerHotkeys.Registered;
+        TrainerHotkeyRows = [.. TrainerHotkeys.Actions.Select(a =>
+        {
+            var key = current.TrainerHotkeys.TryGetValue(a.Id, out var k) && MarkerHotkeyChoices.Contains(k) ? k : "Off";
+            var row = new TrainerHotkeyRow(a.Id, a.Name, key, MarkerHotkeyChoices, ApplyTrainerHotkey);
+            if (key != "Off" && !registered.ContainsKey(a.Id))
+            {
+                row.Status = $"{key} is used by another program.";
+            }
+
+            return row;
+        })];
         var gog = GogInstallLocator.Find(Re1Adapter.GogProductId);
         DetectedInstall = gog is null
             ? "No GOG install of Resident Evil found in the registry."
@@ -73,6 +85,17 @@ public sealed partial class SettingsViewModel : PageViewModel
 
     [ObservableProperty]
     public partial string MarkerHotkeyStatus { get; private set; }
+
+    /// <summary>Keys for trainer actions; they do nothing unless Trainer Mode has write access.</summary>
+    public IReadOnlyList<TrainerHotkeyRow> TrainerHotkeyRows { get; }
+
+    private string? ApplyTrainerHotkey(TrainerHotkeyRow row, string key)
+    {
+        var problem = _services.TrainerHotkeys.Set(row.Id, key, _services.MarkerHotkeyName);
+        var saved = new Dictionary<string, string>(_services.Settings.Current.TrainerHotkeys) { [row.Id] = problem is null ? key : "Off" };
+        Persist(s => s with { TrainerHotkeys = saved });
+        return problem;
+    }
 
     /// <summary>The controller button that adds a marker ("L2 / LT", "Off", or a bound button's name).</summary>
     [ObservableProperty]
