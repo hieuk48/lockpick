@@ -22,8 +22,9 @@ All notable changes to this project are documented here. The format follows
 
 ### Developer tooling (not shipped)
 - `tools/Lockpick.Autoplay`: a test harness for the maintainer — virtual Xbox 360 controller (ViGEmBus), game-state
-  checks, background screenshots and an optional focus patch for runs behind other windows. Never part of the app or
-  its releases.
+  checks, background screenshots and an optional focus patch that keeps the game running unfocused. Input goes out
+  only while the game is in front and no key is ever injected, so it can't drive other windows. Never part of the app
+  or its releases.
 
 ## [0.1.5] - 2026-10-13
 

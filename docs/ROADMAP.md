@@ -104,11 +104,12 @@ Acceptance criteria:
 - Separate write-capable handle requested only when Trainer Mode is enabled (`PROCESS_VM_WRITE | PROCESS_VM_OPERATION`); Challenge Mode never opens one.
 - Every write goes through a typed, profile-declared writable field with bounds (e.g. HP 1..maxHp) and is read back to confirm.
 - Trainer action log (persisted) with timestamp, field, old → new value.
-- Features: set/lock HP, infinite ammo, inventory viewer/editor (8 slots, id + quantity at `0xBE9944`), item box viewer.
-  Inventory layout, ammo semantics and equipped slot are already runtime-verified (read side); the item box is not.
-- Item id table (from biorand, MIT, with attribution) verified against the in-game inventory — about 60 ids
-  confirmed in play so far (`data/games/re1/names.json`; the bazooka ids 7/8 corrected from play). The item box is
-  runtime-verified.
+- Features: set/lock HP, infinite ammo, inventory editor (8 slots, id + quantity at `0xBE9944`; the held-item count
+  `0xBE9827` must follow, and grid icons load only on pickup, load, combine or an item-box swap — MEMORY_MAP).
+  **Done (read side), 2026-10-14:** the Items page shows the inventory grid (8 or 6 slots, equipped weapon) and the
+  item box (48 entries at `0xBE98E4`, runtime-verified).
+- **Done 2026-10-14:** item id table (from biorand, MIT, with attribution) checked against the game's own item-name
+  table for ids 1–77 (`data/games/re1/names.json`; mismatches corrected, generic names before examining noted).
 - Hotkeys (global, configurable) with no effect when the game is not attached.
 - Run record notes whether any write occurred (`RunInvalidated` event).
 - **Save tools** (writes only save files, never the process; always a backup first and an exact restore, never in
@@ -119,14 +120,15 @@ Acceptance criteria:
 
 ## 0.3.0 — Overlay and HUD
 
-- **Room map — started 2026-10-14:** a Map page draws the current room from the player's room files (collision, doors, item spots) with the player live (`Re1RoomMaps`, `RoomMapControl`). Next: enemies on the map, script-placed objects (the dining-room clock) and the whole-floor view (tools/rdt/floor_map.py), then the overlay.
+- **Room map — in the app since 2026-10-14:** a Map page draws the current room from the player's room files (collision, doors, item spots) with the player live (`Re1RoomMaps`, `RoomMapControl`), room names, enemies and people (a shape and colour per kind), item boxes and typewriters, items taken or put in place, and a legend of just what the room holds. Next: script-placed objects (the dining-room clock) and the whole-floor view (tools/rdt/floor_map.py), then the overlay.
 - Transparent, click-through overlay window tracking the game window (position, size, DPI).
 - Game-window placement helper (move/resize the game window to a chosen monitor/position).
 - Configurable HUD widgets (HP, room, timer, events) with < 2% game frame-time impact (measured).
 - HUD data that is already understood (read-only):
   - HP status as the game rates it — Jill Fine 73–96 / Caution 25–48 / Danger 0–24, Chris 106 / 36 / 0
     thresholds (speedrun damage chart, matches the GOG build);
-  - poisoned indicator (poison shows as −2 HP every 4 s; a status flag would be better — research);
+  - poisoned indicator (status byte `0xBE63C0` bit `0x02`, Yawn's poison `0x20`; −2 HP each time the timer
+    `0xBE6458` runs out, ~4 s) and the status screen's own HP band (`0xAE9F2F`) — runtime-verified 2026-10-14;
   - enemy health in the current room (enemy slots: type, HP, active);
   - what just happened: an event feed in plain words (picked up the Emblem, Zombie ankle bite (6), first visit to
     room 11D, Barry gives Jill the lockpick) — the capture timeline's logic in the app;
