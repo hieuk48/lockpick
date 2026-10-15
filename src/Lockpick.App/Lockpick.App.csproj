@@ -21,6 +21,7 @@
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\Lockpick.Core\Lockpick.Core.csproj" />
+    <ProjectReference Include="..\Lockpick.Api\Lockpick.Api.csproj" />
     <ProjectReference Include="..\Lockpick.Platform.Windows\Lockpick.Platform.Windows.csproj" />
     <ProjectReference Include="..\Lockpick.GameAdapter.RE1\Lockpick.GameAdapter.RE1.csproj" />
   </ItemGroup>

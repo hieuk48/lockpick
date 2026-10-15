@@ -42,6 +42,9 @@ public enum TrainerSource
     Hotkey,
     Lock,
     Rule,
+
+    /// <summary>Another program through Lockpick's local API (only when the player allowed trainer commands there).</summary>
+    Api,
 }
 
 public enum TrainerResult
@@ -79,6 +82,12 @@ public sealed record TrainerAction(
         var outcome = Result == TrainerResult.Applied ? string.Empty : $" — {Result.ToString().ToLowerInvariant()}";
         return $"{Action}{change}{outcome}{(Message is null ? string.Empty : $": {Message}")}";
     }
+}
+
+/// <summary>Ids of the rules shared by the Trainer page, hotkeys and the API, so they all switch the same rule.</summary>
+public static class TrainerRules
+{
+    public const string InfiniteAmmo = "infinite-ammo";
 }
 
 /// <summary>One field value a trainer feature wants written.</summary>

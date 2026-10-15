@@ -62,6 +62,40 @@
         </StackPanel>
       </Border>
 
+      <!-- API -->
+      <Border Classes="card">
+        <StackPanel Spacing="8">
+          <StackPanel Classes="cardhead">
+            <c:LucideIcon Data="{StaticResource Icon.Plug}" />
+            <TextBlock Classes="caption" Text="API FOR OTHER TOOLS" />
+          </StackPanel>
+          <TextBlock TextWrapping="Wrap" Foreground="{StaticResource LpMutedBrush}"
+                     Text="Lets scripts, OBS, LiveSplit, a Stream Deck or macro tools read the game state and events, add capture markers and, if you allow it, use trainer commands. Every request needs the token below. See docs/API.md." />
+          <CheckBox Content="Turn on the API" IsChecked="{Binding ApiEnabled}" AutomationProperties.Name="Turn on the API" />
+          <StackPanel Spacing="8" IsEnabled="{Binding ApiEnabled}">
+            <CheckBox Content="Allow other devices on my network (a phone, a Steam Deck, another PC)" IsChecked="{Binding ApiAllowNetwork}"
+                      AutomationProperties.Name="Allow other devices on my network" />
+            <TextBlock TextWrapping="Wrap" Foreground="{StaticResource LpMutedBrush}" IsVisible="{Binding ApiAllowNetwork}"
+                       Text="Windows may ask to allow Lockpick through the firewall. Anyone on your network with the token can use the API." />
+            <CheckBox Content="Allow trainer commands (only while Trainer Mode is on)" IsChecked="{Binding ApiAllowTrainer}"
+                      AutomationProperties.Name="Allow trainer commands from the API" />
+            <WrapPanel ItemSpacing="8" LineSpacing="8">
+              <TextBlock Classes="label" Text="Port" VerticalAlignment="Center" />
+              <NumericUpDown Value="{Binding ApiPort}" Minimum="1024" Maximum="65535" Increment="1" FormatString="0" MinWidth="130"
+                             AutomationProperties.Name="API port" />
+            </WrapPanel>
+            <WrapPanel ItemSpacing="8" LineSpacing="8">
+              <TextBlock Classes="label" Text="Token" VerticalAlignment="Center" />
+              <TextBox Classes="mono" Text="{Binding ApiToken}" IsReadOnly="True" MinWidth="260" MaxWidth="460" TextWrapping="Wrap"
+                       AutomationProperties.Name="API token" />
+              <Button Content="New token" Command="{Binding NewApiTokenCommand}" AutomationProperties.Name="Make a new API token"
+                      ToolTip.Tip="Programs using the old token stop working." />
+            </WrapPanel>
+          </StackPanel>
+          <TextBlock Text="{Binding ApiStatus}" TextWrapping="Wrap" Classes.warning="{Binding ApiProblem}" />
+        </StackPanel>
+      </Border>
+
       <!-- Trainer hotkeys -->
       <Border Classes="card">
         <StackPanel Spacing="8">

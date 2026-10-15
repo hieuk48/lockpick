@@ -1,3 +1,4 @@
+using Lockpick.Api;
 using Lockpick.Core.Fingerprinting;
 using Lockpick.Core.Logging;
 using Lockpick.Core.Monitoring;
@@ -59,6 +60,48 @@ public sealed class AppServices : IAsyncDisposable
 
     /// <summary>System-wide keys for trainer actions (Settings); presses are acted on by the Trainer page.</summary>
     public TrainerHotkeys TrainerHotkeys { get; }
+
+    /// <summary>The API for other tools, once the app has given it capture control (<see cref="CreateApi"/>).</summary>
+    public ApiServer? Api { get; private set; }
+
+    /// <summary>Why the API isn't listening although it is on (e.g. the port is taken), or null.</summary>
+    public string? ApiError { get; private set; }
+
+    public void CreateApi(ICaptureControl capture)
+    {
+        Api ??= new ApiServer(new ApiHost(Source, Adapter, Trainer, capture, AppVersion), LoggerFactory.CreateLogger("Api"));
+    }
+
+    /// <summary>Starts, restarts or stops the API to match the settings (making a token the first time).</summary>
+    public async Task ApplyApiSettingsAsync()
+    {
+        if (Api is null || IsReplay)
+        {
+            return;
+        }
+
+        var current = Settings.Current;
+        if (!current.ApiEnabled)
+        {
+            ApiError = null;
+            await Api.StopAsync().ConfigureAwait(false);
+            return;
+        }
+
+        if (string.IsNullOrEmpty(current.ApiToken))
+        {
+            current = current with { ApiToken = ApiOptions.NewToken() };
+            Settings.Save(current);
+        }
+
+        ApiError = await Api.StartAsync(new ApiOptions
+        {
+            AllowNetwork = current.ApiAllowNetwork,
+            Port = current.ApiPort,
+            Token = current.ApiToken!,
+            AllowTrainer = current.ApiAllowTrainer,
+        }).ConfigureAwait(false);
+    }
 
     /// <summary>The trainer (live game only; null while replaying). Read-only until the player turns Trainer Mode on.</summary>
     public TrainerService? Trainer { get; }
@@ -227,6 +270,11 @@ public sealed class AppServices : IAsyncDisposable
     public async ValueTask DisposeAsync()
     {
         Pause.Dispose();
+        if (Api is not null)
+        {
+            await Api.DisposeAsync();
+        }
+
         Trainer?.Dispose();
         await Source.DisposeAsync();
         Updates.Dispose();

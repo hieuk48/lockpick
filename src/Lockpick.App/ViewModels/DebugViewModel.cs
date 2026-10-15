@@ -39,7 +39,7 @@ public sealed partial class MarkerRow(CaptureMarker marker, Func<int, string, bo
 }
 
 /// <summary>Debug page: session capture for research, monitor statistics, raw profile fields and the live log.</summary>
-public sealed partial class DebugViewModel : PageViewModel, IDisposable
+public sealed partial class DebugViewModel : PageViewModel, IDisposable, Lockpick.Api.ICaptureControl
 {
     private const int MaxLogRows = 400;
 
@@ -127,6 +127,42 @@ public sealed partial class DebugViewModel : PageViewModel, IDisposable
             RefreshRawFields();
         }
     }
+
+    // Capture control for the API (any thread): everything happens on the UI thread, as from the page's buttons.
+    Task<string?> Lockpick.Api.ICaptureControl.StartAsync() => Dispatcher.UIThread.InvokeAsync<string?>(() =>
+    {
+        if (IsCapturing)
+        {
+            return "a capture is already running";
+        }
+
+        StartCapture();
+        return IsCapturing ? null : CaptureStatus;
+    }).GetTask();
+
+    Task<string?> Lockpick.Api.ICaptureControl.StopAsync() => Dispatcher.UIThread.InvokeAsync(async () =>
+    {
+        if (!IsCapturing)
+        {
+            return null;
+        }
+
+        await StopCaptureAsync().ConfigureAwait(true);
+        return LastCaptureZip ?? CaptureStatus;
+    });
+
+    Task<int?> Lockpick.Api.ICaptureControl.MarkAsync(string? note) => Dispatcher.UIThread.InvokeAsync<int?>(() =>
+    {
+        if (_capture is not { } capture)
+        {
+            return null;
+        }
+
+        var marker = capture.AddMarker(note);
+        Markers.Insert(0, new MarkerRow(marker, capture.SetMarkerNote));
+        _logger.LogInformation("Marker {Number} added through the API", marker.Number);
+        return marker.Number;
+    }).GetTask();
 
     [RelayCommand(CanExecute = nameof(CanStartCapture))]
     private void StartCapture()

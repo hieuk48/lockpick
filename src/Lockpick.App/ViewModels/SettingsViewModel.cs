@@ -25,6 +25,12 @@ public sealed partial class SettingsViewModel : PageViewModel
         MarkerHotkey = MarkerHotkeyChoices.Contains(current.MarkerHotkey) ? current.MarkerHotkey : "Off";
         MarkerHotkeyStatus = services.MarkerHotkeyName is null && MarkerHotkey != "Off" ? $"{MarkerHotkey} is used by another program." : string.Empty;
         MarkerButtonName = services.MarkerButton.DisplayName;
+        ApiEnabled = current.ApiEnabled;
+        ApiAllowNetwork = current.ApiAllowNetwork;
+        ApiAllowTrainer = current.ApiAllowTrainer;
+        ApiPort = current.ApiPort;
+        ApiToken = current.ApiToken ?? string.Empty;
+        UpdateApiStatus();
         var registered = services.TrainerHotkeys.Registered;
         TrainerHotkeyRows = [.. TrainerHotkeys.Actions.Select(a =>
         {
@@ -85,6 +91,73 @@ public sealed partial class SettingsViewModel : PageViewModel
 
     [ObservableProperty]
     public partial string MarkerHotkeyStatus { get; private set; }
+
+    [ObservableProperty]
+    public partial bool ApiEnabled { get; set; }
+
+    [ObservableProperty]
+    public partial bool ApiAllowNetwork { get; set; }
+
+    [ObservableProperty]
+    public partial bool ApiAllowTrainer { get; set; }
+
+    [ObservableProperty]
+    public partial decimal ApiPort { get; set; }
+
+    [ObservableProperty]
+    public partial string ApiToken { get; private set; } = string.Empty;
+
+    [ObservableProperty]
+    public partial string ApiStatus { get; private set; } = string.Empty;
+
+    [ObservableProperty]
+    public partial bool ApiProblem { get; private set; }
+
+    partial void OnApiEnabledChanged(bool value) => ChangeApi(s => s with { ApiEnabled = value });
+
+    partial void OnApiAllowNetworkChanged(bool value) => ChangeApi(s => s with { ApiAllowNetwork = value });
+
+    partial void OnApiAllowTrainerChanged(bool value) => ChangeApi(s => s with { ApiAllowTrainer = value });
+
+    partial void OnApiPortChanged(decimal value)
+    {
+        if (value is >= 1024 and <= 65535)
+        {
+            ChangeApi(s => s with { ApiPort = (int)value });
+        }
+    }
+
+    [RelayCommand]
+    private void NewApiToken() => ChangeApi(s => s with { ApiToken = Lockpick.Api.ApiOptions.NewToken() });
+
+    private void ChangeApi(Func<AppSettings, AppSettings> change)
+    {
+        if (_loading || !Persist(change))
+        {
+            return;
+        }
+
+        ApiStatus = "Applying…";
+        _ = ApplyApiAsync();
+    }
+
+    private async Task ApplyApiAsync()
+    {
+        await _services.ApplyApiSettingsAsync().ConfigureAwait(true);
+        ApiToken = _services.Settings.Current.ApiToken ?? string.Empty;
+        UpdateApiStatus();
+    }
+
+    private void UpdateApiStatus()
+    {
+        var current = _services.Settings.Current;
+        ApiProblem = current.ApiEnabled && _services.ApiError is not null;
+        ApiStatus = !current.ApiEnabled ? "Off. Other programs can't reach Lockpick."
+            : _services.ApiError is { } error ? error
+            : _services.Api?.Address is { } address
+                ? $"Listening on {address}api/v1 ({(current.ApiAllowNetwork ? "this PC and other devices on your network" : "this PC only")}); trainer commands {(current.ApiAllowTrainer ? "allowed in Trainer Mode" : "off")}."
+                : "Starting…";
+    }
 
     /// <summary>Keys for trainer actions; they do nothing unless Trainer Mode has write access.</summary>
     public IReadOnlyList<TrainerHotkeyRow> TrainerHotkeyRows { get; }

@@ -13,6 +13,7 @@
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\..\src\Lockpick.Core\Lockpick.Core.csproj" />
+    <ProjectReference Include="..\..\src\Lockpick.Api\Lockpick.Api.csproj" />
     <ProjectReference Include="..\..\src\Lockpick.Platform.Windows\Lockpick.Platform.Windows.csproj" />
     <ProjectReference Include="..\..\src\Lockpick.GameAdapter.RE1\Lockpick.GameAdapter.RE1.csproj" />
     <ProjectReference Include="..\..\src\Lockpick.App\Lockpick.App.csproj" />

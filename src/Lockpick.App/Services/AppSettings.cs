@@ -55,6 +55,20 @@ public sealed record AppSettings
     /// </summary>
     public IReadOnlyDictionary<string, string> TrainerHotkeys { get; init; } = new Dictionary<string, string>();
 
+    /// <summary>Lockpick's API for other tools (docs/API.md): off unless the player turns it on.</summary>
+    public bool ApiEnabled { get; init; }
+
+    /// <summary>Listen for other devices on the network too (not just this PC).</summary>
+    public bool ApiAllowNetwork { get; init; }
+
+    public int ApiPort { get; init; } = Lockpick.Api.ApiOptions.DefaultPort;
+
+    /// <summary>The API token; made when the API is first turned on, replaced on request.</summary>
+    public string? ApiToken { get; init; }
+
+    /// <summary>Let API clients use trainer commands (still only while Trainer Mode is on).</summary>
+    public bool ApiAllowTrainer { get; init; }
+
     /// <summary>Set only while ask mode has the game frozen; lets the next start unfreeze it after a crash.</summary>
     public PausedGame? PausedGame { get; init; }
 }

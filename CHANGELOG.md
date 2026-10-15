@@ -15,6 +15,10 @@ All notable changes to this project are documented here. The format follows
 - Trainer hotkeys (Settings → Trainer hotkeys, off until you pick keys): fill HP, lock / unlock HP, infinite ammo
   on / off — while the game has focus. They do nothing unless Trainer Mode is on with write access, and a key can't
   be given to two actions.
+- An API for other tools ([docs/API.md](docs/API.md)), off until you turn it on in Settings: scripts, OBS, LiveSplit, a
+  Stream Deck or macro tools can read the game state and a live event stream, start and stop captures and add
+  markers, and, if you allow it, use trainer commands (only in Trainer Mode, checked and logged like the buttons).
+  It listens on this PC only unless you allow other devices on your network, and every request needs a token.
 - Saves show up in the event log ("Game saved to slot 3", with the in-game time) and in captures. Lockpick watches the
   game's save folder for this and never opens the files.
 

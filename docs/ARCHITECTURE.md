@@ -28,6 +28,7 @@ Projects:
 | `Lockpick.Core` | Game-agnostic model (`GameSnapshot`, `Field<T>`), events + detector, adapter contract, version profiles (load/validate/match/verify), memory abstractions, `GameMonitor`, recording/replay, JSON-lines logging | M.E.Logging.Abstractions |
 | `Lockpick.Platform.Windows` | Win32 process discovery, read-only handles, `ReadProcessMemory`, high-resolution waits, GOG registry lookup | Core |
 | `Lockpick.GameAdapter.RE1` | RE1 build profiles and interpretation of raw values. **The only place that knows RE1 addresses.** | Core |
+| `Lockpick.Api` | Optional HTTP API for other tools (Kestrel; off by default, token, local unless allowed; docs/API.md) | Core |
 | `Lockpick.App` | Avalonia desktop UI and composition root; first-time setup; Velopack self-update; Debug page with capture | all of the above |
 | `tools/Lockpick.Probe` | Headless identify / watch / trace / record | Core, Platform, RE1 |
 | `tools/Lockpick.Autoplay` | **Developer only, never shipped:** virtual-controller test harness (ViGEmBus), room warp, fast-forward, captures | Core, Platform, RE1 |
@@ -182,6 +183,15 @@ and new value (`trainer/actions.jsonl`, the Trainer page). Locks and rules (infi
 first change in a run (since a new game or a loaded save) raises `RunInvalidated` — a record of what Lockpick did, not
 an anti-cheat claim. Game knowledge (which field is health, which slot holds the equipped weapon's rounds) stays in
 the adapter.
+
+**ADR-017 — An HTTP API for other tools, on Kestrel.** Other programs (scripts, OBS, LiveSplit, Stream Deck and
+macro tools, devices on the network) talk to Lockpick through `Lockpick.Api`: JSON under `/api/v1`, server-sent events
+for the live stream (simpler than WebSockets for browsers and curl, one-way is all overlays need). It is off by default;
+on, it listens on loopback unless the player allows the network, and every request needs a random 256-bit token
+(header, or `?token=` for browser sources), compared in constant time. Trainer commands need their own opt-in and go
+through `TrainerService` (source `api`); switching to read-only or Challenge is always allowed. Kestrel rather than
+`HttpListener`: binding to the network with `HttpListener` needs a URL ACL (administrator), Kestrel doesn't; the
+cost is the ASP.NET Core runtime in the self-contained build.
 
 **ADR-009 — Responsive UI.** The window switches to an icon-rail + single-column layout below 760 px
 (window) / 780 px (dashboard content), for portrait monitors and side-by-side use with the game.

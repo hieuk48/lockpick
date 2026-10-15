@@ -25,7 +25,7 @@ public sealed record TrainerActionRow(string Time, string Text, bool Applied)
 /// </summary>
 public sealed partial class TrainerViewModel : PageViewModel
 {
-    private const string AmmoRule = "infinite-ammo";
+    private const string AmmoRule = TrainerRules.InfiniteAmmo;
     private const int MaxRows = 200;
 
     private readonly TrainerService? _trainer;

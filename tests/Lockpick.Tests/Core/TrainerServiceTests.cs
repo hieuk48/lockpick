@@ -17,7 +17,7 @@ public sealed class TrainerServiceTests : IDisposable
     private const ulong MaxHp = 0x401002;
     private const ulong Room = 0x401004;
 
-    private static readonly VersionProfile Profile = new()
+    internal static readonly VersionProfile Profile = new()
     {
         Id = "test",
         GameId = "test",
@@ -34,7 +34,7 @@ public sealed class TrainerServiceTests : IDisposable
         ],
     };
 
-    private readonly FakeSource _source = new();
+    private readonly FakeStateSource _source = new();
     private readonly FakeWriteHost _host = new();
     private readonly TrainerActionLog _log = new(null);
     private readonly TrainerService _trainer;
@@ -43,7 +43,7 @@ public sealed class TrainerServiceTests : IDisposable
     {
         _host.Memory.WriteI16(Hp, 50).WriteU8(MaxHp, 96).WriteU8(Room, 5);
         _trainer = new TrainerService(_source, _host, _log, NullLogger.Instance);
-        _source.Attach(1234);
+        _source.Attach(1234, Profile);
         _source.Poll(InGame(hp: 50));
     }
 
@@ -127,7 +127,7 @@ public sealed class TrainerServiceTests : IDisposable
         Assert.Contains("Challenge Mode", action.Message, StringComparison.Ordinal);
 
         _source.Detach();
-        _source.Attach(5678);
+        _source.Attach(5678, Profile);
         Assert.Equal(1, _host.Opened); // reattaching in Challenge Mode opens nothing
     }
 
@@ -190,7 +190,7 @@ public sealed class TrainerServiceTests : IDisposable
         Assert.True(first.Disposed);
         Assert.False(_trainer.HasWriteAccess);
 
-        _source.Attach(4321);
+        _source.Attach(4321, Profile);
         Assert.True(_trainer.HasWriteAccess);
         Assert.Equal(4321, _host.LastProcessId);
     }
@@ -227,108 +227,5 @@ public sealed class TrainerServiceTests : IDisposable
             Fields = [new FieldSpec { Name = "x", Address = Room, Type = ValueType.U8, Verification = Verification.Runtime, Evidence = "e", Write = new WriteSpec { Max = 300 } }],
         };
         Assert.Throws<ProfileValidationException>(() => ProfileLoader.Validate(outOfType));
-    }
-
-    private sealed class FakeSource : IGameStateSource
-    {
-        public event EventHandler<MonitorStatus>? StatusChanged;
-
-        public event EventHandler<GameSnapshot>? SnapshotChanged;
-
-        public event EventHandler<GameSnapshot>? Polled;
-
-        public event EventHandler<GameEvent>? EventRaised;
-
-        public MonitorStatus Status { get; private set; } = MonitorStatus.Stopped(DateTimeOffset.UtcNow);
-
-        public bool RecordRegions { get; set; }
-
-        public GameSnapshot? Latest { get; private set; }
-
-        public MonitorStatistics Statistics => new(0, 0, 0, 0, 0, 0);
-
-        public void Attach(int pid)
-        {
-            Status = new MonitorStatus(ConnectionState.Attached, "attached", DateTimeOffset.UtcNow,
-                new ProcessCandidate(pid, "Test", null, null), null, Profile);
-            StatusChanged?.Invoke(this, Status);
-        }
-
-        public void Detach()
-        {
-            Status = new MonitorStatus(ConnectionState.Searching, "searching", DateTimeOffset.UtcNow);
-            StatusChanged?.Invoke(this, Status);
-        }
-
-        public void Poll(GameSnapshot snapshot)
-        {
-            Latest = snapshot;
-            Polled?.Invoke(this, snapshot);
-            SnapshotChanged?.Invoke(this, snapshot);
-        }
-
-        public void Raise(GameEvent gameEvent) => EventRaised?.Invoke(this, gameEvent);
-
-        public void Start()
-        {
-        }
-
-        public Task StopAsync() => Task.CompletedTask;
-
-        public ValueTask DisposeAsync() => ValueTask.CompletedTask;
-    }
-
-    private sealed class FakeWriteHost : IProcessWriteHost
-    {
-        public FakeMemory Memory { get; } = new();
-
-        public int Opened { get; private set; }
-
-        public int? LastProcessId { get; private set; }
-
-        public FakeWriter? LastWriter { get; private set; }
-
-        public bool Refuse { get; set; }
-
-        public IProcessWriter OpenForWrite(int processId)
-        {
-            if (Refuse)
-            {
-                throw new ProcessAccessException("refused");
-            }
-
-            Opened++;
-            LastProcessId = processId;
-            LastWriter = new FakeWriter(processId, Memory);
-            return LastWriter;
-        }
-    }
-
-    private sealed class FakeWriter(int processId, FakeMemory memory) : IProcessWriter
-    {
-        public int ProcessId { get; } = processId;
-
-        public bool Disposed { get; private set; }
-
-        public bool IgnoreWrites { get; set; }
-
-        public bool TryRead(ulong address, Span<byte> destination) => !Disposed && memory.TryRead(address, destination);
-
-        public bool TryWrite(ulong address, ReadOnlySpan<byte> source)
-        {
-            if (Disposed)
-            {
-                return false;
-            }
-
-            if (!IgnoreWrites)
-            {
-                memory.Write(address, source);
-            }
-
-            return true;
-        }
-
-        public void Dispose() => Disposed = true;
     }
 }

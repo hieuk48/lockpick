@@ -1,0 +1,15 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <RootNamespace>Lockpick.Api</RootNamespace>
+    <Description>Lockpick's optional HTTP API for other tools: game state, events, captures and (opt-in) trainer commands.</Description>
+  </PropertyGroup>
+  <ItemGroup>
+    <FrameworkReference Include="Microsoft.AspNetCore.App" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\Lockpick.Core\Lockpick.Core.csproj" />
+  </ItemGroup>
+  <ItemGroup>
+    <InternalsVisibleTo Include="Lockpick.Tests" />
+  </ItemGroup>
+</Project>

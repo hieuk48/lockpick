@@ -49,6 +49,11 @@ public sealed class MockGameAdapter : IGameAdapter
 
     public string? SaveDirectory(string executablePath) => SavesFolder;
 
+    /// <summary>The trainer features reported for any profile (null: none).</summary>
+    public Lockpick.Core.Trainer.IGameTrainer? Trainer { get; set; }
+
+    public Lockpick.Core.Trainer.IGameTrainer? CreateTrainer(VersionProfile profile) => Trainer;
+
     public int? SaveSlot(string fileName) =>
         fileName.StartsWith("savedat", StringComparison.OrdinalIgnoreCase) && fileName.Length > 7 && char.IsAsciiDigit(fileName[7])
             ? fileName[7] - '0'

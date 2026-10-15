@@ -20,6 +20,8 @@ public sealed partial class MainViewModel : ObservableObject, IDisposable
         _settings = new SettingsViewModel(services, RunSetup);
         Pages = [new DashboardViewModel(State, services.Adapter.RoomName), new ProgressViewModel(services, State), new MapViewModel(services, State), new ItemsViewModel(services, State), new TrainerViewModel(services, State), Debug, _settings];
         SelectedPage = Pages[0];
+        services.CreateApi(Debug);
+        _ = services.ApplyApiSettingsAsync();
         Updates = services.Updates;
         State.PropertyChanged += OnStateChanged;
         UpdateHeader();
