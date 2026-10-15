@@ -20,4 +20,22 @@ public interface IGameTrainer
     /// its own memory, so create a new one each time the feature is switched on.
     /// </summary>
     Func<GameSnapshot, IReadOnlyList<FieldWrite>> CreateInfiniteAmmoRule();
+
+    /// <summary>Items the player can be given (through <see cref="AddToStorage"/>), by id, with their names.</summary>
+    IReadOnlyList<GivableItem> GivableItems { get; }
+
+    /// <summary>True when the held item in <paramref name="slot"/> has a count the trainer may change (rounds, ammo, …).</summary>
+    bool HasQuantity(int itemId);
+
+    /// <summary>The write that changes the count of the held item in <paramref name="slot"/>, or null with the reason.</summary>
+    FieldWrite? SetQuantity(GameSnapshot snapshot, int slot, int quantity, out string? refusal);
+
+    /// <summary>
+    /// The write that puts an item into the game's storage (RE1: the first empty item-box entry), where the game loads it
+    /// properly when the player takes it out; null with the reason when it can't.
+    /// </summary>
+    FieldWrite? AddToStorage(GameSnapshot snapshot, int itemId, int quantity, out string? refusal);
 }
+
+/// <summary>An item the trainer can give, and whether it comes with a count.</summary>
+public sealed record GivableItem(int Id, string Name, bool HasQuantity);

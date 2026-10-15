@@ -96,6 +96,73 @@ public sealed partial class TrainerViewModel : PageViewModel
     [ObservableProperty]
     public partial string LastResult { get; private set; } = string.Empty;
 
+    /// <summary>What the player carries (the count can be changed on weapons, ammo and ribbons).</summary>
+    public ObservableCollection<TrainerSlotRow> Slots { get; } = [];
+
+    [ObservableProperty]
+    public partial IReadOnlyList<GivableItem> GivableItems { get; private set; } = [];
+
+    [ObservableProperty]
+    public partial GivableItem? GiveItem { get; set; }
+
+    [ObservableProperty]
+    public partial decimal? GiveQuantity { get; set; } = 1;
+
+    [RelayCommand]
+    private void PutInItemBox()
+    {
+        if (_trainer is null || Game() is not { } game || GiveItem is not { } item || State.Snapshot is not { } snapshot)
+        {
+            return;
+        }
+
+        if (game.AddToStorage(snapshot, item.Id, (int)(GiveQuantity ?? 1), out var refusal) is { } write)
+        {
+            Show(_trainer.Write(write.Field, write.Value, TrainerSource.User, $"Item box + {item.Name}"));
+        }
+        else
+        {
+            LastResult = $"Can't put {item.Name} in the item box: {refusal}";
+        }
+    }
+
+    private void SetSlot(TrainerSlotRow row)
+    {
+        if (_trainer is null || Game() is not { } game || State.Snapshot is not { } snapshot || row.Target is not { } target)
+        {
+            return;
+        }
+
+        if (game.SetQuantity(snapshot, row.Slot, (int)target, out var refusal) is { } write)
+        {
+            Show(_trainer.Write(write.Field, write.Value, TrainerSource.User, $"{row.Name} count"));
+        }
+        else
+        {
+            LastResult = $"Can't change {row.Name}: {refusal}";
+        }
+    }
+
+    private string _slotsShown = string.Empty;
+
+    private void SyncSlots(IGameTrainer? game)
+    {
+        var held = State.Snapshot?.Inventory is { HasValue: true, Value: { } items } ? items : [];
+        var key = string.Join(";", held.Select(h => $"{h.Slot}:{h.ItemId}:{h.Quantity}"));
+        if (key == _slotsShown)
+        {
+            return;
+        }
+
+        _slotsShown = key;
+        Slots.Clear();
+        foreach (var item in held)
+        {
+            Slots.Add(new TrainerSlotRow(item.Slot, _services.Adapter.ItemName(item.ItemId) ?? $"Item {item.ItemId}", item.Quantity,
+                game?.HasQuantity(item.ItemId) ?? false, SetSlot));
+        }
+    }
+
     public bool IsReadOnly => Mode == TrainerMode.ReadOnly;
 
     public bool IsTrainer => Mode == TrainerMode.Trainer;
@@ -284,6 +351,13 @@ public sealed partial class TrainerViewModel : PageViewModel
             }
 
             var game = Game();
+            SyncSlots(game);
+            if (game is not null && GivableItems.Count == 0)
+            {
+                GivableItems = game.GivableItems;
+                GiveItem ??= GivableItems.Count > 0 ? GivableItems[0] : null;
+            }
+
             HealthLocked = game is not null && _trainer.Locks.ContainsKey(game.HealthField);
             InfiniteAmmo = _trainer.HasRule(AmmoRule);
         }

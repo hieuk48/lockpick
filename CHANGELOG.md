@@ -12,6 +12,8 @@ All notable changes to this project are documented here. The format follows
   and infinite ammo (the equipped weapon's rounds never go down; a reload raises the count). Every change is checked
   against the game's limits (HP up to max HP), read back and logged with the value before and after
   (`trainer/actions.jsonl`); a run the trainer changed is marked as such until the next new game or load.
+- Inventory editor (Trainer page, Trainer Mode): change the count of what you carry (a weapon's loaded rounds, ammo,
+  ink ribbons), and put any item into the item box — take it out at a box and the game loads it like a pickup.
 - Trainer hotkeys (Settings → Trainer hotkeys, off until you pick keys): fill HP, lock / unlock HP, infinite ammo
   on / off — while the game has focus. They do nothing unless Trainer Mode is on with write access, and a key can't
   be given to two actions.

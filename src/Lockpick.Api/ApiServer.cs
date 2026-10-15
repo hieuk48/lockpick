@@ -39,7 +39,8 @@ public sealed class ApiServer : IAsyncDisposable
         "GET /status", "GET /state", "GET /events?after=N", "GET /events/stream?after=N",
         "POST /capture/start", "POST /capture/stop", "POST /capture/marker {note}",
         "GET /trainer", "POST /trainer/mode {mode}", "POST /trainer/health {value|full, lock}",
-        "POST /trainer/health/unlock", "POST /trainer/ammo {enabled}"
+        "POST /trainer/health/unlock", "POST /trainer/ammo {enabled}", "GET /trainer/items",
+        "POST /trainer/inventory/quantity {slot, quantity}", "POST /trainer/itembox {itemId, quantity}"
     ];
 
     private readonly ApiHost _host;
@@ -172,6 +173,32 @@ public sealed class ApiServer : IAsyncDisposable
         {
             trainer.Unlock(game.HealthField, TrainerSource.Api);
             return null;
+        }));
+        app.MapGet(Prefix + "/trainer/items", () =>
+            _host.Source.Status.Profile is { } profile && _host.Adapter.CreateTrainer(profile) is { } game
+                ? Ok(new { items = game.GivableItems })
+                : Error(409, "not attached to a supported game"));
+        app.MapPost(Prefix + "/trainer/inventory/quantity", (QuantityRequest request) => TrainerCommand((trainer, game) =>
+        {
+            if (_host.Source.Latest is not { } snapshot)
+            {
+                return Refused("Count", "the game state isn't known yet");
+            }
+
+            return game.SetQuantity(snapshot, request.Slot, request.Quantity, out var refusal) is { } write
+                ? trainer.Write(write.Field, write.Value, TrainerSource.Api, $"Count of slot {request.Slot + 1}")
+                : Refused("Count", refusal ?? "refused");
+        }));
+        app.MapPost(Prefix + "/trainer/itembox", (ItemBoxRequest request) => TrainerCommand((trainer, game) =>
+        {
+            if (_host.Source.Latest is not { } snapshot)
+            {
+                return Refused("Item box", "the game state isn't known yet");
+            }
+
+            return game.AddToStorage(snapshot, request.ItemId, request.Quantity ?? 1, out var refusal) is { } write
+                ? trainer.Write(write.Field, write.Value, TrainerSource.Api, $"Item box + {_host.Adapter.ItemName(request.ItemId) ?? $"item {request.ItemId}"}")
+                : Refused("Item box", refusal ?? "refused");
         }));
         app.MapPost(Prefix + "/trainer/ammo", (ToggleRequest request) => TrainerCommand((trainer, game) =>
         {
@@ -356,6 +383,9 @@ public sealed class ApiServer : IAsyncDisposable
             : Results.Json(new { result = action.Result, error = action.Describe(), action }, Json, statusCode: 409);
     }
 
+    private static TrainerAction Refused(string action, string why) =>
+        new(DateTimeOffset.UtcNow, action, null, null, null, TrainerSource.Api, TrainerResult.Refused, why);
+
     private static T? Value<T>(Field<T>? field)
         where T : struct => field is { HasValue: true } f ? f.Value : null;
 
@@ -376,4 +406,8 @@ public sealed class ApiServer : IAsyncDisposable
     private sealed record HealthRequest(long? Value, bool? Full, bool? Lock);
 
     private sealed record ToggleRequest(bool Enabled);
+
+    private sealed record QuantityRequest(int Slot, int Quantity);
+
+    private sealed record ItemBoxRequest(int ItemId, int? Quantity);
 }

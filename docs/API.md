@@ -44,6 +44,8 @@ Event types: `GameStarted`, `GameStopped`, `GameLoaded`, `GameSaved`, `RoomChang
 | `/api/v1/trainer/health` | `{"value": 90}` or `{"full": true}`, optional `"lock": true` | Sets (or locks) HP |
 | `/api/v1/trainer/health/unlock` | — | Releases the HP lock |
 | `/api/v1/trainer/ammo` | `{"enabled": true}` | Infinite ammo on / off |
+| `/api/v1/trainer/inventory/quantity` | `{"slot": 0, "quantity": 99}` | Changes the count of a held weapon (loaded rounds), ammo or ink ribbons; `slot` as in `state.inventory` |
+| `/api/v1/trainer/itembox` | `{"itemId": 12, "quantity": 30}` | Puts an item in the first empty item-box entry; the player takes it out at any item box (`GET /api/v1/trainer/items` lists the ids) |
 
 ## Examples
 

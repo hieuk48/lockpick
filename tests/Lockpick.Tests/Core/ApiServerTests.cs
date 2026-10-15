@@ -164,6 +164,22 @@ public sealed class ApiServerTests : IAsyncLifetime
         public string MaxHealthField => "maxHp";
 
         public Func<GameSnapshot, IReadOnlyList<FieldWrite>> CreateInfiniteAmmoRule() => _ => [];
+
+        public IReadOnlyList<GivableItem> GivableItems => [];
+
+        public bool HasQuantity(int itemId) => false;
+
+        public FieldWrite? SetQuantity(GameSnapshot snapshot, int slot, int quantity, out string? refusal)
+        {
+            refusal = "not in this test";
+            return null;
+        }
+
+        public FieldWrite? AddToStorage(GameSnapshot snapshot, int itemId, int quantity, out string? refusal)
+        {
+            refusal = "not in this test";
+            return null;
+        }
     }
 
     private sealed class FakeCapture : ICaptureControl

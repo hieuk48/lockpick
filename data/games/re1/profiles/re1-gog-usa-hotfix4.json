@@ -411,36 +411,40 @@
       "address": "0xBE98E4",
       "type": "u16",
       "verification": "runtime",
-      "evidence": "Live Jill session 2026-10-13 (tests/Lockpick.Tests/Fixtures/re1-live-jill-itembox.trace.txt): items put into and taken out of the box change these entries (low byte item id, high byte quantity); swaps exchange box and inventory slots.",
+      "evidence": "Live Jill session 2026-10-13 (tests/Lockpick.Tests/Fixtures/re1-live-jill-itembox.trace.txt): items put into and taken out of the box change these entries (low byte item id, high byte quantity); swaps exchange box and inventory slots. Writes: the dev harness put items into empty entries (2026-10-14/15, give-box) and taking them out at the box loaded them with the right icons.",
       "description": "Item box entry 1 (low byte id, high byte quantity).",
-      "sources": ["ecruells/resident-evil-pc-decomp BioCard.h"]
+      "sources": ["ecruells/resident-evil-pc-decomp BioCard.h"],
+      "write": { "min": 0, "max": 65535 }
     },
     {
       "name": "box1",
       "address": "0xBE98E6",
       "type": "u16",
       "verification": "runtime",
-      "evidence": "Live Jill session 2026-10-13 (tests/Lockpick.Tests/Fixtures/re1-live-jill-itembox.trace.txt): items put into and taken out of the box change these entries (low byte item id, high byte quantity); swaps exchange box and inventory slots.",
+      "evidence": "Live Jill session 2026-10-13 (tests/Lockpick.Tests/Fixtures/re1-live-jill-itembox.trace.txt): items put into and taken out of the box change these entries (low byte item id, high byte quantity); swaps exchange box and inventory slots. Writes: the dev harness put items into empty entries (2026-10-14/15, give-box) and taking them out at the box loaded them with the right icons.",
       "description": "Item box entry 2 (low byte id, high byte quantity).",
-      "sources": ["ecruells/resident-evil-pc-decomp BioCard.h"]
+      "sources": ["ecruells/resident-evil-pc-decomp BioCard.h"],
+      "write": { "min": 0, "max": 65535 }
     },
     {
       "name": "box2",
       "address": "0xBE98E8",
       "type": "u16",
       "verification": "runtime",
-      "evidence": "Live Jill session 2026-10-13 (tests/Lockpick.Tests/Fixtures/re1-live-jill-itembox.trace.txt): items put into and taken out of the box change these entries (low byte item id, high byte quantity); swaps exchange box and inventory slots.",
+      "evidence": "Live Jill session 2026-10-13 (tests/Lockpick.Tests/Fixtures/re1-live-jill-itembox.trace.txt): items put into and taken out of the box change these entries (low byte item id, high byte quantity); swaps exchange box and inventory slots. Writes: the dev harness put items into empty entries (2026-10-14/15, give-box) and taking them out at the box loaded them with the right icons.",
       "description": "Item box entry 3 (low byte id, high byte quantity).",
-      "sources": ["ecruells/resident-evil-pc-decomp BioCard.h"]
+      "sources": ["ecruells/resident-evil-pc-decomp BioCard.h"],
+      "write": { "min": 0, "max": 65535 }
     },
     {
       "name": "box3",
       "address": "0xBE98EA",
       "type": "u16",
       "verification": "runtime",
-      "evidence": "Live Jill session 2026-10-13 (tests/Lockpick.Tests/Fixtures/re1-live-jill-itembox.trace.txt): items put into and taken out of the box change these entries (low byte item id, high byte quantity); swaps exchange box and inventory slots.",
+      "evidence": "Live Jill session 2026-10-13 (tests/Lockpick.Tests/Fixtures/re1-live-jill-itembox.trace.txt): items put into and taken out of the box change these entries (low byte item id, high byte quantity); swaps exchange box and inventory slots. Writes: the dev harness put items into empty entries (2026-10-14/15, give-box) and taking them out at the box loaded them with the right icons.",
       "description": "Item box entry 4 (low byte id, high byte quantity).",
-      "sources": ["ecruells/resident-evil-pc-decomp BioCard.h"]
+      "sources": ["ecruells/resident-evil-pc-decomp BioCard.h"],
+      "write": { "min": 0, "max": 65535 }
     },
     {
       "name": "enemy0Flags",
@@ -926,353 +930,441 @@
       "name": "box4",
       "address": "0xBE98EC",
       "type": "u16",
-      "verification": "unverified",
+      "verification": "runtime",
+      "evidence": "Live 2026-10-15 (owner's Jill save, 27 entries in use): with the item box screen's own cursor moved to entries 4, 13 and 26, the game's swap put exactly the item read at 0xBE98E4 + 2*entry (acid rounds x6, Doom book 1, shells x36) into an empty inventory slot and left the entry empty; entries 0-3 traced 2026-10-13. One contiguous array of 48 2-byte entries (decomp BioCard itemBox[48]). Writes: the dev harness put items into empty entries and taking them out at the box loaded them with the right icons.",
       "description": "Item box entry 5 (low byte id, high byte quantity).",
-      "sources": ["ecruells/resident-evil-pc-decomp BioCard.h"]
+      "sources": ["ecruells/resident-evil-pc-decomp BioCard.h"],
+      "write": { "min": 0, "max": 65535 }
     },
     {
       "name": "box5",
       "address": "0xBE98EE",
       "type": "u16",
-      "verification": "unverified",
+      "verification": "runtime",
+      "evidence": "Live 2026-10-15 (owner's Jill save, 27 entries in use): with the item box screen's own cursor moved to entries 4, 13 and 26, the game's swap put exactly the item read at 0xBE98E4 + 2*entry (acid rounds x6, Doom book 1, shells x36) into an empty inventory slot and left the entry empty; entries 0-3 traced 2026-10-13. One contiguous array of 48 2-byte entries (decomp BioCard itemBox[48]). Writes: the dev harness put items into empty entries and taking them out at the box loaded them with the right icons.",
       "description": "Item box entry 6 (low byte id, high byte quantity).",
-      "sources": ["ecruells/resident-evil-pc-decomp BioCard.h"]
+      "sources": ["ecruells/resident-evil-pc-decomp BioCard.h"],
+      "write": { "min": 0, "max": 65535 }
     },
     {
       "name": "box6",
       "address": "0xBE98F0",
       "type": "u16",
-      "verification": "unverified",
+      "verification": "runtime",
+      "evidence": "Live 2026-10-15 (owner's Jill save, 27 entries in use): with the item box screen's own cursor moved to entries 4, 13 and 26, the game's swap put exactly the item read at 0xBE98E4 + 2*entry (acid rounds x6, Doom book 1, shells x36) into an empty inventory slot and left the entry empty; entries 0-3 traced 2026-10-13. One contiguous array of 48 2-byte entries (decomp BioCard itemBox[48]). Writes: the dev harness put items into empty entries and taking them out at the box loaded them with the right icons.",
       "description": "Item box entry 7 (low byte id, high byte quantity).",
-      "sources": ["ecruells/resident-evil-pc-decomp BioCard.h"]
+      "sources": ["ecruells/resident-evil-pc-decomp BioCard.h"],
+      "write": { "min": 0, "max": 65535 }
     },
     {
       "name": "box7",
       "address": "0xBE98F2",
       "type": "u16",
-      "verification": "unverified",
+      "verification": "runtime",
+      "evidence": "Live 2026-10-15 (owner's Jill save, 27 entries in use): with the item box screen's own cursor moved to entries 4, 13 and 26, the game's swap put exactly the item read at 0xBE98E4 + 2*entry (acid rounds x6, Doom book 1, shells x36) into an empty inventory slot and left the entry empty; entries 0-3 traced 2026-10-13. One contiguous array of 48 2-byte entries (decomp BioCard itemBox[48]). Writes: the dev harness put items into empty entries and taking them out at the box loaded them with the right icons.",
       "description": "Item box entry 8 (low byte id, high byte quantity).",
-      "sources": ["ecruells/resident-evil-pc-decomp BioCard.h"]
+      "sources": ["ecruells/resident-evil-pc-decomp BioCard.h"],
+      "write": { "min": 0, "max": 65535 }
     },
     {
       "name": "box8",
       "address": "0xBE98F4",
       "type": "u16",
-      "verification": "unverified",
+      "verification": "runtime",
+      "evidence": "Live 2026-10-15 (owner's Jill save, 27 entries in use): with the item box screen's own cursor moved to entries 4, 13 and 26, the game's swap put exactly the item read at 0xBE98E4 + 2*entry (acid rounds x6, Doom book 1, shells x36) into an empty inventory slot and left the entry empty; entries 0-3 traced 2026-10-13. One contiguous array of 48 2-byte entries (decomp BioCard itemBox[48]). Writes: the dev harness put items into empty entries and taking them out at the box loaded them with the right icons.",
       "description": "Item box entry 9 (low byte id, high byte quantity).",
-      "sources": ["ecruells/resident-evil-pc-decomp BioCard.h"]
+      "sources": ["ecruells/resident-evil-pc-decomp BioCard.h"],
+      "write": { "min": 0, "max": 65535 }
     },
     {
       "name": "box9",
       "address": "0xBE98F6",
       "type": "u16",
-      "verification": "unverified",
+      "verification": "runtime",
+      "evidence": "Live 2026-10-15 (owner's Jill save, 27 entries in use): with the item box screen's own cursor moved to entries 4, 13 and 26, the game's swap put exactly the item read at 0xBE98E4 + 2*entry (acid rounds x6, Doom book 1, shells x36) into an empty inventory slot and left the entry empty; entries 0-3 traced 2026-10-13. One contiguous array of 48 2-byte entries (decomp BioCard itemBox[48]). Writes: the dev harness put items into empty entries and taking them out at the box loaded them with the right icons.",
       "description": "Item box entry 10 (low byte id, high byte quantity).",
-      "sources": ["ecruells/resident-evil-pc-decomp BioCard.h"]
+      "sources": ["ecruells/resident-evil-pc-decomp BioCard.h"],
+      "write": { "min": 0, "max": 65535 }
     },
     {
       "name": "box10",
       "address": "0xBE98F8",
       "type": "u16",
-      "verification": "unverified",
+      "verification": "runtime",
+      "evidence": "Live 2026-10-15 (owner's Jill save, 27 entries in use): with the item box screen's own cursor moved to entries 4, 13 and 26, the game's swap put exactly the item read at 0xBE98E4 + 2*entry (acid rounds x6, Doom book 1, shells x36) into an empty inventory slot and left the entry empty; entries 0-3 traced 2026-10-13. One contiguous array of 48 2-byte entries (decomp BioCard itemBox[48]). Writes: the dev harness put items into empty entries and taking them out at the box loaded them with the right icons.",
       "description": "Item box entry 11 (low byte id, high byte quantity).",
-      "sources": ["ecruells/resident-evil-pc-decomp BioCard.h"]
+      "sources": ["ecruells/resident-evil-pc-decomp BioCard.h"],
+      "write": { "min": 0, "max": 65535 }
     },
     {
       "name": "box11",
       "address": "0xBE98FA",
       "type": "u16",
-      "verification": "unverified",
+      "verification": "runtime",
+      "evidence": "Live 2026-10-15 (owner's Jill save, 27 entries in use): with the item box screen's own cursor moved to entries 4, 13 and 26, the game's swap put exactly the item read at 0xBE98E4 + 2*entry (acid rounds x6, Doom book 1, shells x36) into an empty inventory slot and left the entry empty; entries 0-3 traced 2026-10-13. One contiguous array of 48 2-byte entries (decomp BioCard itemBox[48]). Writes: the dev harness put items into empty entries and taking them out at the box loaded them with the right icons.",
       "description": "Item box entry 12 (low byte id, high byte quantity).",
-      "sources": ["ecruells/resident-evil-pc-decomp BioCard.h"]
+      "sources": ["ecruells/resident-evil-pc-decomp BioCard.h"],
+      "write": { "min": 0, "max": 65535 }
     },
     {
       "name": "box12",
       "address": "0xBE98FC",
       "type": "u16",
-      "verification": "unverified",
+      "verification": "runtime",
+      "evidence": "Live 2026-10-15 (owner's Jill save, 27 entries in use): with the item box screen's own cursor moved to entries 4, 13 and 26, the game's swap put exactly the item read at 0xBE98E4 + 2*entry (acid rounds x6, Doom book 1, shells x36) into an empty inventory slot and left the entry empty; entries 0-3 traced 2026-10-13. One contiguous array of 48 2-byte entries (decomp BioCard itemBox[48]). Writes: the dev harness put items into empty entries and taking them out at the box loaded them with the right icons.",
       "description": "Item box entry 13 (low byte id, high byte quantity).",
-      "sources": ["ecruells/resident-evil-pc-decomp BioCard.h"]
+      "sources": ["ecruells/resident-evil-pc-decomp BioCard.h"],
+      "write": { "min": 0, "max": 65535 }
     },
     {
       "name": "box13",
       "address": "0xBE98FE",
       "type": "u16",
-      "verification": "unverified",
+      "verification": "runtime",
+      "evidence": "Live 2026-10-15 (owner's Jill save, 27 entries in use): with the item box screen's own cursor moved to entries 4, 13 and 26, the game's swap put exactly the item read at 0xBE98E4 + 2*entry (acid rounds x6, Doom book 1, shells x36) into an empty inventory slot and left the entry empty; entries 0-3 traced 2026-10-13. One contiguous array of 48 2-byte entries (decomp BioCard itemBox[48]). Writes: the dev harness put items into empty entries and taking them out at the box loaded them with the right icons.",
       "description": "Item box entry 14 (low byte id, high byte quantity).",
-      "sources": ["ecruells/resident-evil-pc-decomp BioCard.h"]
+      "sources": ["ecruells/resident-evil-pc-decomp BioCard.h"],
+      "write": { "min": 0, "max": 65535 }
     },
     {
       "name": "box14",
       "address": "0xBE9900",
       "type": "u16",
-      "verification": "unverified",
+      "verification": "runtime",
+      "evidence": "Live 2026-10-15 (owner's Jill save, 27 entries in use): with the item box screen's own cursor moved to entries 4, 13 and 26, the game's swap put exactly the item read at 0xBE98E4 + 2*entry (acid rounds x6, Doom book 1, shells x36) into an empty inventory slot and left the entry empty; entries 0-3 traced 2026-10-13. One contiguous array of 48 2-byte entries (decomp BioCard itemBox[48]). Writes: the dev harness put items into empty entries and taking them out at the box loaded them with the right icons.",
       "description": "Item box entry 15 (low byte id, high byte quantity).",
-      "sources": ["ecruells/resident-evil-pc-decomp BioCard.h"]
+      "sources": ["ecruells/resident-evil-pc-decomp BioCard.h"],
+      "write": { "min": 0, "max": 65535 }
     },
     {
       "name": "box15",
       "address": "0xBE9902",
       "type": "u16",
-      "verification": "unverified",
+      "verification": "runtime",
+      "evidence": "Live 2026-10-15 (owner's Jill save, 27 entries in use): with the item box screen's own cursor moved to entries 4, 13 and 26, the game's swap put exactly the item read at 0xBE98E4 + 2*entry (acid rounds x6, Doom book 1, shells x36) into an empty inventory slot and left the entry empty; entries 0-3 traced 2026-10-13. One contiguous array of 48 2-byte entries (decomp BioCard itemBox[48]). Writes: the dev harness put items into empty entries and taking them out at the box loaded them with the right icons.",
       "description": "Item box entry 16 (low byte id, high byte quantity).",
-      "sources": ["ecruells/resident-evil-pc-decomp BioCard.h"]
+      "sources": ["ecruells/resident-evil-pc-decomp BioCard.h"],
+      "write": { "min": 0, "max": 65535 }
     },
     {
       "name": "box16",
       "address": "0xBE9904",
       "type": "u16",
-      "verification": "unverified",
+      "verification": "runtime",
+      "evidence": "Live 2026-10-15 (owner's Jill save, 27 entries in use): with the item box screen's own cursor moved to entries 4, 13 and 26, the game's swap put exactly the item read at 0xBE98E4 + 2*entry (acid rounds x6, Doom book 1, shells x36) into an empty inventory slot and left the entry empty; entries 0-3 traced 2026-10-13. One contiguous array of 48 2-byte entries (decomp BioCard itemBox[48]). Writes: the dev harness put items into empty entries and taking them out at the box loaded them with the right icons.",
       "description": "Item box entry 17 (low byte id, high byte quantity).",
-      "sources": ["ecruells/resident-evil-pc-decomp BioCard.h"]
+      "sources": ["ecruells/resident-evil-pc-decomp BioCard.h"],
+      "write": { "min": 0, "max": 65535 }
     },
     {
       "name": "box17",
       "address": "0xBE9906",
       "type": "u16",
-      "verification": "unverified",
+      "verification": "runtime",
+      "evidence": "Live 2026-10-15 (owner's Jill save, 27 entries in use): with the item box screen's own cursor moved to entries 4, 13 and 26, the game's swap put exactly the item read at 0xBE98E4 + 2*entry (acid rounds x6, Doom book 1, shells x36) into an empty inventory slot and left the entry empty; entries 0-3 traced 2026-10-13. One contiguous array of 48 2-byte entries (decomp BioCard itemBox[48]). Writes: the dev harness put items into empty entries and taking them out at the box loaded them with the right icons.",
       "description": "Item box entry 18 (low byte id, high byte quantity).",
-      "sources": ["ecruells/resident-evil-pc-decomp BioCard.h"]
+      "sources": ["ecruells/resident-evil-pc-decomp BioCard.h"],
+      "write": { "min": 0, "max": 65535 }
     },
     {
       "name": "box18",
       "address": "0xBE9908",
       "type": "u16",
-      "verification": "unverified",
+      "verification": "runtime",
+      "evidence": "Live 2026-10-15 (owner's Jill save, 27 entries in use): with the item box screen's own cursor moved to entries 4, 13 and 26, the game's swap put exactly the item read at 0xBE98E4 + 2*entry (acid rounds x6, Doom book 1, shells x36) into an empty inventory slot and left the entry empty; entries 0-3 traced 2026-10-13. One contiguous array of 48 2-byte entries (decomp BioCard itemBox[48]). Writes: the dev harness put items into empty entries and taking them out at the box loaded them with the right icons.",
       "description": "Item box entry 19 (low byte id, high byte quantity).",
-      "sources": ["ecruells/resident-evil-pc-decomp BioCard.h"]
+      "sources": ["ecruells/resident-evil-pc-decomp BioCard.h"],
+      "write": { "min": 0, "max": 65535 }
     },
     {
       "name": "box19",
       "address": "0xBE990A",
       "type": "u16",
-      "verification": "unverified",
+      "verification": "runtime",
+      "evidence": "Live 2026-10-15 (owner's Jill save, 27 entries in use): with the item box screen's own cursor moved to entries 4, 13 and 26, the game's swap put exactly the item read at 0xBE98E4 + 2*entry (acid rounds x6, Doom book 1, shells x36) into an empty inventory slot and left the entry empty; entries 0-3 traced 2026-10-13. One contiguous array of 48 2-byte entries (decomp BioCard itemBox[48]). Writes: the dev harness put items into empty entries and taking them out at the box loaded them with the right icons.",
       "description": "Item box entry 20 (low byte id, high byte quantity).",
-      "sources": ["ecruells/resident-evil-pc-decomp BioCard.h"]
+      "sources": ["ecruells/resident-evil-pc-decomp BioCard.h"],
+      "write": { "min": 0, "max": 65535 }
     },
     {
       "name": "box20",
       "address": "0xBE990C",
       "type": "u16",
-      "verification": "unverified",
+      "verification": "runtime",
+      "evidence": "Live 2026-10-15 (owner's Jill save, 27 entries in use): with the item box screen's own cursor moved to entries 4, 13 and 26, the game's swap put exactly the item read at 0xBE98E4 + 2*entry (acid rounds x6, Doom book 1, shells x36) into an empty inventory slot and left the entry empty; entries 0-3 traced 2026-10-13. One contiguous array of 48 2-byte entries (decomp BioCard itemBox[48]). Writes: the dev harness put items into empty entries and taking them out at the box loaded them with the right icons.",
       "description": "Item box entry 21 (low byte id, high byte quantity).",
-      "sources": ["ecruells/resident-evil-pc-decomp BioCard.h"]
+      "sources": ["ecruells/resident-evil-pc-decomp BioCard.h"],
+      "write": { "min": 0, "max": 65535 }
     },
     {
       "name": "box21",
       "address": "0xBE990E",
       "type": "u16",
-      "verification": "unverified",
+      "verification": "runtime",
+      "evidence": "Live 2026-10-15 (owner's Jill save, 27 entries in use): with the item box screen's own cursor moved to entries 4, 13 and 26, the game's swap put exactly the item read at 0xBE98E4 + 2*entry (acid rounds x6, Doom book 1, shells x36) into an empty inventory slot and left the entry empty; entries 0-3 traced 2026-10-13. One contiguous array of 48 2-byte entries (decomp BioCard itemBox[48]). Writes: the dev harness put items into empty entries and taking them out at the box loaded them with the right icons.",
       "description": "Item box entry 22 (low byte id, high byte quantity).",
-      "sources": ["ecruells/resident-evil-pc-decomp BioCard.h"]
+      "sources": ["ecruells/resident-evil-pc-decomp BioCard.h"],
+      "write": { "min": 0, "max": 65535 }
     },
     {
       "name": "box22",
       "address": "0xBE9910",
       "type": "u16",
-      "verification": "unverified",
+      "verification": "runtime",
+      "evidence": "Live 2026-10-15 (owner's Jill save, 27 entries in use): with the item box screen's own cursor moved to entries 4, 13 and 26, the game's swap put exactly the item read at 0xBE98E4 + 2*entry (acid rounds x6, Doom book 1, shells x36) into an empty inventory slot and left the entry empty; entries 0-3 traced 2026-10-13. One contiguous array of 48 2-byte entries (decomp BioCard itemBox[48]). Writes: the dev harness put items into empty entries and taking them out at the box loaded them with the right icons.",
       "description": "Item box entry 23 (low byte id, high byte quantity).",
-      "sources": ["ecruells/resident-evil-pc-decomp BioCard.h"]
+      "sources": ["ecruells/resident-evil-pc-decomp BioCard.h"],
+      "write": { "min": 0, "max": 65535 }
     },
     {
       "name": "box23",
       "address": "0xBE9912",
       "type": "u16",
-      "verification": "unverified",
+      "verification": "runtime",
+      "evidence": "Live 2026-10-15 (owner's Jill save, 27 entries in use): with the item box screen's own cursor moved to entries 4, 13 and 26, the game's swap put exactly the item read at 0xBE98E4 + 2*entry (acid rounds x6, Doom book 1, shells x36) into an empty inventory slot and left the entry empty; entries 0-3 traced 2026-10-13. One contiguous array of 48 2-byte entries (decomp BioCard itemBox[48]). Writes: the dev harness put items into empty entries and taking them out at the box loaded them with the right icons.",
       "description": "Item box entry 24 (low byte id, high byte quantity).",
-      "sources": ["ecruells/resident-evil-pc-decomp BioCard.h"]
+      "sources": ["ecruells/resident-evil-pc-decomp BioCard.h"],
+      "write": { "min": 0, "max": 65535 }
     },
     {
       "name": "box24",
       "address": "0xBE9914",
       "type": "u16",
-      "verification": "unverified",
+      "verification": "runtime",
+      "evidence": "Live 2026-10-15 (owner's Jill save, 27 entries in use): with the item box screen's own cursor moved to entries 4, 13 and 26, the game's swap put exactly the item read at 0xBE98E4 + 2*entry (acid rounds x6, Doom book 1, shells x36) into an empty inventory slot and left the entry empty; entries 0-3 traced 2026-10-13. One contiguous array of 48 2-byte entries (decomp BioCard itemBox[48]). Writes: the dev harness put items into empty entries and taking them out at the box loaded them with the right icons.",
       "description": "Item box entry 25 (low byte id, high byte quantity).",
-      "sources": ["ecruells/resident-evil-pc-decomp BioCard.h"]
+      "sources": ["ecruells/resident-evil-pc-decomp BioCard.h"],
+      "write": { "min": 0, "max": 65535 }
     },
     {
       "name": "box25",
       "address": "0xBE9916",
       "type": "u16",
-      "verification": "unverified",
+      "verification": "runtime",
+      "evidence": "Live 2026-10-15 (owner's Jill save, 27 entries in use): with the item box screen's own cursor moved to entries 4, 13 and 26, the game's swap put exactly the item read at 0xBE98E4 + 2*entry (acid rounds x6, Doom book 1, shells x36) into an empty inventory slot and left the entry empty; entries 0-3 traced 2026-10-13. One contiguous array of 48 2-byte entries (decomp BioCard itemBox[48]). Writes: the dev harness put items into empty entries and taking them out at the box loaded them with the right icons.",
       "description": "Item box entry 26 (low byte id, high byte quantity).",
-      "sources": ["ecruells/resident-evil-pc-decomp BioCard.h"]
+      "sources": ["ecruells/resident-evil-pc-decomp BioCard.h"],
+      "write": { "min": 0, "max": 65535 }
     },
     {
       "name": "box26",
       "address": "0xBE9918",
       "type": "u16",
-      "verification": "unverified",
+      "verification": "runtime",
+      "evidence": "Live 2026-10-15 (owner's Jill save, 27 entries in use): with the item box screen's own cursor moved to entries 4, 13 and 26, the game's swap put exactly the item read at 0xBE98E4 + 2*entry (acid rounds x6, Doom book 1, shells x36) into an empty inventory slot and left the entry empty; entries 0-3 traced 2026-10-13. One contiguous array of 48 2-byte entries (decomp BioCard itemBox[48]). Writes: the dev harness put items into empty entries and taking them out at the box loaded them with the right icons.",
       "description": "Item box entry 27 (low byte id, high byte quantity).",
-      "sources": ["ecruells/resident-evil-pc-decomp BioCard.h"]
+      "sources": ["ecruells/resident-evil-pc-decomp BioCard.h"],
+      "write": { "min": 0, "max": 65535 }
     },
     {
       "name": "box27",
       "address": "0xBE991A",
       "type": "u16",
-      "verification": "unverified",
+      "verification": "runtime",
+      "evidence": "Live 2026-10-15 (owner's Jill save, 27 entries in use): with the item box screen's own cursor moved to entries 4, 13 and 26, the game's swap put exactly the item read at 0xBE98E4 + 2*entry (acid rounds x6, Doom book 1, shells x36) into an empty inventory slot and left the entry empty; entries 0-3 traced 2026-10-13. One contiguous array of 48 2-byte entries (decomp BioCard itemBox[48]). Writes: the dev harness put items into empty entries and taking them out at the box loaded them with the right icons.",
       "description": "Item box entry 28 (low byte id, high byte quantity).",
-      "sources": ["ecruells/resident-evil-pc-decomp BioCard.h"]
+      "sources": ["ecruells/resident-evil-pc-decomp BioCard.h"],
+      "write": { "min": 0, "max": 65535 }
     },
     {
       "name": "box28",
       "address": "0xBE991C",
       "type": "u16",
-      "verification": "unverified",
+      "verification": "runtime",
+      "evidence": "Live 2026-10-15 (owner's Jill save, 27 entries in use): with the item box screen's own cursor moved to entries 4, 13 and 26, the game's swap put exactly the item read at 0xBE98E4 + 2*entry (acid rounds x6, Doom book 1, shells x36) into an empty inventory slot and left the entry empty; entries 0-3 traced 2026-10-13. One contiguous array of 48 2-byte entries (decomp BioCard itemBox[48]). Writes: the dev harness put items into empty entries and taking them out at the box loaded them with the right icons.",
       "description": "Item box entry 29 (low byte id, high byte quantity).",
-      "sources": ["ecruells/resident-evil-pc-decomp BioCard.h"]
+      "sources": ["ecruells/resident-evil-pc-decomp BioCard.h"],
+      "write": { "min": 0, "max": 65535 }
     },
     {
       "name": "box29",
       "address": "0xBE991E",
       "type": "u16",
-      "verification": "unverified",
+      "verification": "runtime",
+      "evidence": "Live 2026-10-15 (owner's Jill save, 27 entries in use): with the item box screen's own cursor moved to entries 4, 13 and 26, the game's swap put exactly the item read at 0xBE98E4 + 2*entry (acid rounds x6, Doom book 1, shells x36) into an empty inventory slot and left the entry empty; entries 0-3 traced 2026-10-13. One contiguous array of 48 2-byte entries (decomp BioCard itemBox[48]). Writes: the dev harness put items into empty entries and taking them out at the box loaded them with the right icons.",
       "description": "Item box entry 30 (low byte id, high byte quantity).",
-      "sources": ["ecruells/resident-evil-pc-decomp BioCard.h"]
+      "sources": ["ecruells/resident-evil-pc-decomp BioCard.h"],
+      "write": { "min": 0, "max": 65535 }
     },
     {
       "name": "box30",
       "address": "0xBE9920",
       "type": "u16",
-      "verification": "unverified",
+      "verification": "runtime",
+      "evidence": "Live 2026-10-15 (owner's Jill save, 27 entries in use): with the item box screen's own cursor moved to entries 4, 13 and 26, the game's swap put exactly the item read at 0xBE98E4 + 2*entry (acid rounds x6, Doom book 1, shells x36) into an empty inventory slot and left the entry empty; entries 0-3 traced 2026-10-13. One contiguous array of 48 2-byte entries (decomp BioCard itemBox[48]). Writes: the dev harness put items into empty entries and taking them out at the box loaded them with the right icons.",
       "description": "Item box entry 31 (low byte id, high byte quantity).",
-      "sources": ["ecruells/resident-evil-pc-decomp BioCard.h"]
+      "sources": ["ecruells/resident-evil-pc-decomp BioCard.h"],
+      "write": { "min": 0, "max": 65535 }
     },
     {
       "name": "box31",
       "address": "0xBE9922",
       "type": "u16",
-      "verification": "unverified",
+      "verification": "runtime",
+      "evidence": "Live 2026-10-15 (owner's Jill save, 27 entries in use): with the item box screen's own cursor moved to entries 4, 13 and 26, the game's swap put exactly the item read at 0xBE98E4 + 2*entry (acid rounds x6, Doom book 1, shells x36) into an empty inventory slot and left the entry empty; entries 0-3 traced 2026-10-13. One contiguous array of 48 2-byte entries (decomp BioCard itemBox[48]). Writes: the dev harness put items into empty entries and taking them out at the box loaded them with the right icons.",
       "description": "Item box entry 32 (low byte id, high byte quantity).",
-      "sources": ["ecruells/resident-evil-pc-decomp BioCard.h"]
+      "sources": ["ecruells/resident-evil-pc-decomp BioCard.h"],
+      "write": { "min": 0, "max": 65535 }
     },
     {
       "name": "box32",
       "address": "0xBE9924",
       "type": "u16",
-      "verification": "unverified",
+      "verification": "runtime",
+      "evidence": "Live 2026-10-15 (owner's Jill save, 27 entries in use): with the item box screen's own cursor moved to entries 4, 13 and 26, the game's swap put exactly the item read at 0xBE98E4 + 2*entry (acid rounds x6, Doom book 1, shells x36) into an empty inventory slot and left the entry empty; entries 0-3 traced 2026-10-13. One contiguous array of 48 2-byte entries (decomp BioCard itemBox[48]). Writes: the dev harness put items into empty entries and taking them out at the box loaded them with the right icons.",
       "description": "Item box entry 33 (low byte id, high byte quantity).",
-      "sources": ["ecruells/resident-evil-pc-decomp BioCard.h"]
+      "sources": ["ecruells/resident-evil-pc-decomp BioCard.h"],
+      "write": { "min": 0, "max": 65535 }
     },
     {
       "name": "box33",
       "address": "0xBE9926",
       "type": "u16",
-      "verification": "unverified",
+      "verification": "runtime",
+      "evidence": "Live 2026-10-15 (owner's Jill save, 27 entries in use): with the item box screen's own cursor moved to entries 4, 13 and 26, the game's swap put exactly the item read at 0xBE98E4 + 2*entry (acid rounds x6, Doom book 1, shells x36) into an empty inventory slot and left the entry empty; entries 0-3 traced 2026-10-13. One contiguous array of 48 2-byte entries (decomp BioCard itemBox[48]). Writes: the dev harness put items into empty entries and taking them out at the box loaded them with the right icons.",
       "description": "Item box entry 34 (low byte id, high byte quantity).",
-      "sources": ["ecruells/resident-evil-pc-decomp BioCard.h"]
+      "sources": ["ecruells/resident-evil-pc-decomp BioCard.h"],
+      "write": { "min": 0, "max": 65535 }
     },
     {
       "name": "box34",
       "address": "0xBE9928",
       "type": "u16",
-      "verification": "unverified",
+      "verification": "runtime",
+      "evidence": "Live 2026-10-15 (owner's Jill save, 27 entries in use): with the item box screen's own cursor moved to entries 4, 13 and 26, the game's swap put exactly the item read at 0xBE98E4 + 2*entry (acid rounds x6, Doom book 1, shells x36) into an empty inventory slot and left the entry empty; entries 0-3 traced 2026-10-13. One contiguous array of 48 2-byte entries (decomp BioCard itemBox[48]). Writes: the dev harness put items into empty entries and taking them out at the box loaded them with the right icons.",
       "description": "Item box entry 35 (low byte id, high byte quantity).",
-      "sources": ["ecruells/resident-evil-pc-decomp BioCard.h"]
+      "sources": ["ecruells/resident-evil-pc-decomp BioCard.h"],
+      "write": { "min": 0, "max": 65535 }
     },
     {
       "name": "box35",
       "address": "0xBE992A",
       "type": "u16",
-      "verification": "unverified",
+      "verification": "runtime",
+      "evidence": "Live 2026-10-15 (owner's Jill save, 27 entries in use): with the item box screen's own cursor moved to entries 4, 13 and 26, the game's swap put exactly the item read at 0xBE98E4 + 2*entry (acid rounds x6, Doom book 1, shells x36) into an empty inventory slot and left the entry empty; entries 0-3 traced 2026-10-13. One contiguous array of 48 2-byte entries (decomp BioCard itemBox[48]). Writes: the dev harness put items into empty entries and taking them out at the box loaded them with the right icons.",
       "description": "Item box entry 36 (low byte id, high byte quantity).",
-      "sources": ["ecruells/resident-evil-pc-decomp BioCard.h"]
+      "sources": ["ecruells/resident-evil-pc-decomp BioCard.h"],
+      "write": { "min": 0, "max": 65535 }
     },
     {
       "name": "box36",
       "address": "0xBE992C",
       "type": "u16",
-      "verification": "unverified",
+      "verification": "runtime",
+      "evidence": "Live 2026-10-15 (owner's Jill save, 27 entries in use): with the item box screen's own cursor moved to entries 4, 13 and 26, the game's swap put exactly the item read at 0xBE98E4 + 2*entry (acid rounds x6, Doom book 1, shells x36) into an empty inventory slot and left the entry empty; entries 0-3 traced 2026-10-13. One contiguous array of 48 2-byte entries (decomp BioCard itemBox[48]). Writes: the dev harness put items into empty entries and taking them out at the box loaded them with the right icons.",
       "description": "Item box entry 37 (low byte id, high byte quantity).",
-      "sources": ["ecruells/resident-evil-pc-decomp BioCard.h"]
+      "sources": ["ecruells/resident-evil-pc-decomp BioCard.h"],
+      "write": { "min": 0, "max": 65535 }
     },
     {
       "name": "box37",
       "address": "0xBE992E",
       "type": "u16",
-      "verification": "unverified",
+      "verification": "runtime",
+      "evidence": "Live 2026-10-15 (owner's Jill save, 27 entries in use): with the item box screen's own cursor moved to entries 4, 13 and 26, the game's swap put exactly the item read at 0xBE98E4 + 2*entry (acid rounds x6, Doom book 1, shells x36) into an empty inventory slot and left the entry empty; entries 0-3 traced 2026-10-13. One contiguous array of 48 2-byte entries (decomp BioCard itemBox[48]). Writes: the dev harness put items into empty entries and taking them out at the box loaded them with the right icons.",
       "description": "Item box entry 38 (low byte id, high byte quantity).",
-      "sources": ["ecruells/resident-evil-pc-decomp BioCard.h"]
+      "sources": ["ecruells/resident-evil-pc-decomp BioCard.h"],
+      "write": { "min": 0, "max": 65535 }
     },
     {
       "name": "box38",
       "address": "0xBE9930",
       "type": "u16",
-      "verification": "unverified",
+      "verification": "runtime",
+      "evidence": "Live 2026-10-15 (owner's Jill save, 27 entries in use): with the item box screen's own cursor moved to entries 4, 13 and 26, the game's swap put exactly the item read at 0xBE98E4 + 2*entry (acid rounds x6, Doom book 1, shells x36) into an empty inventory slot and left the entry empty; entries 0-3 traced 2026-10-13. One contiguous array of 48 2-byte entries (decomp BioCard itemBox[48]). Writes: the dev harness put items into empty entries and taking them out at the box loaded them with the right icons.",
       "description": "Item box entry 39 (low byte id, high byte quantity).",
-      "sources": ["ecruells/resident-evil-pc-decomp BioCard.h"]
+      "sources": ["ecruells/resident-evil-pc-decomp BioCard.h"],
+      "write": { "min": 0, "max": 65535 }
     },
     {
       "name": "box39",
       "address": "0xBE9932",
       "type": "u16",
-      "verification": "unverified",
+      "verification": "runtime",
+      "evidence": "Live 2026-10-15 (owner's Jill save, 27 entries in use): with the item box screen's own cursor moved to entries 4, 13 and 26, the game's swap put exactly the item read at 0xBE98E4 + 2*entry (acid rounds x6, Doom book 1, shells x36) into an empty inventory slot and left the entry empty; entries 0-3 traced 2026-10-13. One contiguous array of 48 2-byte entries (decomp BioCard itemBox[48]). Writes: the dev harness put items into empty entries and taking them out at the box loaded them with the right icons.",
       "description": "Item box entry 40 (low byte id, high byte quantity).",
-      "sources": ["ecruells/resident-evil-pc-decomp BioCard.h"]
+      "sources": ["ecruells/resident-evil-pc-decomp BioCard.h"],
+      "write": { "min": 0, "max": 65535 }
     },
     {
       "name": "box40",
       "address": "0xBE9934",
       "type": "u16",
-      "verification": "unverified",
+      "verification": "runtime",
+      "evidence": "Live 2026-10-15 (owner's Jill save, 27 entries in use): with the item box screen's own cursor moved to entries 4, 13 and 26, the game's swap put exactly the item read at 0xBE98E4 + 2*entry (acid rounds x6, Doom book 1, shells x36) into an empty inventory slot and left the entry empty; entries 0-3 traced 2026-10-13. One contiguous array of 48 2-byte entries (decomp BioCard itemBox[48]). Writes: the dev harness put items into empty entries and taking them out at the box loaded them with the right icons.",
       "description": "Item box entry 41 (low byte id, high byte quantity).",
-      "sources": ["ecruells/resident-evil-pc-decomp BioCard.h"]
+      "sources": ["ecruells/resident-evil-pc-decomp BioCard.h"],
+      "write": { "min": 0, "max": 65535 }
     },
     {
       "name": "box41",
       "address": "0xBE9936",
       "type": "u16",
-      "verification": "unverified",
+      "verification": "runtime",
+      "evidence": "Live 2026-10-15 (owner's Jill save, 27 entries in use): with the item box screen's own cursor moved to entries 4, 13 and 26, the game's swap put exactly the item read at 0xBE98E4 + 2*entry (acid rounds x6, Doom book 1, shells x36) into an empty inventory slot and left the entry empty; entries 0-3 traced 2026-10-13. One contiguous array of 48 2-byte entries (decomp BioCard itemBox[48]). Writes: the dev harness put items into empty entries and taking them out at the box loaded them with the right icons.",
       "description": "Item box entry 42 (low byte id, high byte quantity).",
-      "sources": ["ecruells/resident-evil-pc-decomp BioCard.h"]
+      "sources": ["ecruells/resident-evil-pc-decomp BioCard.h"],
+      "write": { "min": 0, "max": 65535 }
     },
     {
       "name": "box42",
       "address": "0xBE9938",
       "type": "u16",
-      "verification": "unverified",
+      "verification": "runtime",
+      "evidence": "Live 2026-10-15 (owner's Jill save, 27 entries in use): with the item box screen's own cursor moved to entries 4, 13 and 26, the game's swap put exactly the item read at 0xBE98E4 + 2*entry (acid rounds x6, Doom book 1, shells x36) into an empty inventory slot and left the entry empty; entries 0-3 traced 2026-10-13. One contiguous array of 48 2-byte entries (decomp BioCard itemBox[48]). Writes: the dev harness put items into empty entries and taking them out at the box loaded them with the right icons.",
       "description": "Item box entry 43 (low byte id, high byte quantity).",
-      "sources": ["ecruells/resident-evil-pc-decomp BioCard.h"]
+      "sources": ["ecruells/resident-evil-pc-decomp BioCard.h"],
+      "write": { "min": 0, "max": 65535 }
     },
     {
       "name": "box43",
       "address": "0xBE993A",
       "type": "u16",
-      "verification": "unverified",
+      "verification": "runtime",
+      "evidence": "Live 2026-10-15 (owner's Jill save, 27 entries in use): with the item box screen's own cursor moved to entries 4, 13 and 26, the game's swap put exactly the item read at 0xBE98E4 + 2*entry (acid rounds x6, Doom book 1, shells x36) into an empty inventory slot and left the entry empty; entries 0-3 traced 2026-10-13. One contiguous array of 48 2-byte entries (decomp BioCard itemBox[48]). Writes: the dev harness put items into empty entries and taking them out at the box loaded them with the right icons.",
       "description": "Item box entry 44 (low byte id, high byte quantity).",
-      "sources": ["ecruells/resident-evil-pc-decomp BioCard.h"]
+      "sources": ["ecruells/resident-evil-pc-decomp BioCard.h"],
+      "write": { "min": 0, "max": 65535 }
     },
     {
       "name": "box44",
       "address": "0xBE993C",
       "type": "u16",
-      "verification": "unverified",
+      "verification": "runtime",
+      "evidence": "Live 2026-10-15 (owner's Jill save, 27 entries in use): with the item box screen's own cursor moved to entries 4, 13 and 26, the game's swap put exactly the item read at 0xBE98E4 + 2*entry (acid rounds x6, Doom book 1, shells x36) into an empty inventory slot and left the entry empty; entries 0-3 traced 2026-10-13. One contiguous array of 48 2-byte entries (decomp BioCard itemBox[48]). Writes: the dev harness put items into empty entries and taking them out at the box loaded them with the right icons.",
       "description": "Item box entry 45 (low byte id, high byte quantity).",
-      "sources": ["ecruells/resident-evil-pc-decomp BioCard.h"]
+      "sources": ["ecruells/resident-evil-pc-decomp BioCard.h"],
+      "write": { "min": 0, "max": 65535 }
     },
     {
       "name": "box45",
       "address": "0xBE993E",
       "type": "u16",
-      "verification": "unverified",
+      "verification": "runtime",
+      "evidence": "Live 2026-10-15 (owner's Jill save, 27 entries in use): with the item box screen's own cursor moved to entries 4, 13 and 26, the game's swap put exactly the item read at 0xBE98E4 + 2*entry (acid rounds x6, Doom book 1, shells x36) into an empty inventory slot and left the entry empty; entries 0-3 traced 2026-10-13. One contiguous array of 48 2-byte entries (decomp BioCard itemBox[48]). Writes: the dev harness put items into empty entries and taking them out at the box loaded them with the right icons.",
       "description": "Item box entry 46 (low byte id, high byte quantity).",
-      "sources": ["ecruells/resident-evil-pc-decomp BioCard.h"]
+      "sources": ["ecruells/resident-evil-pc-decomp BioCard.h"],
+      "write": { "min": 0, "max": 65535 }
     },
     {
       "name": "box46",
       "address": "0xBE9940",
       "type": "u16",
-      "verification": "unverified",
+      "verification": "runtime",
+      "evidence": "Live 2026-10-15 (owner's Jill save, 27 entries in use): with the item box screen's own cursor moved to entries 4, 13 and 26, the game's swap put exactly the item read at 0xBE98E4 + 2*entry (acid rounds x6, Doom book 1, shells x36) into an empty inventory slot and left the entry empty; entries 0-3 traced 2026-10-13. One contiguous array of 48 2-byte entries (decomp BioCard itemBox[48]). Writes: the dev harness put items into empty entries and taking them out at the box loaded them with the right icons.",
       "description": "Item box entry 47 (low byte id, high byte quantity).",
-      "sources": ["ecruells/resident-evil-pc-decomp BioCard.h"]
+      "sources": ["ecruells/resident-evil-pc-decomp BioCard.h"],
+      "write": { "min": 0, "max": 65535 }
     },
     {
       "name": "box47",
       "address": "0xBE9942",
       "type": "u16",
-      "verification": "unverified",
+      "verification": "runtime",
+      "evidence": "Live 2026-10-15 (owner's Jill save, 27 entries in use): with the item box screen's own cursor moved to entries 4, 13 and 26, the game's swap put exactly the item read at 0xBE98E4 + 2*entry (acid rounds x6, Doom book 1, shells x36) into an empty inventory slot and left the entry empty; entries 0-3 traced 2026-10-13. One contiguous array of 48 2-byte entries (decomp BioCard itemBox[48]). Writes: the dev harness put items into empty entries and taking them out at the box loaded them with the right icons.",
       "description": "Item box entry 48 (low byte id, high byte quantity).",
-      "sources": ["ecruells/resident-evil-pc-decomp BioCard.h"]
+      "sources": ["ecruells/resident-evil-pc-decomp BioCard.h"],
+      "write": { "min": 0, "max": 65535 }
     },
     {
       "name": "enemyCount",

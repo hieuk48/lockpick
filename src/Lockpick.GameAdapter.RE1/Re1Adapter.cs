@@ -59,7 +59,9 @@ public sealed class Re1Adapter : IGameAdapter
     public Core.Insight.IChangeExplainer CreateChangeExplainer(VersionProfile profile) =>
         new Re1ChangeExplainer(Re1Knowledge.LoadEmbedded());
 
-    public Core.Trainer.IGameTrainer CreateTrainer(VersionProfile profile) => new Re1Trainer();
+    public Core.Trainer.IGameTrainer CreateTrainer(VersionProfile profile) => _trainer ??= new Re1Trainer(ItemName);
+
+    private Re1Trainer? _trainer;
 
     /// <summary>The GOG game saves to SAVE\savedatN.dat next to the executable (one file per slot, 1–8; B112, #37).</summary>
     public string? SaveDirectory(string executablePath) =>

@@ -69,6 +69,39 @@ public class Re1TrainerTests
     }
 
     [Fact]
+    public void Counts_change_only_on_weapons_ammo_and_ribbons_within_bounds()
+    {
+        var game = Holding(0, 1, new HeldItem(0, 0x02, 15), new HeldItem(1, 0x0B, 15), new HeldItem(2, 0x1F, 1));
+
+        Assert.Equal(new FieldWrite("inv0Qty", 50), _trainer.SetQuantity(game, 0, 50, out _));
+        Assert.Equal(new FieldWrite("inv0Qty", 0), _trainer.SetQuantity(game, 0, 0, out _));   // an empty gun is fine
+        Assert.Null(_trainer.SetQuantity(game, 1, 0, out var why));                             // ammo needs at least one
+        Assert.Contains("outside", why, StringComparison.Ordinal);
+        Assert.Null(_trainer.SetQuantity(game, 2, 5, out why));                                 // the Emblem has no count
+        Assert.Null(_trainer.SetQuantity(game, 5, 5, out why));                                 // empty slot
+        Assert.Null(_trainer.SetQuantity(game, 0, 256, out _));
+    }
+
+    [Fact]
+    public void Items_go_into_the_first_free_item_box_entry()
+    {
+        var game = Holding(0, 1) with
+        {
+            ItemBox = Field<IReadOnlyList<HeldItem>>.Valid([new HeldItem(0, 0x0B, 15), new HeldItem(1, 0x0B, 15), new HeldItem(3, 0x44, 1)]),
+        };
+
+        Assert.Equal(new FieldWrite("box2", 0x0C | (30 << 8)), _trainer.AddToStorage(game, 0x0C, 30, out _)); // 30 shells
+        Assert.Equal(new FieldWrite("box2", 0x41 | (1 << 8)), _trainer.AddToStorage(game, 0x41, 9, out _));   // a spray is single
+        Assert.Null(_trainer.AddToStorage(game, 0x4E, 1, out var why));                                       // a document
+        Assert.NotNull(why);
+        Assert.Contains(_trainer.GivableItems, i => i.Name == "Shells" && i.HasQuantity);
+
+        var full = game with { ItemBox = Field<IReadOnlyList<HeldItem>>.Valid([.. Enumerable.Range(0, 48).Select(i => new HeldItem(i, 0x0B, 1))]) };
+        Assert.Null(_trainer.AddToStorage(full, 0x0C, 5, out why));
+        Assert.Contains("full", why, StringComparison.Ordinal);
+    }
+
+    [Fact]
     public void Rebecca_uses_her_own_inventory()
     {
         var rule = _trainer.CreateInfiniteAmmoRule();

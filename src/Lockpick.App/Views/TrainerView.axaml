@@ -2,6 +2,7 @@
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:vm="using:Lockpick.App.ViewModels"
              xmlns:c="using:Lockpick.App.Controls"
+             xmlns:trainer="using:Lockpick.Core.Trainer"
              x:Class="Lockpick.App.Views.TrainerView"
              x:DataType="vm:TrainerViewModel">
 
@@ -70,6 +71,45 @@
                     AutomationProperties.Name="Infinite ammo" />
           <TextBlock TextWrapping="Wrap" Foreground="{StaticResource LpMutedBrush}"
                      Text="The equipped weapon's rounds never go down: each shot is put back, and a reload raises the count it keeps." />
+        </StackPanel>
+      </Border>
+
+      <!-- Inventory -->
+      <Border Classes="card" IsEnabled="{Binding CanWrite}">
+        <StackPanel Spacing="8">
+          <StackPanel Classes="cardhead">
+            <c:LucideIcon Data="{StaticResource Icon.Package}" />
+            <TextBlock Classes="caption" Text="INVENTORY" />
+          </StackPanel>
+          <TextBlock TextWrapping="Wrap" Foreground="{StaticResource LpMutedBrush}"
+                     Text="Change the count of what you carry (a weapon's loaded rounds, ammo, ink ribbons). New items go into the item box: take them out at any item box and the game loads them like a pickup." />
+          <ItemsControl ItemsSource="{Binding Slots}">
+            <ItemsControl.ItemTemplate>
+              <DataTemplate x:DataType="vm:TrainerSlotRow">
+                <WrapPanel ItemSpacing="8" LineSpacing="4" Margin="0,2">
+                  <TextBlock Text="{Binding Label}" VerticalAlignment="Center" MinWidth="220" TextWrapping="Wrap" />
+                  <NumericUpDown Value="{Binding Target}" Minimum="0" Maximum="255" Increment="1" FormatString="0" MinWidth="120"
+                                 IsVisible="{Binding Editable}" AutomationProperties.Name="{Binding Name, StringFormat='{}{0} count'}" />
+                  <Button Content="Set" Command="{Binding SetCommand}" IsVisible="{Binding Editable}"
+                          AutomationProperties.Name="{Binding Name, StringFormat='Set {0} count'}" />
+                </WrapPanel>
+              </DataTemplate>
+            </ItemsControl.ItemTemplate>
+          </ItemsControl>
+          <WrapPanel ItemSpacing="8" LineSpacing="8">
+            <TextBlock Classes="label" Text="Put in the item box" VerticalAlignment="Center" />
+            <ComboBox ItemsSource="{Binding GivableItems}" SelectedItem="{Binding GiveItem}" MinWidth="200"
+                      AutomationProperties.Name="Item to put in the item box">
+              <ComboBox.ItemTemplate>
+                <DataTemplate x:DataType="trainer:GivableItem">
+                  <TextBlock Text="{Binding Name}" />
+                </DataTemplate>
+              </ComboBox.ItemTemplate>
+            </ComboBox>
+            <NumericUpDown Value="{Binding GiveQuantity}" Minimum="1" Maximum="255" Increment="1" FormatString="0" MinWidth="110"
+                           IsVisible="{Binding GiveItem.HasQuantity, FallbackValue=False}" AutomationProperties.Name="How many" />
+            <Button Content="Put in box" Command="{Binding PutInItemBoxCommand}" AutomationProperties.Name="Put in the item box" />
+          </WrapPanel>
         </StackPanel>
       </Border>
 
