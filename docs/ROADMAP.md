@@ -16,12 +16,12 @@ Status legend: ✅ done and verified · 🟡 done, partially verified · ⬜ not
 | 0.1.5 | Research tooling: capture markers, ask mode, room index, capture timeline, subtitles pack | ✅ released 2026-10-13 |
 | 0.1.6 | Progress tracker (read-only), Items and Map pages, controller capture markers | ✅ released 2026-10-15 |
 | 0.2.0 | Core trainer functionality and memory modification | ⬜ next — research done (bounties B101–B114) |
-| 0.3.0 | Real-time overlay and customizable HUD | ⬜ |
+| 0.3.0 | Play and stream with one app: run modes, LiveSplit, overlay + OBS, responsive UI, training captures | ⬜ |
 | 0.4.0 | Room, camera, item and enemy database | ⬜ |
 | 0.5.0 | Object highlighting and ESP | ⬜ |
 | 0.6.0 | Advanced trainer and gameplay manipulation | ⬜ |
 | 0.7.0 | Contextual warnings and route guidance | ⬜ |
-| 0.8.0 | Speedrunning and challenge-run suite | ⬜ |
+| 0.8.0 | Speedrun suite: PB tracking, run review, community segment templates | ⬜ |
 | 0.9.0 | Optional AI, optimization, compatibility testing | ⬜ |
 | 1.0.0 | Stable RE1 release | ⬜ |
 
@@ -128,7 +128,27 @@ Acceptance criteria:
   Rebecca…), and a **save editor** (inventory, item box, story flags) once it is known whether saves carry a checksum.
 - All writable addresses runtime-verified on the GOG build; tests with fake memory for every write path.
 
-## 0.3.0 — Overlay and HUD
+## 0.3.0 — Play and stream with one app
+
+Owner's direction (2026-10-15): the first release for other players. A runner doing a speedrun, a no-damage run, a
+knife-only run or a regular playthrough needs only Lockpick open — no second app for timing, splits or the stream —
+and their sessions can be captured for behaviour-cloning research. Planned as sprints; 0.3.0 can ship after the
+first two, with streaming as 0.3.1.
+
+1. **Responsive app:** every page checked and fixed at ultrawide, 1080p and portrait (720×1280 at 150%), 100–200%
+   scaling; content scrolls instead of clipping.
+2. **Run modes** — Speedrun, No Damage, Knife Only, Regular — with live rule checks (any HP loss ends a no-damage run;
+   a shot from anything but the knife breaks knife-only), Challenge Mode forced on, a run timer from the game's own
+   clock and autosplits from the named story flags (pulled forward from 0.8.0). **LiveSplit:** import the runner's
+   splits file (names) and connect to its server, so each split drops a capture marker by itself.
+3. **Overlay and OBS:** a local browser-source page for OBS (timer, splits, HP, run status), a pop-out window for
+   window capture, and an in-game overlay (transparent, click-through, over the game window — windowed or
+   borderless; no hooking into the game).
+4. **Training captures:** opt-in, every game frame (30/s, keyed to the game's frame counter): the state and the
+   game's own input word (`0xBE9840`/`0xBE9842` — exactly what the game acted on, for any pad or keyboard), for the
+   behaviour-cloning pipeline (`tools/rl`); an easy way for players to submit them.
+
+Carried over from the earlier overlay/HUD plan:
 
 - **Room map — in the app since 2026-10-14:** a Map page draws the current room from the player's room files (collision, doors, item spots) with the player live (`Re1RoomMaps`, `RoomMapControl`), room names, enemies and people (a shape and colour per kind), item boxes and typewriters, items taken or put in place, and a legend of just what the room holds. Next: script-placed objects (the dining-room clock) and the whole-floor view (tools/rdt/floor_map.py), then the overlay.
 - Transparent, click-through overlay window tracking the game window (position, size, DPI).
@@ -143,10 +163,6 @@ Acceptance criteria:
   - what just happened: an event feed in plain words (picked up the Emblem, Zombie ankle bite (6), first visit to
     room 11D, Barry gives Jill the lockpick) — the capture timeline's logic in the app;
   - current room and area by name (areas from the game's room table; names as they are confirmed).
-- Subtitles for the voice-over (accessibility): optional download of the separate
-  [lockpick-subtitles](https://github.com/mscrnt/lockpick-subtitles) pack (off by default; checked against the
-  player's voice files by SHA-256), shown in the overlay while a line plays. Needs: which voice file is playing
-  (captures / cutscene scripts).
 - Keep the game running while the player uses Lockpick on another screen (the game pauses and blacks out when
   inactive): opt-in in-process focus patch (`0x44126B`, MEMORY_MAP "Focus and input") — isolated, reversible, read
   back, never in Challenge Mode. **Chosen by the owner (2026-10-13).**
@@ -229,8 +245,11 @@ players play the game themselves; Lockpick enhances their play.
 
 ## 0.8.0 — Speedrun and challenges
 
-- Run timer, LiveSplit integration, autosplits, no-damage/no-heal/knife-only challenges, PB tracking,
-  trainer-modification detection (records, not anti-cheat claims).
+- Run timer, LiveSplit, autosplits and the no-damage / knife-only rules move to 0.3.0. Here: PB tracking, more
+  challenge rules (no heal, …), trainer-modification records (records, not anti-cheat claims).
+- Voice-over subtitles (moved from 0.3.0): optional download of the separate
+  [lockpick-subtitles](https://github.com/mscrnt/lockpick-subtitles) pack (off by default; checked against the
+  player's voice files by SHA-256), shown in the overlay while a line plays. Needs: which voice file is playing.
 - Autosplits from the named story flags and room transitions, matching the community's segment templates (Yawn 1,
   Mansion 1, Courtyard 1, … End — speedrun.com); in-game time from the game timer; the capture timeline as a run
   review (where time went, damage taken, items used).
