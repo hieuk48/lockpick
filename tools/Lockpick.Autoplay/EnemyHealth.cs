@@ -171,6 +171,32 @@ internal sealed partial class EnemyHealth : IDisposable
         return was;
     }
 
+    /// <summary>
+    /// Waits for slot <paramref name="slot"/> to be set up afresh (a room load's enemy_set: active, AI state 0) and for
+    /// its own init to run (state no longer 0), then puts it in <paramref name="state"/> — on its first frames, before
+    /// it can move. Returns how long that took.
+    /// </summary>
+    public TimeSpan HoldWhenReady(int slot, byte state, TimeSpan timeout)
+    {
+        var clock = System.Diagnostics.Stopwatch.StartNew();
+        var fresh = false;
+        while (clock.Elapsed < timeout)
+        {
+            var active = (ReadByte(slot, 0x00) & 1) != 0;
+            var now = ReadByte(slot, 0x84);
+            fresh |= active && now == 0;
+            if (fresh && active && now != 0)
+            {
+                WriteByte(slot, 0x84, state);
+                return clock.Elapsed;
+            }
+
+            Thread.Yield();
+        }
+
+        throw new TimeoutException($"enemy slot {slot} was not set up again within {timeout.TotalSeconds:F0} s");
+    }
+
     private byte ReadByte(int slot, int offset)
     {
         if (slot is < 0 or >= SlotCount)

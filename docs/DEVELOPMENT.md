@@ -100,6 +100,13 @@ conditions), `state`, `peek addr len`, `calibrate`, `shot file.png [width]`, `lo
   dormant zombie in slot 1 for a later scene; woken by the door pillar it walks to the player); `enemy-state <slot>
   <state>` (zombies: 4 = `zombie_no_action`, a bare RET — stands still, still drawn and hittable; 1 = back to its
   behaviour). `freeze-enemies` (enemy count 0) also stops drawing them.
+- **Spawning and swapping enemies** (`spawn.py <type> [x z] [--slot 2] [--hold]`): the room reloads at the player's spot
+  with one extra `enemy_set` run right after its own init script (`room-script <hex>` / `room-script off`,
+  `RoomScriptHook.cs`: a jump at `0x477B29` to a block that runs the room's script, then ours), so the game loads the
+  enemy's model, animations and AI like one that belongs there. Records come from a real `enemy_set` of that type in
+  the install's room files; `--hold` uses `enemy-hold <slot> <state>`, sent with the door, which catches the enemy's
+  first frames (do-nothing state: zombies/dogs 4, snakes 5). Enemy sounds come from a per-room table, so a type
+  foreign to the room may be silent.
 - **Cutscene skips** (`scenes.py`): a scene's end is recorded once by watching it — the bits it changes in the saved
   block (`0xBE9620`–`0xBE9E1F`, what a save holds) and where it leaves the player — then applied instead of playing
   it, so the game is left as if the scene had been watched. `scenes.py record-opening|check-opening jill|chris`;

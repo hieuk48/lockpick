@@ -66,6 +66,7 @@ internal sealed class Runner(Pad pad, TextWriter log) : IDisposable
     private EnemyHealth? _enemyHealth;
     private CameraCut? _camera;
     private EnemyFreeze? _freeze;
+    private RoomScriptHook? _roomScript;
 
     public Game Game => _game ?? throw new InvalidOperationException("the game is not attached (add 'launch' first)");
 
@@ -227,6 +228,29 @@ internal sealed class Runner(Pad pad, TextWriter log) : IDisposable
                     int.Parse(w[3], CultureInfo.InvariantCulture), w.Length > 4 ? short.Parse(w[4], CultureInfo.InvariantCulture) : (short)0,
                     w.Length > 5 ? byte.Parse(w[5], NumberStyles.HexNumber, CultureInfo.InvariantCulture) : (byte)0);
                 Log($"  enemy {w[1]} woken at {w[2]}, {w[3]}");
+                break;
+            case "room-script":
+                // room-script <hex>: run this init script after the room's own on room loads (RoomScriptHook.cs);
+                // room-script off: put the original call back
+                _roomScript ??= new RoomScriptHook(Game.ProcessId);
+                if (w[1] == "off")
+                {
+                    _roomScript.Remove();
+                    Log("  room init back to the room's own script");
+                }
+                else
+                {
+                    _roomScript.Apply(Convert.FromHexString(w[1]));
+                    Log($"  extra room init script installed ({w[1].Length / 2} bytes)");
+                }
+
+                break;
+            case "enemy-hold":
+                // enemy-hold <slot> <state> [timeout s]: after the next set-up of the slot, hold it on its first frames
+                _enemyHealth ??= new EnemyHealth(Game.ProcessId);
+                var held = _enemyHealth.HoldWhenReady(int.Parse(w[1], CultureInfo.InvariantCulture), byte.Parse(w[2], CultureInfo.InvariantCulture),
+                    TimeSpan.FromSeconds(w.Length > 3 ? int.Parse(w[3], CultureInfo.InvariantCulture) : 15));
+                Log($"  enemy {w[1]} held in state {w[2]} {held.TotalSeconds:F2} s after the command");
                 break;
             case "enemy-state":
                 // enemy-state <slot> <state>: zombies 4 = no action (stands still), 1 = back to its behaviour
@@ -614,6 +638,8 @@ internal sealed class Runner(Pad pad, TextWriter log) : IDisposable
             Log("focus patch removed");
         }
 
+        _roomScript?.Dispose();
+        _roomScript = null;
         _warp?.Dispose();
         _warp = null;
         _speed?.Dispose();
