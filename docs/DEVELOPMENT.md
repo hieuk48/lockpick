@@ -92,8 +92,14 @@ conditions), `state`, `peek addr len`, `calibrate`, `shot file.png [width]`, `lo
   where the box cursor starts); `open-box` (open the item box screen in any room: the game opens a menu by itself
   when a mode bit of the state flags' byte 1 is pending, `0x1000` = item box); `box-cursor <slot>`; raw
   `give <item> [qty]` (writes the slot and held count, but the grid icon stays whatever was loaded for that slot);
-  `new-game chris|jill [s]` (fresh boot to a new game with no presses, right after `launch`: `NewGame.cs`, MEMORY_MAP
-  "Boot and new game").
+  `new-game chris|jill [s] [--skip-opening file] [--dump]` (fresh boot to a new game with no presses, right after
+  `launch`: `NewGame.cs`, MEMORY_MAP "Boot and new game"); `scene-stop` (stop a playing scene: event slots idle,
+  message closed, cutscene flags off); `state-apply addr:set:clear …` (set/clear bits of saved-state bytes in one
+  suspension).
+- **Cutscene skips** (`scenes.py`): a scene's end is recorded once by watching it — the bits it changes in the saved
+  block (`0xBE9620`–`0xBE9E1F`, what a save holds) and where it leaves the player — then applied instead of playing
+  it, so the game is left as if the scene had been watched. `scenes.py record-opening|check-opening jill|chris`;
+  the files in `tools/autoplay/scenes/` hold addresses, bits and positions only.
 - **Giving items: use `ap.give(item, qty)`**, not raw `give`. It puts the item in box entry 0, opens the box screen,
   points the cursor at the first empty slot and swaps with A, A, then closes with X, checking the screen state before
   each press. The game's own swap loads the slot's icon, so the item looks right in the grid (verified live for Jill
@@ -123,9 +129,11 @@ look Which menu is open, and which entry is highlighted?
 ### Python runners (`tools/autoplay`)
 
 - `ap.py` — client: `serve()`, `send()`, `look()`, `state()`, `screen()` (vision-classified: title, newload, card,
-  loadmenu, …), `new_game("jill"|"chris")` (fresh boot → new game with **no presses**: the harness's `new-game`
-  hands the title task to `game_start` as the character, the opening plays by itself fast-forwarded, and control is
-  read from state — room 105, no busy flags or message, held 1.5 s; ~56 s Jill, ~42 s Chris from launch),
+  loadmenu, …), `new_game("jill"|"chris")` (fresh boot → new game with **no presses and no opening**: the
+  harness's `new-game` hands the title task to `game_start` as the character, applies the recorded opening end
+  (`scenes/opening-<character>.json`) the frame before the first room loads, and loads that room fast-forwarded;
+  control is read from state — room 105, no busy flags or message, held 1.5 s; ~15 s from launch, clock ~3 s.
+  `skip_opening=False` plays the opening instead, fast-forwarded),
   `in_control()` / `settle()` (state-flag busy bits; fast-forwards cutscenes until control returns).
 - `doors.py` — door table from the player's install (every door's 24-byte record); `record_to(table, "105",
   "jill")` picks a real door into a room.

@@ -312,6 +312,23 @@ attract bit clear, `InitializeGame` builds a real new game (HP, starting items, 
 itself (voiced lines close on their own) until control in the dining room (105). Handing over at the title's START,
 before its setup, crashed in `update_room_bgm` both times.
 
+`InitializeGame` builds the new game (`0x481880` sets the spawn spot: i16 x `0xBE6350` = 17000, z `0xBE6354` = 5000,
+facing `0xBE6358` = 0xC00), sleeps one frame (call `0x480A44`) and then loads the first room (`0x480AB6`), which
+places the player from the spawn spot. A sleeping task's saved stack (`0xD91A70[id]`) holds the return address 40
+bytes up (`pushal`, `pushfd`, `call` in the yield at `0x47577C`), so `0x480A49` there marks that frame. Writing the
+opening's end there (its saved-state bits, room `0xBE9821`, camera `0xBE9822`, spawn spot) loads straight into the
+dining room with the opening never started. Room files then load a chunk per frame (`0x411FDE`, ~7 s at 30 ticks/s);
+the clock `0xD22730` counts only in the game loop (`0x4810D1`).
+
+| Scene | Changes in the saved block (besides room/camera) | Control at |
+|---|---|---|
+| Opening, Jill | `0xBE9834` word `0xEFFF`, bank B bits at `0xBE9856`/`57`/`6A`/`6B`, `0xBE98D3` `\|= 0x06`, `0xBE996B` `\|= 0x01` | 105, (30700, 7200), facing 1900, camera 0 |
+| Opening, Chris | 6 bytes (`tools/autoplay/scenes/opening-chris.json`) | 105, (30900, 8300), facing 2048, camera 0 |
+
+The game loop takes no room change while a message is up (`0x4810F7` tests `0xBE9825 & 0x80`), which is why a door
+handed over during a scene waits; stopping a scene = event slots `0xBF084C` (8 × 0x34; state +0, active +2) idle,
+message closed, state-flag bits `0x100000` (camera lock), `0x20000` (voice), `0x10000` (intensity ramp) cleared.
+
 ## Player status, healing, combat (decomp facts checked live, 2026-10-14 — dev test suite)
 
 | Address / rule | What | Evidence |

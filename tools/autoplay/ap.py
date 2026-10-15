@@ -175,16 +175,20 @@ def open_title_menu(timeout: float = 90) -> None:
     raise Failed(f"menu never opened (title state {title()})")
 
 
-def new_game(character: str = "chris", fast_ms: int = 4) -> float:
+def new_game(character: str = "chris", fast_ms: int = 4, skip_opening: bool = True) -> float:
     """From a fresh launch to player control in a new game, with no presses; returns seconds taken. The harness hands
-    the title task straight to game_start as the character (NewGame.cs: the path the attract demo takes), the opening
-    plays by itself (fast-forwarded), and control is read from the game's state: both openings hand over in the
-    dining room (105), and the main-hall scene has calm gaps that look like control, so the room is part of the test.
-    Never touches save files."""
+    the title task straight to game_start as the character (NewGame.cs: the path the attract demo takes). With
+    skip_opening (and a recorded opening, scenes/opening-<character>.json) the opening never plays: its end is applied
+    the frame before the first room loads, so the game loads straight into the dining room where it hands over
+    control. Without it the opening plays by itself, fast-forwarded. Control is read from the game's state: room 105
+    (the main-hall scene has calm gaps that look like control), no busy flags or message, held 1.5 s. Never touches
+    save files."""
     import time
     t = time.time()
-    send(f"new-game {character} 120")
-    if fast_ms:
+    scene = Path(__file__).parent / "scenes" / f"opening-{character}.json"
+    skipping = skip_opening and scene.exists()
+    send(f"new-game {character} 120" + (f" --skip-opening {scene}" if skipping else ""))
+    if fast_ms and not skipping:
         send(f"speed {fast_ms}")
     try:
         end, since = time.time() + 300, None
@@ -197,7 +201,7 @@ def new_game(character: str = "chris", fast_ms: int = 4) -> float:
             send("wait 250")
         raise Failed(f"no control after the opening: {state()} flags 0x{flags():08X}")
     finally:
-        if fast_ms:
+        if fast_ms and not skipping:
             send("speed normal", check=False)
 
 

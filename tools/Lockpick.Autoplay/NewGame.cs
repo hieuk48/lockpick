@@ -21,6 +21,9 @@ namespace Lockpick.Autoplay;
 /// the first try (2026-10-14: Jill ran Chris's room 106 and the game crashed in the opening scene). Code bytes are
 /// checked first, so another build fails instead of being patched.
 /// </summary>
+/// <summary>Where a cutscene leaves the game: saved-state bits to set/clear, and the player's room and spot.</summary>
+internal sealed record SceneEnd(byte Room, byte Camera, short X, short Z, short Yaw, IReadOnlyList<(ulong Address, byte Set, byte Clear)> Bits);
+
 internal sealed partial class NewGame : IDisposable
 {
     private const ulong TasksEip = 0xD91A80;
@@ -34,6 +37,17 @@ internal sealed partial class NewGame : IDisposable
     private const ulong TitleMenu = 0xD22777; // 1 while the title is up; its exit (0x430E10) clears it
     private const ulong PlayerX = 0xBE6318;
     private const ulong PlayerZ = 0xBE6320;
+    private const ulong PlayerYaw = 0xBE6358;
+    private const ulong SpawnX = 0xBE6350;
+    private const ulong SpawnZ = 0xBE6354;
+    private const ulong RoomByte = 0xBE9821;
+    private const ulong CameraByte = 0xBE9822;
+    private const ulong TasksEsp = 0xD91A70;
+    private const ulong StateBlockStart = 0xBE9620;
+    private const int StateBlockSize = 0x800;
+    // InitializeGame sleeps one frame here (call at 0x480A44) after building the new game and before loading the first
+    // room (0x480AB6): the sleeping task's saved stack holds this return address 40 bytes up (pushal, pushfd, call).
+    private const uint BeforeFirstRoom = 0x480A49;
 
     // game_start: mov dword [g_playingGameFlag 0x4D4674], 1 — title_state: sub esp,8; and dword [0xBE41C0], …
     private static readonly (uint Address, byte[] Bytes)[] Signatures =
@@ -58,10 +72,12 @@ internal sealed partial class NewGame : IDisposable
 
     /// <summary>
     /// Waits for the main task to reach the title screen, hands it to game_start as <paramref name="character"/>
-    /// ("chris" or "jill") and keeps the room variant right until the player is placed in the first room; returns the
-    /// time to the title and to the first room, and how often the variant had to be put back.
+    /// ("chris" or "jill"), keeps the room variant right, and stops the game at the frame before the first room loads.
+    /// There, <paramref name="opening"/> (the opening's recorded end) is applied so the game loads straight into the room
+    /// where the opening hands over control, and the opening never plays. Returns the time to the title and to that
+    /// frame, how often the variant had to be put back, and the saved-state block as it was at that frame.
     /// </summary>
-    public (TimeSpan Title, TimeSpan Room, int Restored) Start(string character, TimeSpan timeout)
+    public (TimeSpan Title, TimeSpan Room, int Restored, byte[] Block) Start(string character, TimeSpan timeout, SceneEnd? opening = null)
     {
         var id = character.ToLowerInvariant() switch
         {
@@ -83,8 +99,8 @@ internal sealed partial class NewGame : IDisposable
             if (BitConverter.ToUInt32(Read(TasksEip, 4)) == TitleState && TryHandOver(id))
             {
                 var title = clock.Elapsed;
-                var restored = HoldVariant(id == 1, clock, timeout);
-                return (title, clock.Elapsed, restored);
+                var (restored, block) = HoldVariant(id == 1, clock, timeout, opening);
+                return (title, clock.Elapsed, restored, block);
             }
 
             Thread.Sleep(5);
@@ -93,11 +109,16 @@ internal sealed partial class NewGame : IDisposable
         throw new TimeoutException($"the title screen never came (task 0 at 0x{BitConverter.ToUInt32(Read(TasksEip, 4)):X})");
     }
 
-    private int HoldVariant(bool jill, Stopwatch clock, TimeSpan timeout)
+    private (int Restored, byte[] Block) HoldVariant(bool jill, Stopwatch clock, TimeSpan timeout, SceneEnd? opening)
     {
         var restored = 0;
         while (clock.Elapsed < timeout)
         {
+            if (BeforeFirstRoomLoads() && TryFirstRoom(jill, opening) is { } block)
+            {
+                return (restored, block);
+            }
+
             if (((BitConverter.ToUInt32(Read(StateFlags, 4)) & JillVariant) != 0) != jill)
             {
                 if (ProcessSuspender.Suspend(_processId) is { } error)
@@ -117,15 +138,64 @@ internal sealed partial class NewGame : IDisposable
                 }
             }
 
-            if (BitConverter.ToInt32(Read(PlayerX, 4)) != 0 || BitConverter.ToInt32(Read(PlayerZ, 4)) != 0)
-            {
-                return restored;
-            }
-
-            Thread.Sleep(2);
+            // Spin, don't sleep: the frame before the first room is one tick (~33 ms) and Thread.Sleep(1) can take ~15 ms
+            // (2026-10-14: missed once). It comes a fraction of a second after the handover.
+            Thread.Yield();
         }
 
-        throw new TimeoutException("the first room never loaded");
+        throw new TimeoutException("the frame before the first room never came");
+    }
+
+    private bool BeforeFirstRoomLoads() =>
+        BitConverter.ToUInt32(Read(TasksEip, 4)) == GameStart && BitConverter.ToInt16(Read(TasksTable, 2)) == 1
+        && BitConverter.ToUInt32(Read(BitConverter.ToUInt32(Read(TasksEsp, 4)) + 40UL, 4)) == BeforeFirstRoom;
+
+    private byte[]? TryFirstRoom(bool jill, SceneEnd? opening)
+    {
+        if (ProcessSuspender.Suspend(_processId) is { } error)
+        {
+            throw new InvalidOperationException("suspend failed: " + error);
+        }
+
+        try
+        {
+            if (BitConverter.ToUInt32(Read(CurrentTaskId, 4)) == 0 || !BeforeFirstRoomLoads())
+            {
+                return null;
+            }
+
+            var flags = BitConverter.ToUInt32(Read(StateFlags, 4));
+            Write(StateFlags, BitConverter.GetBytes(jill ? flags | JillVariant : flags & ~JillVariant));
+            var block = Read(StateBlockStart, StateBlockSize);
+            if (opening is not null)
+            {
+                foreach (var (address, set, clear) in opening.Bits)
+                {
+                    if (address < StateBlockStart || address >= StateBlockStart + StateBlockSize)
+                    {
+                        throw new ArgumentOutOfRangeException(nameof(opening), $"0x{address:X} is outside the saved state block");
+                    }
+
+                    Write(address, [(byte)((Read(address, 1)[0] | set) & ~clear)]);
+                }
+
+                Write(RoomByte, [opening.Room]);
+                Write(CameraByte, [opening.Camera]);
+                // The new game's spawn spot (InitPlayerData 0x481880 writes 17000, 5000, 0xC00 here); the room load
+                // places the player from it.
+                Write(SpawnX, BitConverter.GetBytes(opening.X));
+                Write(SpawnZ, BitConverter.GetBytes(opening.Z));
+                Write(PlayerYaw, BitConverter.GetBytes(opening.Yaw));
+                Write(PlayerX, BitConverter.GetBytes((int)opening.X));
+                Write(PlayerZ, BitConverter.GetBytes((int)opening.Z));
+            }
+
+            return block;
+        }
+        finally
+        {
+            ProcessSuspender.Resume(_processId);
+        }
     }
 
     public void Dispose() => _process.Dispose();

@@ -23,6 +23,8 @@ namespace Lockpick.Autoplay;
 ///   give-box item [qty] [--front] put an item in the first empty item-box entry (its icon then shows right);
 ///                                --front: in entry 0, where the box cursor starts
 ///   new-game chris|jill [s]      fresh boot to a new game, no presses: hands the title task to game_start (NewGame.cs)
+///   state-apply addr:set:clear…  set/clear bits of saved-state bytes in one suspension (StateBlock.cs; cutscene skips)
+///   scene-stop                   stop the playing scene: event slots idle, message closed, cutscene flags off
 ///   open-box                     open the item box screen wherever the player is (only when they're free)
 ///   box-cursor slot              move the box screen's inventory cursor to a slot
 ///   heal                         HP back to the maximum (alive players only)
@@ -252,8 +254,58 @@ internal sealed class Runner(Pad pad, TextWriter log) : IDisposable
             case "new-game":
                 using (var newGame = new NewGame(Game.ProcessId))
                 {
-                    var (title, room, restored) = newGame.Start(w[1], TimeSpan.FromSeconds(w.Length > 2 ? int.Parse(w[2], CultureInfo.InvariantCulture) : 120));
-                    Log($"  title at {title.TotalSeconds:F1} s, handed to game_start as {w[1]}; first room at {room.TotalSeconds:F1} s (room variant put back {restored}x)");
+                    // new-game <character> [timeout s] [--skip-opening <scene-end.json>] [--dump]
+                    var bootTimeout = w.Length > 2 && int.TryParse(w[2], CultureInfo.InvariantCulture, out var seconds) ? seconds : 120;
+                    var skip = Array.IndexOf(w, "--skip-opening") is var skipAt and >= 0 ? LoadSceneEnd(w[skipAt + 1]) : null;
+                    var (title, room, restored, block) = newGame.Start(w[1], TimeSpan.FromSeconds(bootTimeout), skip);
+                    Log($"  title at {title.TotalSeconds:F1} s, handed to game_start as {w[1]}; before the first room at {room.TotalSeconds:F1} s"
+                        + $" (room variant put back {restored}x){(skip is null ? string.Empty : $"; opening skipped: room {skip.Room:X2}, {skip.Bits.Count} state bytes")}");
+                    if (w.Contains("--dump"))
+                    {
+                        Log("  block " + Convert.ToHexString(block));
+                    }
+
+                    if (skip is not null)
+                    {
+                        // The first room's files load a chunk per frame (0x411FDE), ~7 s at the normal rate. The clock
+                        // (0xD22730) only runs in the game loop, so loading goes fast-forwarded and the normal rate is
+                        // back by the loop's first ticks.
+                        _speed ??= new GameSpeed(Game.ProcessId);
+                        var loading = Stopwatch.StartNew();
+                        _speed.SetIntervalMs(1);
+                        try
+                        {
+                            while (Game.ReadU32(0xD22730) == 0 && loading.Elapsed < TimeSpan.FromSeconds(30))
+                            {
+                                Thread.Sleep(1);
+                            }
+                        }
+                        finally
+                        {
+                            _speed.SetIntervalMs(_speed.OriginalMs);
+                        }
+
+                        Log($"  first room loaded in {loading.Elapsed.TotalSeconds:F1} s (clock at {Game.ReadU32(0xD22730)} ticks)");
+                    }
+                }
+
+                break;
+            case "state-apply":
+                using (var block = new StateBlock(Game.ProcessId))
+                {
+                    var changes = w[1..].Select(c => c.Split(':')).Select(p => (
+                        ulong.Parse(p[0].Replace("0x", string.Empty, StringComparison.OrdinalIgnoreCase), NumberStyles.HexNumber, CultureInfo.InvariantCulture),
+                        byte.Parse(p[1], NumberStyles.HexNumber, CultureInfo.InvariantCulture),
+                        byte.Parse(p[2], NumberStyles.HexNumber, CultureInfo.InvariantCulture))).ToList();
+                    Log($"  {block.Apply(changes)} of {changes.Count} bytes changed");
+                }
+
+                break;
+            case "scene-stop":
+                using (var block = new StateBlock(Game.ProcessId))
+                {
+                    block.StopScene();
+                    Log("  event scripts stopped, message closed, cutscene flags cleared");
                 }
 
                 break;
@@ -457,6 +509,24 @@ internal sealed class Runner(Pad pad, TextWriter log) : IDisposable
             (0x04, "0x04"), (0x200, "0x200"), (0x400, "0x400"),
         ];
         return string.Join(' ', bits.Where(b => (word & b.Bit) != 0).Select(b => b.Name));
+    }
+
+    /// <summary>
+    /// A recorded scene end (tools/autoplay/scenes.py): {"room": "105", "camera": 0, "pos": [x, y, z], "yaw": n,
+    /// "bits": [["BE9856", "10", "00"], …]}; room is the stage digit and room as the game shows them.
+    /// </summary>
+    private static SceneEnd LoadSceneEnd(string path)
+    {
+        using var json = System.Text.Json.JsonDocument.Parse(File.ReadAllText(path));
+        var r = json.RootElement;
+        var pos = r.GetProperty("pos");
+        var bits = r.GetProperty("bits").EnumerateArray().Select(b => (
+            ulong.Parse(b[0].GetString()!, NumberStyles.HexNumber, CultureInfo.InvariantCulture),
+            byte.Parse(b[1].GetString()!, NumberStyles.HexNumber, CultureInfo.InvariantCulture),
+            byte.Parse(b[2].GetString()!, NumberStyles.HexNumber, CultureInfo.InvariantCulture))).ToList();
+        return new SceneEnd(byte.Parse(r.GetProperty("room").GetString()![1..], NumberStyles.HexNumber, CultureInfo.InvariantCulture),
+            (byte)r.GetProperty("camera").GetInt32(), (short)pos[0].GetInt32(), (short)pos[2].GetInt32(),
+            (short)r.GetProperty("yaw").GetInt32(), bits);
     }
 
     public void RequireForeground()
