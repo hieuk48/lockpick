@@ -245,6 +245,18 @@ class Lab:
             ap.send("inv-clear 2")
         ap.equip_now(weapon, quantity, log=self.log)
 
+    def loose(self, kind: int) -> dict | None:
+        """The enemy spawned free in front of the player. The mansion plant never struck as spawned from its record, at
+        any facing, but always did once enemy-wake re-ran its init facing the player (plant run, 2026-10-15): it is
+        woken that way, 1200 away."""
+        if kind != 15:
+            return self.spawn(kind, at=self.at_distance(3500), hold=False)
+        e = self.spawn(kind, at=self.at_distance(1200), hold=False)
+        if e:
+            p = ap.pos()
+            ap.send(f"enemy-wake {SLOT} {e['x']} {e['z']} {ap.angle_to(e['x'], e['z'], p[0], p[2])} 1")
+        return e
+
     def aware(self, seconds: float = 4) -> bool:
         """Waits for the enemy's aim-height bits (it noticed the player); false when they never came."""
         end = time.time() + seconds
@@ -428,7 +440,7 @@ class Lab:
                 row = {"type": kind, "name": spawn.scd.Names().enemies.get(str(kind)), "startHp": start, "hps": []}
                 try:
                     self.ensure()
-                    if not self.spawn(kind, at=self.at_distance(800 if kind == 15 else 3500), hold=False):
+                    if not self.loose(kind):
                         raise ap.Failed("not spawned")
                     ap.send(f"hp {start}")
                     last, end = start, time.time() + seconds
@@ -697,11 +709,14 @@ class Lab:
                 self.arena()
         return rows
 
-    def melee(self, types: list[int], seconds: float = 60, weapon: int = 1, quantity: int = 0) -> list[dict]:
+    def melee(self, types: list[int], seconds: float = 60, weapon: int = 1, quantity: int = 0,
+              start_hp: int | None = None) -> list[dict]:
         """Fliers with the knife: held at arm's length a crow kept only its up aim height (its AI rewrote the targetable
         bits) and was never cut, nor the wasp (2026-10-15). In play they are cut while they swoop in to attack: each one
         let loose on a player with the knife raised, stabbing level then up, healed as needed, until it dies. --weapon:
-        the same with another weapon (the rocket never hit a crow, up only, or a snake, down only, held in place)."""
+        the same with another weapon (the rocket never hit a crow, up only, or a snake, down only, held in place).
+        --hp: the enemy's HP set after it spawns, so one hit kills (the knife cut a wasp once in 4 minutes). A kill is
+        caught on the hit itself: a knifed wasp respawned with fresh HP within the same round of stabs (2026-10-15)."""
         rows = []
         for kind in types:
             row = {"type": kind, "name": spawn.scd.Names().enemies.get(str(kind)), "weapon": weapon, "hits": []}
@@ -711,23 +726,33 @@ class Lab:
                 e = self.spawn(kind, at=self.at_distance(1500), hold=False)
                 if not e:
                     raise ap.Failed("not spawned")
-                row["startHp"] = last = e["hp"]
+                if start_hp is not None:
+                    time.sleep(1.5)       # a spawned wasp re-rolls its HP in its first frames (15 -> 34, 2026-10-15)
+                    ap.send(f"enemy-hp {SLOT} {start_hp}")
+                row["startHp"] = last = start_hp if start_hp is not None else e["hp"]
                 end = time.time() + seconds
                 while time.time() < end:
                     for key in ("", "LUp", "LDown") if weapon != 1 else ("", "LUp"):
-                        at = self.shot(key, settle=0.15)
+                        try:
+                            at = self.shot(key, settle=0.15)
+                        except NotAiming:
+                            # Held by the enemy (a snake's bite, a crow on the player): no aim until it lets go.
+                            self.reboot = False
+                            time.sleep(0.5)
+                            continue
                         now = (enemy() or {}).get("hp")
                         if now is not None and now != last:
                             row["hits"].append({"aim": key or "level", "damage": last - now, "hp": now,
                                                 "enemy": list(slot_bytes(SLOT, 0x84, 4)), "aimByte": at["aimByte"],
                                                 "y": int.from_bytes(slot_bytes(SLOT, 0x38, 4), "little", signed=True)})
                             last = now
+                            if now <= 0:
+                                break
                         if ap.hp() < 40:
                             ap.send("heal")
                     if last is not None and last <= 0:
-                        time.sleep(2)
                         row["killed"] = True
-                        row["after"] = (enemy() or {}).get("hp")
+                        row["after"] = self.trace(8)     # the death, and a wasp's or snake's respawn
                         break
                 row.setdefault("killed", False)
             except Exception as e:  # noqa: BLE001
@@ -747,7 +772,7 @@ class Lab:
         room script sets behaviour bit 0x40, so no weapon kills it."""
         rows = []
         engaged_turn = None
-        for turn in (0, 1024, 2048, 3072):
+        for turn in ((0,) if "--kill" in sys.argv else (0, 1024, 2048, 3072)):
             row = {"case": "facing", "turn": turn}
             try:
                 self.ensure()
@@ -767,6 +792,24 @@ class Lab:
                         row["state"] = [b[0], b[2], b[0x84], b[0x85], b[0x86]]
                         break
                     time.sleep(0.1)
+                if "--kill" in sys.argv and row["engaged"]:
+                    # Its grip on a player at 10 HP for a minute: does it kill (decomp: only variant 5 stops at 0)?
+                    ap.send("hp 10")
+                    row["hps"], last, stop = [], 10, time.time() + 60
+                    while time.time() < stop:
+                        now = ap.hp()
+                        if now != last:
+                            row["hps"].append({"hp": now, "plant": list(slot_bytes(SLOT, 0x84, 4)),
+                                               "player": list(ap.peek(PLAYER + 0x84, 4))})
+                            last = now
+                            if now < 0:
+                                break
+                        time.sleep(0.03)
+                    row["died"] = last < 0
+                    rows.append(row)
+                    self.save_partial("plant", rows)
+                    self.log(f"plant grip from 10 HP: {[h['hp'] for h in row['hps']]} died {row['died']}")
+                    return rows
                 time.sleep(4)
                 row["hpLoss"] = hp0 - ap.hp()
                 row["yawAfter"] = int.from_bytes(slot_bytes(SLOT, 0x74, 2), "little")
@@ -808,6 +851,60 @@ class Lab:
             self.save_partial("plant", rows)
         return rows
 
+    def plant_ring(self, radius: int = 1200, seconds: float = 12) -> list[dict]:
+        """Which side of the mansion plant strikes, independent of angle conventions: the plant stays put (re-woken
+        between tries, same yaw) and the player is teleported to 8 spots around it, `radius` out, facing it. The first
+        side that strikes is then used for its grip on a player at 10 HP for a minute (does it kill?). Two plant runs
+        disagreed at the same yaw (2026-10-15)."""
+        import math
+        rows = []
+        self.ensure()
+        ap.send("heal")
+        e = self.spawn(15, at=self.at_distance(1200), hold=False)
+        if not e:
+            raise ap.Failed("not spawned")
+        yaw = int.from_bytes(slot_bytes(SLOT, 0x74, 2), "little")
+        strike_at = None
+        for side in range(0, 4096, 512):
+            theta = side * 2 * math.pi / 4096
+            x, z = int(e["x"] + math.cos(theta) * radius), int(e["z"] - math.sin(theta) * radius)
+            row = {"case": "ring", "side": side, "plantYaw": yaw, "player": [x, z]}
+            ap.send(f"place {x} {z} {ap.angle_to(x, z, e['x'], e['z'])}", "heal")
+            ap.send(f"enemy-wake {SLOT} {e['x']} {e['z']} {yaw} 1")
+            end, row["engaged"] = time.time() + seconds, False
+            while time.time() < end:
+                b = slot_bytes(SLOT, 0, 0x90)
+                if b[0x85] >= 2 or b[2] in (3, 4):
+                    row["engaged"], row["state"] = True, [b[0], b[2], b[0x84], b[0x85], b[0x86]]
+                    break
+                time.sleep(0.1)
+            if row["engaged"] and strike_at is None:
+                strike_at = (x, z)
+            self.log(f"plant yaw {yaw}, player at side {side}: engaged {row['engaged']}")
+            rows.append(row)
+            self.save_partial("plantring", rows)
+            time.sleep(3)
+        if strike_at:
+            row = {"case": "grip from 10 HP", "player": list(strike_at), "hps": []}
+            x, z = strike_at
+            ap.send(f"place {x} {z} {ap.angle_to(x, z, e['x'], e['z'])}", "hp 10")
+            ap.send(f"enemy-wake {SLOT} {e['x']} {e['z']} {yaw} 1")
+            last, stop = 10, time.time() + 60
+            while time.time() < stop:
+                now = ap.hp()
+                if now != last:
+                    row["hps"].append({"hp": now, "plant": list(slot_bytes(SLOT, 0x84, 4)),
+                                       "player": list(ap.peek(PLAYER + 0x84, 4))})
+                    last = now
+                    if now < 0:
+                        break
+                time.sleep(0.03)
+            row["died"] = last < 0
+            self.log(f"plant grip from 10 HP: {[h['hp'] for h in row['hps']]} died {row['died']}")
+            rows.append(row)
+            self.save_partial("plantring", rows)
+        return rows
+
     def save_partial(self, name: str, rows: list[dict]) -> None:
         (self.out / f"lab-{name}-{self.character}.json").write_text(json.dumps(rows, indent=1) + "\n", encoding="utf-8")
 
@@ -817,7 +914,7 @@ class Lab:
         for kind in types:
             row = {"type": kind, "name": spawn.scd.Names().enemies.get(str(kind)), "hits": []}
             try:
-                if not self.spawn(kind, at=self.at_distance(800 if kind == 15 else 3500), hold=False):
+                if not self.loose(kind):
                     raise ap.Failed("not spawned")
                 ap.send("heal")
                 full = ap.hp()
@@ -866,8 +963,9 @@ if __name__ == "__main__":
               "deaths": lambda: lab.deaths(types), "falloff": lambda: lab.falloff(),
               "linger": lambda: lab.linger(), "decap": lambda: lab.decap(),
               "wasps": lambda: lab.wasps(),
-              "plant": lambda: lab.plant(),
+              "plant": lambda: lab.plant(), "plantring": lambda: lab.plant_ring(900),
               "melee": lambda: lab.melee(types if "--types" in args else [5, 7],
                                    float(args[args.index("--seconds") + 1]) if "--seconds" in args else 60,
-                                   *([int(args[args.index("--weapon") + 1]), 30] if "--weapon" in args else []))}[experiment]()
+                                   *([int(args[args.index("--weapon") + 1]), 30] if "--weapon" in args else [1, 0]),
+                                   int(args[args.index("--hp") + 1]) if "--hp" in args else None)}[experiment]()
     (out / f"lab-{experiment}-{character}.json").write_text(json.dumps(result, indent=1) + "\n", encoding="utf-8")
