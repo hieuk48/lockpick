@@ -19,11 +19,19 @@ sys.path.insert(0, str(Path(__file__).parent))
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "rdt"))
 import ap  # noqa: E402
 import doors  # noqa: E402
+import rdt_map  # noqa: E402
 import scd  # noqa: E402
 import survey  # noqa: E402
 
-# A do-nothing entry in each type's state table (decomp): the enemy stays drawn and hittable but doesn't act.
-HOLD_STATE = {0: 4, 1: 4, 17: 4, 2: 4, 10: 5}
+# A do-nothing entry in each type's state table (decomp): the enemy stays drawn and hittable but doesn't act. Types
+# without one (crows, wasps and snakes have none: their tables are init/run/damaged/death) are pinned instead.
+HOLD_STATE = {0: 4, 1: 4, 17: 4, 2: 4}
+
+
+def hold_command(kind: int, slot: int) -> str:
+    """The harness command that arms `slot` to be held from its next set-up's first frames (returns at once, so every
+    slot of one room load is caught)."""
+    return f"enemy-arm {slot} {HOLD_STATE[kind] if kind in HOLD_STATE else 'pin'}"
 
 
 @lru_cache(maxsize=1)
@@ -49,9 +57,11 @@ def templates() -> dict[int, bytes]:
     return {t: b for t, (b, _) in found.items()}
 
 
-def enemy_set(kind: int, slot: int, x: int, z: int, angle: int) -> bytes:
+def enemy_set(kind: int, slot: int, x: int, z: int, angle: int, kill_flag: int = 0xFF) -> bytes:
+    """kill_flag: flagEnemies index the enemy sets when it dies and that keeps it from being placed again (0xFF: none,
+    always placed)."""
     b = bytearray(templates()[kind])
-    b[3] = 0xFF                      # no kill flag: always placed
+    b[3] = kill_flag
     b[4] = 1                         # always initialised
     struct.pack_into("<H", b, 0x08, angle & 0xFFFF)
     struct.pack_into("<h", b, 0x0C, x)
@@ -81,12 +91,17 @@ def reload_room(log=print, then: tuple[str, ...] = ()) -> None:
         ready = ap.state().get("room") == room and ap.in_control()
         since = (since or time.time()) if ready else None
         if since and time.time() - since >= 1.0:
+            # The arrival keeps the door's entry camera; cut to the one the room's zones give the player's spot.
+            camera = rdt_map.load(survey.INSTALL, room, character).camera_for(x, z)
+            if camera is not None and camera != ap.peek(0xBE9822, 1)[0]:
+                ap.send(f"camera {camera}", "wait 300")
             return
         time.sleep(0.2)
     raise ap.Failed(f"no control after reloading {room}: {ap.state()}")
 
 
-def spawn(kind: int, x: int | None = None, z: int | None = None, slot: int = 2, hold: bool = False, log=print) -> dict:
+def spawn(kind: int, x: int | None = None, z: int | None = None, slot: int = 2, hold: bool = False, log=print,
+          kill_flag: int = 0xFF, extra: tuple[str, ...] = ()) -> dict:
     """Reloads the room with `kind` added in `slot` at (x, z) facing the player (default: 2000 units in front)."""
     p = ap.pos()
     if x is None or z is None:
@@ -94,12 +109,13 @@ def spawn(kind: int, x: int | None = None, z: int | None = None, slot: int = 2, 
         yaw = int.from_bytes(ap.peek(0xBE6358, 2), "little", signed=True)
         theta = yaw * 2 * math.pi / 4096
         x, z = int(p[0] + math.cos(theta) * 2000), int(p[2] - math.sin(theta) * 2000)
-    record = enemy_set(kind, slot, x, z, ap.angle_to(x, z, p[0], p[2]))
-    ap.send("room-script " + script(record).hex())
-    holding = hold and kind in HOLD_STATE
+    record = enemy_set(kind, slot, x, z, ap.angle_to(x, z, p[0], p[2]), kill_flag)
+    holding = hold
+    # Armed before the door: the harness catches each enemy's first frames, before it can move.
+    ap.send(f"enemy-pin {slot} off", *((hold_command(kind, slot),) if holding else ()), *extra,
+            "room-script " + script(record).hex())
     try:
-        # The hold is sent with the door so the harness catches the enemy's first frames, before it can move.
-        reload_room(log, then=(f"enemy-hold {slot} {HOLD_STATE[kind]} 20",) if holding else ())
+        reload_room(log)
     finally:
         ap.send("room-script off", check=False)
     enemy = next((e for e in ap.enemies() if e["slot"] == slot), None)

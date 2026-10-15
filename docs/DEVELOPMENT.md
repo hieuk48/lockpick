@@ -106,7 +106,14 @@ conditions), `state`, `peek addr len`, `calibrate`, `shot file.png [width]`, `lo
   enemy's model, animations and AI like one that belongs there. Records come from a real `enemy_set` of that type in
   the install's room files; `--hold` uses `enemy-hold <slot> <state>`, sent with the door, which catches the enemy's
   first frames (do-nothing state: zombies/dogs 4, snakes 5). Enemy sounds come from a per-room table, so a type
-  foreign to the room may be silent.
+  foreign to the room may be silent. Holds are armed before the door (`enemy-arm <slot> pin|<state>`) and caught on
+  each enemy's first frames: zombies and dogs get their do-nothing state 4; crows, wasps and snakes have none, so
+  every other type is pinned (`enemy-pin`: a harness thread rewrites its position, facing and AI state about every
+  millisecond; health and hit state are left alone so shots still count).
+- **Weapon lab** (`lab.py <out> hp|killflags|aim|attacks`): the owner's pick, room 108's second leg — the player in
+  the foreground of camera 2 at (24000, 15500) facing the first corner, where the enemy stands; teleported there, no
+  walking. The dogs' trigger lines only react to the player, who never crosses them. For things the code can't
+  settle (starting HP per type, kill-flag bits and respawn, aim-height bits, damage enemies deal), not for what is known.
 - **Cutscene skips** (`scenes.py`): a scene's end is recorded once by watching it — the bits it changes in the saved
   block (`0xBE9620`–`0xBE9E1F`, what a save holds) and where it leaves the player — then applied instead of playing
   it, so the game is left as if the scene had been watched. `scenes.py record-opening|check-opening jill|chris`;

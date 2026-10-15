@@ -67,6 +67,7 @@ internal sealed class Runner(Pad pad, TextWriter log) : IDisposable
     private CameraCut? _camera;
     private EnemyFreeze? _freeze;
     private RoomScriptHook? _roomScript;
+    private EnemyPin? _pin;
 
     public Game Game => _game ?? throw new InvalidOperationException("the game is not attached (add 'launch' first)");
 
@@ -244,6 +245,37 @@ internal sealed class Runner(Pad pad, TextWriter log) : IDisposable
                     Log($"  extra room init script installed ({w[1].Length / 2} bytes)");
                 }
 
+                break;
+            case "enemy-pin":
+                // enemy-pin <slot> [--ready [timeout s]] | enemy-pin <slot> off: hold a slot by rewriting its position,
+                // facing and AI state every millisecond (EnemyPin.cs); --ready waits for its next set-up first
+                _pin ??= new EnemyPin(Game.ProcessId);
+                var pinSlot = int.Parse(w[1], CultureInfo.InvariantCulture);
+                if (w.Length > 2 && w[2] == "off")
+                {
+                    Log($"  enemy {pinSlot} {(_pin.Unpin(pinSlot) ? "unpinned" : "was not pinned")}");
+                }
+                else if (w.Length > 2 && w[2] == "--ready")
+                {
+                    var took = _pin.PinWhenReady(pinSlot, TimeSpan.FromSeconds(w.Length > 3 ? int.Parse(w[3], CultureInfo.InvariantCulture) : 15));
+                    Log($"  enemy {pinSlot} pinned {took.TotalSeconds:F2} s after the command");
+                }
+                else
+                {
+                    _pin.Pin(pinSlot);
+                    Log($"  enemy {pinSlot} pinned");
+                }
+
+                break;
+            case "enemy-arm":
+                // enemy-arm <slot> pin|<state>: hold the slot from its next set-up's first frames, without waiting
+                // (several slots of one room load are each caught on their own; EnemyPin.cs)
+                _pin ??= new EnemyPin(Game.ProcessId);
+                _pin.Arm(int.Parse(w[1], CultureInfo.InvariantCulture), w[2] == "pin" ? null : byte.Parse(w[2], CultureInfo.InvariantCulture));
+                Log($"  enemy {w[1]} armed ({w[2]})");
+                break;
+            case "enemy-armed":
+                Log("  still waiting: " + string.Join(' ', (_pin?.Waiting() ?? [])));
                 break;
             case "enemy-hold":
                 // enemy-hold <slot> <state> [timeout s]: after the next set-up of the slot, hold it on its first frames
@@ -640,6 +672,8 @@ internal sealed class Runner(Pad pad, TextWriter log) : IDisposable
 
         _roomScript?.Dispose();
         _roomScript = null;
+        _pin?.Dispose();
+        _pin = null;
         _warp?.Dispose();
         _warp = null;
         _speed?.Dispose();
