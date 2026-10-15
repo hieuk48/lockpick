@@ -63,6 +63,40 @@ public sealed class GameMonitorTests : IAsyncDisposable
     }
 
     [Fact]
+    public void A_save_file_written_by_the_game_becomes_one_GameSaved_event()
+    {
+        var folder = Directory.CreateTempSubdirectory("lockpick-saves-").FullName;
+        try
+        {
+            _adapter.SavesFolder = folder;
+            Launch();
+            _adapter.Script.Enqueue((s, t) => MockGameAdapter.InRoom(s, t, 1, 6, 0, 140));
+            Scan();
+
+            // The game writes a save in several steps; other files in the folder are ignored.
+            File.WriteAllBytes(Path.Combine(folder, "savedat3.dat"), [1, 2, 3]);
+            File.AppendAllText(Path.Combine(folder, "savedat3.dat"), "more");
+            File.WriteAllText(Path.Combine(folder, "notes.txt"), "x");
+
+            var deadline = DateTime.UtcNow.AddSeconds(5);
+            while (!_events.OfType<GameSaved>().Any() && DateTime.UtcNow < deadline)
+            {
+                Thread.Sleep(50);
+                _monitor.Tick();
+            }
+
+            Thread.Sleep(300);
+            _monitor.Tick();
+            var saved = Assert.Single(_events.OfType<GameSaved>());
+            Assert.Equal(3, saved.Slot);
+        }
+        finally
+        {
+            Directory.Delete(folder, recursive: true);
+        }
+    }
+
+    [Fact]
     public void Unknown_build_is_rejected_without_opening_the_process()
     {
         Launch();

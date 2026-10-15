@@ -88,6 +88,18 @@ public class Re1ProgressTrackerTests
     }
 
     [Fact]
+    public void Saves_are_savedat1_to_savedat8_in_the_SAVE_folder()
+    {
+        var adapter = new Re1Adapter();
+        Assert.Equal(Path.Combine(@"G:\GOG Games\Resident Evil", "SAVE"), adapter.SaveDirectory(@"G:\GOG Games\Resident Evil\ResidentEvil.exe"));
+        Assert.Equal(1, adapter.SaveSlot("savedat1.dat"));
+        Assert.Equal(8, adapter.SaveSlot("SAVEDAT8.DAT"));
+        Assert.Null(adapter.SaveSlot("savedat9.dat"));
+        Assert.Null(adapter.SaveSlot("savedat1.dat.tmp"));
+        Assert.Null(adapter.SaveSlot("notes.txt"));
+    }
+
+    [Fact]
     public void The_adapter_names_rooms_it_knows()
     {
         var adapter = new Re1Adapter();

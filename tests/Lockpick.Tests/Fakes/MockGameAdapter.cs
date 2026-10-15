@@ -44,6 +44,16 @@ public sealed class MockGameAdapter : IGameAdapter
 
     public string? RejectAttachWith { get; set; }
 
+    /// <summary>The save folder reported for any executable (null: none).</summary>
+    public string? SavesFolder { get; set; }
+
+    public string? SaveDirectory(string executablePath) => SavesFolder;
+
+    public int? SaveSlot(string fileName) =>
+        fileName.StartsWith("savedat", StringComparison.OrdinalIgnoreCase) && fileName.Length > 7 && char.IsAsciiDigit(fileName[7])
+            ? fileName[7] - '0'
+            : null;
+
     public int AttachCount { get; private set; }
 
     public ProfileMatch Identify(ExecutableFingerprint fingerprint) => ProfileMatcher.Match(Profiles, fingerprint);

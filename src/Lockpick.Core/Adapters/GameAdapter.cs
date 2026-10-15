@@ -55,6 +55,12 @@ public interface IGameAdapter
     /// </summary>
     Maps.IRoomMapSource? CreateRoomMaps(string installDirectory) => null;
 
+    /// <summary>The folder the game writes its saves to, for the executable at <paramref name="executablePath"/>; null if unknown.</summary>
+    string? SaveDirectory(string executablePath) => null;
+
+    /// <summary>The save slot a file in <see cref="SaveDirectory"/> belongs to, or null for any other file.</summary>
+    int? SaveSlot(string fileName) => null;
+
     /// <summary>The game's trainer features (what to write for health, ammo, …); null when the adapter has none.</summary>
     Trainer.IGameTrainer? CreateTrainer(VersionProfile profile) => null;
 

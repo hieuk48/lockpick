@@ -28,6 +28,9 @@ public sealed class GameMonitor : IGameStateSource
     private Thread? _thread;
     private IAttachedProcess? _process;
     private IGameSession? _session;
+    private FileSystemWatcher? _saves;
+    private readonly System.Collections.Concurrent.ConcurrentQueue<(int Slot, DateTimeOffset At)> _savedSlots = new();
+    private readonly Dictionary<int, DateTimeOffset> _lastSaved = [];
     private DateTimeOffset _nextScan = DateTimeOffset.MinValue;
     private long _sequence;
     private int _consecutiveFailures;
@@ -247,6 +250,7 @@ public sealed class GameMonitor : IGameStateSource
                 fingerprint.Sha256);
             SetStatus(new MonitorStatus(ConnectionState.Attached, $"Attached — {match.Profile.DisplayName}", now, candidate, fingerprint, match.Profile));
             Raise(new GameStarted(now, _adapter.DisplayName, match.Profile.Id, candidate.ProcessId));
+            WatchSaves(candidate.ExecutablePath);
             Poll(now);
             return null;
         }
@@ -306,6 +310,68 @@ public sealed class GameMonitor : IGameStateSource
         {
             Raise(gameEvent);
         }
+
+        while (_savedSlots.TryDequeue(out var saved))
+        {
+            // The game writes a save in several steps; one event per slot within a few seconds.
+            if (_lastSaved.TryGetValue(saved.Slot, out var last) && saved.At - last < SaveDebounce)
+            {
+                continue;
+            }
+
+            _lastSaved[saved.Slot] = saved.At;
+            Raise(new GameSaved(saved.At, saved.Slot, snapshot.GameTime.HasValue ? snapshot.GameTime.Value : null));
+        }
+    }
+
+    private static readonly TimeSpan SaveDebounce = TimeSpan.FromSeconds(5);
+
+    /// <summary>
+    /// Watches the game's save folder (read-only; the files are never opened) so saves, which leave no trace in game
+    /// memory, become <see cref="GameSaved"/> events on the next poll.
+    /// </summary>
+    private void WatchSaves(string executablePath)
+    {
+        StopWatchingSaves();
+        if (_adapter.SaveDirectory(executablePath) is not { } folder || !Directory.Exists(folder))
+        {
+            return;
+        }
+
+        try
+        {
+            _saves = new FileSystemWatcher(folder)
+            {
+                NotifyFilter = NotifyFilters.FileName | NotifyFilters.LastWrite | NotifyFilters.Size,
+                IncludeSubdirectories = false,
+            };
+            FileSystemEventHandler onChange = (_, e) => OnSaveFile(e.Name);
+            _saves.Changed += onChange;
+            _saves.Created += onChange;
+            _saves.Renamed += (_, e) => OnSaveFile(e.Name);
+            _saves.EnableRaisingEvents = true;
+        }
+        catch (Exception ex) when (ex is IOException or ArgumentException or UnauthorizedAccessException)
+        {
+            _logger.LogWarning("Can't watch the save folder {Folder}: {Error}", folder, ex.Message);
+            StopWatchingSaves();
+        }
+    }
+
+    private void OnSaveFile(string? name)
+    {
+        if (name is not null && _adapter.SaveSlot(Path.GetFileName(name)) is { } slot)
+        {
+            _savedSlots.Enqueue((slot, _time.GetUtcNow()));
+        }
+    }
+
+    private void StopWatchingSaves()
+    {
+        _saves?.Dispose();
+        _saves = null;
+        _savedSlots.Clear();
+        _lastSaved.Clear();
     }
 
     private void Detach(string reason)
@@ -318,6 +384,7 @@ public sealed class GameMonitor : IGameStateSource
         _process?.Dispose();
         _process = null;
         _session = null;
+        StopWatchingSaves();
         _nextScan = DateTimeOffset.MinValue;
         _logger.LogInformation("Detached: {Reason}", reason);
         Raise(new GameStopped(_time.GetUtcNow(), reason));

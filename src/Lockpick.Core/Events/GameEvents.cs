@@ -15,6 +15,7 @@ namespace Lockpick.Core.Events;
 [JsonDerivedType(typeof(CameraChanged), nameof(CameraChanged))]
 [JsonDerivedType(typeof(PlayerHealthChanged), nameof(PlayerHealthChanged))]
 [JsonDerivedType(typeof(PlayerDamaged), nameof(PlayerDamaged))]
+[JsonDerivedType(typeof(GameSaved), nameof(GameSaved))]
 [JsonDerivedType(typeof(TrainerActionExecuted), nameof(TrainerActionExecuted))]
 [JsonDerivedType(typeof(RunInvalidated), nameof(RunInvalidated))]
 public abstract record GameEvent(DateTimeOffset Timestamp)
@@ -62,6 +63,17 @@ public sealed record PlayerHealthChanged(DateTimeOffset Timestamp, int From, int
 public sealed record PlayerDamaged(DateTimeOffset Timestamp, int Amount, int Remaining) : GameEvent(Timestamp)
 {
     public override string Describe() => $"Damaged for {Amount} (HP {Remaining})";
+}
+
+/// <summary>
+/// The game wrote a save file. Saves leave no trace in game memory, so this comes from watching the game's save folder
+/// (read-only: the files are never opened).
+/// </summary>
+public sealed record GameSaved(DateTimeOffset Timestamp, int Slot, TimeSpan? GameTime) : GameEvent(Timestamp)
+{
+    public override string Describe() => GameTime is { } t
+        ? $"Game saved to slot {Slot} (in-game time {(int)t.TotalHours:D2}:{t.Minutes:D2}:{t.Seconds:D2})"
+        : $"Game saved to slot {Slot}";
 }
 
 /// <summary>The trainer changed the game (Trainer Mode only): what, from what to what.</summary>

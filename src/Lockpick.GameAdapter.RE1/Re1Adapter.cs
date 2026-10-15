@@ -61,6 +61,16 @@ public sealed class Re1Adapter : IGameAdapter
 
     public Core.Trainer.IGameTrainer CreateTrainer(VersionProfile profile) => new Re1Trainer();
 
+    /// <summary>The GOG game saves to SAVE\savedatN.dat next to the executable (one file per slot, 1–8; B112, #37).</summary>
+    public string? SaveDirectory(string executablePath) =>
+        Path.GetDirectoryName(executablePath) is { } folder ? Path.Combine(folder, "SAVE") : null;
+
+    public int? SaveSlot(string fileName) =>
+        fileName.Length == 12 && fileName.StartsWith("savedat", StringComparison.OrdinalIgnoreCase)
+            && fileName.EndsWith(".dat", StringComparison.OrdinalIgnoreCase) && fileName[7] is >= '1' and <= '8'
+            ? fileName[7] - '0'
+            : null;
+
     public Core.Insight.IProgressTracker CreateProgressTracker(VersionProfile profile) =>
         new Re1ProgressTracker(Re1Knowledge.LoadEmbedded());
 
