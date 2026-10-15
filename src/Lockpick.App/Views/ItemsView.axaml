@@ -18,7 +18,7 @@
   </UserControl.Resources>
 
   <ScrollViewer>
-    <StackPanel Spacing="12" MaxWidth="700" HorizontalAlignment="Left">
+    <c:SideBySide StackBelow="900">
       <Border Classes="card">
         <StackPanel Spacing="6">
           <StackPanel Classes="cardhead">
@@ -68,9 +68,15 @@
           <TextBlock Classes="headline" Text="{Binding BoxHeading}" TextWrapping="Wrap" />
           <TextBlock TextWrapping="Wrap" Foreground="{StaticResource LpMutedBrush}"
                      Text="Read from the game (read-only); the box is shared by every item box in the game." />
-          <ItemsControl ItemsSource="{Binding Box}" ItemTemplate="{StaticResource ItemRowTemplate}" />
+          <ItemsControl ItemsSource="{Binding Box}" ItemTemplate="{StaticResource ItemRowTemplate}">
+            <ItemsControl.ItemsPanel>
+              <ItemsPanelTemplate>
+                <c:ListColumns MinColumnWidth="300" MaxColumns="8" />
+              </ItemsPanelTemplate>
+            </ItemsControl.ItemsPanel>
+          </ItemsControl>
         </StackPanel>
       </Border>
-    </StackPanel>
+    </c:SideBySide>
   </ScrollViewer>
 </UserControl>

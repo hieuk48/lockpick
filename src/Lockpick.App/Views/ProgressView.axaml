@@ -6,7 +6,7 @@
              x:DataType="vm:ProgressViewModel">
 
   <ScrollViewer>
-    <StackPanel Spacing="12" MaxWidth="900" HorizontalAlignment="Left">
+    <StackPanel Spacing="12">
 
       <Border Classes="card">
         <StackPanel Spacing="4">
@@ -23,7 +23,7 @@
       <ItemsControl ItemsSource="{Binding Areas}">
         <ItemsControl.ItemsPanel>
           <ItemsPanelTemplate>
-            <StackPanel Spacing="12" />
+            <c:CardColumns MinColumnWidth="420" MaxColumns="4" />
           </ItemsPanelTemplate>
         </ItemsControl.ItemsPanel>
         <ItemsControl.ItemTemplate>
@@ -68,6 +68,11 @@
         <StackPanel Spacing="4">
           <TextBlock Classes="caption" Text="{Binding StoryHeader}" />
           <ItemsControl ItemsSource="{Binding Story}">
+            <ItemsControl.ItemsPanel>
+              <ItemsPanelTemplate>
+                <c:ListColumns MinColumnWidth="420" MaxColumns="4" />
+              </ItemsPanelTemplate>
+            </ItemsControl.ItemsPanel>
             <ItemsControl.ItemTemplate>
               <DataTemplate x:DataType="x:String">
                 <TextBlock Text="{Binding StringFormat='• {0}'}" TextWrapping="Wrap" />

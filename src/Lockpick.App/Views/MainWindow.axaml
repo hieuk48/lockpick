@@ -5,14 +5,20 @@
         x:Class="Lockpick.App.Views.MainWindow"
         x:DataType="vm:MainViewModel"
         Title="Lockpick Trainer"
-        Width="1180" Height="780" MinWidth="380" MinHeight="480"
+        Width="1180" Height="780" MinWidth="380" MinHeight="400"
+        Icon="avares://Lockpick/Assets/lockpick.ico"
         WindowStartupLocation="CenterScreen">
 
   <Window.Styles>
     <Style Selector="Border.navpane"><Setter Property="Width" Value="180" /></Style>
     <Style Selector="ContentControl.page"><Setter Property="Margin" Value="16" /></Style>
     <Style Selector="Border.header"><Setter Property="Padding" Value="18,12" /></Style>
-    <Style Selector="TextBlock.wordmark"><Setter Property="FontSize" Value="22" /><Setter Property="LetterSpacing" Value="6" /></Style>
+    <!-- Special Elite's capitals sit 0.14 em above the middle of its line box (ascent 1440, descent 608, caps 1469 of
+         2048 units), so the wordmark is moved down by that much to line up with the icon, and the tagline (14 px) down
+         to share the wordmark's baseline. RenderTransform leaves the layout alone. -->
+    <Style Selector="TextBlock.wordmark"><Setter Property="FontSize" Value="26" /><Setter Property="LetterSpacing" Value="3" /><Setter Property="RenderTransform" Value="translateY(3.7px)" /></Style>
+    <Style Selector="TextBlock.tagline"><Setter Property="FontSize" Value="14" /><Setter Property="RenderTransform" Value="translateY(6px)" /></Style>
+    <Style Selector="Image.logo"><Setter Property="Width" Value="30" /><Setter Property="Height" Value="30" /></Style>
     <!-- Screen readers and UI automation name each page by its title (they read the view-model type otherwise). -->
     <Style Selector="ListBox.nav ListBoxItem" x:DataType="vm:PageViewModel"><Setter Property="AutomationProperties.Name" Value="{Binding Title}" /></Style>
     <Style Selector="ListBox.nav ListBoxItem:selected c|LucideIcon"><Setter Property="Foreground" Value="{StaticResource LpGreenBrush}" /></Style>
@@ -31,7 +37,8 @@
     </Style>
     <Style Selector="Grid#Shell.compact ListBox.nav ListBoxItem"><Setter Property="Padding" Value="10,10" /></Style>
     <Style Selector="Grid#Shell.compact ContentControl.page"><Setter Property="Margin" Value="8" /></Style>
-    <Style Selector="Grid#Shell.compact TextBlock.wordmark"><Setter Property="FontSize" Value="18" /><Setter Property="LetterSpacing" Value="4" /></Style>
+    <Style Selector="Grid#Shell.compact TextBlock.wordmark"><Setter Property="FontSize" Value="21" /><Setter Property="LetterSpacing" Value="2" /><Setter Property="RenderTransform" Value="translateY(3px)" /></Style>
+    <Style Selector="Grid#Shell.compact Image.logo"><Setter Property="Width" Value="24" /><Setter Property="Height" Value="24" /></Style>
     <Style Selector="Grid#Shell.compact Border.header"><Setter Property="Padding" Value="12,10" /></Style>
   </Window.Styles>
 
@@ -59,8 +66,11 @@
           </StackPanel>
         </Border>
         <StackPanel Orientation="Horizontal" Spacing="14" VerticalAlignment="Center">
-          <TextBlock Classes="wordmark" Text="LOCKPICK" FontWeight="Black" Foreground="{StaticResource LpGreenBrush}" VerticalAlignment="Center" />
-          <TextBlock Classes="tagline" Text="Master of Unlocking." FontStyle="Italic" Foreground="{StaticResource LpMutedBrush}" VerticalAlignment="Center" />
+          <StackPanel Orientation="Horizontal" Spacing="10">
+            <Image Classes="logo" Source="avares://Lockpick/Assets/lockpick-256.png" VerticalAlignment="Center" />
+            <TextBlock Classes="wordmark" Text="LOCKPICK" FontFamily="{StaticResource LpWordmark}" Foreground="{StaticResource LpGreenBrush}" VerticalAlignment="Center" />
+          </StackPanel>
+          <TextBlock Classes="tagline" Text="Master of Unlocking." FontFamily="{StaticResource LpWordmark}" Foreground="{StaticResource LpMutedBrush}" VerticalAlignment="Center" />
         </StackPanel>
       </DockPanel>
     </Border>

@@ -23,24 +23,25 @@
     </Style>
   </UserControl.Styles>
 
+  <!-- The map is the page: the header is one compact row and the legend only takes room when there is room to give. -->
   <Grid x:Name="Layout" RowDefinitions="Auto,*,Auto" ColumnDefinitions="*,Auto">
-    <Border Classes="card" Grid.Row="0" Grid.ColumnSpan="2" Margin="0,0,0,12">
-      <Grid ColumnDefinitions="*,Auto">
-        <StackPanel Spacing="4">
-          <StackPanel Classes="cardhead">
-            <c:LucideIcon Data="{StaticResource Icon.Map}" />
-            <TextBlock Classes="caption" Text="MAP" />
-          </StackPanel>
-          <TextBlock Classes="headline" Text="{Binding Heading}" TextWrapping="Wrap" />
-          <TextBlock TextWrapping="Wrap" Foreground="{StaticResource LpMutedBrush}" Text="{Binding Details}" />
+    <Border x:Name="HeaderCard" Classes="card" Grid.Row="0" Grid.ColumnSpan="2" Margin="0,0,0,8" Padding="14,8">
+      <Grid ColumnDefinitions="Auto,*,Auto" RowDefinitions="Auto,Auto,Auto">
+        <c:LucideIcon Data="{StaticResource Icon.Map}" VerticalAlignment="Center" Margin="0,0,10,0" />
+        <TextBlock Grid.Column="1" Classes="headline" Text="{Binding Heading}" TextTrimming="CharacterEllipsis"
+                   VerticalAlignment="Center" ToolTip.Tip="{Binding Details}" />
+        <StackPanel x:Name="HeaderButtons" Grid.Column="2" Orientation="Horizontal" Spacing="8" Margin="8,0,0,0" VerticalAlignment="Center">
+          <ToggleButton x:Name="LegendToggle" Content="Legend" AutomationProperties.Name="Show the legend"
+                        ToolTip.Tip="Show what the colours and shapes on the map mean." />
+          <ToggleButton Content="Taken &amp; later" IsChecked="{Binding ShowAbsentItems}" AutomationProperties.Name="Show taken and later items"
+                        ToolTip.Tip="Also draw the room's items you've already taken, and ones the story places later." />
         </StackPanel>
-        <ToggleSwitch Grid.Column="1" VerticalAlignment="Top" IsChecked="{Binding ShowAbsentItems}"
-                      OnContent="Taken and later items shown" OffContent="Show taken and later items"
-                      ToolTip.Tip="Also draw the room's items you've already taken, and ones the story places later." />
+        <TextBlock x:Name="DetailsText" Grid.Row="2" Grid.Column="1" Grid.ColumnSpan="2" TextWrapping="Wrap"
+                   Foreground="{StaticResource LpMutedBrush}" Text="{Binding Details}" Margin="0,2,0,0" />
       </Grid>
     </Border>
 
-    <Border x:Name="MapCard" Classes="card" Grid.Row="1" Grid.Column="0" MinHeight="240">
+    <Border x:Name="MapCard" Classes="card" Grid.Row="1" Grid.Column="0" MinHeight="160" Padding="6">
       <c:RoomMapControl Map="{Binding Map}" PlacedItems="{Binding PlacedItems}" TakenItems="{Binding TakenItems}" FilledSockets="{Binding FilledSockets}" DoorNames="{Binding DoorNames}" Actors="{Binding Actors}" LiveFixtures="{Binding LiveFixtures}" ShowAbsentItems="{Binding ShowAbsentItems}" PlayerX="{Binding PlayerX}" PlayerZ="{Binding PlayerZ}"
                         PlayerAngle="{Binding PlayerAngle}" HasPlayer="{Binding HasPlayer}"
                         WallBrush="{StaticResource LpMutedBrush}" SoftBrush="{StaticResource LpBorderBrush}"
@@ -50,7 +51,7 @@
     </Border>
 
     <!-- The legend lists only what this room holds: beside the map on a wide window, under it on a narrow one. -->
-    <Border x:Name="LegendCard" Classes="card" Grid.Row="1" Grid.Column="1" Margin="12,0,0,0" MinWidth="190">
+    <Border x:Name="LegendCard" Classes="card" Grid.Row="1" Grid.Column="1" Margin="8,0,0,0" MinWidth="190" MaxWidth="260">
       <ScrollViewer>
         <StackPanel>
           <TextBlock Classes="caption" Text="LEGEND" />

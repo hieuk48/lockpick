@@ -17,7 +17,7 @@
   </UserControl.Styles>
 
   <ScrollViewer>
-    <StackPanel Spacing="12" MaxWidth="760" HorizontalAlignment="Left">
+    <StackPanel Spacing="12">
 
       <!-- Cheats on / off -->
       <Border Classes="card">
@@ -36,6 +36,10 @@
         </StackPanel>
       </Border>
 
+      <TextBlock Text="{Binding LastResult}" TextWrapping="Wrap"
+                 IsVisible="{Binding LastResult, Converter={x:Static StringConverters.IsNotNullOrEmpty}}" />
+
+      <c:CardColumns MinColumnWidth="420" MaxColumns="3">
       <!-- Health -->
       <Border Classes="card" IsEnabled="{Binding CanWrite}">
         <StackPanel Spacing="8">
@@ -82,13 +86,14 @@
           <ItemsControl ItemsSource="{Binding Slots}">
             <ItemsControl.ItemTemplate>
               <DataTemplate x:DataType="vm:TrainerSlotRow">
-                <WrapPanel ItemSpacing="8" LineSpacing="4" Margin="0,2">
-                  <TextBlock Text="{Binding Label}" VerticalAlignment="Center" MinWidth="220" TextWrapping="Wrap" />
-                  <NumericUpDown Value="{Binding Target}" Minimum="0" Maximum="255" Increment="1" FormatString="0" MinWidth="120"
+                <!-- The name wraps; the count and Set stay on its line, even in a narrow window. -->
+                <Grid ColumnDefinitions="*,Auto,Auto" ColumnSpacing="8" Margin="0,2" MaxWidth="520" HorizontalAlignment="Left">
+                  <TextBlock Text="{Binding Label}" VerticalAlignment="Center" TextWrapping="Wrap" />
+                  <NumericUpDown Grid.Column="1" Value="{Binding Target}" Minimum="0" Maximum="255" Increment="1" FormatString="0" Width="120"
                                  IsVisible="{Binding Editable}" AutomationProperties.Name="{Binding Name, StringFormat='{}{0} count'}" />
-                  <Button Content="Set" Command="{Binding SetCommand}" IsVisible="{Binding Editable}"
+                  <Button Grid.Column="2" Content="Set" Command="{Binding SetCommand}" IsVisible="{Binding Editable}"
                           AutomationProperties.Name="{Binding Name, StringFormat='Set {0} count'}" />
-                </WrapPanel>
+                </Grid>
               </DataTemplate>
             </ItemsControl.ItemTemplate>
           </ItemsControl>
@@ -109,8 +114,6 @@
         </StackPanel>
       </Border>
 
-      <TextBlock Text="{Binding LastResult}" TextWrapping="Wrap"
-                 IsVisible="{Binding LastResult, Converter={x:Static StringConverters.IsNotNullOrEmpty}}" />
 
       <!-- Log -->
       <Border Classes="card">
@@ -133,6 +136,7 @@
           </ItemsControl>
         </StackPanel>
       </Border>
+      </c:CardColumns>
     </StackPanel>
   </ScrollViewer>
 </UserControl>

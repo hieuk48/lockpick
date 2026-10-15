@@ -11,19 +11,19 @@
       <ResourceDictionary.MergedDictionaries>
         <ResourceInclude Source="avares://Lockpick/Assets/Icons.axaml" />
       </ResourceDictionary.MergedDictionaries>
-    <!-- Palette: dark laboratory terminal, restrained green status, red warnings. -->
-    <Color x:Key="LpBg">#0A0D0B</Color>
-    <Color x:Key="LpPanel">#111612</Color>
-    <Color x:Key="LpPanelAlt">#151C17</Color>
-    <Color x:Key="LpBorder">#223027</Color>
-    <Color x:Key="LpText">#D4DCD6</Color>
-    <Color x:Key="LpMuted">#7B897F</Color>
-    <Color x:Key="LpGreen">#4FBF78</Color>
-    <Color x:Key="LpGreenDim">#173323</Color>
+    <!-- Palette "Status screen": the game's status screen (ECG green on the dark ground, red for danger). -->
+    <Color x:Key="LpBg">#0B0F0E</Color>
+    <Color x:Key="LpPanel">#121A18</Color>
+    <Color x:Key="LpPanelAlt">#161E1C</Color>
+    <Color x:Key="LpBorder">#27322F</Color>
+    <Color x:Key="LpText">#DFE8E3</Color>
+    <Color x:Key="LpMuted">#8FA39B</Color>
+    <Color x:Key="LpGreen">#4EC36D</Color>
+    <Color x:Key="LpGreenDim">#15321F</Color>
     <Color x:Key="LpAmber">#D6A23E</Color>
     <Color x:Key="LpAmberDim">#3A2D12</Color>
-    <Color x:Key="LpRed">#D9474B</Color>
-    <Color x:Key="LpRedDim">#3B1517</Color>
+    <Color x:Key="LpRed">#E0533F</Color>
+    <Color x:Key="LpRedDim">#3D1913</Color>
     <SolidColorBrush x:Key="LpBgBrush" Color="{StaticResource LpBg}" />
     <SolidColorBrush x:Key="LpPanelBrush" Color="{StaticResource LpPanel}" />
     <SolidColorBrush x:Key="LpPanelAltBrush" Color="{StaticResource LpPanelAlt}" />
@@ -37,6 +37,8 @@
     <SolidColorBrush x:Key="LpRedBrush" Color="{StaticResource LpRed}" />
     <SolidColorBrush x:Key="LpRedDimBrush" Color="{StaticResource LpRedDim}" />
     <FontFamily x:Key="LpMono">Cascadia Mono, Consolas, Courier New</FontFamily>
+    <!-- Wordmark: Special Elite (typewriter, Apache 2.0, Assets/Fonts/LICENSE.txt). -->
+    <FontFamily x:Key="LpWordmark">avares://Lockpick/Assets/Fonts#Special Elite</FontFamily>
     </ResourceDictionary>
   </Application.Resources>
 

@@ -5,7 +5,9 @@
              x:Class="Lockpick.App.Views.DebugView"
              x:DataType="vm:DebugViewModel">
 
-  <Grid RowDefinitions="Auto,Auto,*,*" RowSpacing="12">
+  <!-- The field table and the log fill the window; a short window scrolls the page instead of squeezing them (code-behind). -->
+  <ScrollViewer x:Name="Scroller">
+  <Grid x:Name="Root" RowDefinitions="Auto,Auto,*,*" RowSpacing="12">
 
     <!-- Capture -->
     <Border Grid.Row="0" Classes="card" Classes.recording="{Binding IsCapturing}">
@@ -155,4 +157,5 @@
       </DockPanel>
     </Border>
   </Grid>
+  </ScrollViewer>
 </UserControl>

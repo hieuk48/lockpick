@@ -1,4 +1,5 @@
-<Window xmlns="https://github.com/avaloniaui"
+<Window Icon="avares://Lockpick/Assets/lockpick.ico"
+        xmlns="https://github.com/avaloniaui"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:vm="using:Lockpick.App.ViewModels"
         xmlns:c="using:Lockpick.App.Controls"

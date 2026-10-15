@@ -22,6 +22,12 @@ OF USE, DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE OR OTHER T
 OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 ```
 
+### Special Elite font (Astigmatic) — Apache License 2.0
+The wordmark font, `src/Lockpick.App/Assets/Fonts/SpecialElite-Regular.ttf`, from Google Fonts
+(https://fonts.google.com/specimen/Special+Elite), unmodified. Copyright (c) 2010 by Brian J. Bonislawsky DBA
+Astigmatic (AOETI). The full license text is in `src/Lockpick.App/Assets/Fonts/LICENSE.txt`. It is also used to render
+the README banner (`tools/branding/make_icon.py`).
+
 ### BioRand and biohazard-utils (IntelOrca) — MIT License
 The RE1 item and enemy id names in `data/games/re1/names.json` come from BioRand's `Re1ItemIds` / `Re1EnemyIds`, and
 the room-script opcode sizes and field offsets used by `tools/rdt/rdt_index.py` follow biohazard-utils

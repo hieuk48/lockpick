@@ -9,12 +9,15 @@ public partial class DashboardView : UserControl
     /// <summary>Below this content width the cards stack in one column (portrait / side-by-side with the game).</summary>
     public const double SingleColumnBelow = 780;
 
-    private bool? _compact;
+    /// <summary>From this width (ultrawide) the event log gets a column of its own beside the other cards.</summary>
+    public const double ThreeColumnsFrom = 1800;
+
+    private int _columns;
 
     public DashboardView()
     {
         InitializeComponent();
-        ApplyLayout(compact: false);
+        ApplyLayout(2);
     }
 
     protected override void OnPropertyChanged(AvaloniaPropertyChangedEventArgs change)
@@ -22,20 +25,36 @@ public partial class DashboardView : UserControl
         base.OnPropertyChanged(change);
         if (change.Property == BoundsProperty)
         {
-            ApplyLayout(Responsive.IsCompact(Bounds.Width, SingleColumnBelow));
+            ApplyLayout(Responsive.IsCompact(Bounds.Width, SingleColumnBelow) ? 1 : Bounds.Width >= ThreeColumnsFrom ? 3 : 2);
         }
     }
 
-    private void ApplyLayout(bool compact)
+    private void ApplyLayout(int columns)
     {
-        if (_compact == compact)
+        if (_columns == columns)
         {
             return;
         }
 
-        _compact = compact;
-        if (compact)
+        _columns = columns;
+        // The game state card keeps its natural height (its health bar sits under the values, not at the bottom).
+        StateCard.VerticalAlignment = columns == 1 ? Avalonia.Layout.VerticalAlignment.Stretch : Avalonia.Layout.VerticalAlignment.Top;
+        Grid.SetRowSpan(EventsCard, 1);
+        if (columns == 3)
         {
+            Root.ColumnDefinitions = new ColumnDefinitions("*,*,1.3*");
+            Root.RowDefinitions = new RowDefinitions("Auto,*");
+            Place(ConnectionCard, 0, 0);
+            Place(BuildCard, 1, 0);
+            Place(StateCard, 0, 1);
+            Grid.SetRowSpan(StateCard, 2);
+            Place(EventsCard, 0, 2);
+            Grid.SetRowSpan(EventsCard, 2);
+            BuildCard.VerticalAlignment = Avalonia.Layout.VerticalAlignment.Top;
+        }
+        else if (columns == 1)
+        {
+            Grid.SetRowSpan(StateCard, 1);
             Root.ColumnDefinitions = new ColumnDefinitions("*");
             Root.RowDefinitions = new RowDefinitions("Auto,Auto,Auto,*");
             Place(ConnectionCard, 0, 0);
@@ -45,6 +64,8 @@ public partial class DashboardView : UserControl
         }
         else
         {
+            Grid.SetRowSpan(StateCard, 1);
+            BuildCard.VerticalAlignment = Avalonia.Layout.VerticalAlignment.Stretch;
             Root.ColumnDefinitions = new ColumnDefinitions("*,*");
             Root.RowDefinitions = new RowDefinitions("Auto,*");
             Place(ConnectionCard, 0, 0);

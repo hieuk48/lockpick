@@ -5,6 +5,7 @@
     <RootNamespace>Lockpick.App</RootNamespace>
     <AssemblyName>Lockpick</AssemblyName>
     <ApplicationManifest>app.manifest</ApplicationManifest>
+    <ApplicationIcon>Assets\lockpick.ico</ApplicationIcon>
     <AvaloniaUseCompiledBindingsByDefault>true</AvaloniaUseCompiledBindingsByDefault>
     <Description>Lockpick Trainer desktop application.</Description>
     <!-- CA1822: view-model members are bound from XAML and must stay instance members. -->
@@ -24,6 +25,12 @@
     <ProjectReference Include="..\Lockpick.Api\Lockpick.Api.csproj" />
     <ProjectReference Include="..\Lockpick.Platform.Windows\Lockpick.Platform.Windows.csproj" />
     <ProjectReference Include="..\Lockpick.GameAdapter.RE1\Lockpick.GameAdapter.RE1.csproj" />
+  </ItemGroup>
+  <ItemGroup>
+    <!-- Branding: made by tools/branding/make_icon.py; wordmark font is Special Elite. -->
+    <AvaloniaResource Include="Assets\lockpick.ico" />
+    <AvaloniaResource Include="Assets\lockpick-256.png" />
+    <AvaloniaResource Include="Assets\Fonts\*.ttf" />
   </ItemGroup>
   <ItemGroup>
     <!-- Single source for the in-app credits (Settings -> Credits). -->

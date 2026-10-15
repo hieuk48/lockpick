@@ -65,7 +65,7 @@ jobs:
       - name: Pack
         run: >
           vpk pack --packId Lockpick --packVersion ${{ steps.version.outputs.value }}
-          --packDir publish/app --mainExe Lockpick.exe
+          --packDir publish/app --mainExe Lockpick.exe --icon src/Lockpick.App/Assets/lockpick.ico
           --packTitle "Lockpick Trainer" --packAuthors "Lockpick contributors"
           --releaseNotes release-notes.md -o Releases
 

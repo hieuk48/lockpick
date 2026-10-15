@@ -7,7 +7,7 @@
              x:DataType="vm:SettingsViewModel">
 
   <ScrollViewer>
-    <StackPanel Spacing="12" MaxWidth="900" HorizontalAlignment="Left">
+    <c:CardColumns MinColumnWidth="480" MaxColumns="3">
 
       <!-- Updates -->
       <Border Classes="card">
@@ -201,6 +201,6 @@
           <SelectableTextBlock Classes="mono" Text="{Binding LoadedProfiles}" TextWrapping="Wrap" />
         </StackPanel>
       </Border>
-    </StackPanel>
+    </c:CardColumns>
   </ScrollViewer>
 </UserControl>

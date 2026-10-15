@@ -1,6 +1,4 @@
-# LOCKPICK
-
-*Master of Unlocking.*
+<h1 align="center"><img src="docs/lockpick-banner.png" alt="Lockpick — Master of Unlocking." width="640"></h1>
 
 [![Latest release](https://img.shields.io/github/v/release/mscrnt/lockpick?label=release)](https://github.com/mscrnt/lockpick/releases/latest)
 [![Downloads](https://img.shields.io/github/downloads/mscrnt/lockpick/total)](https://github.com/mscrnt/lockpick/releases)

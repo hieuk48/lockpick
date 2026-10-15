@@ -27,6 +27,14 @@ All notable changes to this project are documented here. The format follows
   It listens on this PC only unless you allow other devices on your network, and every request needs a token.
 - Saves show up in the event log ("Game saved to slot 3", with the in-game time) and in captures. Lockpick watches the
   game's save folder for this and never opens the files.
+- Branding: an app icon (a pick set: hook, rake and tension wrench), a typewriter wordmark (Special Elite, Apache 2.0)
+  and colours taken from the game's status screen.
+
+### Changed
+- Pages use the width of wide and ultrawide windows: cards sit side by side in as many columns as fit, long lists
+  (the story so far, the item box) flow into columns, and the dashboard gives the event log its own column. The map
+  page keeps the map as large as the window allows; its legend moves beside the map on wide windows and behind a
+  button on small ones.
 
 ## [0.1.6] - 2026-10-15
 

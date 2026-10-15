@@ -22,7 +22,7 @@
   </UserControl.Styles>
 
   <ScrollViewer>
-    <StackPanel Spacing="12" MaxWidth="760" HorizontalAlignment="Left">
+    <StackPanel Spacing="12">
 
       <!-- Where things stand -->
       <Border Classes="card status" Classes.running="{Binding IsRunning}" Classes.failed="{Binding IsFailed}">
@@ -41,6 +41,7 @@
         </StackPanel>
       </Border>
 
+      <c:CardColumns MinColumnWidth="380" MaxColumns="3">
       <!-- Step 1 -->
       <Border Classes="card" IsEnabled="{Binding CanChoose}">
         <StackPanel Spacing="8">
@@ -90,6 +91,7 @@
                   AutomationProperties.Name="Start the challenge" />
         </StackPanel>
       </Border>
+      </c:CardColumns>
     </StackPanel>
   </ScrollViewer>
 </UserControl>
