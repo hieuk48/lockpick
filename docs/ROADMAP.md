@@ -143,7 +143,11 @@ first two, with streaming as 0.3.1.
    splits file (names) and connect to its server, so each split drops a capture marker by itself.
 3. **Overlay and OBS:** a local browser-source page for OBS (timer, splits, HP, run status), a pop-out window for
    window capture, and an in-game overlay (transparent, click-through, over the game window — windowed or
-   borderless; no hooking into the game).
+   borderless; no hooking into the game). **Display research done 2026-10-15** ([DISPLAY.md](DISPLAY.md)): every
+   wrapper mode on both monitors — Lockpick reads the game in all of them; OBS Game Capture and WGC window capture
+   work everywhere; the overlay works windowed/borderless (exclusive fullscreen still needs an owner check); exclusive
+   fullscreen minimizes and stops on any focus change, so Lockpick must never activate its windows then; the
+   requirements list there is the spec for this item.
 4. **Training captures:** opt-in, every game frame (30/s, keyed to the game's frame counter): the state and the
    game's own input word (`0xBE9840`/`0xBE9842` — exactly what the game acted on, for any pad or keyboard), for the
    behaviour-cloning pipeline (`tools/rl`); an easy way for players to submit them.

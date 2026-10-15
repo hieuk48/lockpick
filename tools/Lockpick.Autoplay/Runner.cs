@@ -180,6 +180,11 @@ internal sealed class Runner(Pad pad, TextWriter log) : IDisposable
             case "background":
                 _patch ??= FocusPatch.Apply(Game.ProcessId, Log);
                 break;
+            case "foreground":
+                // Restores the game's own focus handling (it pauses when inactive), e.g. to see what players see.
+                _patch?.Dispose();
+                _patch = null;
+                break;
             case "speed":
                 _speed ??= new GameSpeed(Game.ProcessId);
                 if (w.Length > 1)

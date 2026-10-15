@@ -74,9 +74,10 @@ typed elsewhere don't reach it. The virtual pad is a real controller to Windows:
 controllers** while runs go (Steam → Settings → Controller), or Steam's desktop layout turns its presses into
 Enter/Escape/arrow keys in whatever window is in front. Bytes are checked before writing, read back, and restored when the harness exits; the
 changes are in the game's memory only and end with the process. Screenshots use PrintWindow, so they work behind
-other windows.
+other windows. `foreground` removes the patch again (the game pauses and blacks out when inactive, as players see
+it) — used by the display research ([DISPLAY.md](DISPLAY.md), `tools/display/probe.py`).
 
-Script commands (one per line, `#` comments): `launch`, `restart`, `background`, `focus`, `press A [ms]`
+Script commands (one per line, `#` comments): `launch`, `restart`, `background`, `foreground`, `focus`, `press A [ms]`
 (combine with `+`), `wait ms`, `until room 106 [ms]` / `until gameplay` / `until field=value`, `expect …` (same
 conditions), `state`, `peek addr len`, `calibrate`, `shot file.png [width]`, `look <question>`, `echo`, plus:
 
@@ -191,8 +192,13 @@ descriptions of the game are not committed.
 
 Rules:
 - Without `background`, every press checks the game is the foreground window and the run stops if it isn't
-  (someone is using the PC). The harness never injects keys: `focus` only asks Windows, which may refuse
-  (2026-10-14: an injected Alt opened menus in the owner's windows).
+  (someone is using the PC). The harness never injects keys: `focus` only asks Windows, which refuses a background
+  process (2026-10-14: an injected Alt opened menus in the owner's windows). WScript's `AppActivate('RESIDENT EVIL')`
+  does bring the game to the front (used by the display research); the virtual pad resets Windows' idle timer, so
+  "is someone using the PC" has to ignore the harness's own presses.
+- Never test exclusive fullscreen at a resolution other than the desktop's without saving the display settings and
+  window positions first: on 2026-10-15 it left the monitors rearranged (primary swapped) until
+  `ChangeDisplaySettingsEx(NULL, NULL, …)` re-applied the saved layout.
 - `calibrate` skips Start and Back (they open the game's options and key setup).
 - Pressing through the title screen can load the player's saves (it did twice on 2026-10-14): `ap.wait_screen` only
   presses on screens where a press is harmless (logo, title, text, black) and backs out of the load list.
