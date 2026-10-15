@@ -30,6 +30,8 @@ public sealed class RoomMapControl : Control
         AvaloniaProperty.Register<RoomMapControl, IReadOnlyList<LiveActor>?>(nameof(Actors));
     public static readonly StyledProperty<IReadOnlyList<PlacedFixture>?> LiveFixturesProperty =
         AvaloniaProperty.Register<RoomMapControl, IReadOnlyList<PlacedFixture>?>(nameof(LiveFixtures));
+    public static readonly StyledProperty<bool> ShowAbsentItemsProperty =
+        AvaloniaProperty.Register<RoomMapControl, bool>(nameof(ShowAbsentItems));
     public static readonly StyledProperty<bool> HasPlayerProperty = AvaloniaProperty.Register<RoomMapControl, bool>(nameof(HasPlayer));
     public static readonly StyledProperty<IBrush?> WallBrushProperty = AvaloniaProperty.Register<RoomMapControl, IBrush?>(nameof(WallBrush));
     public static readonly StyledProperty<IBrush?> SoftBrushProperty = AvaloniaProperty.Register<RoomMapControl, IBrush?>(nameof(SoftBrush));
@@ -43,7 +45,7 @@ public sealed class RoomMapControl : Control
 
     static RoomMapControl()
     {
-        AffectsRender<RoomMapControl>(MapProperty, PlacedItemsProperty, TakenItemsProperty, FilledSocketsProperty, DoorNamesProperty, ActorsProperty, LiveFixturesProperty, PlayerXProperty, PlayerZProperty, PlayerAngleProperty, HasPlayerProperty,
+        AffectsRender<RoomMapControl>(MapProperty, PlacedItemsProperty, TakenItemsProperty, FilledSocketsProperty, DoorNamesProperty, ActorsProperty, LiveFixturesProperty, ShowAbsentItemsProperty, PlayerXProperty, PlayerZProperty, PlayerAngleProperty, HasPlayerProperty,
             WallBrushProperty, SoftBrushProperty, DoorBrushProperty, ItemBrushProperty, PlayerBrushProperty,
             FaintTextBrushProperty, LabelPlateBrushProperty);
     }
@@ -69,6 +71,9 @@ public sealed class RoomMapControl : Control
 
     /// <summary>Item boxes and typewriters the game has active now; when set, only those room-file ones are drawn.</summary>
     public IReadOnlyList<PlacedFixture>? LiveFixtures { get => GetValue(LiveFixturesProperty); set => SetValue(LiveFixturesProperty, value); }
+
+    /// <summary>Also draw the room-file items not in the room now (taken, or placed later by the story).</summary>
+    public bool ShowAbsentItems { get => GetValue(ShowAbsentItemsProperty); set => SetValue(ShowAbsentItemsProperty, value); }
 
     /// <summary>Enemies and NPCs in the room right now.</summary>
     public IReadOnlyList<LiveActor>? Actors { get => GetValue(ActorsProperty); set => SetValue(ActorsProperty, value); }
@@ -169,7 +174,7 @@ public sealed class RoomMapControl : Control
                 context.DrawRectangle(null, ItemBrush is null ? null : new Pen(ItemBrush, 1.5), rect);
                 DrawLabel(context, item.Name, rect.TopLeft + new Vector(rect.Width / 2, -10), ItemBrush, 12);
             }
-            else if (SoftBrush is not null)
+            else if (ShowAbsentItems && SoftBrush is not null)
             {
                 // In the room files but not placed now: already taken, or not placed until a story event.
                 var taken = TakenItems?.Contains(item) == true;
@@ -225,38 +230,9 @@ public sealed class RoomMapControl : Control
         }
     }
 
-    private enum Glyph
-    {
-        Circle,
-        Triangle,
-        Diamond,
-        Square,
-        Hexagon,
-        Star,
-    }
-
-    // One look per family of enemy type (RE1 ids; names.json): shape, colour and a letter inside.
-    private static (Glyph Shape, Color Color, string Letter) Style(LiveActor actor) => actor.Kind switch
-    {
-        ActorKind.Npc => (Glyph.Square, Color.Parse("#4FA3FF"), actor.Name.Length > 0 ? actor.Name[..1] : "?"),
-        ActorKind.Boss => (Glyph.Star, Color.Parse("#E040FB"), "B"),
-        _ => actor.Type switch
-        {
-            0 or 1 or 17 => (Glyph.Circle, Color.Parse("#7CB342"), "Z"),   // zombies
-            2 => (Glyph.Triangle, Color.Parse("#FF8A3D"), "D"),            // Cerberus
-            3 => (Glyph.Hexagon, Color.Parse("#B388FF"), "S"),             // giant spider
-            5 => (Glyph.Diamond, Color.Parse("#B0BEC5"), "C"),             // crow
-            6 => (Glyph.Triangle, Color.Parse("#FF5252"), "H"),            // hunter
-            7 => (Glyph.Diamond, Color.Parse("#FFD740"), "W"),             // wasp
-            9 => (Glyph.Hexagon, Color.Parse("#26C6DA"), "C"),             // chimera
-            10 => (Glyph.Circle, Color.Parse("#C6FF00"), "S"),             // snake
-            _ => (Glyph.Circle, Color.Parse("#9E9E9E"), "?"),              // plants, webs, the lab arms
-        },
-    };
-
     private void DrawActor(DrawingContext context, LiveActor actor, Point at)
     {
-        var (shape, color, letter) = Style(actor);
+        var (shape, color, letter, _) = ActorStyles.For(actor);
         var size = actor.Kind == ActorKind.Boss ? 11.0 : 8.0;
         var fill = new SolidColorBrush(color, 0.85);
         var pen = new Pen(new SolidColorBrush(Colors.Black, 0.8), 1.2);
@@ -265,10 +241,10 @@ public sealed class RoomMapControl : Control
         {
             var corners = shape switch
             {
-                Glyph.Triangle => 3,
-                Glyph.Diamond or Glyph.Square => 4,
-                Glyph.Hexagon => 6,
-                Glyph.Star => 10,
+                ActorGlyph.Triangle => 3,
+                ActorGlyph.Diamond or ActorGlyph.Square => 4,
+                ActorGlyph.Hexagon => 6,
+                ActorGlyph.Star => 10,
                 _ => 0,
             };
             if (corners == 0)
@@ -279,10 +255,10 @@ public sealed class RoomMapControl : Control
             }
             else
             {
-                var start = shape == Glyph.Square ? Math.PI / 4 : -Math.PI / 2;
+                var start = shape == ActorGlyph.Square ? Math.PI / 4 : -Math.PI / 2;
                 for (var i = 0; i < corners; i++)
                 {
-                    var r = shape == Glyph.Star && i % 2 == 1 ? size * 0.5 : size;
+                    var r = shape == ActorGlyph.Star && i % 2 == 1 ? size * 0.5 : size;
                     var a = start + i * 2 * Math.PI / corners;
                     var p = at + new Vector(Math.Cos(a) * r, Math.Sin(a) * r);
                     if (i == 0)

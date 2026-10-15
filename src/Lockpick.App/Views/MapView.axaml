@@ -5,27 +5,109 @@
              x:Class="Lockpick.App.Views.MapView"
              x:DataType="vm:MapViewModel">
 
-  <Grid RowDefinitions="Auto,*">
-    <Border Classes="card" Grid.Row="0" Margin="0,0,0,12">
-      <StackPanel Spacing="4">
-        <StackPanel Classes="cardhead">
-          <c:LucideIcon Data="{StaticResource Icon.Map}" />
-          <TextBlock Classes="caption" Text="MAP" />
+  <UserControl.Styles>
+    <Style Selector="TextBlock.legend">
+      <Setter Property="Foreground" Value="{StaticResource LpTextBrush}" />
+      <Setter Property="FontSize" Value="12" />
+      <Setter Property="VerticalAlignment" Value="Center" />
+    </Style>
+    <Style Selector="TextBlock.legendhead">
+      <Setter Property="Foreground" Value="{StaticResource LpMutedBrush}" />
+      <Setter Property="FontSize" Value="11" />
+      <Setter Property="Margin" Value="0,8,0,2" />
+    </Style>
+    <Style Selector="StackPanel.legendrow">
+      <Setter Property="Orientation" Value="Horizontal" />
+      <Setter Property="Spacing" Value="8" />
+      <Setter Property="Margin" Value="0,2" />
+    </Style>
+  </UserControl.Styles>
+
+  <Grid x:Name="Layout" RowDefinitions="Auto,*,Auto" ColumnDefinitions="*,Auto">
+    <Border Classes="card" Grid.Row="0" Grid.ColumnSpan="2" Margin="0,0,0,12">
+      <Grid ColumnDefinitions="*,Auto">
+        <StackPanel Spacing="4">
+          <StackPanel Classes="cardhead">
+            <c:LucideIcon Data="{StaticResource Icon.Map}" />
+            <TextBlock Classes="caption" Text="MAP" />
+          </StackPanel>
+          <TextBlock Classes="headline" Text="{Binding Heading}" TextWrapping="Wrap" />
+          <TextBlock TextWrapping="Wrap" Foreground="{StaticResource LpMutedBrush}" Text="{Binding Details}" />
         </StackPanel>
-        <TextBlock Classes="headline" Text="{Binding Heading}" TextWrapping="Wrap" />
-        <TextBlock TextWrapping="Wrap" Foreground="{StaticResource LpMutedBrush}" Text="{Binding Details}" />
-        <TextBlock TextWrapping="Wrap" Foreground="{StaticResource LpMutedBrush}"
-                   Text="Walls and furniture from the room's collision; green = doors (to room), amber = items in the room now (dashed = put in place), faint = items you've taken, or that appear later in the story. Brown = item box, teal = typewriter. Enemies: Z zombie, D dog, H hunter, C crow/chimera, W wasp, S spider/snake; stars are bosses, blue squares people. The arrow is you." />
-      </StackPanel>
+        <ToggleSwitch Grid.Column="1" VerticalAlignment="Top" IsChecked="{Binding ShowAbsentItems}"
+                      OnContent="Taken and later items shown" OffContent="Show taken and later items"
+                      ToolTip.Tip="Also draw the room's items you've already taken, and ones the story places later." />
+      </Grid>
     </Border>
 
-    <Border Classes="card" Grid.Row="1" MinHeight="240">
-      <c:RoomMapControl Map="{Binding Map}" PlacedItems="{Binding PlacedItems}" TakenItems="{Binding TakenItems}" FilledSockets="{Binding FilledSockets}" DoorNames="{Binding DoorNames}" Actors="{Binding Actors}" LiveFixtures="{Binding LiveFixtures}" PlayerX="{Binding PlayerX}" PlayerZ="{Binding PlayerZ}"
+    <Border x:Name="MapCard" Classes="card" Grid.Row="1" Grid.Column="0" MinHeight="240">
+      <c:RoomMapControl Map="{Binding Map}" PlacedItems="{Binding PlacedItems}" TakenItems="{Binding TakenItems}" FilledSockets="{Binding FilledSockets}" DoorNames="{Binding DoorNames}" Actors="{Binding Actors}" LiveFixtures="{Binding LiveFixtures}" ShowAbsentItems="{Binding ShowAbsentItems}" PlayerX="{Binding PlayerX}" PlayerZ="{Binding PlayerZ}"
                         PlayerAngle="{Binding PlayerAngle}" HasPlayer="{Binding HasPlayer}"
                         WallBrush="{StaticResource LpMutedBrush}" SoftBrush="{StaticResource LpBorderBrush}"
                         DoorBrush="{StaticResource LpGreenBrush}" ItemBrush="{StaticResource LpAmberBrush}"
                         PlayerBrush="{StaticResource LpRedBrush}" FaintTextBrush="{StaticResource LpMutedBrush}"
                         LabelPlateBrush="{StaticResource LpBgBrush}" />
+    </Border>
+
+    <!-- The legend lists only what this room holds: beside the map on a wide window, under it on a narrow one. -->
+    <Border x:Name="LegendCard" Classes="card" Grid.Row="1" Grid.Column="1" Margin="12,0,0,0" MinWidth="190">
+      <ScrollViewer>
+        <StackPanel>
+          <TextBlock Classes="caption" Text="LEGEND" />
+
+          <TextBlock Classes="legendhead" Text="Room" />
+          <StackPanel Classes="legendrow">
+            <Rectangle Width="14" Height="10" Fill="{StaticResource LpMutedBrush}" />
+            <TextBlock Classes="legend" Text="Walls and furniture" />
+          </StackPanel>
+          <StackPanel Classes="legendrow">
+            <Rectangle Width="14" Height="10" Fill="{StaticResource LpBorderBrush}" />
+            <TextBlock Classes="legend" Text="Steps and floor zones" />
+          </StackPanel>
+          <StackPanel Classes="legendrow">
+            <Rectangle Width="14" Height="10" Stroke="{StaticResource LpGreenBrush}" StrokeThickness="1.5" />
+            <TextBlock Classes="legend" Text="Door (to room)" />
+          </StackPanel>
+          <StackPanel Classes="legendrow" IsVisible="{Binding HasItemBox}">
+            <Rectangle Width="14" Height="10" Fill="#59A1887F" Stroke="#A1887F" StrokeThickness="1.5" />
+            <TextBlock Classes="legend" Text="Item box" />
+          </StackPanel>
+          <StackPanel Classes="legendrow" IsVisible="{Binding HasTypewriter}">
+            <Rectangle Width="14" Height="10" Fill="#594DB6AC" Stroke="#4DB6AC" StrokeThickness="1.5" />
+            <TextBlock Classes="legend" Text="Typewriter" />
+          </StackPanel>
+
+          <TextBlock Classes="legendhead" Text="Items" IsVisible="{Binding HasItemRows}" />
+          <StackPanel Classes="legendrow" IsVisible="{Binding HasPlacedItems}">
+            <Rectangle Width="14" Height="10" Stroke="{StaticResource LpAmberBrush}" StrokeThickness="1.5" />
+            <TextBlock Classes="legend" Text="In the room now" />
+          </StackPanel>
+          <StackPanel Classes="legendrow" IsVisible="{Binding HasFilledSockets}">
+            <Rectangle Width="14" Height="10" Stroke="{StaticResource LpAmberBrush}" StrokeThickness="1.5" StrokeDashArray="3,1" />
+            <TextBlock Classes="legend" Text="Put in place (e.g. an emblem)" />
+          </StackPanel>
+          <StackPanel Classes="legendrow" IsVisible="{Binding ShowAbsentItems}">
+            <Rectangle Width="14" Height="10" Stroke="{StaticResource LpBorderBrush}" StrokeThickness="1" StrokeDashArray="2,2" />
+            <TextBlock Classes="legend" Text="Taken, or comes later" />
+          </StackPanel>
+
+          <TextBlock Classes="legendhead" Text="People and enemies" />
+          <StackPanel Classes="legendrow">
+            <Path Data="M7,0 L14,12 L7,9 L0,12 Z" Fill="{StaticResource LpRedBrush}" />
+            <TextBlock Classes="legend" Text="You (pointing where you face)" />
+          </StackPanel>
+          <ItemsControl ItemsSource="{Binding LegendActors}">
+            <ItemsControl.ItemTemplate>
+              <DataTemplate x:DataType="vm:LegendEntry">
+                <StackPanel Classes="legendrow">
+            <Path Data="{Binding Icon}" Fill="{Binding Fill}" Width="12" Height="12" Stretch="Uniform" />
+            <TextBlock Classes="legend" Text="{Binding Label}" TextWrapping="Wrap" MaxWidth="200" />
+                </StackPanel>
+              </DataTemplate>
+            </ItemsControl.ItemTemplate>
+          </ItemsControl>
+        </StackPanel>
+      </ScrollViewer>
     </Border>
   </Grid>
 </UserControl>
