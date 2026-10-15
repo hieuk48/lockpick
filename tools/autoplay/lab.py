@@ -135,7 +135,7 @@ class Lab:
         if aim:
             ap.send(f"hold {aim}", "wait 400")
         at = {"player": ap.pos(), "aimByte": ap.peek(AIM, 1)[0]}
-        if at["aimByte"] == 0:
+        if at["aimByte"] == 0 and ap.equipped() != 1:     # the knife held level reads 0
             # A whole run's shots (headkill, 2026-10-15) went with the aim byte 0: holding RT never raised the gun in
             # that game, the up/down key walked the player instead, and every case read as a miss. A fresh boot fixed
             # it; the case is retried there.
@@ -697,23 +697,24 @@ class Lab:
                 self.arena()
         return rows
 
-    def melee(self, types: list[int], seconds: float = 60) -> list[dict]:
+    def melee(self, types: list[int], seconds: float = 60, weapon: int = 1, quantity: int = 0) -> list[dict]:
         """Fliers with the knife: held at arm's length a crow kept only its up aim height (its AI rewrote the targetable
         bits) and was never cut, nor the wasp (2026-10-15). In play they are cut while they swoop in to attack: each one
-        let loose on a player with the knife raised, stabbing level then up, healed as needed, until it dies."""
+        let loose on a player with the knife raised, stabbing level then up, healed as needed, until it dies. --weapon:
+        the same with another weapon (the rocket never hit a crow, up only, or a snake, down only, held in place)."""
         rows = []
         for kind in types:
-            row = {"type": kind, "name": spawn.scd.Names().enemies.get(str(kind)), "hits": []}
+            row = {"type": kind, "name": spawn.scd.Names().enemies.get(str(kind)), "weapon": weapon, "hits": []}
             try:
                 self.ensure()
-                self.arm(1, 0)
+                self.arm(weapon, quantity)
                 e = self.spawn(kind, at=self.at_distance(1500), hold=False)
                 if not e:
                     raise ap.Failed("not spawned")
                 row["startHp"] = last = e["hp"]
                 end = time.time() + seconds
                 while time.time() < end:
-                    for key in ("", "LUp"):
+                    for key in ("", "LUp", "LDown") if weapon != 1 else ("", "LUp"):
                         at = self.shot(key, settle=0.15)
                         now = (enemy() or {}).get("hp")
                         if now is not None and now != last:
@@ -735,6 +736,76 @@ class Lab:
                      f"{row.get('error', '')}")
             rows.append(row)
             self.save_partial("melee", rows)
+        return rows
+
+    def plant(self, seconds: float = 20) -> list[dict]:
+        """The mansion plant (type 15). Variant 1 strikes once the player is within 3000 (Manhattan) and inside ±90° of
+        where it faces (decomp mp_sub_1). Which yaw (+0x74) makes it strike, compared with angle_to? (2026-10-15: it struck
+        facing the player and turned ±90°, never turned 180° — its front is the usual one; a 180° spawn offset taken from
+        a misread linger run had kept it passive.) Then, facing that way, weapon hits: its HP is never used. A hit sends it to state 2, which counts
+        it (+0x188) and, past 3, sets scenario flag 0x5B (`SCENARIO_FLAG_MONSTER_PLANT_PROG`). It only dies when the
+        room script sets behaviour bit 0x40, so no weapon kills it."""
+        rows = []
+        engaged_turn = None
+        for turn in (0, 1024, 2048, 3072):
+            row = {"case": "facing", "turn": turn}
+            try:
+                self.ensure()
+                ap.send("heal")
+                e = self.spawn(15, at=self.at_distance(1200), hold=False)
+                p = ap.pos()
+                row["spawnYaw"] = int.from_bytes(slot_bytes(SLOT, 0x74, 2), "little")
+                row["angleTo"] = ap.angle_to(e["x"], e["z"], p[0], p[2])
+                facing = (row["angleTo"] + turn) % 4096
+                ap.send(f"enemy-wake {SLOT} {e['x']} {e['z']} {facing} 1")
+                end, row["engaged"] = time.time() + seconds, False
+                hp0 = ap.hp()
+                while time.time() < end:
+                    b = slot_bytes(SLOT, 0, 0x90)
+                    if b[0x85] >= 2 or b[2] in (3, 4):
+                        row["engaged"] = True
+                        row["state"] = [b[0], b[2], b[0x84], b[0x85], b[0x86]]
+                        break
+                    time.sleep(0.1)
+                time.sleep(4)
+                row["hpLoss"] = hp0 - ap.hp()
+                row["yawAfter"] = int.from_bytes(slot_bytes(SLOT, 0x74, 2), "little")
+                if row["engaged"] and engaged_turn is None:
+                    engaged_turn = turn
+            except Exception as e:  # noqa: BLE001
+                row["error"] = str(e)[-300:]
+            self.log(f"plant turned {turn}: {row}")
+            rows.append(row)
+            self.save_partial("plant", rows)
+        for weapon, quantity in ((2, 30), (3, 30), (5, 30), (6, 200), (7, 30), (10, 30)):
+            row = {"case": "hits", "weapon": weapon, "turn": engaged_turn, "shots": []}
+            try:
+                self.ensure()
+                self.arm(weapon, quantity)
+                ap.send("heal")
+                e = self.spawn(15, at=self.at_distance(1200 if weapon in (6, 7, 10) else 3500), hold=False)
+                p = ap.pos()
+                facing = (ap.angle_to(e["x"], e["z"], p[0], p[2]) + (engaged_turn or 0)) % 4096
+                ap.send(f"enemy-wake {SLOT} {e['x']} {e['z']} {facing} 1")
+                time.sleep(1.0)
+                for key in ("LDown", "", "LDown", "", "LDown"):
+                    hits = int.from_bytes(slot_bytes(SLOT, 0x188, 2), "little")
+                    at = self.shot(key, settle=0.5)
+                    b = slot_bytes(SLOT, 0, 0x190)
+                    row["shots"].append({"aim": key or "level", "aimByte": at["aimByte"], "flags": b[0],
+                                         "hitsBefore": hits, "hits": int.from_bytes(b[0x188:0x18A], "little"),
+                                         "hp": int.from_bytes(b[0x88:0x8A], "little", signed=True),
+                                         "state": [b[0x84], b[0x85], b[0x86]]})
+                    if ap.hp() < 40:
+                        ap.send("heal")
+                row["flag5B"] = bool(ap.peek(0xBE98C0 + 0x5B // 32 * 4 + (31 - 0x5B % 32) // 8, 1)[0]
+                                     & (1 << ((31 - 0x5B % 32) % 8)))
+            except Exception as e:  # noqa: BLE001
+                row["error"] = str(e)[-300:]
+            self.log(f"plant weapon {weapon}: {[(s['aim'], s['hits']) for s in row['shots']]} "
+                     f"flag 0x5B {row.get('flag5B')} {row.get('error', '')}")
+            rows.append(row)
+            self.save_partial("plant", rows)
         return rows
 
     def save_partial(self, name: str, rows: list[dict]) -> None:
@@ -795,5 +866,8 @@ if __name__ == "__main__":
               "deaths": lambda: lab.deaths(types), "falloff": lambda: lab.falloff(),
               "linger": lambda: lab.linger(), "decap": lambda: lab.decap(),
               "wasps": lambda: lab.wasps(),
-              "melee": lambda: lab.melee([t for t in types if t in (5, 7, 15)] or [5, 7])}[experiment]()
+              "plant": lambda: lab.plant(),
+              "melee": lambda: lab.melee(types if "--types" in args else [5, 7],
+                                   float(args[args.index("--seconds") + 1]) if "--seconds" in args else 60,
+                                   *([int(args[args.index("--weapon") + 1]), 30] if "--weapon" in args else []))}[experiment]()
     (out / f"lab-{experiment}-{character}.json").write_text(json.dumps(result, indent=1) + "\n", encoding="utf-8")

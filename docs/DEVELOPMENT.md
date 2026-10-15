@@ -110,10 +110,22 @@ conditions), `state`, `peek addr len`, `calibrate`, `shot file.png [width]`, `lo
   each enemy's first frames: zombies and dogs get their do-nothing state 4; crows, wasps and snakes have none, so
   every other type is pinned (`enemy-pin`: a harness thread rewrites its position, facing and AI state about every
   millisecond; health and hit state are left alone so shots still count).
-- **Weapon lab** (`lab.py <out> hp|killflags|aim|attacks`): the owner's pick, room 108's second leg — the player in
-  the foreground of camera 2 at (24000, 15500) facing the first corner, where the enemy stands; teleported there, no
-  walking. The dogs' trigger lines only react to the player, who never crosses them. For things the code can't
-  settle (starting HP per type, kill-flag bits and respawn, aim-height bits, damage enemies deal), not for what is known.
+- **Weapon lab** (`lab.py <out> <experiment> [--types 0,2] [--weapons 2,3] [--pairs 5:3,15:5]`): the owner's pick,
+  room 108's second leg. Jill is teleported (no walking) into the foreground of camera 2 at (24000, 15500), facing the
+  first corner where the enemy stands. The dogs' trigger lines only react to the player, who never crosses them.
+  Experiments:
+  - `hp`, `killflags`, `aim`, `attacks`, `deaths`
+  - `reactions`: every weapon's hit and lethal hit per type
+  - `poise [--long]`: knockdowns and getting back up
+  - `special`, `falloff [--headkill]`: the shotgun/Python distance and aim rules
+  - `linger`, `decap`, `wasps`, `melee`
+
+  It is for things the code can't settle, not for what is known; results are in MEMORY_MAP ("Enemies in the weapon
+  lab"). Weapons come in through the item box screen (`ap.equip_now`). The spare slots are cleared first, and
+  `inv-clear` frees the icon rows it empties; otherwise the game runs out after a few changes and crashes at
+  `0x402E1D`. A shot whose gun never rose (aim byte 0) reboots the game and the case is retried. Enemies that need
+  effect sprites their room doesn't load (Hunter, spider) are covered by `effect-guard on`. Run one queue at a time,
+  and never edit a queue script while it runs.
 - **Cutscene skips** (`scenes.py`): a scene's end is recorded once by watching it — the bits it changes in the saved
   block (`0xBE9620`–`0xBE9E1F`, what a save holds) and where it leaves the player — then applied instead of playing
   it, so the game is left as if the scene had been watched. `scenes.py record-opening|check-opening jill|chris`;

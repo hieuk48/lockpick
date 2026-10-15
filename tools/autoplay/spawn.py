@@ -67,10 +67,6 @@ def templates() -> dict[int, bytes]:
 # Zombies too: the type-0 template is 101's lying-down zombie (0x08), which stayed on the floor in its do-nothing state
 # and never took a hit in the reactions test.
 HUNTING = {0: 0x00, 1: 0x00, 17: 0x00, 3: 0x00, 5: 0x10, 7: 0x20, 10: 0x00, 15: 0x01}
-# Facing added to "towards the player" (cos θ, −sin θ, as for the player): the mansion plant's front is the other way,
-# and since it never turns it stayed passive facing "towards" the player and engaged turned 180° (linger, 2026-10-15).
-FACING_OFFSET = {15: 2048}
-
 
 def enemy_set(kind: int, slot: int, x: int, z: int, angle: int, kill_flag: int = 0xFF,
               behaviour: int | None = None) -> bytes:
@@ -130,7 +126,7 @@ def spawn(kind: int, x: int | None = None, z: int | None = None, slot: int = 2, 
         yaw = int.from_bytes(ap.peek(0xBE6358, 2), "little", signed=True)
         theta = yaw * 2 * math.pi / 4096
         x, z = int(p[0] + math.cos(theta) * 2000), int(p[2] - math.sin(theta) * 2000)
-    facing = (ap.angle_to(x, z, p[0], p[2]) + FACING_OFFSET.get(kind, 0)) % 4096
+    facing = ap.angle_to(x, z, p[0], p[2])
     record = enemy_set(kind, slot, x, z, facing, kill_flag, behaviour)
     holding = hold
     # The room load empties the effect sprites a foreign enemy may need within its first frames: the harness keeps
