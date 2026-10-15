@@ -48,10 +48,10 @@ internal sealed class Re1ProgressTracker(Re1Knowledge knowledge) : IProgressTrac
             bool InArea(FlagUse u) => u.Room[0] == stage;
 
             var pickups = items.Where(u => InArea(u) && u.What < FirstMapItem)
-                .Select(u => new ProgressEntry(knowledge.Item(u.What), knowledge.RoomLabel(u.Room), !Bit(snapshot, "flagRoomItems", u.Flag)))
+                .Select(u => new ProgressEntry(knowledge.Item(u.What), knowledge.RoomLabel(u.Room), Taken(snapshot, u)))
                 .ToList();
             var papers = items.Where(u => InArea(u) && u.What >= FirstMapItem)
-                .Select(u => new ProgressEntry(Paper(u.What), knowledge.RoomLabel(u.Room), !Bit(snapshot, "flagRoomItems", u.Flag)))
+                .Select(u => new ProgressEntry(Paper(u.What), knowledge.RoomLabel(u.Room), Taken(snapshot, u)))
                 .ToList();
             var kills = enemies.Where(InArea)
                 .Select(u => new ProgressEntry(knowledge.Enemy(u.What), knowledge.RoomLabel(u.Room), Bit(snapshot, "flagEnemies", u.Flag)))
@@ -117,6 +117,25 @@ internal sealed class Re1ProgressTracker(Re1Knowledge knowledge) : IProgressTrac
         }
 
         return new ProgressReport(areas, story, unnamed);
+    }
+
+    /// <summary>
+    /// A pickup flag reads clear both once the item is taken and, for an item a story event puts in place later, until
+    /// then (Chris's flamethrower in 30D read "taken" 2½ minutes into his game, 2026-10-15). An item counts as taken only
+    /// from a room the player has been in; the mansion revisited (6xx/7xx) shares the 1F/2F marks.
+    /// </summary>
+    private static bool Taken(GameSnapshot snapshot, FlagUse item) => !Bit(snapshot, "flagRoomItems", item.Flag) && Visited(snapshot, item.Room);
+
+    private static bool Visited(GameSnapshot snapshot, string room)
+    {
+        var stage = room[0] switch { '6' => '1', '7' => '2', var s => s };
+        if (stage is < '1' or > '5' || !int.TryParse(room.AsSpan(1), System.Globalization.NumberStyles.HexNumber, null, out var index))
+        {
+            return true;
+        }
+
+        var (first, count) = VisitTable[stage - '1'];
+        return index >= count || Bit(snapshot, "flagRoom", first + index);
     }
 
     private string Paper(int item) =>

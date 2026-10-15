@@ -13,6 +13,8 @@
     <Style Selector="ContentControl.page"><Setter Property="Margin" Value="16" /></Style>
     <Style Selector="Border.header"><Setter Property="Padding" Value="18,12" /></Style>
     <Style Selector="TextBlock.wordmark"><Setter Property="FontSize" Value="22" /><Setter Property="LetterSpacing" Value="6" /></Style>
+    <!-- Screen readers and UI automation name each page by its title (they read the view-model type otherwise). -->
+    <Style Selector="ListBox.nav ListBoxItem" x:DataType="vm:PageViewModel"><Setter Property="AutomationProperties.Name" Value="{Binding Title}" /></Style>
     <Style Selector="ListBox.nav ListBoxItem:selected c|LucideIcon"><Setter Property="Foreground" Value="{StaticResource LpGreenBrush}" /></Style>
     <!-- Compact layout for narrow/portrait windows: icon-only navigation rail, no tagline. -->
     <Style Selector="Grid#Shell.compact TextBlock.tagline"><Setter Property="IsVisible" Value="False" /></Style>

@@ -67,6 +67,17 @@ public class Re1ProgressTrackerTests
     }
 
     [Fact]
+    public void An_item_counts_as_taken_only_from_a_room_the_player_has_been_in()
+    {
+        // The blue jewel's pickup flag (44) is clear: before 105 is visited it hasn't been put there yet, not taken.
+        var before = _tracker.Evaluate(Jill(("flagRoomItems1", 0xFFF7FFFF)))!;
+        Assert.Contains(Group(before, "Mansion 1F", "Items").Entries, e => e.Name == "Blue jewel" && !e.Done);
+
+        var after = _tracker.Evaluate(Jill(("flagRoomItems1", 0xFFF7FFFF), ("flagRoom0", 0x04000000)))!; // 105 visited
+        Assert.Contains(Group(after, "Mansion 1F", "Items").Entries, e => e.Name == "Blue jewel" && e.Done);
+    }
+
+    [Fact]
     public void Ink_ribbons_are_listed_for_Chris_but_never_for_Jill()
     {
         static bool Ribbons(ProgressReport report) =>

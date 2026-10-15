@@ -80,6 +80,7 @@
               <Setter Property="Padding" Value="4,3" />
               <Setter Property="MinHeight" Value="0" />
             </Style>
+            <Style Selector="ListBoxItem" x:DataType="vm:EventItem"><Setter Property="AutomationProperties.Name" Value="{Binding Text}" /></Style>
           </ListBox.Styles>
           <ListBox.ItemTemplate>
             <DataTemplate x:DataType="vm:EventItem">

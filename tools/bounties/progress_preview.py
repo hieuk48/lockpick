@@ -35,14 +35,28 @@ def main(argv: list[str]) -> int:
     player = "jill" if state.get("character", 0) & 3 == 1 else "chris"
     mine = lambda u: u["player"] in (player, "both")  # noqa: E731
     first = lambda entries: list({e["flag"]: e for e in reversed(entries)}.values())  # noqa: E731
-    items = first([u for u in names.index["items"] if mine(u) and u["flag"] is not None and u["item"] != 49])  # lockpick: handed over
+    items = first([u for u in names.index["items"] if mine(u) and u["flag"] is not None and u["item"] != 49  # lockpick: handed over
+                   and not (player == "jill" and u["item"] == 0x2F)])  # no ink ribbons in Jill's game (Re1ProgressTracker)
     enemies = first([u for u in names.index["enemies"] if mine(u) and u["flag"] not in (None, 255) and u["type"] < 32])
     t = state.get("gameTimer", 0) // 30
+
+    def visited(room: str) -> bool:
+        stage = {"6": "1", "7": "2"}.get(room[0], room[0])
+        if not "1" <= stage <= "5":
+            return True
+        base, count = VISIT_TABLE[int(stage) - 1]
+        index = int(room[1:], 16)
+        return index >= count or bit(state, "flagRoom", base + index)
+
+    def taken(u: dict) -> bool:
+        # As the app (Re1ProgressTracker.Taken): a clear pickup flag only counts from a room the player has been in.
+        return not bit(state, "flagRoomItems", u["flag"]) and visited(u["room"])
+
     print(f"{player.title()} at {t // 60}:{t % 60:02} in {state.get('stage', 0) + 1}{state.get('room', 0):02X}")
     for stage, area in sorted(rooms["areas"].items()):
         rows = []
-        pick = [(names.item(u["item"]), u["room"], not bit(state, "flagRoomItems", u["flag"])) for u in items if u["room"][0] == stage and u["item"] < 0x4E]
-        docs = [(names.item(u["item"]), u["room"], not bit(state, "flagRoomItems", u["flag"])) for u in items if u["room"][0] == stage and u["item"] >= 0x4E]
+        pick = [(names.item(u["item"]), u["room"], taken(u)) for u in items if u["room"][0] == stage and u["item"] < 0x4E]
+        docs = [(names.item(u["item"]), u["room"], taken(u)) for u in items if u["room"][0] == stage and u["item"] >= 0x4E]
         kills = [(names.enemy(u["type"]), u["room"], bit(state, "flagEnemies", u["flag"])) for u in enemies if u["room"][0] == stage]
         visits = []
         if "1" <= stage <= "5":
@@ -58,7 +72,10 @@ def main(argv: list[str]) -> int:
             print(f"- {area}: " + ("\n    " if missing else "; ").join(rows))
     story = [label for (bank, mask), label in timeline.KNOWN_FLAGS.items()
              if bank.startswith("flagScenario") and state.get(bank, 0) & mask]
-    print(f"story so far: {len(story)} named events")
+    unnamed = sum(1 for bank, words in (("flagScenarioA", 4), ("flagScenarioB", 8)) for w in range(words)
+                  for b in range(32) if state.get(f"{bank}{w}", 0) >> b & 1 and (f"{bank}{w}", 1 << b) not in timeline.KNOWN_FLAGS)
+    # As the app's Progress page: an event named by two flags counts once.
+    print(f"story so far: {len(set(story))} named, {unnamed} not named yet")
     return 0
 
 
