@@ -20,7 +20,10 @@ namespace Lockpick.Autoplay;
 ///   camera id                    cut to a camera of the room (must have a switch-zone group; CameraCut.cs)
 ///   inv-clear from               empty inventory slots from..7 (not the equipped one; InventorySlots.cs)
 ///   give item [qty]              put an item in the first empty inventory slot (default qty 1; InventorySlots.cs)
-///   give-box item [qty]          put an item in the first empty item-box entry (its icon then shows right)
+///   give-box item [qty] [--front] put an item in the first empty item-box entry (its icon then shows right);
+///                                --front: in entry 0, where the box cursor starts
+///   open-box                     open the item box screen wherever the player is (only when they're free)
+///   box-cursor slot              move the box screen's inventory cursor to a slot
 ///   heal                         HP back to the maximum (alive players only)
 ///   hp n                         set HP to n (1..max, alive players only)
 ///   flag A|B n 0|1               set or clear one story flag (bank A 0..127, B 0..255; StoryFlags.cs)
@@ -40,8 +43,8 @@ namespace Lockpick.Autoplay;
 ///   shot file.png [width]        screenshot the game window (optionally scaled down)
 ///   look question...             screenshot and ask the vision model (LOCKPICK_VISION_URL)
 ///   echo text
-/// Input is sent only while the game is the foreground window ('background' just keeps the game running unfocused);
-/// the run stops if it loses focus, and anything held is let go.
+/// Without 'background', input is sent only while the game is the foreground window; the run stops if it loses focus.
+/// With it the run goes on behind other windows (the owner keeps using the PC). The harness never injects keys.
 /// </summary>
 internal sealed class Runner(Pad pad, TextWriter log) : IDisposable
 {
@@ -60,10 +63,6 @@ internal sealed class Runner(Pad pad, TextWriter log) : IDisposable
     private EnemyHealth? _enemyHealth;
     private CameraCut? _camera;
     private EnemyFreeze? _freeze;
-
-    // Lets go of every input whenever the game isn't in front (checked every 50 ms), so a held stick or button never
-    // drives another window. Started on the first input.
-    private System.Threading.Timer? _guard;
 
     public Game Game => _game ?? throw new InvalidOperationException("the game is not attached (add 'launch' first)");
 
@@ -244,8 +243,19 @@ internal sealed class Runner(Pad pad, TextWriter log) : IDisposable
             case "give-box":
                 _inventory ??= new InventorySlots(Game.ProcessId);
                 var boxItem = int.Parse(w[1], CultureInfo.InvariantCulture);
-                var entry = _inventory.GiveToBox(boxItem, w.Length > 2 ? int.Parse(w[2], CultureInfo.InvariantCulture) : 1);
+                var front = w.Contains("--front");
+                var boxArgs = w.Where(a => a != "--front").ToArray();
+                var entry = _inventory.GiveToBox(boxItem, boxArgs.Length > 2 ? int.Parse(boxArgs[2], CultureInfo.InvariantCulture) : 1, front);
                 Log($"  item {boxItem} in item-box entry {entry}");
+                break;
+            case "open-box":
+                _inventory ??= new InventorySlots(Game.ProcessId);
+                _inventory.OpenItemBox();
+                Log("  item box screen requested");
+                break;
+            case "box-cursor":
+                _inventory ??= new InventorySlots(Game.ProcessId);
+                _inventory.PointBoxCursor(int.Parse(w[1], CultureInfo.InvariantCulture));
                 break;
             case "give":
                 _inventory ??= new InventorySlots(Game.ProcessId);
@@ -370,7 +380,7 @@ internal sealed class Runner(Pad pad, TextWriter log) : IDisposable
         }
     }
 
-    /// <summary>Presses inputs for <paramref name="holdMs"/> then releases them; the game needs â‰¥ 2 ticks each way.</summary>
+    /// <summary>Presses inputs for <paramref name="holdMs"/> then releases them; the game needs ≥ 2 ticks each way.</summary>
     public void Press(string combo, int holdMs)
     {
         if (!Pad.IsKnown(combo))
@@ -392,14 +402,14 @@ internal sealed class Runner(Pad pad, TextWriter log) : IDisposable
         Thread.Sleep(80);
     }
 
-    // Presses every input in turn and ORs the game's raw button word over the hold: the controller â†’ PSX mapping the game
+    // Presses every input in turn and ORs the game's raw button word over the hold: the controller → PSX mapping the game
     // actually uses (it depends on the player's joystick table, save offset 0xA02).
     public void Calibrate()
     {
         var game = Game;
         RequireForeground();
         var idle = Sample(game, 300);
-        Log($"idle word 0x{idle:X4}{(idle != 0 ? " (something is held â€” results are OR-ed with it)" : string.Empty)}");
+        Log($"idle word 0x{idle:X4}{(idle != 0 ? " (something is held — results are OR-ed with it)" : string.Empty)}");
         foreach (var input in Pad.AllInputs)
         {
             uint seen = 0;
@@ -440,21 +450,11 @@ internal sealed class Runner(Pad pad, TextWriter log) : IDisposable
         return string.Join(' ', bits.Where(b => (word & b.Bit) != 0).Select(b => b.Name));
     }
 
-    // The virtual pad is a real controller to Windows: whatever window is in front reads it too (Xbox Game Bar, the
-    // Settings app, browsers). So input goes out only while the game is in front, even with 'background' (which only
-    // keeps the game running unfocused), and the guard releases everything the moment it isn't.
     public void RequireForeground()
     {
-        _guard ??= new System.Threading.Timer(_ =>
+        if (_patch is null && !Game.IsForeground)
         {
-            if (_game is { } game && !game.IsForeground)
-            {
-                pad.ReleaseAll();
-            }
-        }, null, 50, 50);
-        if (!Game.IsForeground)
-        {
-            throw new InvalidOperationException("the game is not the foreground window (is someone using the PC?) â€” stopped");
+            throw new InvalidOperationException("the game is not the foreground window (is someone using the PC?) — stopped");
         }
     }
 
@@ -501,7 +501,6 @@ internal sealed class Runner(Pad pad, TextWriter log) : IDisposable
 
     public void Dispose()
     {
-        _guard?.Dispose();
         if (_recorder is not null)
         {
             Log("capture saved: " + _recorder.StopAsync().GetAwaiter().GetResult());

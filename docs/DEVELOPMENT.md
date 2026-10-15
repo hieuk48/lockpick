@@ -69,9 +69,10 @@ script's `launch`, `calibrate --launch`); a pad plugged into an already running 
 pad for the game's lifetime, so tests can be sent step by step. Stop the server before rebuilding (DLL lock).
 
 `--background` (or the script command `background`) applies the **dev-only focus patch** (`FocusPatch.cs`): the
-game keeps running while other windows are in front, and its keyboard map is kept blank so keys typed elsewhere
-don't reach it. It does **not** let input through while the game is behind: the virtual pad is a real controller to
-Windows, and controller-aware windows in front (Xbox Game Bar, the Settings app, browsers) read it too. Bytes are checked before writing, read back, and restored when the harness exits; the
+game keeps running and reading the pad while other windows are in front, and its keyboard map is kept blank so keys
+typed elsewhere don't reach it. The virtual pad is a real controller to Windows: **turn off Steam Input for Xbox
+controllers** while runs go (Steam → Settings → Controller), or Steam's desktop layout turns its presses into
+Enter/Escape/arrow keys in whatever window is in front. Bytes are checked before writing, read back, and restored when the harness exits; the
 changes are in the game's memory only and end with the process. Screenshots use PrintWindow, so they work behind
 other windows.
 
@@ -87,10 +88,15 @@ conditions), `state`, `peek addr len`, `calibrate`, `shot file.png [width]`, `lo
 - `camera <id>` — cut to a camera of the room (memory trigger; the camera must have a switch-zone group —
   `rdt_map.camera_for(x, z)` picks one) (`CameraCut.cs`).
 - `freeze-enemies` — stop the room's enemies until the next room load (`EnemyFreeze.cs`); `heal`; `inv-clear <from>`
-  (empty spare inventory slots); `give <item> [qty]` (add an item after the held ones so a route can start mid-way; the
-  held count is kept in step — the grid icon stays wrong until a save load, names/CHECK/doors are right);
-  `give-box <item> [qty]` (put it in the first empty item-box entry: the box screen draws icons from the item ids, and
-  taking it out there makes the game load the right inventory icon).
+  (empty spare inventory slots); `give-box <item> [qty] [--front]` (into the first empty item-box entry, or entry 0
+  where the box cursor starts); `open-box` (open the item box screen in any room: the game opens a menu by itself
+  when a mode bit of the state flags' byte 1 is pending, `0x1000` = item box); `box-cursor <slot>`; raw
+  `give <item> [qty]` (writes the slot and held count, but the grid icon stays whatever was loaded for that slot).
+- **Giving items: use `ap.give(item, qty)`**, not raw `give`. It puts the item in box entry 0, opens the box screen,
+  points the cursor at the first empty slot and swaps with A, A, then closes with X, checking the screen state before
+  each press. The game's own swap loads the slot's icon, so the item looks right in the grid (verified live for Jill
+  and Chris, 2026-10-14). `ap.give(item, qty, to="box")` only fills a box entry. The player must be free (no menu or
+  message).
 - Reading the screen from memory (`ap.py`): `message_state()` / `message_text()` / `dismiss()` / `answer(yes)` use the
   game's own message state, `inventory()` gives names as the game shows them, `examine(item)` turns an item in the
   viewer until it says something, `use_item(item)` checks every menu step. Never press A on the strength of the state
@@ -142,10 +148,9 @@ Environment: `LOCKPICK_VISION_URL` / `LOCKPICK_VISION_MODEL` (OpenAI-compatible 
 descriptions of the game are not committed.
 
 Rules:
-- Every press and hold checks the game is the foreground window and the run stops if it isn't (someone is using
-  the PC); a guard lets go of anything held within 50 ms of the game losing focus. The harness never injects keys:
-  `focus` only asks Windows, which may refuse (2026-10-14: an injected Alt opened menus in the owner's windows). Use
-  `focus` and `launch` (the game's window comes to the front) only when nobody is using the PC.
+- Without `background`, every press checks the game is the foreground window and the run stops if it isn't
+  (someone is using the PC). The harness never injects keys: `focus` only asks Windows, which may refuse
+  (2026-10-14: an injected Alt opened menus in the owner's windows).
 - `calibrate` skips Start and Back (they open the game's options and key setup).
 - Pressing through the title screen can load the player's saves (it did twice on 2026-10-14): `ap.wait_screen` only
   presses on screens where a press is harmless (logo, title, text, black) and backs out of the load list.

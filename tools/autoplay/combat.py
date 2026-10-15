@@ -82,7 +82,7 @@ def live_enemy() -> dict | None:
 
 def equip(weapon: int, quantity: int, log, room: rdt_map.Room | None = None) -> bool:
     if weapon not in [i for i, _, _ in ap.inventory()]:
-        ap.send(f"give {weapon} {quantity}")
+        ap.give(weapon, quantity, log=log)
     if ap.equipped() != weapon:
         enemy = live_enemy()
         if room is not None and enemy is not None:

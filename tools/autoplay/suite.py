@@ -148,7 +148,9 @@ def t_healing(c: Context) -> None:
     c.fresh()
     for item in HEALING:
         def one(item=item):
-            ap.send("inv-clear 3", f"give {item}", "hp 10")
+            ap.send("inv-clear 3")
+            ap.give(item, log=c.log)
+            ap.send("hp 10")
             before = ap.hp()
             info = ap.use_item(item)
             said = ap.dismiss() if ap.message_active() else []
@@ -169,9 +171,9 @@ def t_combine(c: Context) -> None:
     for first, second, expected in COMBINATIONS:
         def one(first=first, second=second, expected=expected):
             ap.send("inv-clear 3")
-            ap.send(f"give {first} {15 if first == 11 else 1}")
+            ap.give(first, 15 if first == 11 else 1, log=c.log)
             if second != 2:
-                ap.send(f"give {second}")
+                ap.give(second, log=c.log)
             result = ap.combine(first, second)
             after = [i for i, _, _ in result["after"]]
             c.add({"first": first, "second": second, "expected": expected, "after": result["after"],
@@ -199,9 +201,9 @@ def t_full_inventory(c: Context) -> None:
                     continue
                 ap.send("inv-clear 3")
                 if kind == "ammo into a stack":
-                    ap.send("give 11 5")
+                    ap.give(11, 5, log=c.log)
                 while len(ap.inventory()) < limit:
-                    ap.send("give 68")
+                    ap.give(0x44, log=c.log)
                 before = ap.inventory()
                 result = pickup.try_pickup({**target[0]}, rdt_map.load(survey.INSTALL, entry["room"], c.character),
                                            clear_inventory=False)
@@ -251,7 +253,7 @@ def poison_ticks(seconds: float = 14) -> list[dict]:
 
 
 def cure(c: Context, item: int) -> dict:
-    ap.send(f"give {item}")
+    ap.give(item, log=c.log)
     before = ap.peek(ap.PLAYER_STATUS, 1)[0]
     ap.use_item(item)
     said = ap.dismiss() if ap.message_active() else []
@@ -398,7 +400,7 @@ def t_doors(c: Context, plan: Path, only_locks: set[int] | None = None) -> None:
                     ap.send("flag A 124 1")
                     continue
                 if 1 <= key <= 0x4D:
-                    ap.send(f"give {key}")
+                    ap.give(key, log=c.log)
                     if ap.examined(key) is False:
                         ap.examine(key)
             locks_before = bank_flags(LOCKS, 2)

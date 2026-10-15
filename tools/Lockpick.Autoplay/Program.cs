@@ -16,6 +16,9 @@ var focus = args.Contains("--focus");
 var background = args.Contains("--background");
 var rest = args.Skip(1).Where(a => !a.StartsWith("--", StringComparison.Ordinal)).ToArray();
 
+// UTF-8 out, so clients (tools/autoplay/ap.py) read the log's dashes and arrows instead of the console code page.
+Console.OutputEncoding = System.Text.Encoding.UTF8;
+
 if (command == "send")
 {
     var script = args.Contains("--file") ? await File.ReadAllTextAsync(rest[0]) : string.Join(' ', rest).Replace(';', '\n');

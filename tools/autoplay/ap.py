@@ -20,7 +20,7 @@ def send(*commands: str, check: bool = True, timeout: float = 600) -> str:
     """Runs commands on the server; returns the log lines (without timestamps). Raises Failed on a FAILED line."""
     script = "\n".join(commands)
     out = subprocess.run([str(EXE), "send", script.replace("\n", ";")], capture_output=True, text=True,
-                         encoding="utf-8", timeout=timeout).stdout
+                         encoding="utf-8", errors="replace", timeout=timeout).stdout or ""
     lines = [re.sub(r"^\[[0-9:.]+\] ", "", l) for l in out.splitlines()]
     if check and any(l.startswith("FAILED") for l in lines):
         raise Failed("\n".join(lines))
@@ -496,6 +496,64 @@ def inventory() -> list[tuple[int, int, str]]:
     """(item, quantity, name as shown) per held slot — only the first HELD_COUNT slots count, as in the game."""
     raw, held = peek(INVENTORY_SLOTS, 16), peek(HELD_COUNT, 1)[0]
     return [(raw[i * 2], raw[i * 2 + 1], item_name(raw[i * 2])) for i in range(min(held, 8)) if raw[i * 2]]
+
+
+ITEM_BOX = 0xBE98E4      # 48 entries, item | quantity << 8
+BOX_MODE = 0x1000        # stateFlags: the item box screen (pending or open)
+BOX_CURSOR = 0xAE9F24    # item box screen: the box entry under the cursor (0 when the screen opens)
+
+
+def slot_limit() -> int:
+    """Jill carries 8, Chris and Rebecca 6."""
+    return 8 if peek(0xBE62E5, 1)[0] & 3 == 1 else 6
+
+
+def item_box() -> list[tuple[int, int]]:
+    raw = peek(ITEM_BOX, 96)
+    return [(raw[i * 2], raw[i * 2 + 1]) for i in range(48)]
+
+
+def box_screen() -> int | None:
+    """The item box screen's state (1 inventory side, 2 box side, 3 paging), or None when it isn't open."""
+    return peek(MENU_INPUT, 1)[0] if flags() & BOX_MODE and flags() & 0x8000 else None
+
+
+def give(item: int, quantity: int = 1, to: str = "inventory", log=print) -> int:
+    """Gives the player an item that looks right. to="box": into the first empty item-box entry (the box screen draws
+    icons from the ids). to="inventory": through the game's own item box swap, wherever the player is — the item goes
+    in box entry 0, the box screen is opened by its mode bit, the inventory cursor is put on the first empty slot and
+    A, A takes it out (the game loads the slot's icon), X closes. Every press waits on the screen's state. Returns the
+    box entry or the inventory slot."""
+    if to == "box":
+        out = send(f"give-box {item} {quantity}")
+        return int(out.rsplit("entry ", 1)[-1].split()[0])
+    if to != "inventory":
+        raise ValueError(f"to must be 'inventory' or 'box', not {to!r}")
+    held = peek(HELD_COUNT, 1)[0]
+    if held >= slot_limit():
+        raise Failed(f"the inventory is full ({held} of {slot_limit()})")
+    if not in_control():
+        raise Failed(f"the player isn't free to open the item box: {state()}")
+    send(f"give-box {item} {quantity} --front", "open-box")
+    if not wait_for(lambda: box_screen() == 1, 5):
+        raise Failed(f"the item box screen didn't open (flags 0x{flags():08X})")
+    send(f"box-cursor {held}")
+    send("press A 120")
+    if not wait_for(lambda: box_screen() == 2, 3):
+        raise Failed(f"the box side didn't take the cursor (screen state {box_screen()})")
+    if peek(BOX_CURSOR, 1)[0] != 0 or item_box()[0] != (item, quantity):
+        raise Failed(f"the box cursor isn't on the item (entry {peek(BOX_CURSOR, 1)[0]}, entry 0 {item_box()[0]})")
+    send("press A 120")
+    if not wait_for(lambda: box_screen() == 1 and peek(HELD_COUNT, 1)[0] == held + 1, 3):
+        raise Failed(f"the swap didn't happen (screen {box_screen()}, held {peek(HELD_COUNT, 1)[0]})")
+    send("press X 120")
+    if not wait_for(lambda: box_screen() is None and in_control(), 5):
+        raise Failed(f"the item box screen didn't close (flags 0x{flags():08X})")
+    slot = peek(INVENTORY_SLOTS + held * 2, 2)
+    if (slot[0], slot[1]) != (item, quantity):
+        raise Failed(f"slot {held} holds {tuple(slot)}, not {(item, quantity)}")
+    log(f"  gave {item_name(item, shown=False)} x{quantity} in slot {held} through the item box")
+    return held
 
 
 def _open_submenu(item: int, timeout: float) -> int:
