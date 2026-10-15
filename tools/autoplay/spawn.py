@@ -28,10 +28,13 @@ import survey  # noqa: E402
 HOLD_STATE = {0: 4, 1: 4, 17: 4, 2: 4}
 
 
-def hold_command(kind: int, slot: int) -> str:
+def hold_command(kind: int, slot: int, pin: bool = False, position_only: bool = False) -> str:
     """The harness command that arms `slot` to be held from its next set-up's first frames (returns at once, so every
-    slot of one room load is caught)."""
-    return f"enemy-arm {slot} {HOLD_STATE[kind] if kind in HOLD_STATE else 'pin'}"
+    slot of one room load is caught). pin: pinned even when the type has a do-nothing state — its AI keeps running
+    (and setting e.g. the aim-height bits a shot needs) while its moves are undone."""
+    if position_only:
+        return f"enemy-arm {slot} pinpos"   # only where it stands: its AI, reactions, falls and death run as usual
+    return f"enemy-arm {slot} {HOLD_STATE[kind] if kind in HOLD_STATE and not pin else 'pin'}"
 
 
 @lru_cache(maxsize=1)
@@ -92,6 +95,9 @@ def reload_room(log=print, then: tuple[str, ...] = ()) -> None:
         since = (since or time.time()) if ready else None
         if since and time.time() - since >= 1.0:
             # The arrival keeps the door's entry camera; cut to the one the room's zones give the player's spot.
+            # A spawned enemy's effects (blood, sparks, spit) may not be among the room's effect sprites: empty
+            # entries crash the game when drawn (StateBlock.FillEffectSprites).
+            ap.send("effect-fill")
             camera = rdt_map.load(survey.INSTALL, room, character).camera_for(x, z)
             if camera is not None and camera != ap.peek(0xBE9822, 1)[0]:
                 ap.send(f"camera {camera}", "wait 300")
@@ -101,7 +107,7 @@ def reload_room(log=print, then: tuple[str, ...] = ()) -> None:
 
 
 def spawn(kind: int, x: int | None = None, z: int | None = None, slot: int = 2, hold: bool = False, log=print,
-          kill_flag: int = 0xFF, extra: tuple[str, ...] = ()) -> dict:
+          kill_flag: int = 0xFF, extra: tuple[str, ...] = (), pin: bool = False, position_only: bool = False) -> dict:
     """Reloads the room with `kind` added in `slot` at (x, z) facing the player (default: 2000 units in front)."""
     p = ap.pos()
     if x is None or z is None:
@@ -112,7 +118,7 @@ def spawn(kind: int, x: int | None = None, z: int | None = None, slot: int = 2, 
     record = enemy_set(kind, slot, x, z, ap.angle_to(x, z, p[0], p[2]), kill_flag)
     holding = hold
     # Armed before the door: the harness catches each enemy's first frames, before it can move.
-    ap.send(f"enemy-pin {slot} off", *((hold_command(kind, slot),) if holding else ()), *extra,
+    ap.send(f"enemy-pin {slot} off", *((hold_command(kind, slot, pin, position_only),) if holding else ()), *extra,
             "room-script " + script(record).hex())
     try:
         reload_room(log)

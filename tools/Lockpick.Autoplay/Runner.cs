@@ -227,8 +227,36 @@ internal sealed class Runner(Pad pad, TextWriter log) : IDisposable
                 _enemyHealth ??= new EnemyHealth(Game.ProcessId);
                 _enemyHealth.Wake(int.Parse(w[1], CultureInfo.InvariantCulture), int.Parse(w[2], CultureInfo.InvariantCulture),
                     int.Parse(w[3], CultureInfo.InvariantCulture), w.Length > 4 ? short.Parse(w[4], CultureInfo.InvariantCulture) : (short)0,
-                    w.Length > 5 ? byte.Parse(w[5], NumberStyles.HexNumber, CultureInfo.InvariantCulture) : (byte)0);
-                Log($"  enemy {w[1]} woken at {w[2]}, {w[3]}");
+                    w.Length > 5 && w[5] != "--hold" ? byte.Parse(w[5], NumberStyles.HexNumber, CultureInfo.InvariantCulture) : (byte)0);
+                if (Array.IndexOf(w, "--hold") is var holdAt and >= 0)
+                {
+                    // enemy-wake … --hold pin|<state>: held the moment its init has run. The init follows the write
+                    // within a frame, too fast for the pin thread's arming to see the state pass through 0, so this
+                    // spins on the slot's AI state right here.
+                    var wakeSlot = int.Parse(w[1], CultureInfo.InvariantCulture);
+                    var ran = Stopwatch.StartNew();
+                    while (Game.ReadBytes(0xBE6464 + (ulong)(wakeSlot * 0x18C) + 0x84, 1)[0] == 0 && ran.ElapsedMilliseconds < 2000)
+                    {
+                        Thread.SpinWait(50);
+                    }
+
+                    if (w[holdAt + 1] is "pin" or "pinpos")
+                    {
+                        _pin ??= new EnemyPin(Game.ProcessId);
+                        _pin.Pin(wakeSlot, w[holdAt + 1] == "pinpos");
+                    }
+                    else
+                    {
+                        _enemyHealth.SetState(wakeSlot, byte.Parse(w[holdAt + 1], CultureInfo.InvariantCulture));
+                    }
+
+                    Log($"  enemy {w[1]} woken at {w[2]}, {w[3]} and held ({w[holdAt + 1]}) {ran.Elapsed.TotalMilliseconds:F0} ms after");
+                }
+                else
+                {
+                    Log($"  enemy {w[1]} woken at {w[2]}, {w[3]}");
+                }
+
                 break;
             case "room-script":
                 // room-script <hex>: run this init script after the room's own on room loads (RoomScriptHook.cs);
@@ -262,8 +290,8 @@ internal sealed class Runner(Pad pad, TextWriter log) : IDisposable
                 }
                 else
                 {
-                    _pin.Pin(pinSlot);
-                    Log($"  enemy {pinSlot} pinned");
+                    _pin.Pin(pinSlot, w.Length > 2 && w[2] == "pos");
+                    Log($"  enemy {pinSlot} pinned{(w.Length > 2 && w[2] == "pos" ? " (position only)" : string.Empty)}");
                 }
 
                 break;
@@ -271,7 +299,8 @@ internal sealed class Runner(Pad pad, TextWriter log) : IDisposable
                 // enemy-arm <slot> pin|<state>: hold the slot from its next set-up's first frames, without waiting
                 // (several slots of one room load are each caught on their own; EnemyPin.cs)
                 _pin ??= new EnemyPin(Game.ProcessId);
-                _pin.Arm(int.Parse(w[1], CultureInfo.InvariantCulture), w[2] == "pin" ? null : byte.Parse(w[2], CultureInfo.InvariantCulture));
+                _pin.Arm(int.Parse(w[1], CultureInfo.InvariantCulture), w[2] is "pin" or "pinpos" ? null : byte.Parse(w[2], CultureInfo.InvariantCulture),
+                    w[2] == "pinpos");
                 Log($"  enemy {w[1]} armed ({w[2]})");
                 break;
             case "enemy-armed":
@@ -368,6 +397,13 @@ internal sealed class Runner(Pad pad, TextWriter log) : IDisposable
                         byte.Parse(p[1], NumberStyles.HexNumber, CultureInfo.InvariantCulture),
                         byte.Parse(p[2], NumberStyles.HexNumber, CultureInfo.InvariantCulture))).ToList();
                     Log($"  {block.Apply(changes)} of {changes.Count} bytes changed");
+                }
+
+                break;
+            case "effect-fill":
+                using (var block = new StateBlock(Game.ProcessId))
+                {
+                    Log($"  {block.FillEffectSprites()} empty effect sprite entries pointed at a loaded one");
                 }
 
                 break;

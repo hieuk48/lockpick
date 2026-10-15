@@ -16,10 +16,13 @@ internal sealed partial class EnemyPin : IDisposable
     private const ulong Slots = 0xBE6464;
     private const int SlotSize = 0x18C;
     private static readonly (int Offset, int Length)[] Pinned = [(0x34, 12), (0x6C, 6), (0x74, 2), (0x84, 4)];
+    // Position only (x/y/z ints and shorts): the enemy's AI, reactions, falls and death run as usual, it just can't
+    // leave the spot — for watching what hits do to it.
+    private static readonly (int Offset, int Length)[] PinnedPosition = [(0x34, 12), (0x6C, 6)];
 
     private readonly SafeProcessHandle _process;
-    private readonly Dictionary<int, byte[][]> _pins = [];
-    private readonly Dictionary<int, (byte? State, bool Fresh)> _armed = [];
+    private readonly Dictionary<int, (byte[][] Copy, bool PositionOnly)> _pins = [];
+    private readonly Dictionary<int, (byte? State, bool Fresh, bool PositionOnly)> _armed = [];
     private readonly Lock _lock = new();
     private readonly Thread _thread;
     private volatile bool _stop;
@@ -37,18 +40,18 @@ internal sealed partial class EnemyPin : IDisposable
         _thread.Start();
     }
 
-    /// <summary>Pins <paramref name="slot"/> where and as it is now.</summary>
-    public void Pin(int slot)
+    /// <summary>Pins <paramref name="slot"/> where and as it is now (or, with <paramref name="positionOnly"/>, just where).</summary>
+    public void Pin(int slot, bool positionOnly = false)
     {
         if (slot is < 0 or >= 30)
         {
             throw new ArgumentOutOfRangeException(nameof(slot), "0–29");
         }
 
-        var copy = Pinned.Select(p => Read(Address(slot, p.Offset), p.Length)).ToArray();
+        var copy = (positionOnly ? PinnedPosition : Pinned).Select(p => Read(Address(slot, p.Offset), p.Length)).ToArray();
         lock (_lock)
         {
-            _pins[slot] = copy;
+            _pins[slot] = (copy, positionOnly);
         }
     }
 
@@ -82,7 +85,7 @@ internal sealed partial class EnemyPin : IDisposable
     /// no longer 0), it is held — pinned (<paramref name="state"/> null) or put in a do-nothing state — by this thread,
     /// so several slots set up by one room load are each caught on their own first frames. Returns at once.
     /// </summary>
-    public void Arm(int slot, byte? state)
+    public void Arm(int slot, byte? state, bool positionOnly = false)
     {
         if (slot is < 0 or >= 30)
         {
@@ -92,7 +95,7 @@ internal sealed partial class EnemyPin : IDisposable
         lock (_lock)
         {
             _pins.Remove(slot);
-            _armed[slot] = (state, false);
+            _armed[slot] = (state, false, positionOnly);
         }
     }
 
@@ -115,13 +118,13 @@ internal sealed partial class EnemyPin : IDisposable
 
     private void CatchArmed()
     {
-        KeyValuePair<int, (byte? State, bool Fresh)>[] armed;
+        KeyValuePair<int, (byte? State, bool Fresh, bool PositionOnly)>[] armed;
         lock (_lock)
         {
             armed = [.. _armed];
         }
 
-        foreach (var (slot, (state, wasFresh)) in armed)
+        foreach (var (slot, (state, wasFresh, positionOnly)) in armed)
         {
             var head = Read(Address(slot, 0), 1)[0];
             var now = Read(Address(slot, 0x84), 1)[0];
@@ -133,13 +136,15 @@ internal sealed partial class EnemyPin : IDisposable
                     WriteProcessMemory(_process, (nint)Address(slot, 0x84), [s], 1, out _);
                 }
 
-                var copy = state is null ? Pinned.Select(p => Read(Address(slot, p.Offset), p.Length)).ToArray() : null;
+                var copy = state is null
+                    ? (positionOnly ? PinnedPosition : Pinned).Select(p => Read(Address(slot, p.Offset), p.Length)).ToArray()
+                    : null;
                 lock (_lock)
                 {
                     _armed.Remove(slot);
                     if (copy is not null)
                     {
-                        _pins[slot] = copy;
+                        _pins[slot] = (copy, positionOnly);
                     }
                 }
             }
@@ -149,7 +154,7 @@ internal sealed partial class EnemyPin : IDisposable
                 {
                     if (_armed.ContainsKey(slot))
                     {
-                        _armed[slot] = (state, fresh);
+                        _armed[slot] = (state, fresh, positionOnly);
                     }
                 }
             }
@@ -178,17 +183,18 @@ internal sealed partial class EnemyPin : IDisposable
                 // The game went away or is between rooms; try again on the next pass.
             }
 
-            KeyValuePair<int, byte[][]>[] pins;
+            KeyValuePair<int, (byte[][] Copy, bool PositionOnly)>[] pins;
             lock (_lock)
             {
                 pins = [.. _pins];
             }
 
-            foreach (var (slot, copy) in pins)
+            foreach (var (slot, (copy, positionOnly)) in pins)
             {
-                for (var i = 0; i < Pinned.Length; i++)
+                var fields = positionOnly ? PinnedPosition : Pinned;
+                for (var i = 0; i < fields.Length; i++)
                 {
-                    WriteProcessMemory(_process, (nint)Address(slot, Pinned[i].Offset), copy[i], (nuint)copy[i].Length, out _);
+                    WriteProcessMemory(_process, (nint)Address(slot, fields[i].Offset), copy[i], (nuint)copy[i].Length, out _);
                 }
             }
 

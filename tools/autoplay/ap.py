@@ -505,12 +505,13 @@ def box_screen() -> int | None:
     return peek(MENU_INPUT, 1)[0] if flags() & BOX_MODE and flags() & 0x8000 else None
 
 
-def give(item: int, quantity: int = 1, to: str = "inventory", log=print) -> int:
+def give(item: int, quantity: int = 1, to: str = "inventory", log=print, equip: bool = False) -> int:
     """Gives the player an item that looks right. to="box": into the first empty item-box entry (the box screen draws
     icons from the ids). to="inventory": through the game's own item box swap, wherever the player is — the item goes
     in box entry 0, the box screen is opened by its mode bit, the inventory cursor is put on the first empty slot and
-    A, A takes it out (the game loads the slot's icon), X closes. Every press waits on the screen's state. Returns the
-    box entry or the inventory slot."""
+    A, A takes it out (the game loads the slot's icon), X closes. Every press waits on the screen's state. With
+    equip, the slot is made the equipped one before X: closing the screen equips it the game's own way (see
+    equip_now). Returns the box entry or the inventory slot."""
     if to == "box":
         out = send(f"give-box {item} {quantity}")
         return int(out.rsplit("entry ", 1)[-1].split()[0])
@@ -521,6 +522,7 @@ def give(item: int, quantity: int = 1, to: str = "inventory", log=print) -> int:
         raise Failed(f"the inventory is full ({held} of {slot_limit()})")
     if not in_control():
         raise Failed(f"the player isn't free to open the item box: {state()}")
+    camera = peek(0xBE9822, 1)[0]
     send(f"give-box {item} {quantity} --front", "open-box")
     if not wait_for(lambda: box_screen() == 1, 5):
         raise Failed(f"the item box screen didn't open (flags 0x{flags():08X})")
@@ -533,14 +535,63 @@ def give(item: int, quantity: int = 1, to: str = "inventory", log=print) -> int:
     send("press A 120")
     if not wait_for(lambda: box_screen() == 1 and peek(HELD_COUNT, 1)[0] == held + 1, 3):
         raise Failed(f"the swap didn't happen (screen {box_screen()}, held {peek(HELD_COUNT, 1)[0]})")
+    if equip:
+        _set_equipped_slot(held)
     send("press X 120")
     if not wait_for(lambda: box_screen() is None and in_control(), 5):
         raise Failed(f"the item box screen didn't close (flags 0x{flags():08X})")
+    _restore_camera(camera)
     slot = peek(INVENTORY_SLOTS + held * 2, 2)
     if (slot[0], slot[1]) != (item, quantity):
         raise Failed(f"slot {held} holds {tuple(slot)}, not {(item, quantity)}")
-    log(f"  gave {item_name(item, shown=False)} x{quantity} in slot {held} through the item box")
+    if equip and equipped() != item:
+        raise Failed(f"{item} isn't equipped after the box screen closed (equipped {equipped()})")
+    log(f"  gave {item_name(item, shown=False)} x{quantity} in slot {held} through the item box"
+        + (", equipped" if equip else ""))
     return held
+
+
+def _restore_camera(camera: int) -> None:
+    """Closing a menu screen redraws the room's entry camera (2026-10-14: the box screen left camera 0 behind after a
+    teleport and a cut to camera 2): cut back to the one shown before."""
+    if peek(0xBE9822, 1)[0] != camera:
+        send(f"camera {camera}", "wait 300")
+
+
+def _set_equipped_slot(slot: int) -> None:
+    value = slot + 1  # 1-based
+    send(f"state-apply {EQUIPPED_SLOT_ADDRESS:X}:{value:02X}:{~value & 0xFF:02X}")
+
+
+EQUIPPED_SLOT_ADDRESS = 0xBE9849
+
+
+def equip_now(item: int, quantity: int = 15, log=print) -> int:
+    """Puts a weapon in the player's hands without the status menu. The equipped weapon is an inventory slot (0xBE9849,
+    1-based), so a weapon not carried comes in through give(); one carried has its slot made the equipped one while
+    the item box screen is open. Closing a menu screen (box mode 2 included) runs the game's own
+    menu_update_equipped_weapon, which sets the weapon in hand and loads its model and animations (decomp MainMenu,
+    0x463C35 path; LoadEquippedWeaponAnimation). Returns the slot."""
+    held = [i for i, _, _ in inventory()]
+    if item not in held:
+        return give(item, quantity, log=log, equip=True)
+    if equipped() == item:
+        return held.index(item)
+    if not in_control():
+        raise Failed(f"the player isn't free to open the item box: {state()}")
+    camera = peek(0xBE9822, 1)[0]
+    send("open-box")
+    if not wait_for(lambda: box_screen() == 1, 5):
+        raise Failed(f"the item box screen didn't open (flags 0x{flags():08X})")
+    _set_equipped_slot(held.index(item))
+    send("press X 120")
+    if not wait_for(lambda: box_screen() is None and in_control(), 5):
+        raise Failed(f"the item box screen didn't close (flags 0x{flags():08X})")
+    _restore_camera(camera)
+    if equipped() != item:
+        raise Failed(f"{item} isn't equipped after the box screen closed (equipped {equipped()})")
+    log(f"  equipped {item_name(item, shown=False)} (slot {held.index(item)}) through the item box screen")
+    return held.index(item)
 
 
 def _open_submenu(item: int, timeout: float) -> int:

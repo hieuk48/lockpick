@@ -119,6 +119,63 @@ internal sealed partial class StateBlock : IDisposable
         }
     }
 
+    /// <summary>
+    /// For enemies spawned outside their own rooms: the room's effect sprites (g_effectSpriteInfo, 50 pointers at
+    /// 0xBF0A54, filled per room) only cover the effects of the room's own enemies, and Effect_CreateBillboard
+    /// (0x47BE30) reads the header without a null check — a Hunter hit or a spider's attack in the dog corridor crashed
+    /// the game at 0x47BFB6, and its animation table g_effectAnimData (0xBF0B1C) at 0x47C010 (2026-10-14). Each empty type (0xFFFFFFFF, or 0)
+    /// gets a loaded type's sprite header and animation data: the effect may look wrong,
+    /// nothing crashes. Undone by the next room load. Returns how many entries were filled.
+    /// </summary>
+    public int FillEffectSprites()
+    {
+        const ulong table = 0xBF0A54;     // g_effectSpriteInfo: sprite header per effect type
+        const ulong anims = 0xBF0B1C;     // g_effectAnimData: animation data per effect type (read the same way)
+        const int count = 50;
+        if (ProcessSuspender.Suspend(_processId) is { } error)
+        {
+            throw new InvalidOperationException("suspend failed: " + error);
+        }
+
+        try
+        {
+            var raw = new byte[count * 4];
+            var rawAnims = new byte[count * 4];
+            if (!ReadProcessMemory(_process, (nint)table, raw, (nuint)raw.Length, out _)
+                || !ReadProcessMemory(_process, (nint)anims, rawAnims, (nuint)rawAnims.Length, out _))
+            {
+                throw new InvalidOperationException("reading the effect sprite tables failed");
+            }
+
+            static bool Empty(uint e) => e is 0 or 0xFFFFFFFF;
+            var entries = Enumerable.Range(0, count).Select(i => BitConverter.ToUInt32(raw, i * 4)).ToArray();
+            var animEntries = Enumerable.Range(0, count).Select(i => BitConverter.ToUInt32(rawAnims, i * 4)).ToArray();
+            // One loaded type whose sprite header and animation data both exist: each empty type gets both of its.
+            var donor = Enumerable.Range(0, count).FirstOrDefault(i => !Empty(entries[i]) && !Empty(animEntries[i]), -1);
+            if (donor < 0)
+            {
+                return 0;
+            }
+
+            var filled = 0;
+            for (var i = 0; i < count; i++)
+            {
+                if (Empty(entries[i]) || Empty(animEntries[i]))
+                {
+                    WriteChecked(table + (ulong)(i * 4), BitConverter.GetBytes(entries[donor]));
+                    WriteChecked(anims + (ulong)(i * 4), BitConverter.GetBytes(animEntries[donor]));
+                    filled++;
+                }
+            }
+
+            return filled;
+        }
+        finally
+        {
+            ProcessSuspender.Resume(_processId);
+        }
+    }
+
     public void Dispose() => _process.Dispose();
 
     private byte ReadByte(ulong address)
