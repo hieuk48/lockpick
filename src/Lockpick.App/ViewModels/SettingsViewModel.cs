@@ -24,6 +24,7 @@ public sealed partial class SettingsViewModel : PageViewModel
         IncludePrereleases = current.IncludePrereleases;
         MarkerHotkey = MarkerHotkeyChoices.Contains(current.MarkerHotkey) ? current.MarkerHotkey : "Off";
         MarkerHotkeyStatus = services.MarkerHotkeyName is null && MarkerHotkey != "Off" ? $"{MarkerHotkey} is used by another program." : string.Empty;
+        MarkerButtonName = services.MarkerButton.DisplayName;
         var gog = GogInstallLocator.Find(Re1Adapter.GogProductId);
         DetectedInstall = gog is null
             ? "No GOG install of Resident Evil found in the registry."
@@ -72,6 +73,63 @@ public sealed partial class SettingsViewModel : PageViewModel
 
     [ObservableProperty]
     public partial string MarkerHotkeyStatus { get; private set; }
+
+    /// <summary>The controller button that adds a marker ("L2 / LT", "Off", or a bound button's name).</summary>
+    [ObservableProperty]
+    public partial string MarkerButtonName { get; private set; }
+
+    [ObservableProperty]
+    public partial string MarkerButtonStatus { get; private set; } = string.Empty;
+
+    [ObservableProperty]
+    [NotifyCanExecuteChangedFor(nameof(BindMarkerButtonCommand))]
+    public partial bool BindingMarkerButton { get; private set; }
+
+    [RelayCommand(CanExecute = nameof(CanBindMarkerButton))]
+    private async Task BindMarkerButtonAsync()
+    {
+        BindingMarkerButton = true;
+        MarkerButtonStatus = "Press the button on your controller (10 seconds)…";
+        try
+        {
+            if (await _services.NextGamepadButtonAsync(TimeSpan.FromSeconds(10)) is { } button)
+            {
+                UseMarkerButton(button.ToString());
+                MarkerButtonStatus = $"Markers: {button.DisplayName}.";
+            }
+            else
+            {
+                MarkerButtonStatus = "No controller button was pressed; nothing changed.";
+            }
+        }
+        finally
+        {
+            BindingMarkerButton = false;
+        }
+    }
+
+    private bool CanBindMarkerButton() => !BindingMarkerButton;
+
+    [RelayCommand]
+    private void UseL2ForMarkers()
+    {
+        UseMarkerButton(GamepadBinding.L2);
+        MarkerButtonStatus = string.Empty;
+    }
+
+    [RelayCommand]
+    private void TurnOffMarkerButton()
+    {
+        UseMarkerButton(GamepadBinding.Off);
+        MarkerButtonStatus = string.Empty;
+    }
+
+    private void UseMarkerButton(string value)
+    {
+        _services.SetMarkerButton(value);
+        MarkerButtonName = _services.MarkerButton.DisplayName;
+        Persist(s => s with { MarkerButton = value });
+    }
 
     [RelayCommand]
     public void CheckInstalledBuild()

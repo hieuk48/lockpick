@@ -44,12 +44,21 @@
             <TextBlock Classes="caption" Text="CAPTURE MARKERS" />
           </StackPanel>
           <TextBlock TextWrapping="Wrap" Foreground="{StaticResource LpMutedBrush}"
-                     Text="While a capture is running, this key marks the current moment even while the game has focus. Pick a key that does nothing in your game (F9 closes Resident Evil)." />
+                     Text="While a capture is running, this key or controller button marks the current moment even while the game has focus. Pick ones that do nothing in your game (F9 closes Resident Evil; L2 does nothing with the PlayStation layout)." />
           <WrapPanel ItemSpacing="8" LineSpacing="8">
             <TextBlock Classes="label" Text="Marker hotkey" VerticalAlignment="Center" />
             <ComboBox ItemsSource="{Binding MarkerHotkeyChoices}" SelectedItem="{Binding MarkerHotkey}" MinWidth="160" AutomationProperties.Name="Marker hotkey" />
           </WrapPanel>
           <TextBlock Text="{Binding MarkerHotkeyStatus}" Classes="warning" TextWrapping="Wrap" IsVisible="{Binding MarkerHotkeyStatus, Converter={x:Static StringConverters.IsNotNullOrEmpty}}" />
+          <WrapPanel ItemSpacing="8" LineSpacing="8">
+            <TextBlock Classes="label" Text="Controller button" VerticalAlignment="Center" />
+            <TextBlock Classes="mono" Text="{Binding MarkerButtonName}" VerticalAlignment="Center" MinWidth="120" />
+            <Button Content="Bind…" Command="{Binding BindMarkerButtonCommand}" AutomationProperties.Name="Bind the controller marker button" />
+            <Button Content="L2 / LT" Command="{Binding UseL2ForMarkersCommand}" AutomationProperties.Name="Use L2 or LT for markers" />
+            <Button Content="Off" Command="{Binding TurnOffMarkerButtonCommand}" AutomationProperties.Name="No controller button for markers" />
+          </WrapPanel>
+          <TextBlock Text="{Binding MarkerButtonStatus}" TextWrapping="Wrap" Foreground="{StaticResource LpMutedBrush}"
+                     IsVisible="{Binding MarkerButtonStatus, Converter={x:Static StringConverters.IsNotNullOrEmpty}}" />
         </StackPanel>
       </Border>
 

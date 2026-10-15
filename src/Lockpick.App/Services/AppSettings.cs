@@ -1,4 +1,5 @@
 using System.Text.Json;
+using Lockpick.Platform.Windows;
 using Microsoft.Extensions.Logging;
 
 namespace Lockpick.App.Services;
@@ -38,6 +39,12 @@ public sealed record AppSettings
 
     /// <summary>Hotkey that adds a capture marker while the game has focus (a GlobalHotkey.Choices name, or "Off").</summary>
     public string MarkerHotkey { get; init; } = "Ctrl+Shift+M";
+
+    /// <summary>
+    /// Controller button that adds a capture marker (GamepadBinding: "L2" = LT / L2, "Off", or a bound button such as
+    /// "hid:0810:0001/5"). L2 does nothing in Resident Evil with the PlayStation layout, so a player can press it mid-run.
+    /// </summary>
+    public string MarkerButton { get; init; } = GamepadBinding.L2;
 
     /// <summary>Set only while ask mode has the game frozen; lets the next start unfreeze it after a crash.</summary>
     public PausedGame? PausedGame { get; init; }

@@ -6,7 +6,16 @@ All notable changes to this project are documented here. The format follows
 
 ## [Unreleased]
 
+## [0.1.6] - 2026-10-15
+
+Read-only pages for what you carry, where you are and how far you've got, and capture markers from the controller.
+
 ### Added
+- Capture markers from the controller: press **L2** (LT on an Xbox-style pad) while a capture is running to mark the
+  moment, without letting go of the pad. It works with Xbox-style pads and with PlayStation pads and other USB pads
+  read directly; a pad whose buttons are numbered differently (a PS1 USB adapter) can be bound by pressing the button
+  (Settings → Capture markers → Bind…), or the button turned off. Only button presses are read, never the keyboard,
+  and the game still gets every press.
 - Items page (read-only): what you carry (with the equipped weapon and the rounds loaded) and everything in the
   item box.
 - Map page (read-only): the room you're in, drawn from your own install's room files — walls and furniture, doors with the room they lead to, item spots for your character — with your position and facing live. Items show as in the room now, taken,
@@ -19,6 +28,12 @@ All notable changes to this project are documented here. The format follows
   room table) and enemies defeated for good, with what's left and where; plus the story so far from the named events.
   Read from the game's flags, so it works from a loaded save. `tools/bounties/progress_preview.py` shows the same for a
   capture.
+
+### Fixed
+- Progress: an item counts as taken only from a room you have been in. Items a story event puts in place later
+  (Chris's flamethrower) read as taken from the start of a game.
+- Screen readers name the navigation pages, the dashboard's event log and the Debug log (they read internal type
+  names before).
 
 ### Developer tooling (not shipped)
 - `tools/Lockpick.Autoplay`: a test harness for the maintainer — virtual Xbox 360 controller (ViGEmBus), game-state

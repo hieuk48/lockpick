@@ -15,6 +15,9 @@ public sealed class AppServices : IAsyncDisposable
     private readonly HighResolutionWaitStrategy? _wait;
     private readonly ILogger _log;
     private GlobalHotkey? _markerHotkey;
+    private GamepadButtons? _gamepad;
+    private GamepadBinding _markerButton = new(GamepadBinding.Off);
+    private TaskCompletionSource<GamepadButton>? _binding;
 
     private AppServices(
         JsonLinesLoggerProvider logProvider,
@@ -36,6 +39,7 @@ public sealed class AppServices : IAsyncDisposable
         _wait = wait;
         _log = loggerFactory.CreateLogger("Lockpick");
         SetMarkerHotkey(settings.Current.MarkerHotkey);
+        SetMarkerButton(settings.Current.MarkerButton);
         Pause = new GamePause(settings, loggerFactory.CreateLogger("GamePause"));
         Pause.RecoverFromCrash();
         ReplayPath = replayPath;
@@ -82,6 +86,72 @@ public sealed class AppServices : IAsyncDisposable
 
         _markerHotkey.Pressed += (_, _) => MarkerHotkeyPressed?.Invoke(this, EventArgs.Empty);
         return true;
+    }
+
+    /// <summary>The controller button that adds a marker (the same event as the hotkey).</summary>
+    public GamepadBinding MarkerButton => _markerButton;
+
+    /// <summary>Uses <paramref name="value"/> (a <see cref="GamepadBinding"/> value) for markers from the controller.</summary>
+    public void SetMarkerButton(string value)
+    {
+        _markerButton = new GamepadBinding(value);
+        EnsureGamepad();
+    }
+
+    /// <summary>The next controller button pressed (for binding one), or null after <paramref name="timeout"/>.</summary>
+    public async Task<GamepadButton?> NextGamepadButtonAsync(TimeSpan timeout)
+    {
+        var wait = new TaskCompletionSource<GamepadButton>(TaskCreationOptions.RunContinuationsAsynchronously);
+        _binding = wait;
+        EnsureGamepad();
+        try
+        {
+            return await wait.Task.WaitAsync(timeout);
+        }
+        catch (TimeoutException)
+        {
+            return null;
+        }
+        finally
+        {
+            Interlocked.CompareExchange(ref _binding, null, wait);
+            EnsureGamepad();
+        }
+    }
+
+    /// <summary>Reads the controllers only while a button is bound or being bound.</summary>
+    private void EnsureGamepad()
+    {
+        var needed = !_markerButton.IsOff || _binding is not null;
+        if (needed && _gamepad is null)
+        {
+            _gamepad = new GamepadButtons();
+            _gamepad.ButtonDown += OnGamepadButton;
+            if (!_gamepad.HidAvailable)
+            {
+                _log.LogWarning("Raw Input is unavailable: only XInput controllers can add markers");
+            }
+        }
+        else if (!needed && _gamepad is not null)
+        {
+            _gamepad.ButtonDown -= OnGamepadButton;
+            _gamepad.Dispose();
+            _gamepad = null;
+        }
+    }
+
+    private void OnGamepadButton(object? sender, GamepadButton button)
+    {
+        if (_binding is { } binding)
+        {
+            binding.TrySetResult(button);
+            return;
+        }
+
+        if (_markerButton.Matches(button))
+        {
+            MarkerHotkeyPressed?.Invoke(this, EventArgs.Empty);
+        }
     }
 
     public string AppVersion => Updates.CurrentVersion;
@@ -141,6 +211,7 @@ public sealed class AppServices : IAsyncDisposable
         await Source.DisposeAsync();
         Updates.Dispose();
         _markerHotkey?.Dispose();
+        _gamepad?.Dispose();
         _wait?.Dispose();
         LoggerFactory.Dispose();
         LogProvider.Dispose();

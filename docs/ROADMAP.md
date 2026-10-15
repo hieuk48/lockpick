@@ -14,7 +14,7 @@ Status legend: ✅ done and verified · 🟡 done, partially verified · ⬜ not
 | 0.1.3 | Bounty automation, capture fixes from live testing (compact recordings, mid-session start) | ✅ released 2026-10-13 |
 | 0.1.4 | Captures record the game-state memory; enemy and flag detection; grouped reads | ✅ released 2026-10-13 |
 | 0.1.5 | Research tooling: capture markers, ask mode, room index, capture timeline, subtitles pack | ✅ released 2026-10-13 |
-| 0.1.6 | Progress tracker (read-only): items left, documents, maps, rooms explored, kills, story progress | 🟡 built; needs the live check |
+| 0.1.6 | Progress tracker (read-only), Items and Map pages, controller capture markers | ✅ released 2026-10-15 |
 | 0.2.0 | Core trainer functionality and memory modification | ⬜ next — research done (bounties B101–B114) |
 | 0.3.0 | Real-time overlay and customizable HUD | ⬜ |
 | 0.4.0 | Room, camera, item and enemy database | ⬜ |
@@ -82,7 +82,7 @@ Built and used in live sessions 6–8 (2026-10-13); see CHANGELOG `[0.1.5]`.
 
 ---
 
-## 0.1.6 — Progress tracker (next)
+## 0.1.6 — Progress tracker (released)
 
 Pulled forward from 0.7.0 (owner's decision, 2026-10-13): read-only and Challenge-safe, and it needs no new memory
 research — the room index, the flag banks and the named flags already hold everything.
@@ -94,6 +94,13 @@ Acceptance criteria:
 - Character-aware (Jill's and Chris's room files differ) and correct for the mansion revisited (6xx/7xx).
 - Updates live while playing; works from a loaded save (flags, not history).
 - Verified live against a playthrough: counts match what the player saw; no writes, no extra process access.
+
+**Live check 2026-10-15** (the owner's saves loaded from the title screen: Jill in the mansion revisited, 66 rooms
+explored; Chris in the main hall): every area's items, documents and maps, rooms and kills matched an independent
+reading of the same state (`tools/bounties/progress_preview.py` on a capture), and so did the story list (61 named,
+11 unnamed). The page updated live when Jill entered a new room (courtyard rooms explored 4 → 5) and re-attached after
+the game restarted. Found and fixed: items a story event places later counted as taken before their room was visited.
+Read-only throughout (the app's handle has no write rights).
 
 ---
 
