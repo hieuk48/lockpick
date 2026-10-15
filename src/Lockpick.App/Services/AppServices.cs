@@ -3,6 +3,7 @@ using Lockpick.Core.Logging;
 using Lockpick.Core.Monitoring;
 using Lockpick.Core.Profiles;
 using Lockpick.Core.Recording;
+using Lockpick.Core.Trainer;
 using Lockpick.GameAdapter.RE1;
 using Lockpick.Platform.Windows;
 using Microsoft.Extensions.Logging;
@@ -27,7 +28,8 @@ public sealed class AppServices : IAsyncDisposable
         IGameStateSource source,
         FileFingerprintProvider fingerprints,
         HighResolutionWaitStrategy? wait,
-        string? replayPath)
+        string? replayPath,
+        IProcessWriteHost? writeHost = null)
     {
         Updates = new UpdateService(settings, loggerFactory.CreateLogger("Updates"));
         LogProvider = logProvider;
@@ -43,7 +45,14 @@ public sealed class AppServices : IAsyncDisposable
         Pause = new GamePause(settings, loggerFactory.CreateLogger("GamePause"));
         Pause.RecoverFromCrash();
         ReplayPath = replayPath;
+        if (writeHost is not null)
+        {
+            Trainer = new TrainerService(source, writeHost, new TrainerActionLog(AppPaths.TrainerLog), loggerFactory.CreateLogger("Trainer"));
+        }
     }
+
+    /// <summary>The trainer (live game only; null while replaying). Read-only until the player turns Trainer Mode on.</summary>
+    public TrainerService? Trainer { get; }
 
     public JsonLinesLoggerProvider LogProvider { get; }
 
@@ -190,13 +199,14 @@ public sealed class AppServices : IAsyncDisposable
         }
 
         var wait = new HighResolutionWaitStrategy();
+        var host = new Win32ProcessHost();
         var monitor = new GameMonitor(
             adapter,
-            new Win32ProcessHost(),
+            host,
             fingerprints,
             new MonitorOptions { WaitStrategy = wait },
             loggerFactory.CreateLogger<GameMonitor>());
-        return new AppServices(logProvider, loggerFactory, settings, adapter, monitor, fingerprints, wait, null);
+        return new AppServices(logProvider, loggerFactory, settings, adapter, monitor, fingerprints, wait, null, host);
     }
 
     /// <summary>The executable to inspect offline: the configured path, else the GOG install.</summary>
@@ -208,6 +218,7 @@ public sealed class AppServices : IAsyncDisposable
     public async ValueTask DisposeAsync()
     {
         Pause.Dispose();
+        Trainer?.Dispose();
         await Source.DisposeAsync();
         Updates.Dispose();
         _markerHotkey?.Dispose();

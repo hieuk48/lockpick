@@ -6,6 +6,13 @@ All notable changes to this project are documented here. The format follows
 
 ## [Unreleased]
 
+### Added
+- Trainer page. Lockpick still starts read-only every time; choose **Trainer** to allow changes or **Challenge** for
+  a run that Lockpick can't touch. In Trainer Mode: set HP, fill it, or lock it (put back whenever the game lowers it),
+  and infinite ammo (the equipped weapon's rounds never go down; a reload raises the count). Every change is checked
+  against the game's limits (HP up to max HP), read back and logged with the value before and after
+  (`trainer/actions.jsonl`); a run the trainer changed is marked as such until the next new game or load.
+
 ## [0.1.6] - 2026-10-15
 
 Read-only pages for what you carry, where you are and how far you've got, and capture markers from the controller.

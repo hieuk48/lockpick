@@ -50,6 +50,9 @@
     <DataTemplate DataType="vm:ItemsViewModel">
       <views:ItemsView />
     </DataTemplate>
+    <DataTemplate DataType="vm:TrainerViewModel">
+      <views:TrainerView />
+    </DataTemplate>
     <DataTemplate DataType="vm:MapViewModel">
       <views:MapView />
     </DataTemplate>

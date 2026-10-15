@@ -156,6 +156,42 @@ public static class ValueTypeExtensions
         _ => throw new ArgumentOutOfRangeException(nameof(type), type, "Unknown value type."),
     };
 
+    /// <summary>The values the type can hold.</summary>
+    public static (long Min, long Max) Range(this ValueType type) => type switch
+    {
+        ValueType.U8 => (byte.MinValue, byte.MaxValue),
+        ValueType.U16 => (ushort.MinValue, ushort.MaxValue),
+        ValueType.I16 => (short.MinValue, short.MaxValue),
+        ValueType.U32 => (uint.MinValue, uint.MaxValue),
+        ValueType.I32 => (int.MinValue, int.MaxValue),
+        _ => throw new ArgumentOutOfRangeException(nameof(type), type, "Unknown value type."),
+    };
+
+    /// <summary>Encodes <paramref name="value"/> little-endian into the start of <paramref name="bytes"/> (SizeOf bytes).</summary>
+    public static void Encode(this ValueType type, long value, Span<byte> bytes)
+    {
+        switch (type)
+        {
+            case ValueType.U8:
+                bytes[0] = checked((byte)value);
+                break;
+            case ValueType.U16:
+                BinaryPrimitives.WriteUInt16LittleEndian(bytes, checked((ushort)value));
+                break;
+            case ValueType.I16:
+                BinaryPrimitives.WriteInt16LittleEndian(bytes, checked((short)value));
+                break;
+            case ValueType.U32:
+                BinaryPrimitives.WriteUInt32LittleEndian(bytes, checked((uint)value));
+                break;
+            case ValueType.I32:
+                BinaryPrimitives.WriteInt32LittleEndian(bytes, checked((int)value));
+                break;
+            default:
+                throw new ArgumentOutOfRangeException(nameof(type), type, "Unknown value type.");
+        }
+    }
+
     public static int SizeOf(this ValueType type) => type switch
     {
         ValueType.U8 => 1,

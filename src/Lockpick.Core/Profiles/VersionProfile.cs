@@ -126,9 +126,28 @@ public sealed record FieldSpec
 
     public IReadOnlyList<string> Sources { get; init; } = [];
 
+    /// <summary>Present only on fields the trainer may write; see <see cref="WriteSpec"/>.</summary>
+    public WriteSpec? Write { get; init; }
+
     public bool IsTrusted => Verification >= Verification.Static;
 
+    /// <summary>Writable: the profile declares bounds for it and its meaning is confirmed in the live game.</summary>
+    public bool IsWritable => Write is not null && Verification == Verification.Runtime && Mask is null;
+
     public override string ToString() => $"{Name} @0x{Address:X} {Type} ({Verification})";
+}
+
+/// <summary>
+/// Bounds for a field the trainer may write (Trainer Mode only). A write outside them is refused before it reaches the
+/// game; <see cref="MaxField"/> bounds the value by another field's current value (HP ≤ max HP).
+/// </summary>
+public sealed record WriteSpec
+{
+    public long Min { get; init; }
+
+    public long Max { get; init; }
+
+    public string? MaxField { get; init; }
 }
 
 internal sealed class HexUInt64Converter : JsonConverter<ulong>

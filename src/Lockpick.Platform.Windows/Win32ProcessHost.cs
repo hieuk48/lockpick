@@ -3,13 +3,17 @@ using System.Diagnostics;
 using System.Runtime.InteropServices;
 using System.Runtime.Versioning;
 using Lockpick.Core.Processes;
+using Lockpick.Core.Trainer;
 using Microsoft.Win32.SafeHandles;
 
 namespace Lockpick.Platform.Windows;
 
-/// <summary>Finds game processes and opens them with read-only access (no write or code-execution rights).</summary>
+/// <summary>
+/// Finds game processes and opens them read-only (no write or code-execution rights). Trainer Mode alone asks for a
+/// second, write-capable handle (<see cref="OpenForWrite"/>).
+/// </summary>
 [SupportedOSPlatform("windows")]
-public sealed class Win32ProcessHost : IProcessHost
+public sealed class Win32ProcessHost : IProcessHost, IProcessWriteHost
 {
     public IReadOnlyList<ProcessCandidate> FindProcesses(IReadOnlyCollection<string> executableNames)
     {
@@ -36,6 +40,8 @@ public sealed class Win32ProcessHost : IProcessHost
     }
 
     public IAttachedProcess OpenReadOnly(ProcessCandidate candidate) => Win32AttachedProcess.Open(candidate.ProcessId);
+
+    public IProcessWriter OpenForWrite(int processId) => Win32ProcessWriter.Open(processId);
 
     /// <summary>Full executable path via QueryFullProcessImageName (works across bitness and needs only limited rights).</summary>
     public static string? TryGetImagePath(int processId)
@@ -160,4 +166,79 @@ public sealed class Win32AttachedProcess : IAttachedProcess
 
         return new ModuleImage((ulong)info.BaseOfDll, info.SizeOfImage, Win32ProcessHost.QueryImagePath(handle));
     }
+}
+
+/// <summary>
+/// The trainer's handle: PROCESS_VM_WRITE | PROCESS_VM_OPERATION (needed by WriteProcessMemory) plus reading back,
+/// opened only while Trainer Mode is on. No thread, code-execution or protection-changing rights: it can change the
+/// game's data, nothing else.
+/// </summary>
+[SupportedOSPlatform("windows")]
+public sealed class Win32ProcessWriter : IProcessWriter
+{
+    private const uint Access = NativeMethods.ProcessVmWrite | NativeMethods.ProcessVmOperation | NativeMethods.ProcessVmRead
+        | NativeMethods.ProcessQueryLimitedInformation;
+
+    private readonly SafeProcessHandle _handle;
+
+    private Win32ProcessWriter(int processId, SafeProcessHandle handle)
+    {
+        ProcessId = processId;
+        _handle = handle;
+    }
+
+    public int ProcessId { get; }
+
+    public static Win32ProcessWriter Open(int processId)
+    {
+        var handle = NativeMethods.OpenProcess(Access, false, processId);
+        if (handle.IsInvalid)
+        {
+            var error = Marshal.GetLastPInvokeError();
+            handle.Dispose();
+            throw new ProcessAccessException($"Windows refused write access to the game (PID {processId}): {new Win32Exception(error).Message}");
+        }
+
+        return new Win32ProcessWriter(processId, handle);
+    }
+
+    public unsafe bool TryRead(ulong address, Span<byte> destination)
+    {
+        if (destination.IsEmpty)
+        {
+            return true;
+        }
+
+        if (_handle.IsClosed || address > (ulong)nint.MaxValue)
+        {
+            return false;
+        }
+
+        fixed (byte* buffer = destination)
+        {
+            return NativeMethods.ReadProcessMemory(_handle, (nint)address, buffer, (nuint)destination.Length, out var read)
+                && read == (nuint)destination.Length;
+        }
+    }
+
+    public unsafe bool TryWrite(ulong address, ReadOnlySpan<byte> source)
+    {
+        if (source.IsEmpty)
+        {
+            return true;
+        }
+
+        if (_handle.IsClosed || address > (ulong)nint.MaxValue)
+        {
+            return false;
+        }
+
+        fixed (byte* buffer = source)
+        {
+            return NativeMethods.WriteProcessMemory(_handle, (nint)address, buffer, (nuint)source.Length, out var written)
+                && written == (nuint)source.Length;
+        }
+    }
+
+    public void Dispose() => _handle.Dispose();
 }

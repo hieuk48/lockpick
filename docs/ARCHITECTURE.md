@@ -89,7 +89,10 @@ not emitted yet; they arrive with the milestone that verifies their data.
 
 ## Safety
 
-- Read-only access rights only (`PROCESS_VM_READ | PROCESS_QUERY_LIMITED_INFORMATION | SYNCHRONIZE`).
+- Monitoring uses read-only access rights only (`PROCESS_VM_READ | PROCESS_QUERY_LIMITED_INFORMATION | SYNCHRONIZE`).
+- Writes (0.2+) only through `TrainerService`, on a second handle (`PROCESS_VM_WRITE | PROCESS_VM_OPERATION`, plus
+  reading back) that exists only while the player has Trainer Mode on; Lockpick starts read-only every time, and
+  Challenge Mode never opens one (ADR-016).
 - Exact build identification before opening the process; runtime image verification before reading.
 - Reads confined to the verified image range; profile validation rejects addresses outside the image.
 - Lockpick never modifies game files and runs `asInvoker` (no elevation).
@@ -167,6 +170,18 @@ alongside the readable trace. Any value can be decoded from old captures later, 
 having identified a field before the capture was made. The format is pinned by a golden file shared by the C# writer
 and the Python analyzer. Field reads are grouped into a few block reads per poll (fallback to per-field reads when a
 block can't be read), which keeps 130+ fields cheap.
+
+**ADR-016 — The trainer writes profile fields through one service.** `TrainerService` (Core, game-agnostic) is the
+only code that changes the game. Modes: read-only (the default at every start; no write handle), Trainer (a second
+handle with write rights, opened on the switch and on each attach, closed on detach or mode change) and Challenge (no
+handle, every write refused). A write names a profile field; the profile marks writable fields with bounds
+(`write: { min, max, maxField }`), only on runtime-verified, unmasked fields (profile validation enforces it). Each
+write is checked against the bounds and the bound field's live value (HP ≤ max HP), read back, and logged with the old
+and new value (`trainer/actions.jsonl`, the Trainer page). Locks and rules (infinite ammo, from the adapter's
+`IGameTrainer`) re-apply on each poll in a game; a write that would change nothing is skipped and not logged. The
+first change in a run (since a new game or a loaded save) raises `RunInvalidated` — a record of what Lockpick did, not
+an anti-cheat claim. Game knowledge (which field is health, which slot holds the equipped weapon's rounds) stays in
+the adapter.
 
 **ADR-009 — Responsive UI.** The window switches to an icon-rail + single-column layout below 760 px
 (window) / 780 px (dashboard content), for portrait monitors and side-by-side use with the game.

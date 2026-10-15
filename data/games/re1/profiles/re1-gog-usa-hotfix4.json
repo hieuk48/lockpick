@@ -83,6 +83,8 @@
       "description": "Player current HP (player entity +0x88).",
       "evidence": "Live GOG session 2026-10-12: 140 at New Game as Chris; zombie bites in room 104 lowered it 140 -> 130 -> ... -> 10 -> 0 -> -10 (signed, overshoots below zero at death). Static: 154 word-width references; death checks 'cmp word [0xBE636C],0' (e.g. 0x40615E); heal clamp at 0x401285 compares it with max HP.",
       "sources": ["static analysis of this executable", "ecruells/resident-evil-pc-decomp Entities.h health @0x88", "deserteagle417/RE1-Autosplitter hp"]
+,
+      "write": { "min": 1, "max": 255, "maxField": "maxHp" }
     },
     {
       "name": "maxHp",
@@ -245,6 +247,146 @@
       "evidence": "Live Jill session 2026-10-12 (tests/Lockpick.Tests/Fixtures/re1-live-jill-inventory.trace.txt): pickups fill the first empty slot; Beretta (id 0x02) quantity = loaded rounds, decremented per shot; reload moves rounds from handgun bullets (id 0x0B); consumed items are removed and later slots shift up. Static: item writes at 0xBE9944 (id) / 0xBE9945 (qty).",
       "description": "Inventory slot 8: low byte item id, high byte quantity/ammo. Slots 7-8 are Jill only.",
       "sources": ["static analysis of this executable (item writes at 0xBE9944/0xBE9945)", "ecruells/resident-evil-pc-decomp BioCard.h", "deserteagle417/RE1-Autosplitter Inventory"]
+    },
+    {
+      "name": "inv0Qty",
+      "address": "0xBE9945",
+      "type": "u8",
+      "verification": "runtime",
+      "evidence": "Byte of the runtime-verified inventory slot (inv0, high byte = quantity / loaded rounds; static: item writes at 0xBE9944 id / 0xBE9945 qty). Trainer writes: the dev harness set slot quantities by memory writes and the game fired and reloaded with them (2026-10-14 test suite, weapon lab 2026-10-15).",
+      "description": "Inventory slot 1 quantity (Chris and Jill; for a weapon, the loaded rounds).",
+      "sources": ["static analysis of this executable (item writes at 0xBE9944/0xBE9945)"],
+      "write": { "min": 0, "max": 255 }
+    },
+    {
+      "name": "inv1Qty",
+      "address": "0xBE9947",
+      "type": "u8",
+      "verification": "runtime",
+      "evidence": "Byte of the runtime-verified inventory slot (inv1, high byte = quantity / loaded rounds; static: item writes at 0xBE9944 id / 0xBE9945 qty). Trainer writes: the dev harness set slot quantities by memory writes and the game fired and reloaded with them (2026-10-14 test suite, weapon lab 2026-10-15).",
+      "description": "Inventory slot 2 quantity (Chris and Jill; for a weapon, the loaded rounds).",
+      "sources": ["static analysis of this executable (item writes at 0xBE9944/0xBE9945)"],
+      "write": { "min": 0, "max": 255 }
+    },
+    {
+      "name": "inv2Qty",
+      "address": "0xBE9949",
+      "type": "u8",
+      "verification": "runtime",
+      "evidence": "Byte of the runtime-verified inventory slot (inv2, high byte = quantity / loaded rounds; static: item writes at 0xBE9944 id / 0xBE9945 qty). Trainer writes: the dev harness set slot quantities by memory writes and the game fired and reloaded with them (2026-10-14 test suite, weapon lab 2026-10-15).",
+      "description": "Inventory slot 3 quantity (Chris and Jill; for a weapon, the loaded rounds).",
+      "sources": ["static analysis of this executable (item writes at 0xBE9944/0xBE9945)"],
+      "write": { "min": 0, "max": 255 }
+    },
+    {
+      "name": "inv3Qty",
+      "address": "0xBE994B",
+      "type": "u8",
+      "verification": "runtime",
+      "evidence": "Byte of the runtime-verified inventory slot (inv3, high byte = quantity / loaded rounds; static: item writes at 0xBE9944 id / 0xBE9945 qty). Trainer writes: the dev harness set slot quantities by memory writes and the game fired and reloaded with them (2026-10-14 test suite, weapon lab 2026-10-15).",
+      "description": "Inventory slot 4 quantity (Chris and Jill; for a weapon, the loaded rounds).",
+      "sources": ["static analysis of this executable (item writes at 0xBE9944/0xBE9945)"],
+      "write": { "min": 0, "max": 255 }
+    },
+    {
+      "name": "inv4Qty",
+      "address": "0xBE994D",
+      "type": "u8",
+      "verification": "runtime",
+      "evidence": "Byte of the runtime-verified inventory slot (inv4, high byte = quantity / loaded rounds; static: item writes at 0xBE9944 id / 0xBE9945 qty). Trainer writes: the dev harness set slot quantities by memory writes and the game fired and reloaded with them (2026-10-14 test suite, weapon lab 2026-10-15).",
+      "description": "Inventory slot 5 quantity (Chris and Jill; for a weapon, the loaded rounds).",
+      "sources": ["static analysis of this executable (item writes at 0xBE9944/0xBE9945)"],
+      "write": { "min": 0, "max": 255 }
+    },
+    {
+      "name": "inv5Qty",
+      "address": "0xBE994F",
+      "type": "u8",
+      "verification": "runtime",
+      "evidence": "Byte of the runtime-verified inventory slot (inv5, high byte = quantity / loaded rounds; static: item writes at 0xBE9944 id / 0xBE9945 qty). Trainer writes: the dev harness set slot quantities by memory writes and the game fired and reloaded with them (2026-10-14 test suite, weapon lab 2026-10-15).",
+      "description": "Inventory slot 6 quantity (Chris and Jill; for a weapon, the loaded rounds).",
+      "sources": ["static analysis of this executable (item writes at 0xBE9944/0xBE9945)"],
+      "write": { "min": 0, "max": 255 }
+    },
+    {
+      "name": "inv6Qty",
+      "address": "0xBE9951",
+      "type": "u8",
+      "verification": "runtime",
+      "evidence": "Byte of the runtime-verified inventory slot (inv6, high byte = quantity / loaded rounds; static: item writes at 0xBE9944 id / 0xBE9945 qty). Trainer writes: the dev harness set slot quantities by memory writes and the game fired and reloaded with them (2026-10-14 test suite, weapon lab 2026-10-15).",
+      "description": "Inventory slot 7 quantity (Chris and Jill; for a weapon, the loaded rounds).",
+      "sources": ["static analysis of this executable (item writes at 0xBE9944/0xBE9945)"],
+      "write": { "min": 0, "max": 255 }
+    },
+    {
+      "name": "inv7Qty",
+      "address": "0xBE9953",
+      "type": "u8",
+      "verification": "runtime",
+      "evidence": "Byte of the runtime-verified inventory slot (inv7, high byte = quantity / loaded rounds; static: item writes at 0xBE9944 id / 0xBE9945 qty). Trainer writes: the dev harness set slot quantities by memory writes and the game fired and reloaded with them (2026-10-14 test suite, weapon lab 2026-10-15).",
+      "description": "Inventory slot 8 quantity (Chris and Jill; for a weapon, the loaded rounds).",
+      "sources": ["static analysis of this executable (item writes at 0xBE9944/0xBE9945)"],
+      "write": { "min": 0, "max": 255 }
+    },
+    {
+      "name": "rebInv0Qty",
+      "address": "0xBE9951",
+      "type": "u8",
+      "verification": "runtime",
+      "evidence": "Rebecca's held items (6 slots of id + quantity at 0xBE9950, the inventory pointer 0xD22768 while she plays): live 2026-10-15 (B007), her Beretta x15 in slot 1, matching her status screen.",
+      "description": "Rebecca's inventory slot 1 quantity (her own list; it overlaps Jill's slots 7-8, never used in Chris's game).",
+      "sources": ["static analysis of this executable (room init points 0xD22768 at 0xBE9950 for character 3)", "live B007 capture 2026-10-15"],
+      "write": { "min": 0, "max": 255 }
+    },
+    {
+      "name": "rebInv1Qty",
+      "address": "0xBE9953",
+      "type": "u8",
+      "verification": "runtime",
+      "evidence": "Rebecca's held items (6 slots of id + quantity at 0xBE9950, the inventory pointer 0xD22768 while she plays): live 2026-10-15 (B007), her Beretta x15 in slot 1, matching her status screen.",
+      "description": "Rebecca's inventory slot 2 quantity (her own list; it overlaps Jill's slots 7-8, never used in Chris's game).",
+      "sources": ["static analysis of this executable (room init points 0xD22768 at 0xBE9950 for character 3)", "live B007 capture 2026-10-15"],
+      "write": { "min": 0, "max": 255 }
+    },
+    {
+      "name": "rebInv2Qty",
+      "address": "0xBE9955",
+      "type": "u8",
+      "verification": "runtime",
+      "evidence": "Rebecca's held items (6 slots of id + quantity at 0xBE9950, the inventory pointer 0xD22768 while she plays): live 2026-10-15 (B007), her Beretta x15 in slot 1, matching her status screen.",
+      "description": "Rebecca's inventory slot 3 quantity (her own list; it overlaps Jill's slots 7-8, never used in Chris's game).",
+      "sources": ["static analysis of this executable (room init points 0xD22768 at 0xBE9950 for character 3)", "live B007 capture 2026-10-15"],
+      "write": { "min": 0, "max": 255 }
+    },
+    {
+      "name": "rebInv3Qty",
+      "address": "0xBE9957",
+      "type": "u8",
+      "verification": "runtime",
+      "evidence": "Rebecca's held items (6 slots of id + quantity at 0xBE9950, the inventory pointer 0xD22768 while she plays): live 2026-10-15 (B007), her Beretta x15 in slot 1, matching her status screen.",
+      "description": "Rebecca's inventory slot 4 quantity (her own list; it overlaps Jill's slots 7-8, never used in Chris's game).",
+      "sources": ["static analysis of this executable (room init points 0xD22768 at 0xBE9950 for character 3)", "live B007 capture 2026-10-15"],
+      "write": { "min": 0, "max": 255 }
+    },
+    {
+      "name": "rebInv4Qty",
+      "address": "0xBE9959",
+      "type": "u8",
+      "verification": "runtime",
+      "evidence": "Rebecca's held items (6 slots of id + quantity at 0xBE9950, the inventory pointer 0xD22768 while she plays): live 2026-10-15 (B007), her Beretta x15 in slot 1, matching her status screen.",
+      "description": "Rebecca's inventory slot 5 quantity (her own list; it overlaps Jill's slots 7-8, never used in Chris's game).",
+      "sources": ["static analysis of this executable (room init points 0xD22768 at 0xBE9950 for character 3)", "live B007 capture 2026-10-15"],
+      "write": { "min": 0, "max": 255 }
+    },
+    {
+      "name": "rebInv5Qty",
+      "address": "0xBE995B",
+      "type": "u8",
+      "verification": "runtime",
+      "evidence": "Rebecca's held items (6 slots of id + quantity at 0xBE9950, the inventory pointer 0xD22768 while she plays): live 2026-10-15 (B007), her Beretta x15 in slot 1, matching her status screen.",
+      "description": "Rebecca's inventory slot 6 quantity (her own list; it overlaps Jill's slots 7-8, never used in Chris's game).",
+      "sources": ["static analysis of this executable (room init points 0xD22768 at 0xBE9950 for character 3)", "live B007 capture 2026-10-15"],
+      "write": { "min": 0, "max": 255 }
     },
     {
       "name": "equippedSlot",

@@ -18,6 +18,9 @@ public static class AppPaths
     public static string Captures => Path.Combine(DataRoot, "captures");
 
     public static string SettingsFile => Path.Combine(DataRoot, "settings.json");
+
+    /// <summary>Every trainer action (JSON lines): what was written, from what to what, and the result.</summary>
+    public static string TrainerLog => Path.Combine(DataRoot, "trainer", "actions.jsonl");
 }
 
 public sealed record AppSettings

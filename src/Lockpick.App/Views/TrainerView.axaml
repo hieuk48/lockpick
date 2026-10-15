@@ -1,0 +1,102 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:vm="using:Lockpick.App.ViewModels"
+             xmlns:c="using:Lockpick.App.Controls"
+             x:Class="Lockpick.App.Views.TrainerView"
+             x:DataType="vm:TrainerViewModel">
+
+  <UserControl.Styles>
+    <Style Selector="Button.mode">
+      <Setter Property="MinWidth" Value="120" />
+    </Style>
+    <Style Selector="Button.mode.selected">
+      <Setter Property="BorderBrush" Value="{StaticResource LpGreenBrush}" />
+      <Setter Property="BorderThickness" Value="2" />
+    </Style>
+  </UserControl.Styles>
+
+  <ScrollViewer>
+    <StackPanel Spacing="12" MaxWidth="760" HorizontalAlignment="Left">
+
+      <!-- Mode -->
+      <Border Classes="card">
+        <StackPanel Spacing="8">
+          <StackPanel Classes="cardhead">
+            <c:LucideIcon Data="{StaticResource Icon.Wrench}" />
+            <TextBlock Classes="caption" Text="MODE" />
+          </StackPanel>
+          <WrapPanel ItemSpacing="8" LineSpacing="8" IsEnabled="{Binding Available}">
+            <Button Classes="mode" Classes.selected="{Binding IsReadOnly}" Content="Read-only" Command="{Binding UseReadOnlyCommand}"
+                    AutomationProperties.Name="Read-only mode" ToolTip.Tip="Lockpick only reads the game (the default every time it starts)." />
+            <Button Classes="mode" Classes.selected="{Binding IsTrainer}" Content="Trainer" Command="{Binding UseTrainerCommand}"
+                    AutomationProperties.Name="Trainer mode" ToolTip.Tip="Allow checked, logged changes to the game." />
+            <Button Classes="mode" Classes.selected="{Binding IsChallenge}" Content="Challenge" Command="{Binding UseChallengeCommand}"
+                    AutomationProperties.Name="Challenge mode" ToolTip.Tip="No write access at all: the run stays exactly as you played it." />
+          </WrapPanel>
+          <TextBlock Text="{Binding ModeText}" TextWrapping="Wrap" />
+          <TextBlock Text="{Binding RunText}" TextWrapping="Wrap" Classes.warning="{Binding RunModified}"
+                     Foreground="{StaticResource LpMutedBrush}" />
+        </StackPanel>
+      </Border>
+
+      <!-- Health -->
+      <Border Classes="card" IsEnabled="{Binding CanWrite}">
+        <StackPanel Spacing="8">
+          <StackPanel Classes="cardhead">
+            <c:LucideIcon Data="{StaticResource Icon.HeartPulse}" />
+            <TextBlock Classes="caption" Text="HEALTH" />
+          </StackPanel>
+          <WrapPanel ItemSpacing="8" LineSpacing="8">
+            <TextBlock Classes="label" Text="HP" VerticalAlignment="Center" />
+            <TextBlock Classes="mono" Text="{Binding HealthText}" VerticalAlignment="Center" MinWidth="80" />
+            <NumericUpDown Value="{Binding HealthTarget}" Minimum="1" Maximum="{Binding HealthMax}" Increment="1" FormatString="0"
+                           MinWidth="130" AutomationProperties.Name="HP to set" />
+            <Button Content="Set" Command="{Binding SetHealthCommand}" AutomationProperties.Name="Set HP" />
+            <Button Content="Full" Command="{Binding FillHealthCommand}" AutomationProperties.Name="Set HP to full" />
+            <CheckBox Content="Lock" IsChecked="{Binding HealthLocked}" VerticalAlignment="Center"
+                      ToolTip.Tip="Keep HP at this value: whenever the game lowers it, Lockpick puts it back." />
+          </WrapPanel>
+        </StackPanel>
+      </Border>
+
+      <!-- Ammo -->
+      <Border Classes="card" IsEnabled="{Binding CanWrite}">
+        <StackPanel Spacing="8">
+          <StackPanel Classes="cardhead">
+            <c:LucideIcon Data="{StaticResource Icon.Package}" />
+            <TextBlock Classes="caption" Text="AMMO" />
+          </StackPanel>
+          <CheckBox Content="Infinite ammo" IsChecked="{Binding InfiniteAmmo}"
+                    AutomationProperties.Name="Infinite ammo" />
+          <TextBlock TextWrapping="Wrap" Foreground="{StaticResource LpMutedBrush}"
+                     Text="The equipped weapon's rounds never go down: each shot is put back, and a reload raises the count it keeps." />
+        </StackPanel>
+      </Border>
+
+      <TextBlock Text="{Binding LastResult}" TextWrapping="Wrap"
+                 IsVisible="{Binding LastResult, Converter={x:Static StringConverters.IsNotNullOrEmpty}}" />
+
+      <!-- Log -->
+      <Border Classes="card">
+        <StackPanel Spacing="6">
+          <StackPanel Classes="cardhead">
+            <c:LucideIcon Data="{StaticResource Icon.ScrollText}" />
+            <TextBlock Classes="caption" Text="ACTION LOG" />
+          </StackPanel>
+          <TextBlock TextWrapping="Wrap" Foreground="{StaticResource LpMutedBrush}"
+                     Text="{Binding LogPath, StringFormat='Every trainer action, with the value before and after. Kept in {0}'}" />
+          <ItemsControl ItemsSource="{Binding Actions}">
+            <ItemsControl.ItemTemplate>
+              <DataTemplate x:DataType="vm:TrainerActionRow">
+                <Grid ColumnDefinitions="72,*" Margin="0,2" AutomationProperties.Name="{Binding Text}">
+                  <TextBlock Classes="mono" Text="{Binding Time}" Foreground="{StaticResource LpMutedBrush}" FontSize="11.5" />
+                  <TextBlock Grid.Column="1" Text="{Binding Text}" TextWrapping="Wrap" />
+                </Grid>
+              </DataTemplate>
+            </ItemsControl.ItemTemplate>
+          </ItemsControl>
+        </StackPanel>
+      </Border>
+    </StackPanel>
+  </ScrollViewer>
+</UserControl>

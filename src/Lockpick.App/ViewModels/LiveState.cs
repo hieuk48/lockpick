@@ -49,6 +49,13 @@ public sealed partial class LiveState : ObservableObject
 
     public IGameStateSource Source { get; }
 
+    /// <summary>Adds an event from elsewhere (the trainer) to the event log, in order with the game's own.</summary>
+    public void Add(GameEvent gameEvent)
+    {
+        _pendingEvents.Enqueue(gameEvent);
+        ScheduleFlush();
+    }
+
     [ObservableProperty]
     public partial MonitorStatus Status { get; private set; }
 
@@ -78,7 +85,7 @@ public sealed partial class LiveState : ObservableObject
 
         while (_pendingEvents.TryDequeue(out var e))
         {
-            Events.Insert(0, new EventItem(e.Timestamp, e.GetType().Name, e.Describe(), e is PlayerDamaged or GameStopped));
+            Events.Insert(0, new EventItem(e.Timestamp, e.GetType().Name, e.Describe(), e is PlayerDamaged or GameStopped or RunInvalidated));
             if (Events.Count > MaxEvents)
             {
                 Events.RemoveAt(Events.Count - 1);

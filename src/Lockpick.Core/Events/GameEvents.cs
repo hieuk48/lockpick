@@ -15,6 +15,8 @@ namespace Lockpick.Core.Events;
 [JsonDerivedType(typeof(CameraChanged), nameof(CameraChanged))]
 [JsonDerivedType(typeof(PlayerHealthChanged), nameof(PlayerHealthChanged))]
 [JsonDerivedType(typeof(PlayerDamaged), nameof(PlayerDamaged))]
+[JsonDerivedType(typeof(TrainerActionExecuted), nameof(TrainerActionExecuted))]
+[JsonDerivedType(typeof(RunInvalidated), nameof(RunInvalidated))]
 public abstract record GameEvent(DateTimeOffset Timestamp)
 {
     public abstract string Describe();
@@ -60,4 +62,19 @@ public sealed record PlayerHealthChanged(DateTimeOffset Timestamp, int From, int
 public sealed record PlayerDamaged(DateTimeOffset Timestamp, int Amount, int Remaining) : GameEvent(Timestamp)
 {
     public override string Describe() => $"Damaged for {Amount} (HP {Remaining})";
+}
+
+/// <summary>The trainer changed the game (Trainer Mode only): what, from what to what.</summary>
+public sealed record TrainerActionExecuted(DateTimeOffset Timestamp, string Description) : GameEvent(Timestamp)
+{
+    public override string Describe() => $"Trainer: {Description}";
+}
+
+/// <summary>
+/// The first trainer change since this run started (a new game or a loaded save). A record of what Lockpick did, not
+/// an anti-cheat claim: Lockpick can't see what other programs do.
+/// </summary>
+public sealed record RunInvalidated(DateTimeOffset Timestamp, string Reason) : GameEvent(Timestamp)
+{
+    public override string Describe() => $"Run modified by the trainer: {Reason}";
 }

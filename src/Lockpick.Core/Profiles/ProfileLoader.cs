@@ -128,6 +128,28 @@ public static class ProfileLoader
             {
                 errors.Add($"field '{field.Name}' is marked {field.Verification} but has no evidence");
             }
+
+            if (field.Write is { } write)
+            {
+                var (lowest, highest) = Memory.ValueTypeExtensions.Range(field.Type);
+                if (field.Verification != Verification.Runtime || field.Mask is not null)
+                {
+                    errors.Add($"field '{field.Name}' is writable but not runtime-verified, or masked");
+                }
+
+                if (write.Min > write.Max || write.Min < lowest || write.Max > highest)
+                {
+                    errors.Add($"field '{field.Name}' has write bounds {write.Min}..{write.Max} outside its type");
+                }
+            }
+        }
+
+        foreach (var field in profile.Fields)
+        {
+            if (field.Write?.MaxField is { } bound && profile.FindField(bound) is null)
+            {
+                errors.Add($"field '{field.Name}' is bounded by unknown field '{bound}'");
+            }
         }
 
         var regionNames = new HashSet<string>(StringComparer.OrdinalIgnoreCase);

@@ -55,6 +55,9 @@ public interface IGameAdapter
     /// </summary>
     Maps.IRoomMapSource? CreateRoomMaps(string installDirectory) => null;
 
+    /// <summary>The game's trainer features (what to write for health, ammo, …); null when the adapter has none.</summary>
+    Trainer.IGameTrainer? CreateTrainer(VersionProfile profile) => null;
+
     /// <summary>A short name for the room (e.g. "Dining room"), or null when the adapter doesn't know it.</summary>
     string? RoomName(string roomId) => null;
 
