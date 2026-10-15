@@ -16,7 +16,7 @@ Status legend: ✅ done and verified · 🟡 done, partially verified · ⬜ not
 | 0.1.5 | Research tooling: capture markers, ask mode, room index, capture timeline, subtitles pack | ✅ released 2026-10-13 |
 | 0.1.6 | Progress tracker (read-only), Items and Map pages, controller capture markers | ✅ released 2026-10-15 |
 | 0.2.0 | Core trainer (Trainer Mode, HP/ammo/inventory, hotkeys), Challenges tab, API for other tools, branding | ✅ released 2026-10-15 |
-| 0.3.0 | Play and stream with one app: run modes, LiveSplit, overlay + OBS, responsive UI, training captures | ⬜ next — display research done |
+| 0.3.0 | Play and stream with one app: overlay, runs (timer, splits, LiveSplit), OBS sources, training captures | ⬜ next — responsive UI and display research done |
 | 0.4.0 | Room, camera, item and enemy database | ⬜ |
 | 0.5.0 | Object highlighting and ESP | ⬜ |
 | 0.6.0 | Advanced trainer and gameplay manipulation | ⬜ |
@@ -135,44 +135,92 @@ Acceptance criteria:
 
 Owner's direction (2026-10-15): the first release for other players. A runner doing a speedrun, a no-damage run, a
 knife-only run or a regular playthrough needs only Lockpick open — no second app for timing, splits or the stream —
-and their sessions can be captured for behaviour-cloning research. Planned as sprints; 0.3.0 can ship after the
-first two, with streaming as 0.3.1.
+and their sessions can be captured for behaviour-cloning research (they will be playing 0.3.0, so training captures
+ship in it).
 
-1. **Responsive app:** every page checked and fixed at ultrawide, 1080p and portrait (720×1280 at 150%), 100–200%
-   scaling; content scrolls instead of clipping.
-2. **Run modes** — Speedrun, No Damage, Knife Only, Regular — with live rule checks (any HP loss ends a no-damage run;
-   a shot from anything but the knife breaks knife-only), Challenge Mode forced on, a run timer from the game's own
-   clock and autosplits from the named story flags (pulled forward from 0.8.0). **LiveSplit:** import the runner's
-   splits file (names) and connect to its server, so each split drops a capture marker by itself.
-3. **Overlay and OBS:** a local browser-source page for OBS (timer, splits, HP, run status), a pop-out window for
-   window capture, and an in-game overlay (transparent, click-through, over the game window — windowed or
-   borderless; no hooking into the game). **Display research done 2026-10-15** ([DISPLAY.md](DISPLAY.md)): every
-   wrapper mode on both monitors — Lockpick reads the game in all of them; OBS Game Capture and WGC window capture
-   work everywhere; the overlay works windowed/borderless (exclusive fullscreen still needs an owner check); exclusive
-   fullscreen minimizes and stops on any focus change, so Lockpick must never activate its windows then; the
-   requirements list there is the spec for this item.
-4. **Training captures:** opt-in, every game frame (30/s, keyed to the game's frame counter): the state and the
-   game's own input word (`0xBE9840`/`0xBE9842` — exactly what the game acted on, for any pad or keyboard), for the
-   behaviour-cloning pipeline (`tools/rl`); an easy way for players to submit them.
+**What we know going in (2026-10-15):**
+- Display research ([DISPLAY.md](DISPLAY.md)): Lockpick reads the game in every display mode; the game is
+  per-monitor DPI aware and opens on the primary monitor; windowed/borderless overlays work and never take focus;
+  exclusive fullscreen minimizes and stops on any focus change (an overlay there still needs an owner check); a
+  vanilla game pauses and goes black when inactive, which blanks every OBS capture; Discord's toast covers the
+  top-left corner.
+- OBS 32.2.2 / WebSocket 5.7.4 on the owner's PC supports everything planned below (browser sources, recording,
+  `CreateRecordChapter`, `SaveReplayBuffer`, scene and source switching, creating inputs).
+- Already in the app: challenges (no damage, knife only, speedrun) with live rule checks, the API with a live event
+  stream (`/api/v1/events/stream`), controller markers, captures, the room map, progress and the layouts.
+- Known in memory: in-game clock `0xD22730` (frames at 30/s; zeroed on New Game, restored on load — the docs disagree
+  whether it runs in menus: bounty B206), player dead (`0x01000000` in the state flags, HP below 0), the results
+  screen (reads the saved clock), named story flags, item pickups and rooms (split triggers), the input words
+  `0xBE9840`/`0xBE9842` and the raw pad word `0xBF0A04`.
 
-Carried over from the earlier overlay/HUD plan:
+**Sprints.** 0.3.0 ships after sprints 1–6; OBS automation and the keep-running option follow as 0.3.1.
 
-- **Room map — in the app since 2026-10-14:** a Map page draws the current room from the player's room files (collision, doors, item spots) with the player live (`Re1RoomMaps`, `RoomMapControl`), room names, enemies and people (a shape and colour per kind), item boxes and typewriters, items taken or put in place, and a legend of just what the room holds. Next: script-placed objects (the dining-room clock) and the whole-floor view (tools/rdt/floor_map.py), then the overlay.
-- Transparent, click-through overlay window tracking the game window (position, size, DPI).
-- Game-window placement helper (move/resize the game window to a chosen monitor/position).
-- Configurable HUD widgets (HP, room, timer, events) with < 2% game frame-time impact (measured).
-- HUD data that is already understood (read-only):
-  - HP status as the game rates it — Jill Fine 73–96 / Caution 25–48 / Danger 0–24, Chris 106 / 36 / 0
-    thresholds (speedrun damage chart, matches the GOG build);
-  - poisoned indicator (status byte `0xBE63C0` bit `0x02`, Yawn's poison `0x20`; −2 HP each time the timer
-    `0xBE6458` runs out, ~4 s) and the status screen's own HP band (`0xAE9F2F`) — runtime-verified 2026-10-14;
-  - enemy health in the current room (enemy slots: type, HP, active);
-  - what just happened: an event feed in plain words (picked up the Emblem, Zombie ankle bite (6), first visit to
-    room 11D, Barry gives Jill the lockpick) — the capture timeline's logic in the app;
-  - current room and area by name (areas from the game's room table; names as they are confirmed).
-- Keep the game running while the player uses Lockpick on another screen (the game pauses and blacks out when
-  inactive): opt-in in-process focus patch (`0x44126B`, MEMORY_MAP "Focus and input") — isolated, reversible, read
-  back, never in Challenge Mode. **Chosen by the owner (2026-10-13).**
+1. **Responsive app — done 2026-10-15:** every page at ultrawide (full, half, third, quarter), 1080p, 720p, 1024×768,
+   800×600, portrait (720×1280 at 150 %) and the 150 % 1080p monitor (full to quarter); content scrolls instead of
+   clipping; the map keeps the space.
+2. **Overlay** (spec: DISPLAY.md requirements):
+   - follow the game window (PID → class `RESIDENT EVIL`): client rectangle in physical pixels, monitor, DPI,
+     minimized, exclusive fullscreen; move/size events;
+   - a click-through, topmost, non-activating overlay window over the 4:3 picture (computed from `dxcfg.ini`'s
+     `aspect`/`scaling`); hidden while the game is minimized; Lockpick never activates its own windows while the
+     game is exclusive fullscreen (the ask-mode question waits or shows without activation);
+   - widgets: run timer, splits, HP band and poison, challenge status (a fail banner with the reason), room name,
+     enemy HP, the event feed (#43); positioned against the picture, presets for each corner (not top-left by
+     default), a layout editor on a preview, toggled by a hotkey or a controller button;
+   - exclusive fullscreen: supported if the owner check passes, otherwise a notice that suggests borderless;
+   - game display helper (#20): move the game to a monitor; switch it to borderless (`display=desktop`, windowed)
+     by editing `dxcfg.ini` only on the player's click, with a backup and a restore;
+   - budget: the overlay costs < 2 % of the game's frame pacing (measured from the in-game clock).
+3. **Runs:**
+   - run sessions: start on New Game (or a loaded save, marked as such), end on the ending's results screen
+     (B703), a death / Game Over (B205), quitting to the title, or the game closing; a local record per attempt
+     (category, character, in-game time, splits, deaths, damage taken, result, whether cheats were on);
+   - a "Playthrough" mode (no rules: timer, splits and progress only) next to the challenges;
+   - timer from the game's own clock (matching how it behaves in menus — B206), real time as an option;
+   - splits: built-in RE1 sets — the community segments (Yawn 1 › Mansion 1 › … › End) and the key-item routes
+     (Jill / Chris NMG) — triggered by named story flags, item pickups and rooms (B701, B702, B706); a split editor;
+     comparison against the player's best (local);
+   - challenge feedback: the fail reason in the overlay and an optional sound; a death counter; retry from a
+     controller button; challenges end on a death (B205);
+   - **LiveSplit:** drive the runner's own LiveSplit through LiveSplit Server (start, split, reset, set game time —
+     their layouts and comparisons stay theirs), import a `.lss` file's segment names onto Lockpick's split
+     triggers, and drop a capture marker at each split (B208).
+4. **OBS, the simple way:** the API serves browser-source pages — timer, splits, HP, challenge status, event feed,
+   room map — transparent, live through the event stream, options in the URL; "Copy OBS link" buttons in the app;
+   a pop-out HUD window for window capture; the docs recommend Game Capture (works in every mode, 640×480 native,
+   no pillarbox). Our in-game overlay is not part of any capture, so these pages are the stream's HUD.
+5. **Training captures:** opt-in, every game frame (the in-game clock's ticks): state, the held and new input words
+   and the raw pad word, control type, room and camera, enemies; a consent screen (what is recorded, nothing
+   personal); submitted like play captures; checked by `tools/rl/dataset.py` and a small behaviour-cloning model
+   (dev). Optional pairing with an OBS recording (its start time and chapters) for models that learn from video.
+   Needs every input setup recorded (B207).
+6. **Ready for other players:** a player guide (install, challenges, cheats, overlay, OBS, LiveSplit, captures);
+   streamer mode (hides profile paths, process ids and the API token on screen); a one-click support bundle;
+   unexpected errors logged with an offer to send the bundle; the Lockpick window remembers its size per monitor;
+   code signing so Windows stops warning about the installer (owner decision: certificate or Azure Trusted Signing);
+   OBS + Lockpick + the game together checked for frame pacing (B209).
+
+### 0.3.1 — OBS automation and keep-running
+
+- **OBS WebSocket (optional; the password kept with Windows DPAPI):** "Set up OBS" creates a Lockpick scene (Game
+  Capture of the game plus the browser sources); start and stop recording with a run; recording chapters at splits,
+  fails and deaths (`CreateRecordChapter`); save the replay buffer on a death, a failed challenge or a new best;
+  switch to a "paused" scene while the game is inactive (a vanilla game goes black) and back when it returns.
+- **Keep the game running when it isn't the active window** (opt-in, Trainer Mode only, never in challenges; the
+  in-process focus patch `0x44126B`, MEMORY_MAP "Focus and input"; chosen by the owner 2026-10-13) — the alternative
+  to the OBS "paused" scene for people who aren't running a challenge.
+
+Known HUD data (already understood, read-only) for sprint 2 and #42:
+- HP status as the game rates it — Jill Fine 73–96 / Caution 25–48 / Danger 0–24, Chris 106 / 36 / 0
+  thresholds (speedrun damage chart, matches the GOG build);
+- poisoned indicator (status byte `0xBE63C0` bit `0x02`, Yawn's poison `0x20`; −2 HP each time the timer
+  `0xBE6458` runs out, ~4 s) and the status screen's own HP band (`0xAE9F2F`) — runtime-verified 2026-10-14;
+- enemy health in the current room (enemy slots: type, HP, active);
+- what just happened: an event feed in plain words (picked up the Emblem, Zombie ankle bite (6), first visit to
+  room 11D, Barry gives Jill the lockpick) — the capture timeline's logic in the app (#43);
+- current room and area by name (areas from the game's room table; names as they are confirmed);
+- room map — in the app since 2026-10-14 (`Re1RoomMaps`, `RoomMapControl`); next: script-placed objects (the
+  dining-room clock) and the whole-floor view (tools/rdt/floor_map.py), then an overlay / browser-source version.
 
 ## Developer tooling (never shipped)
 
@@ -257,8 +305,9 @@ players play the game themselves; Lockpick enhances their play.
 
 ## 0.8.0 — Speedrun and challenges
 
-- Run timer, LiveSplit, autosplits and the no-damage / knife-only rules move to 0.3.0. Here: PB tracking, more
-  challenge rules (no heal, …), trainer-modification records (records, not anti-cheat claims).
+- Run timer, LiveSplit, autosplits, run records, deaths and the no-damage / knife-only rules move to 0.3.0 (their
+  capture bounties B701–B704, B706 too). Here: PB history and run review, more challenge rules (no heal, no saves,
+  deathless…), community segment templates, trainer-modification records (records, not anti-cheat claims).
 - Voice-over subtitles (moved from 0.3.0): optional download of the separate
   [lockpick-subtitles](https://github.com/mscrnt/lockpick-subtitles) pack (off by default; checked against the
   player's voice files by SHA-256), shown in the overlay while a line plays. Needs: which voice file is playing.
@@ -281,8 +330,7 @@ players play the game themselves; Lockpick enhances their play.
 
 ## Backlog / ideas
 
-- Lockpick window: remember size/position per monitor; "compact" always-on-top mode for a side screen.
+- "Compact" always-on-top mode for a side screen (remembering the window size per monitor is in 0.3.0 sprint 6).
 - ~~Music track lead (`0xD226A0`)~~ — ruled out 2026-10-14 (a sound-state bitfield, not a track id; MEMORY_MAP Leads).
 - Ask mode with a controller button instead of the keyboard (the owner plays with a DualSense).
-- Debug: one-click "export support bundle" (log + recording + fingerprint, no game files).
 - Investigate why the game window cannot be dragged (window style `0x14C80000` has a caption; the 1997 window procedure likely swallows the move).

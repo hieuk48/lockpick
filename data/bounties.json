@@ -246,22 +246,25 @@
     },
     {
       "release": "0.3.0",
-      "title": "Overlay and HUD",
+      "title": "Overlay, runs and streaming",
       "bounties": [
         {
           "id": "B201",
           "task": "Play windowed at a few window sizes and positions; alt-tab away and back",
           "verifies": "Game window tracking, focus handling",
-          "status": "blocked",
+          "status": "done",
           "evidence": [
-            "needs window geometry in captures"
+            "2026-10-15 owner's dev display research (docs/DISPLAY.md, tools/display/probe.py): every windowed size of the GOG wrapper on both monitors (100 % and 150 %), moved and straddling, alt-tab away and back — window and client rectangles, DPI, the picture inside the client, and the game pausing and going black when inactive"
           ]
         },
         {
           "id": "B202",
           "task": "Play in fullscreen",
           "verifies": "Overlay behavior in fullscreen",
-          "status": "blocked"
+          "status": "partial",
+          "evidence": [
+            "2026-10-15 owner's dev display research: exclusive fullscreen (desktop, 1920×1080, 640×480) is D3D exclusive, minimizes and stops on any focus change and resumes when restored; OBS Game Capture and WGC window capture see it. Still needed: does an overlay window actually show over it on the monitor (a person has to look)"
+          ]
         },
         {
           "id": "B203",
@@ -280,6 +283,69 @@
           "evidence": [
             "2026-10-14 owner's dev test suite (tools/autoplay/suite.py; setups by dev-only memory writes, results read from memory): status-screen band 0xAE9F2F = (HP-1)/(maxHP>>2): Jill HP 1-24 Danger, 25-48 Caution, 49-96 Fine (bands 2-3); 4 while poisoned (bit 0x02 of 0xBE63C0)."
           ]
+        },
+        {
+          "id": "B205",
+          "task": "Die and reach the **Game Over** screen: once choose to continue, once quit to the title",
+          "verifies": "Death and Game Over detection, and how a run attempt ends (continue vs. quit)",
+          "status": "needed"
+        },
+        {
+          "id": "B206",
+          "task": "Stand still a few seconds in each: the status screen, the options screen, a file being read, a door, a cutscene, the item box",
+          "verifies": "When the in-game clock runs (the docs disagree about menus) — for a run timer that matches the game",
+          "status": "needed"
+        },
+        {
+          "id": "B207",
+          "task": "Play a few minutes with each input you have: an Xbox pad, a PlayStation pad, the keyboard (and the game's control types in Options)",
+          "verifies": "The input words training captures record, for every pad and control type",
+          "status": "needed"
+        },
+        {
+          "id": "B208",
+          "task": "Run a segment with **LiveSplit** and its autosplitter running next to a Lockpick capture; press the marker key at each split",
+          "verifies": "Lockpick's splits and in-game time match LiveSplit's",
+          "status": "needed"
+        },
+        {
+          "id": "B209",
+          "task": "Play with **OBS** recording or streaming (Game Capture) while a capture runs",
+          "verifies": "The game's frame pacing with OBS and Lockpick together (overlay/HUD performance budget)",
+          "status": "needed"
+        },
+        {
+          "id": "B701",
+          "task": "Full **any%** run, Chris",
+          "verifies": "Split points (story flags, key items, rooms) and the final in-game time, for the built-in run timer and autosplits",
+          "status": "needed"
+        },
+        {
+          "id": "B702",
+          "task": "Full **any%** run, Jill",
+          "verifies": "Split points (story flags, key items, rooms) and the final in-game time, for the built-in run timer and autosplits",
+          "status": "needed"
+        },
+        {
+          "id": "B703",
+          "task": "Reach each **ending** and the results screen",
+          "verifies": "End-of-run detection (the ending and the results screen), the final in-game time and rank",
+          "status": "needed"
+        },
+        {
+          "id": "B704",
+          "task": "Knife-only section: knife everything, but also pick up, reload and combine ammo without firing",
+          "verifies": "The knife-only rule: only a shot from another weapon may fail the run",
+          "status": "partial",
+          "evidence": [
+            "2026-10-15 owner's dev harness: the Knife only challenge failed on the first Beretta shot; ammo per shot is known for every weapon (B103–B107). Not yet seen in a played section"
+          ]
+        },
+        {
+          "id": "B706",
+          "task": "Press the marker key at each speedrun split during a run",
+          "verifies": "Split points as story flags / room transitions, for built-in autosplits and LiveSplit",
+          "status": "needed"
         }
       ]
     },
@@ -554,30 +620,6 @@
       "title": "Speedrun and challenge suite",
       "bounties": [
         {
-          "id": "B701",
-          "task": "Full **any%** run, Chris",
-          "verifies": "Split points, final timer",
-          "status": "needed"
-        },
-        {
-          "id": "B702",
-          "task": "Full **any%** run, Jill",
-          "verifies": "Split points, final timer",
-          "status": "needed"
-        },
-        {
-          "id": "B703",
-          "task": "Reach each **ending** and the results screen",
-          "verifies": "End-of-game detection, final IGT, rank",
-          "status": "needed"
-        },
-        {
-          "id": "B704",
-          "task": "Knife-only section",
-          "verifies": "Weapon-use tracking",
-          "status": "needed"
-        },
-        {
           "id": "B705",
           "task": "Resets mid-run (quit to title; restart the game)",
           "verifies": "Reset detection",
@@ -588,12 +630,6 @@
             "2026-10-13 re-check of sessions 4-7: quit to title and a new game (session 5: Jill run, then Chris), loads and game restarts are all detected as separate segments; timers jumping back reset the event detector"
           ],
           "detector": "resets"
-        },
-        {
-          "id": "B706",
-          "task": "Press the marker key at each speedrun split during a run",
-          "verifies": "Split points as story flags / room transitions, for built-in autosplits",
-          "status": "needed"
         }
       ]
     },

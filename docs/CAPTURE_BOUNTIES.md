@@ -71,14 +71,24 @@ Unless noted, bounties are for the supported build (GOG, USA, 1.0 hotfix4).
 
 ---
 
-## 0.3.0 — Overlay and HUD
+## 0.3.0 — Overlay, runs and streaming
 
 | ID | Do this in-game | Verifies | Status |
 |---|---|---|---|
-| B201 | Play windowed at a few window sizes and positions; alt-tab away and back | Game window tracking, focus handling | 🛠️ needs window geometry in captures |
-| B202 | Play in fullscreen | Overlay behavior in fullscreen | 🛠️ |
+| B201 | Play windowed at a few window sizes and positions; alt-tab away and back | Game window tracking, focus handling | ✅ 2026-10-15 owner's dev display research (docs/DISPLAY.md, tools/display/probe.py): every windowed size of the GOG wrapper on both monitors (100 % and 150 %), moved and straddling, alt-tab away and back — window and client rectangles, DPI, the picture inside the client, and the game pausing and going black when inactive |
+| B202 | Play in fullscreen | Overlay behavior in fullscreen | 🟡 2026-10-15 owner's dev display research: exclusive fullscreen (desktop, 1920×1080, 640×480) is D3D exclusive, minimizes and stops on any focus change and resumes when restored; OBS Game Capture and WGC window capture see it. Still needed: does an overlay window actually show over it on the monitor (a person has to look) |
 | B203 | Examine objects, read documents and pick up items with a capture running | Which on-screen message is shown (text buffer at 0xD91A00, pointer 0xD226A4) — for a text log | ✅ 2026-10-14 owner's dev test suite (tools/autoplay/suite.py; setups by dev-only memory writes, results read from memory): the message on screen: start pointer 0xBF0A1C, revealed-so-far 0xBF0A20 (into the exe's text tables or the room file), state 0xBF0A16 (1 typing, 2 page, 4 yes/no prompt, 5 waiting, 6 closing), active/choice 0xBE9825 (bit 0x80 up, bit 0 = No). Read live for examine text, documents, door messages and prompts. (Not 0xD91A00/0xD226A4.) |
 | B204 | Open the status screen while Fine, Caution, Danger and poisoned | HP bands as the game rates them; a poison status flag (poison is only seen as −2 HP ticks so far) | ✅ 2026-10-14 owner's dev test suite (tools/autoplay/suite.py; setups by dev-only memory writes, results read from memory): status-screen band 0xAE9F2F = (HP-1)/(maxHP>>2): Jill HP 1-24 Danger, 25-48 Caution, 49-96 Fine (bands 2-3); 4 while poisoned (bit 0x02 of 0xBE63C0). |
+| B205 | Die and reach the **Game Over** screen: once choose to continue, once quit to the title | Death and Game Over detection, and how a run attempt ends (continue vs. quit) | ⬜ |
+| B206 | Stand still a few seconds in each: the status screen, the options screen, a file being read, a door, a cutscene, the item box | When the in-game clock runs (the docs disagree about menus) — for a run timer that matches the game | ⬜ |
+| B207 | Play a few minutes with each input you have: an Xbox pad, a PlayStation pad, the keyboard (and the game's control types in Options) | The input words training captures record, for every pad and control type | ⬜ |
+| B208 | Run a segment with **LiveSplit** and its autosplitter running next to a Lockpick capture; press the marker key at each split | Lockpick's splits and in-game time match LiveSplit's | ⬜ |
+| B209 | Play with **OBS** recording or streaming (Game Capture) while a capture runs | The game's frame pacing with OBS and Lockpick together (overlay/HUD performance budget) | ⬜ |
+| B701 | Full **any%** run, Chris | Split points (story flags, key items, rooms) and the final in-game time, for the built-in run timer and autosplits | ⬜ |
+| B702 | Full **any%** run, Jill | Split points (story flags, key items, rooms) and the final in-game time, for the built-in run timer and autosplits | ⬜ |
+| B703 | Reach each **ending** and the results screen | End-of-run detection (the ending and the results screen), the final in-game time and rank | ⬜ |
+| B704 | Knife-only section: knife everything, but also pick up, reload and combine ammo without firing | The knife-only rule: only a shot from another weapon may fail the run | 🟡 2026-10-15 owner's dev harness: the Knife only challenge failed on the first Beretta shot; ammo per shot is known for every weapon (B103–B107). Not yet seen in a played section |
+| B706 | Press the marker key at each speedrun split during a run | Split points as story flags / room transitions, for built-in autosplits and LiveSplit | ⬜ |
 
 ---
 
@@ -138,12 +148,7 @@ Unless noted, bounties are for the supported build (GOG, USA, 1.0 hotfix4).
 
 | ID | Do this in-game | Verifies | Status |
 |---|---|---|---|
-| B701 | Full **any%** run, Chris | Split points, final timer | ⬜ |
-| B702 | Full **any%** run, Jill | Split points, final timer | ⬜ |
-| B703 | Reach each **ending** and the results screen | End-of-game detection, final IGT, rank | ⬜ |
-| B704 | Knife-only section | Weapon-use tracking | ⬜ |
 | B705 | Resets mid-run (quit to title; restart the game) | Reset detection | ✅ quit to title and game restart seen; evidence in 2026-10-13 live session 7 (Jill, ask mode, mansion to guardhouse): 1 restart(s) / reload(s) — needs review; 2026-10-13 re-check of sessions 4-7: quit to title and a new game (session 5: Jill run, then Chris), loads and game restarts are all detected as separate segments; timers jumping back reset the event detector |
-| B706 | Press the marker key at each speedrun split during a run | Split points as story flags / room transitions, for built-in autosplits | ⬜ |
 
 ---
 
