@@ -333,7 +333,14 @@ def describe(image: Path, question: str, max_tokens: int = 200) -> str:
 # takes input; cursor 0xAE9F23: 0–7 the tab row, 8 + 2·slot the item slots (two per row; Left/Right toggles bit 2,
 # Down +4, Up −4); 0xAE9F1B = the selected item id. USE needs the room to allow the item there (g_itemUseFlags).
 MENU_INPUT, MENU_CURSOR, MENU_ITEM = 0xAE9F20, 0xAE9F23, 0xAE9F1B
-INVENTORY_SLOTS = 0xBE9944
+INVENTORY_SLOTS = 0xBE9944        # Chris's and Jill's held items; Rebecca's are at 0xBE9950
+INVENTORY_POINTER = 0xD22768      # the list the game uses now (the room init points it at Rebecca's while she plays)
+
+
+def inventory_slots() -> int:
+    """The held-item list in use: reading 0xBE9944 while Rebecca played listed Chris's items (2026-10-15)."""
+    pointer = int.from_bytes(peek(INVENTORY_POINTER, 4), "little")
+    return pointer if pointer in (0xBE9944, 0xBE9950) else INVENTORY_SLOTS
 
 
 def close_menu() -> None:
@@ -481,7 +488,7 @@ HELD_COUNT = 0xBE9827  # g_TotalHeldItems: the game ignores slots at or past it
 
 def inventory() -> list[tuple[int, int, str]]:
     """(item, quantity, name as shown) per held slot — only the first HELD_COUNT slots count, as in the game."""
-    raw, held = peek(INVENTORY_SLOTS, 16), peek(HELD_COUNT, 1)[0]
+    raw, held = peek(inventory_slots(), 16), peek(HELD_COUNT, 1)[0]
     return [(raw[i * 2], raw[i * 2 + 1], item_name(raw[i * 2])) for i in range(min(held, 8)) if raw[i * 2]]
 
 
@@ -541,7 +548,7 @@ def give(item: int, quantity: int = 1, to: str = "inventory", log=print, equip: 
     if not wait_for(lambda: box_screen() is None and in_control(), 5):
         raise Failed(f"the item box screen didn't close (flags 0x{flags():08X})")
     _restore_camera(camera)
-    slot = peek(INVENTORY_SLOTS + held * 2, 2)
+    slot = peek(inventory_slots() + held * 2, 2)
     if (slot[0], slot[1]) != (item, quantity):
         raise Failed(f"slot {held} holds {tuple(slot)}, not {(item, quantity)}")
     if equip and equipped() != item:
@@ -579,7 +586,7 @@ def equip_now(item: int, quantity: int = 15, log=print) -> int:
     slot = held.index(item)
     if carried[slot][1] < quantity and item != 1:
         # Topped up to what was asked for: tests that equip a carried gun again had emptied it (2026-10-14).
-        send(f"state-apply {INVENTORY_SLOTS + slot * 2 + 1:X}:{quantity:02X}:{~quantity & 0xFF:02X}")
+        send(f"state-apply {inventory_slots() + slot * 2 + 1:X}:{quantity:02X}:{~quantity & 0xFF:02X}")
     if equipped() == item:
         return slot
     if not in_control():
@@ -604,7 +611,7 @@ def _open_submenu(item: int, timeout: float) -> int:
     is checked: the cursor must move (the menu ignores input while it opens) and the selected item must be the target
     before A."""
     import time
-    raw, held = peek(INVENTORY_SLOTS, 16), peek(HELD_COUNT, 1)[0]
+    raw, held = peek(inventory_slots(), 16), peek(HELD_COUNT, 1)[0]
     slots = [raw[i * 2] if i < held else 0 for i in range(8)]
     if item not in slots:
         raise Failed(f"item {item} is not in the inventory ({slots})")
@@ -720,7 +727,7 @@ def hp() -> int:
 def equipped() -> int:
     """Item id of the equipped weapon (0 when none): 0xBE9849 is the 1-based slot (live, bounty B114)."""
     slot = peek(EQUIPPED_SLOT, 1)[0]
-    return peek(INVENTORY_SLOTS + (slot - 1) * 2, 1)[0] if 1 <= slot <= 8 else 0
+    return peek(inventory_slots() + (slot - 1) * 2, 1)[0] if 1 <= slot <= 8 else 0
 
 
 def fire_at(slot: int, shots: int = 1, gap_ms: int = 900) -> list[dict]:

@@ -405,7 +405,7 @@ From the decomp (GPL-3.0; facts only, no code used) and the RE1 Mod SDK layout, 
 |---|---|---|
 | `0xBE62E4` | Player entity (0x180 bytes) | partially (fields above) |
 | `0xBE6464` | Enemy array, 30 × 0x18C; slot active when `+0x00 & 1` | unverified |
-| `0xBE9950` | Rebecca's inventory (6 slots) | live 2026-10-15: the inventory pointer while playing Rebecca |
+| `0xBE9950` | Rebecca's inventory (6 slots; a new game puts the Beretta with 15 rounds in it) | live 2026-10-15: the inventory pointer while playing Rebecca; it held the Beretta ×15, as her status screen showed (her portrait, nothing equipped, ECG Fine at 88/88); the held count `0xBE9827` was 1 and Chris's list at `0xBE9944` stayed as it was |
 | `0xBE98E4` | Item box, 48 × `{id, qty}` | unverified |
 | `0xBE9844` | Saved copy of the game timer | static |
 | `0xBE9620` | Save block ("bio card"), 0x41C bytes | unverified |
