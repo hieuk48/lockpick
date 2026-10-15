@@ -6,6 +6,12 @@ All notable changes to this project are documented here. The format follows
 
 ## [Unreleased]
 
+## [0.2.0] - 2026-10-15
+
+The core trainer: cheats you switch on deliberately (health, ammo, inventory, hotkeys), every change checked, read
+back and logged, and guided challenges that Lockpick can't touch. Also an API for other tools, a new look, and
+layouts for wide, ultrawide and portrait windows.
+
 ### Added
 - **Challenges** tab, step by step: choose a challenge (Speedrun, No damage, Knife only), add rules to it (a no-damage
   knife run…), start it. While it runs Lockpick can't change your game. The tab shows whether the attempt is still
@@ -33,8 +39,8 @@ All notable changes to this project are documented here. The format follows
 ### Changed
 - Pages use the width of wide and ultrawide windows: cards sit side by side in as many columns as fit, long lists
   (the story so far, the item box) flow into columns, and the dashboard gives the event log its own column. The map
-  page keeps the map as large as the window allows; its legend moves beside the map on wide windows and behind a
-  button on small ones.
+  page keeps the map as large as the window allows; its legend moves beside the map on wide windows, under it on tall
+  ones and behind a button on small ones. The Debug page scrolls in a short window instead of squeezing its lists.
 
 ### Fixed
 - The header's status badge is green when connected, red for an unsupported build and amber in replay (it was always

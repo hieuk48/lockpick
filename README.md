@@ -11,8 +11,8 @@ on PC, starting with **Resident Evil (1996), GOG release**. It reads live game s
 which build it is talking to, and is designed to grow into a trainer, overlay, world explorer and
 speedrun/challenge suite.
 
-> **Status: 0.1.x (foundation).** Detection, fingerprinting, safe read-only attachment and live state
-> are working and validated against the real GOG game (Chris and Jill games). See [docs/ROADMAP.md](docs/ROADMAP.md).
+> **Status: 0.2 (core trainer).** Live state, progress, challenges and an opt-in trainer, all validated against the
+> real GOG game (Chris and Jill games). See [docs/ROADMAP.md](docs/ROADMAP.md).
 
 ## Screenshots
 
@@ -40,22 +40,27 @@ speedrun/challenge suite.
 </p>
 <p align="center"><em>Every page adapts to the window: wide and ultrawide (left), narrow or portrait (right).</em></p>
 
-## What works in 0.1
+## What works
 
-- Finds the running game and locates the GOG install via the registry.
-- Fingerprints the executable (SHA-256 + PE header) and matches it to a version profile; unknown builds
-  are rejected without opening the process.
-- Attaches with a read-only handle after verifying the in-memory image and code anchors.
-- Live values (30 Hz): session state, character, HP / max HP, stage + room, camera, position, in-game time.
-- Typed events: attached/detached, room changed, camera changed, HP changed, damaged.
-- Survives the game closing and restarting; explains access problems (e.g. elevated game).
-- First-time setup (game location with build check, update preferences) and automatic updates (Velopack).
-- Debug page: one-click capture of a play session (raw traces, recordings, events → zip), raw profile fields with
-  verification level, poll statistics, live log.
-- Replay mode for recordings (`--replay`), and a headless probe tool for validation.
-- Responsive UI with a compact layout for portrait / side-by-side windows.
+- **Connects safely:** finds the running game and the GOG install, fingerprints the executable (SHA-256 + PE header)
+  and refuses unknown builds without opening the process, then verifies the in-memory image before reading.
+- **Live game state** 30 times a second (character, HP, room, camera, position, in-game time) and plain-language events
+  (game loaded, room changes, damage, saves).
+- **Challenges** (Speedrun, No damage, Knife only, rules combinable): Lockpick can't change the game while one runs,
+  and the attempt fails on a hit, a shot from anything but the knife, or cheats being switched on.
+- **Trainer** (off every time Lockpick starts): set, fill or lock HP; infinite ammo; change what you carry; put any
+  item into the item box; hotkeys for all of it. Every change is checked against the game's limits, read back and
+  logged, and a changed run is marked as changed.
+- **Progress, Map and Items:** how much of each area you've done (items, documents, rooms, enemies) from the game's own
+  flags, the current room drawn from your install's room files with you in it, and your inventory and item box.
+- **Captures** of play sessions for research (Debug page), with markers from a hotkey or the controller (L2 / LT).
+- **API for other tools** (off by default): game state, a live event stream, capture control and, if you allow it,
+  trainer commands for scripts, OBS, LiveSplit, a Stream Deck or macros ([docs/API.md](docs/API.md)).
+- Installer with automatic updates (Velopack), first-time setup, and layouts for every window size — ultrawide, 1080p,
+  side by side and portrait.
 
-Not yet: any memory writes (trainer features arrive in 0.2), overlay (0.3), world data (0.4).
+Next: **0.3.0** — one app for playing and streaming (run timer and splits, LiveSplit, an in-game overlay and OBS
+sources); see the [roadmap](docs/ROADMAP.md).
 
 ## Supported builds
 
@@ -107,14 +112,16 @@ or bounties.
 
 ```text
 src/
-  Lockpick.Core/               state model, events, adapter contract, profiles, monitor, recording, logging
-  Lockpick.Platform.Windows/   Win32 process discovery and read-only memory access
+  Lockpick.Core/               state model, events, adapter contract, profiles, monitor, trainer, challenges, recording
+  Lockpick.Platform.Windows/   Win32 process discovery, memory reads (writes only in Trainer Mode), hotkeys, controllers
   Lockpick.GameAdapter.RE1/    RE1 adapter (the only code that knows RE1 addresses)
+  Lockpick.Api/                local API for other tools (off by default)
   Lockpick.App/                Avalonia desktop app
 data/games/re1/profiles/       version profiles (addresses, anchors, evidence) — source of truth
 tools/Lockpick.Probe/          headless identify / watch / trace / record
 tools/Lockpick.Autoplay/       developer-only test harness (virtual controller); not part of the app
 tools/autoplay/                developer-only test runners (room survey, save library, scene launcher)
+tools/display/                 developer-only display probe (game window, capture, overlay — docs/DISPLAY.md)
 tools/fixtures/                trace → recording fixture converter
 tests/Lockpick.Tests/          unit, fixture playback and Win32 integration tests
 benchmarks/                    BenchmarkDotNet suites
@@ -131,21 +138,23 @@ docs/                          architecture, roadmap, research, compatibility, m
 
 ## Safety and integrity
 
-- Read-only in 0.1. No game files are modified, no game binaries or assets are distributed.
+- Read-only unless you turn cheats on. No game files are modified, no game binaries or assets are distributed.
 - The one exception is opt-in: the Debug page's *Ask me about unknown events* capture mode can pause (suspend) the
   game process while you answer a question. It never writes to the game, and the game resumes as soon as you answer.
 - Exact build identification and runtime image verification before any read; reads are confined to the
   verified module image.
-- Future Trainer Mode writes will be explicit, validated and logged; Challenge Mode will disable writes.
-  Challenge Mode records what Lockpick did — it is not an anti-cheat system.
+- Cheats (Trainer Mode) are off every time Lockpick starts. Turning them on opens a separate write handle; every
+  write is typed, bounded, read back and logged, and a run with changes is marked. While a challenge runs no write
+  handle exists. Challenge Mode records what Lockpick did — it is not an anti-cheat system.
 
 ## Known limitations
 
 - Only the GOG USA 1.0 hotfix4 build is supported.
-- The Rebecca character id (partner swap) is implemented from static analysis but not yet observed live.
 - While choosing a save file on the load screen, the previous game's values are still shown for a few seconds.
 - After a death, values are hidden until the next game initializes (the dead game's data lingers in memory).
-- The game stops rendering when unfocused, and its window can't be dragged — original game behavior.
+- The game pauses and its window goes black whenever it isn't the active window (original behavior), so a window or
+  game capture in OBS loses the picture while you click elsewhere. In exclusive fullscreen it minimizes instead
+  ([docs/DISPLAY.md](docs/DISPLAY.md)).
 - If the game runs elevated, Lockpick must also run elevated to read it.
 
 ## Credits

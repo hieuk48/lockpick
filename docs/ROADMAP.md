@@ -15,8 +15,8 @@ Status legend: ✅ done and verified · 🟡 done, partially verified · ⬜ not
 | 0.1.4 | Captures record the game-state memory; enemy and flag detection; grouped reads | ✅ released 2026-10-13 |
 | 0.1.5 | Research tooling: capture markers, ask mode, room index, capture timeline, subtitles pack | ✅ released 2026-10-13 |
 | 0.1.6 | Progress tracker (read-only), Items and Map pages, controller capture markers | ✅ released 2026-10-15 |
-| 0.2.0 | Core trainer functionality and memory modification | ⬜ next — research done (bounties B101–B114) |
-| 0.3.0 | Play and stream with one app: run modes, LiveSplit, overlay + OBS, responsive UI, training captures | ⬜ |
+| 0.2.0 | Core trainer (Trainer Mode, HP/ammo/inventory, hotkeys), Challenges tab, API for other tools, branding | ✅ done 2026-10-15 — release pending |
+| 0.3.0 | Play and stream with one app: run modes, LiveSplit, overlay + OBS, responsive UI, training captures | ⬜ next — display research done |
 | 0.4.0 | Room, camera, item and enemy database | ⬜ |
 | 0.5.0 | Object highlighting and ESP | ⬜ |
 | 0.6.0 | Advanced trainer and gameplay manipulation | ⬜ |
@@ -104,29 +104,32 @@ Read-only throughout (the app's handle has no write rights).
 
 ---
 
-## 0.2.0 — Core trainer
+## 0.2.0 — Core trainer (done 2026-10-15)
 
 Goal: deliberate, validated memory modification in Trainer Mode, with Challenge Mode enforcing no writes.
 
-Research status (2026-10-15): every 0.2.0 capture bounty is done (B101–B114: inventory slots and quantities, the held count, ammo per shot and reload, the item box, the equipped slot, HP and max HP, healing and poison). What is left is building and live-verifying the write side in the app (issues #8–#12, #14, #16, #17, #37).
+Status (2026-10-15): every criterion below is built and live-verified on the GOG build (issues #8–#12, #14, #16,
+#17, #37), on top of the 0.2.0 capture bounties (B101–B114). The app also gained the Challenges tab (guided
+challenges that fail on a hit or a non-knife shot), an API for other tools, branding, and layouts for wide,
+ultrawide and portrait windows. The save tools moved to 0.6.0.
 
 Acceptance criteria:
-- Separate write-capable handle requested only when Trainer Mode is enabled (`PROCESS_VM_WRITE | PROCESS_VM_OPERATION`); Challenge Mode never opens one.
-- Every write goes through a typed, profile-declared writable field with bounds (e.g. HP 1..maxHp) and is read back to confirm.
-- Trainer action log (persisted) with timestamp, field, old → new value.
-- Features: set/lock HP, infinite ammo, inventory editor (8 slots, id + quantity at `0xBE9944`; the held-item count
+- **Done:** separate write-capable handle requested only when Trainer Mode is enabled (`PROCESS_VM_WRITE | PROCESS_VM_OPERATION`); Challenge Mode never opens one (live: the handle closes when a challenge starts).
+- **Done:** every write goes through a typed, profile-declared writable field with bounds (e.g. HP 1..maxHp) and is read back to confirm.
+- **Done:** trainer action log (persisted, `trainer/actions.jsonl`) with timestamp, field, old → new value and source.
+- **Done (live 2026-10-15):** set/lock HP, infinite ammo, inventory editor — counts of what you carry, and any item
+  put into the item box (the game loads it like a pickup when taken out; box entries 0–47 runtime-verified). Background
+  for the design: inventory slots (8 slots, id + quantity at `0xBE9944`; the held-item count
   `0xBE9827` must follow, and grid icons load only on pickup, load, combine or an item-box swap — MEMORY_MAP).
   **Done (read side), 2026-10-14:** the Items page shows the inventory grid (8 or 6 slots, equipped weapon) and the
   item box (48 entries at `0xBE98E4`, runtime-verified).
 - **Done 2026-10-14:** item id table (from biorand, MIT, with attribution) checked against the game's own item-name
   table for ids 1–77 (`data/games/re1/names.json`; mismatches corrected, generic names before examining noted).
-- Hotkeys (global, configurable) with no effect when the game is not attached.
-- Run record notes whether any write occurred (`RunInvalidated` event).
-- **Save tools** (writes only save files, never the process; always a backup first and an exact restore, never in
-  Challenge Mode): save reader (done as `tools/bounties/saves.py`: a save is a copy of the state block — offset +
-  `0xBE9620`), a **scene library / practice mode** (put any practice save into a spare slot: Plant 42, Lab Tyrant,
-  Rebecca…), and a **save editor** (inventory, item box, story flags) once it is known whether saves carry a checksum.
-- All writable addresses runtime-verified on the GOG build; tests with fake memory for every write path.
+- **Done (owner-verified live 2026-10-15):** hotkeys (global, configurable: fill HP, lock HP, infinite ammo) with no
+  effect unless Trainer Mode has write access; also a GameSaved event from the save folder (#37, owner save to slot 4).
+- **Done:** run record notes whether any write occurred (`RunInvalidated` event; a challenge fails if cheats go on).
+- **Done:** all writable addresses runtime-verified on the GOG build; tests with fake memory for every write path.
+- Moved to 0.6.0 (2026-10-15): the save tools (practice mode, save editor).
 
 ## 0.3.0 — Play and stream with one app
 
@@ -227,6 +230,11 @@ players play the game themselves; Lockpick enhances their play.
 - Give or remove any item; put pickups back into the world (set their pickup bit), reset puzzles (clear their named
   flags), respawn enemies (clear kill flags), reset the map's explored rooms; teleport (room + position).
 - Challenge setups (knife-only, no herbs, start with nothing) and a light item randomizer, built on the same writes.
+- **Save tools** (moved from 0.2.0; write only save files, never the process; always a backup first and an exact
+  restore, never in Challenge Mode): save reader (done as `tools/bounties/saves.py`: a save is a copy of the state
+  block — offset + `0xBE9620`), a **scene library / practice mode** (put any practice save into a spare slot: Plant
+  42, Lab Tyrant, Rebecca…), and a **save editor** (inventory, item box, story flags) once it is known whether saves
+  carry a checksum.
 
 ## 0.7.0 — Contextual guidance
 
