@@ -15,6 +15,13 @@ public sealed partial class SettingsViewModel : PageViewModel
     public SettingsViewModel(AppServices services, Action runSetup, OverlayViewModel overlay)
         : base("Settings", "Icon.Settings")
     {
+        SetSections(
+            new PageSection("general", "General"),
+            new PageSection("display", "Game display"),
+            new PageSection("overlay", "Overlay"),
+            new PageSection("hotkeys", "Hotkeys"),
+            new PageSection("speedrun", "speedrun.com"),
+            new PageSection("advanced", "API and profiles"));
         _services = services;
         _runSetup = runSetup;
         Overlay = overlay;

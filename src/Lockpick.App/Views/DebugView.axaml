@@ -6,8 +6,9 @@
              x:DataType="vm:DebugViewModel">
 
   <!-- The field table and the log fill the window; a short window scrolls the page instead of squeezing them (code-behind). -->
-  <ScrollViewer x:Name="Scroller">
-  <Grid x:Name="Root" RowDefinitions="Auto,Auto,*,*" RowSpacing="12">
+  <ScrollViewer x:Name="Scroller" c:SectionScroll.Section="{Binding SelectedSection}">
+  <Panel x:Name="Root">
+  <Grid RowDefinitions="Auto" IsVisible="{Binding SelectedSection, Converter={x:Static c:SectionIs.Instance}, ConverterParameter=capture}">
 
     <!-- Capture -->
     <Border Grid.Row="0" Classes="card" Classes.recording="{Binding IsCapturing}">
@@ -77,8 +78,10 @@
       </StackPanel>
     </Border>
 
+  </Grid>
+  <Grid RowDefinitions="Auto,*" RowSpacing="12" IsVisible="{Binding SelectedSection, Converter={x:Static c:SectionIs.Instance}, ConverterParameter=monitor}">
     <!-- Monitor -->
-    <Border Grid.Row="1" Classes="card">
+    <Border Grid.Row="0" Classes="card">
       <Grid ColumnDefinitions="Auto,*" RowDefinitions="Auto,Auto,Auto,Auto" ColumnSpacing="12" RowSpacing="4">
         <StackPanel Grid.ColumnSpan="2" Classes="cardhead">
           <c:LucideIcon Data="{StaticResource Icon.Gauge}" />
@@ -94,7 +97,7 @@
     </Border>
 
     <!-- Raw profile fields -->
-    <Border Grid.Row="2" Classes="card">
+    <Border Grid.Row="1" Classes="card">
       <DockPanel>
         <StackPanel DockPanel.Dock="Top" Classes="cardhead">
           <c:LucideIcon Data="{StaticResource Icon.Fingerprint}" />
@@ -129,8 +132,10 @@
       </DockPanel>
     </Border>
 
+  </Grid>
+  <Grid RowDefinitions="*" IsVisible="{Binding SelectedSection, Converter={x:Static c:SectionIs.Instance}, ConverterParameter=log}">
     <!-- Log -->
-    <Border Grid.Row="3" Classes="card">
+    <Border Grid.Row="0" Classes="card">
       <DockPanel>
         <StackPanel DockPanel.Dock="Top" Classes="cardhead">
           <c:LucideIcon Data="{StaticResource Icon.ScrollText}" />
@@ -157,5 +162,6 @@
       </DockPanel>
     </Border>
   </Grid>
+  </Panel>
   </ScrollViewer>
 </UserControl>

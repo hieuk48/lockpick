@@ -116,7 +116,7 @@ public sealed class LeaderboardGuard
             var exe = _services.ResolveInstalledExecutable();
             var directory = exe is null ? null : Path.GetDirectoryName(exe);
             (InstallCheck? install, string? problem) result = directory is null || _services.RunLibrary.Rules is not { } rules
-                ? (null, "The game's install wasn't found (Settings → Game installation).")
+                ? (null, "The game's install wasn't found (Settings → General → Game installation).")
                 : await Task.Run(() =>
                 {
                     try
@@ -159,9 +159,9 @@ public sealed class LeaderboardGuard
         var trainerOff = _services.Trainer is not { Mode: TrainerMode.Trainer };
         checks.Add(trainerOff
             ? new GuardCheck(GuardState.Pass, "Lockpick's trainer is off and locked (read-only; switching it on would fail the attempt).")
-            : new GuardCheck(GuardState.Fail, "Lockpick's trainer is on: turn it off (Trainer page)."));
+            : new GuardCheck(GuardState.Fail, "Lockpick's trainer is on: turn it off (Trainer → Cheats)."));
         checks.Add(AskModeOn?.Invoke() == true
-            ? new GuardCheck(GuardState.Fail, "Ask mode is on: it pauses the game. Turn it off (Debug page).")
+            ? new GuardCheck(GuardState.Fail, "Ask mode is on: it pauses the game. Turn it off (Debug → Capture).")
             : new GuardCheck(GuardState.Pass, "Ask mode is off (Lockpick never pauses the game)."));
         lock (_gate)
         {

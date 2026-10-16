@@ -35,6 +35,10 @@ public sealed partial class TrainerViewModel : PageViewModel
     public TrainerViewModel(AppServices services, LiveState state)
         : base("Trainer", "Icon.Wrench")
     {
+        SetSections(
+            new PageSection("cheats", "Cheats"),
+            new PageSection("inventory", "Inventory"),
+            new PageSection("log", "Action log"));
         _services = services;
         _trainer = services.Trainer;
         State = state;

@@ -171,7 +171,8 @@ is decided later. Keep-running stays out of challenges (it patches the game, and
 
 1. **Responsive app — done 2026-10-15:** every page at ultrawide (full, half, third, quarter), 1080p, 720p, 1024×768,
    800×600, portrait (720×1280 at 150 %) and the 150 % 1080p monitor (full to quarter); content scrolls instead of
-   clipping; the map keeps the space.
+   clipping; the map keeps the space. **Pages in sections (owner, 2026-10-16: the pages were getting cluttered):** each page's sections
+   under it in the navigation, one shown at a time (a row above the page in the compact layout).
 2. **Overlay** (spec: DISPLAY.md requirements). **Foundation done 2026-10-15 (#54):** follows the game window
    (100 % and 150 % monitors, moved, minimized), sits on the 4:3 picture from `dxcfg.ini`, click-through and
    never activated (verified: a click on the panel reaches the game, the game keeps focus), directly above the game

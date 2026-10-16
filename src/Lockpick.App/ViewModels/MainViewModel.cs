@@ -90,7 +90,11 @@ public sealed partial class MainViewModel : ObservableObject, IDisposable
 
     /// <summary>The version label in the navigation opens the update controls in Settings.</summary>
     [RelayCommand]
-    private void OpenUpdates() => SelectedPage = _settings;
+    private void OpenUpdates()
+    {
+        _settings.ShowSection("general");
+        SelectedPage = _settings;
+    }
 
     private void RunSetup() => Setup = new SetupViewModel(_services, () => Setup = null);
 

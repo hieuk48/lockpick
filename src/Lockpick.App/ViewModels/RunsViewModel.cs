@@ -54,6 +54,11 @@ public sealed partial class RunsViewModel : PageViewModel
     public RunsViewModel(AppServices services, LiveState state)
         : base("Runs", "Icon.Timer")
     {
+        SetSections(
+            new PageSection("splits", "Splits"),
+            new PageSection("training", "Training"),
+            new PageSection("leaderboard", "Leaderboard"),
+            new PageSection("livesplit", "LiveSplit"));
         _services = services;
         _runs = services.Runs;
         _appVersion = services.AppVersion;

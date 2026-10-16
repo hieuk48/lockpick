@@ -185,15 +185,65 @@
     <Style Selector="ListBox.nav">
       <Setter Property="Background" Value="Transparent" />
     </Style>
+    <!-- A page row: the highlight is on its head, so its sections below keep their own. -->
     <Style Selector="ListBox.nav ListBoxItem">
-      <Setter Property="Padding" Value="14,9" />
-      <Setter Property="CornerRadius" Value="2" />
+      <Setter Property="Padding" Value="0" />
       <Setter Property="Margin" Value="0,1" />
     </Style>
-    <Style Selector="ListBox.nav ListBoxItem:selected /template/ ContentPresenter">
+    <Style Selector="ListBox.nav ListBoxItem:selected /template/ ContentPresenter, ListBox.nav ListBoxItem:pointerover /template/ ContentPresenter">
+      <Setter Property="Background" Value="Transparent" />
+    </Style>
+    <Style Selector="Border.navhead">
+      <Setter Property="Padding" Value="14,9" />
+      <Setter Property="CornerRadius" Value="2" />
+      <Setter Property="Background" Value="Transparent" />
+    </Style>
+    <Style Selector="ListBox.nav ListBoxItem:pointerover Border.navhead">
+      <Setter Property="Background" Value="{StaticResource LpPanelAltBrush}" />
+    </Style>
+    <Style Selector="Border.navhead.current">
       <Setter Property="Background" Value="{StaticResource LpGreenDimBrush}" />
     </Style>
-    <Style Selector="ListBox.nav ListBoxItem:selected TextBlock">
+    <Style Selector="Border.navhead.current TextBlock">
+      <Setter Property="Foreground" Value="{StaticResource LpGreenBrush}" />
+    </Style>
+    <!-- Sections under the selected page. -->
+    <Style Selector="ListBox.subnav">
+      <Setter Property="Background" Value="Transparent" />
+      <Setter Property="Margin" Value="0,2,0,4" />
+    </Style>
+    <Style Selector="ListBox.subnav ListBoxItem">
+      <Setter Property="Padding" Value="42,6,10,6" />
+      <Setter Property="Margin" Value="0" />
+      <Setter Property="CornerRadius" Value="2" />
+    </Style>
+    <Style Selector="ListBox.subnav ListBoxItem TextBlock">
+      <Setter Property="Foreground" Value="{StaticResource LpMutedBrush}" />
+    </Style>
+    <Style Selector="ListBox.subnav ListBoxItem:pointerover /template/ ContentPresenter">
+      <Setter Property="Background" Value="{StaticResource LpPanelAltBrush}" />
+    </Style>
+    <Style Selector="ListBox.subnav ListBoxItem:selected /template/ ContentPresenter">
+      <Setter Property="Background" Value="Transparent" />
+      <Setter Property="BorderBrush" Value="{StaticResource LpGreenBrush}" />
+      <Setter Property="BorderThickness" Value="2,0,0,0" />
+    </Style>
+    <Style Selector="ListBox.subnav ListBoxItem:selected TextBlock">
+      <Setter Property="Foreground" Value="{StaticResource LpGreenBrush}" />
+      <Setter Property="FontWeight" Value="SemiBold" />
+    </Style>
+    <!-- The compact layout's row of sections above the page. -->
+    <Style Selector="ListBox.sectionbar">
+      <Setter Property="Background" Value="Transparent" />
+    </Style>
+    <Style Selector="ListBox.sectionbar ListBoxItem">
+      <Setter Property="Padding" Value="10,6" />
+      <Setter Property="CornerRadius" Value="2" />
+    </Style>
+    <Style Selector="ListBox.sectionbar ListBoxItem:selected /template/ ContentPresenter">
+      <Setter Property="Background" Value="{StaticResource LpGreenDimBrush}" />
+    </Style>
+    <Style Selector="ListBox.sectionbar ListBoxItem:selected TextBlock">
       <Setter Property="Foreground" Value="{StaticResource LpGreenBrush}" />
     </Style>
 

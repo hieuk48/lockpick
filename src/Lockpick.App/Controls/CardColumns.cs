@@ -40,8 +40,10 @@ public sealed class CardColumns : Panel
         set => SetValue(SpacingProperty, value);
     }
 
+    /// <summary>As many columns as fit, but no more than there are cards (one card uses the whole width).</summary>
     private int Columns(double width) =>
-        double.IsInfinity(width) ? 1 : Math.Clamp((int)((width + Spacing) / (MinColumnWidth + Spacing)), 1, Math.Max(1, MaxColumns));
+        double.IsInfinity(width) ? 1
+        : Math.Clamp((int)((width + Spacing) / (MinColumnWidth + Spacing)), 1, Math.Max(1, Math.Min(MaxColumns, Children.Count(c => c.IsVisible))));
 
     private double ColumnWidth(double width, int columns) => (width - (Spacing * (columns - 1))) / columns;
 

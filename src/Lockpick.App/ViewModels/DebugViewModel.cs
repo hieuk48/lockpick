@@ -53,6 +53,10 @@ public sealed partial class DebugViewModel : PageViewModel, IDisposable, Lockpic
     public DebugViewModel(AppServices services, LiveState state)
         : base("Debug", "Icon.Bug")
     {
+        SetSections(
+            new PageSection("capture", "Capture"),
+            new PageSection("monitor", "Fields"),
+            new PageSection("log", "Log"));
         _services = services;
         _logger = services.LoggerFactory.CreateLogger("Debug");
         State = state;

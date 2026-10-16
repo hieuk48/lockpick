@@ -19,6 +19,9 @@ public sealed partial class ChallengesViewModel : PageViewModel
     public ChallengesViewModel(AppServices services, LiveState state)
         : base("Challenges", "Icon.Trophy")
     {
+        SetSections(
+            new PageSection("new", "New challenge"),
+            new PageSection("feedback", "Feedback"));
         _services = services;
         _challenges = services.Challenges;
         _challenges.EventRaised += (_, e) => state.Add(e);

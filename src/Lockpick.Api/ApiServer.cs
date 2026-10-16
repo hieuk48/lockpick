@@ -147,7 +147,7 @@ public sealed class ApiServer : IAsyncDisposable
         var expected = _options?.Token ?? string.Empty;
         if (expected.Length == 0 || !CryptographicOperations.FixedTimeEquals(Encoding.UTF8.GetBytes(supplied), Encoding.UTF8.GetBytes(expected)))
         {
-            await Reply(context, 401, new { error = "missing or wrong token (Lockpick → Settings → API)" }).ConfigureAwait(false);
+            await Reply(context, 401, new { error = "missing or wrong token (Lockpick → Settings → API and profiles)" }).ConfigureAwait(false);
             return;
         }
 
@@ -421,7 +421,7 @@ public sealed class ApiServer : IAsyncDisposable
         // Making the game safer (read-only, Challenge) is always allowed; giving the trainer write access needs the opt-in.
         if (wanted == TrainerMode.Trainer && !(_options?.AllowTrainer ?? false))
         {
-            return Error(403, "trainer commands are off (Lockpick → Settings → API)");
+            return Error(403, "trainer commands are off (Lockpick → Settings → API and profiles)");
         }
 
         trainer.SetMode(wanted);
@@ -453,7 +453,7 @@ public sealed class ApiServer : IAsyncDisposable
 
         if (!(_options?.AllowTrainer ?? false))
         {
-            return Error(403, "trainer commands are off (Lockpick → Settings → API)");
+            return Error(403, "trainer commands are off (Lockpick → Settings → API and profiles)");
         }
 
         if (_host.Source.Status is not { State: ConnectionState.Attached, Profile: { } profile } || _host.Adapter.CreateTrainer(profile) is not { } game)

@@ -6,64 +6,198 @@
              x:Class="Lockpick.App.Views.SettingsView"
              x:DataType="vm:SettingsViewModel">
 
-  <ScrollViewer>
-    <c:CardColumns MinColumnWidth="480" MaxColumns="3">
-
-      <!-- Updates -->
-      <Border Classes="card">
-        <StackPanel Spacing="8">
-          <StackPanel Classes="cardhead">
-            <c:LucideIcon Data="{StaticResource Icon.RefreshCw}" />
-            <TextBlock Classes="caption" Text="UPDATES" />
+  <ScrollViewer c:SectionScroll.Section="{Binding SelectedSection}">
+    <Panel>
+      <c:CardColumns MinColumnWidth="480" MaxColumns="3" IsVisible="{Binding SelectedSection, Converter={x:Static c:SectionIs.Instance}, ConverterParameter=general}">
+        <!-- Updates -->
+        <Border Classes="card">
+          <StackPanel Spacing="8">
+            <StackPanel Classes="cardhead">
+              <c:LucideIcon Data="{StaticResource Icon.RefreshCw}" />
+              <TextBlock Classes="caption" Text="UPDATES" />
+            </StackPanel>
+            <StackPanel Orientation="Horizontal" Spacing="10">
+              <TextBlock Classes="label" Text="Installed version" />
+              <TextBlock Classes="mono" Text="{Binding Updates.VersionLabel}" Classes.warning="{Binding Updates.HasUpdate}" />
+            </StackPanel>
+            <TextBlock Text="{Binding Updates.Status}" TextWrapping="Wrap" Foreground="{StaticResource LpMutedBrush}" />
+            <WrapPanel ItemSpacing="8" LineSpacing="8">
+              <Button Content="Check now" Command="{Binding CheckForUpdatesNowCommand}" IsEnabled="{Binding Updates.IsSupported}" />
+              <Button Command="{Binding UpdateNowCommand}" IsVisible="{Binding Updates.HasUpdate}" Classes="accent" AutomationProperties.Name="Update and restart">
+                <StackPanel Orientation="Horizontal" Spacing="6">
+                  <c:LucideIcon Data="{StaticResource Icon.Download}" Width="14" Height="14" />
+                  <TextBlock Text="{Binding Updates.AvailableVersion, StringFormat='Update to v{0} and restart'}" />
+                </StackPanel>
+              </Button>
+            </WrapPanel>
+            <ProgressBar Classes="health" Minimum="0" Maximum="100" Value="{Binding Updates.Progress}" IsVisible="{Binding Updates.IsBusy}" />
+            <ToggleSwitch IsChecked="{Binding CheckForUpdates}" OnContent="Check for updates automatically" OffContent="Check for updates automatically" />
+            <ToggleSwitch IsChecked="{Binding IncludePrereleases}" OnContent="Include pre-release versions" OffContent="Include pre-release versions" />
           </StackPanel>
-          <StackPanel Orientation="Horizontal" Spacing="10">
-            <TextBlock Classes="label" Text="Installed version" />
-            <TextBlock Classes="mono" Text="{Binding Updates.VersionLabel}" Classes.warning="{Binding Updates.HasUpdate}" />
-          </StackPanel>
-          <TextBlock Text="{Binding Updates.Status}" TextWrapping="Wrap" Foreground="{StaticResource LpMutedBrush}" />
-          <WrapPanel ItemSpacing="8" LineSpacing="8">
-            <Button Content="Check now" Command="{Binding CheckForUpdatesNowCommand}" IsEnabled="{Binding Updates.IsSupported}" />
-            <Button Command="{Binding UpdateNowCommand}" IsVisible="{Binding Updates.HasUpdate}" Classes="accent" AutomationProperties.Name="Update and restart">
-              <StackPanel Orientation="Horizontal" Spacing="6">
-                <c:LucideIcon Data="{StaticResource Icon.Download}" Width="14" Height="14" />
-                <TextBlock Text="{Binding Updates.AvailableVersion, StringFormat='Update to v{0} and restart'}" />
-              </StackPanel>
-            </Button>
-          </WrapPanel>
-          <ProgressBar Classes="health" Minimum="0" Maximum="100" Value="{Binding Updates.Progress}" IsVisible="{Binding Updates.IsBusy}" />
-          <ToggleSwitch IsChecked="{Binding CheckForUpdates}" OnContent="Check for updates automatically" OffContent="Check for updates automatically" />
-          <ToggleSwitch IsChecked="{Binding IncludePrereleases}" OnContent="Include pre-release versions" OffContent="Include pre-release versions" />
-        </StackPanel>
-      </Border>
+        </Border>
 
-      <!-- Capture -->
-      <!-- Overlay -->
-      <Border Classes="card">
-        <StackPanel Spacing="8">
-          <StackPanel Classes="cardhead">
-            <c:LucideIcon Data="{StaticResource Icon.Gauge}" />
-            <TextBlock Classes="caption" Text="OVERLAY" />
+        <!-- Game -->
+        <Border Classes="card">
+          <StackPanel Spacing="8">
+            <StackPanel Classes="cardhead">
+              <c:LucideIcon Data="{StaticResource Icon.Gamepad}" />
+              <TextBlock Classes="caption" Text="GAME INSTALLATION" />
+            </StackPanel>
+            <TextBlock Text="{Binding DetectedInstall}" TextWrapping="Wrap" />
+            <TextBlock Classes="label" Text="Executable override (leave empty to use the detected GOG install)" />
+            <Grid ColumnDefinitions="*,Auto" ColumnSpacing="8">
+              <TextBox Text="{Binding GameExecutablePath}" PlaceholderText="e.g. D:\Games\Resident Evil\ResidentEvil.exe" FontFamily="{StaticResource LpMono}" />
+              <Button Grid.Column="1" Content="Browse..." Click="OnBrowse" />
+            </Grid>
+            <StackPanel Orientation="Horizontal" Spacing="8">
+              <Button Content="Check build" Command="{Binding CheckInstalledBuildCommand}" />
+              <Button Content="Save" Command="{Binding SaveCommand}" />
+              <TextBlock Text="{Binding SaveResult}" VerticalAlignment="Center" Foreground="{StaticResource LpMutedBrush}" />
+            </StackPanel>
+            <SelectableTextBlock Classes="mono" Text="{Binding BuildCheckResult}" TextWrapping="Wrap" />
           </StackPanel>
-          <TextBlock TextWrapping="Wrap" Foreground="{StaticResource LpMutedBrush}"
-                     Text="Shows the in-game time and HP, a map, the enemies in the room, your run's splits and what just happened on top of the game. Clicks go through it and it never takes focus, so the game keeps running. It works with the game windowed, borderless or fullscreen. Put each widget in a corner or turn it off; widgets in the same corner stack. To keep the game's picture clear, pop a widget out into a window of its own (put it on another monitor, or capture it in OBS), or use the Stream page." />
-          <ToggleSwitch IsChecked="{Binding OverlayEnabled}" OnContent="Overlay on" OffContent="Overlay off" AutomationProperties.Name="Show the overlay over the game" />
-          <ItemsControl ItemsSource="{Binding OverlayWidgetRows}">
-            <ItemsControl.ItemTemplate>
-              <DataTemplate x:DataType="vm:OverlayWidgetRow">
-                <WrapPanel ItemSpacing="8" LineSpacing="4" Margin="0,2">
-                  <TextBlock Classes="label" Text="{Binding Name}" VerticalAlignment="Center" MinWidth="180" />
-                  <ComboBox ItemsSource="{Binding Choices}" SelectedItem="{Binding Corner}" MinWidth="160"
-                            AutomationProperties.Name="{Binding Name}" />
-                  <Button Content="{Binding PopOutText}" Command="{Binding PopOutCommand}" MinWidth="110"
-                          ToolTip.Tip="Show this widget in a window of its own: move it anywhere, resize it, or capture it in OBS (right-click it for a green background and always on top)." />
-                </WrapPanel>
-              </DataTemplate>
-            </ItemsControl.ItemTemplate>
-          </ItemsControl>
+        </Border>
 
-          <!-- The map: which views its key cycles through, and how they look. -->
-          <StackPanel Spacing="6" Margin="0,4,0,0" DataContext="{Binding MapOptions}" x:DataType="vm:MapOverlayOptionsViewModel">
-            <TextBlock Classes="label" Text="Map views" />
+        <!-- Setup and data -->
+        <Border Classes="card">
+          <StackPanel Spacing="8">
+            <TextBlock Classes="caption" Text="SETUP AND DATA" />
+            <Button Content="Run first-time setup again" Command="{Binding RunSetupCommand}" />
+            <TextBlock Classes="label" Text="Lockpick data folder (logs, captures, settings)" />
+            <SelectableTextBlock Classes="mono" Text="{Binding DataFolder}" />
+          </StackPanel>
+        </Border>
+
+        <!-- Credits -->
+        <Border Classes="card">
+          <StackPanel Spacing="10">
+            <StackPanel Classes="cardhead">
+              <c:LucideIcon Data="{StaticResource Icon.Users}" />
+              <TextBlock Classes="caption" Text="CREDITS" />
+            </StackPanel>
+            <TextBlock TextWrapping="Wrap" Foreground="{StaticResource LpMutedBrush}"
+                       Text="Lockpick is free and built with help from its community. Capture a play session (Debug → Capture) or complete a bounty to be listed here — contributions are unpaid; the credit is the reward." />
+            <ItemsControl ItemsSource="{Binding Credits}">
+              <ItemsControl.ItemTemplate>
+                <DataTemplate x:DataType="svc:CreditSection">
+                  <StackPanel Spacing="4" Margin="0,4,0,6">
+                    <TextBlock Text="{Binding Title}" FontWeight="SemiBold" />
+                    <ItemsControl ItemsSource="{Binding Entries}">
+                      <ItemsControl.ItemTemplate>
+                        <DataTemplate x:DataType="svc:CreditEntry">
+                          <StackPanel Orientation="Horizontal" Spacing="8">
+                            <TextBlock Text="{Binding Name}" Foreground="{StaticResource LpGreenBrush}" FontWeight="SemiBold" />
+                            <TextBlock Text="{Binding Detail}" Foreground="{StaticResource LpMutedBrush}" TextWrapping="Wrap" />
+                          </StackPanel>
+                        </DataTemplate>
+                      </ItemsControl.ItemTemplate>
+                    </ItemsControl>
+                    <TextBlock Text="Nobody yet — this could be you." Foreground="{StaticResource LpMutedBrush}" FontStyle="Italic" IsVisible="{Binding IsEmpty}" />
+                  </StackPanel>
+                </DataTemplate>
+              </ItemsControl.ItemTemplate>
+            </ItemsControl>
+          </StackPanel>
+        </Border>
+      </c:CardColumns>
+
+      <c:CardColumns MinColumnWidth="480" MaxColumns="3" IsVisible="{Binding SelectedSection, Converter={x:Static c:SectionIs.Instance}, ConverterParameter=display}">
+        <!-- Game display -->
+        <Border Classes="card" DataContext="{Binding GameDisplay}">
+          <StackPanel Spacing="8" x:DataType="vm:GameDisplayViewModel">
+            <StackPanel Classes="cardhead">
+              <c:LucideIcon Data="{StaticResource Icon.LayoutDashboard}" />
+              <TextBlock Classes="caption" Text="GAME DISPLAY" />
+            </StackPanel>
+            <TextBlock TextWrapping="Wrap" Foreground="{StaticResource LpMutedBrush}"
+                       Text="How Resident Evil shows itself: its own display settings, changed only when you press Apply (your original is kept and can be put back). The game reads them when it starts." />
+            <!-- Every setting on screen as one aligned list (the labels share a column through the size scope). -->
+            <StackPanel Spacing="6" Grid.IsSharedSizeScope="True" IsEnabled="{Binding Available}">
+              <Grid ColumnSpacing="8">
+                <Grid.ColumnDefinitions><ColumnDefinition SharedSizeGroup="DisplayLabel" Width="Auto" /><ColumnDefinition Width="*" /></Grid.ColumnDefinitions>
+                <TextBlock Classes="label" Text="Display" VerticalAlignment="Center" />
+                <ComboBox Grid.Column="1" ItemsSource="{Binding ModeChoices}" SelectedItem="{Binding Mode}" HorizontalAlignment="Stretch" MaxWidth="460" AutomationProperties.Name="Game display mode" />
+              </Grid>
+              <Grid ColumnSpacing="8">
+                <Grid.ColumnDefinitions><ColumnDefinition SharedSizeGroup="DisplayLabel" Width="Auto" /><ColumnDefinition Width="*" /></Grid.ColumnDefinitions>
+                <TextBlock Classes="label" Text="Resolution" VerticalAlignment="Center" />
+                <ComboBox Grid.Column="1" ItemsSource="{Binding ResolutionChoices}" SelectedItem="{Binding Resolution}" IsEnabled="{Binding CanChooseResolution}" HorizontalAlignment="Stretch" MaxWidth="460" AutomationProperties.Name="Game resolution" />
+              </Grid>
+              <Grid ColumnSpacing="8">
+                <Grid.ColumnDefinitions><ColumnDefinition SharedSizeGroup="DisplayLabel" Width="Auto" /><ColumnDefinition Width="*" /></Grid.ColumnDefinitions>
+                <TextBlock Classes="label" Text="Picture" VerticalAlignment="Center" />
+                <ComboBox Grid.Column="1" ItemsSource="{Binding ScalingChoices}" SelectedItem="{Binding Scaling}" HorizontalAlignment="Stretch" MaxWidth="460" AutomationProperties.Name="Game picture scaling" />
+              </Grid>
+              <ItemsControl ItemsSource="{Binding Options}">
+                <ItemsControl.ItemsPanel>
+                  <ItemsPanelTemplate><StackPanel Spacing="6" /></ItemsPanelTemplate>
+                </ItemsControl.ItemsPanel>
+                <ItemsControl.ItemTemplate>
+                  <DataTemplate x:DataType="vm:DisplayOptionRow">
+                    <Grid ColumnSpacing="8">
+                      <Grid.ColumnDefinitions><ColumnDefinition SharedSizeGroup="DisplayLabel" Width="Auto" /><ColumnDefinition Width="*" /></Grid.ColumnDefinitions>
+                      <TextBlock Classes="label" Text="{Binding Label}" VerticalAlignment="Center" />
+                      <ComboBox Grid.Column="1" ItemsSource="{Binding Choices}" SelectedItem="{Binding Selected}" HorizontalAlignment="Stretch" MaxWidth="460"
+                                AutomationProperties.Name="{Binding Label}" />
+                    </Grid>
+                  </DataTemplate>
+                </ItemsControl.ItemTemplate>
+              </ItemsControl>
+            </StackPanel>
+            <TextBlock Text="{Binding Warning}" Classes="warning" TextWrapping="Wrap" IsVisible="{Binding Warning, Converter={x:Static StringConverters.IsNotNullOrEmpty}}" />
+            <WrapPanel ItemSpacing="8" LineSpacing="8">
+              <Button Content="Apply" Command="{Binding ApplyCommand}" Classes="accent" IsEnabled="{Binding Available}" AutomationProperties.Name="Apply the game display settings" />
+              <Button Content="Restore my original" Command="{Binding RestoreCommand}" AutomationProperties.Name="Restore the original game display settings" />
+              <!-- Next to the setting it applies: shown while the running game still has the old settings. -->
+              <Button Content="{Binding RestartText}" Command="{Binding RestartGameCommand}" IsVisible="{Binding NeedsRestart}"
+                      AutomationProperties.Name="Restart the game to use the new settings" />
+            </WrapPanel>
+            <TextBlock Text="{Binding Status}" TextWrapping="Wrap" Foreground="{StaticResource LpMutedBrush}" IsVisible="{Binding Status, Converter={x:Static StringConverters.IsNotNullOrEmpty}}" />
+            <WrapPanel ItemSpacing="8" LineSpacing="8">
+              <TextBlock Classes="label" Text="Move the game to" VerticalAlignment="Center" />
+              <ComboBox ItemsSource="{Binding MonitorChoices}" SelectedItem="{Binding MoveTarget}" MinWidth="200" AutomationProperties.Name="Monitor to move the game to" />
+              <Button Content="Move" Command="{Binding MoveGameCommand}" AutomationProperties.Name="Move the game window" />
+            </WrapPanel>
+            <TextBlock Text="{Binding MoveStatus}" TextWrapping="Wrap" Foreground="{StaticResource LpMutedBrush}" IsVisible="{Binding MoveStatus, Converter={x:Static StringConverters.IsNotNullOrEmpty}}" />
+          </StackPanel>
+        </Border>
+      </c:CardColumns>
+
+      <c:CardColumns MinColumnWidth="480" MaxColumns="3" IsVisible="{Binding SelectedSection, Converter={x:Static c:SectionIs.Instance}, ConverterParameter=overlay}">
+        <!-- Overlay -->
+        <Border Classes="card">
+          <StackPanel Spacing="8">
+            <StackPanel Classes="cardhead">
+              <c:LucideIcon Data="{StaticResource Icon.Gauge}" />
+              <TextBlock Classes="caption" Text="OVERLAY" />
+            </StackPanel>
+            <TextBlock TextWrapping="Wrap" Foreground="{StaticResource LpMutedBrush}"
+                       Text="Shows the in-game time and HP, a map, the enemies in the room, your run's splits and what just happened on top of the game. Clicks go through it and it never takes focus, so the game keeps running. It works with the game windowed, borderless or fullscreen. Put each widget in a corner or turn it off; widgets in the same corner stack. To keep the game's picture clear, pop a widget out into a window of its own (put it on another monitor, or capture it in OBS), or use the Stream page." />
+            <ToggleSwitch IsChecked="{Binding OverlayEnabled}" OnContent="Overlay on" OffContent="Overlay off" AutomationProperties.Name="Show the overlay over the game" />
+            <ItemsControl ItemsSource="{Binding OverlayWidgetRows}">
+              <ItemsControl.ItemTemplate>
+                <DataTemplate x:DataType="vm:OverlayWidgetRow">
+                  <WrapPanel ItemSpacing="8" LineSpacing="4" Margin="0,2">
+                    <TextBlock Classes="label" Text="{Binding Name}" VerticalAlignment="Center" MinWidth="180" />
+                    <ComboBox ItemsSource="{Binding Choices}" SelectedItem="{Binding Corner}" MinWidth="160"
+                              AutomationProperties.Name="{Binding Name}" />
+                    <Button Content="{Binding PopOutText}" Command="{Binding PopOutCommand}" MinWidth="110"
+                            ToolTip.Tip="Show this widget in a window of its own: move it anywhere, resize it, or capture it in OBS (right-click it for a green background and always on top)." />
+                  </WrapPanel>
+                </DataTemplate>
+              </ItemsControl.ItemTemplate>
+            </ItemsControl>
+            <TextBlock Text="{Binding Overlay.Status}" TextWrapping="Wrap" Foreground="{StaticResource LpMutedBrush}" />
+          </StackPanel>
+        </Border>
+
+        <!-- The map: which views its key cycles through, and how they look. -->
+        <Border Classes="card">
+          <StackPanel Spacing="8" DataContext="{Binding MapOptions}" x:DataType="vm:MapOverlayOptionsViewModel">
+            <StackPanel Classes="cardhead">
+              <c:LucideIcon Data="{StaticResource Icon.Map}" />
+              <TextBlock Classes="caption" Text="MAP VIEWS" />
+            </StackPanel>
             <TextBlock TextWrapping="Wrap" Foreground="{StaticResource LpMutedBrush}"
                        Text="The map key (Hotkeys) moves to the next view you tick, in this order; the first is where it starts. The full-screen views cover the game's picture; the time and HP stay on top." />
             <ItemsControl ItemsSource="{Binding Views}">
@@ -89,268 +223,149 @@
             <TextBlock Text="{Binding Status}" Classes="warning" TextWrapping="Wrap"
                        IsVisible="{Binding Status, Converter={x:Static StringConverters.IsNotNullOrEmpty}}" />
           </StackPanel>
-          <TextBlock Text="{Binding Overlay.Status}" TextWrapping="Wrap" Foreground="{StaticResource LpMutedBrush}" />
-        </StackPanel>
-      </Border>
+        </Border>
+      </c:CardColumns>
 
-      <!-- speedrun.com account: the name for the leaderboards, and the API key, kept encrypted -->
-      <Border Classes="card" DataContext="{Binding Speedrun}">
-        <StackPanel Spacing="8" x:DataType="vm:SpeedrunAccountViewModel">
-          <StackPanel Classes="cardhead">
-            <c:LucideIcon Data="{StaticResource Icon.Trophy}" />
-            <TextBlock Classes="caption" Text="SPEEDRUN.COM" />
-          </StackPanel>
-          <TextBlock TextWrapping="Wrap" Foreground="{StaticResource LpMutedBrush}"
-                     Text="Your speedrun.com name marks your runs on the leaderboards (Runs page). No password or key is needed for that." />
-          <WrapPanel ItemSpacing="8" LineSpacing="6">
-            <TextBox Text="{Binding UserName}" Watermark="Your speedrun.com name" MinWidth="220" AutomationProperties.Name="speedrun.com name" />
-            <Button Content="Use this name" Command="{Binding UseNameCommand}" />
-          </WrapPanel>
-          <TextBlock Text="{Binding NameStatus}" TextWrapping="Wrap"
-                     IsVisible="{Binding NameStatus, Converter={x:Static StringConverters.IsNotNullOrEmpty}}" />
-
-          <TextBlock Classes="label" Text="API key (optional)" Margin="0,6,0,0" />
-          <TextBlock TextWrapping="Wrap" Foreground="{StaticResource LpMutedBrush}"
-                     Text="Only needed to submit runs from Lockpick. Your key lets an app act as you on speedrun.com, so Lockpick: checks it with speedrun.com before keeping it; keeps it encrypted for your Windows account on this PC (not in its settings, logs, captures or its own API); sends it only to speedrun.com; and never shows it again. You can remove it here, and make a new one on speedrun.com at any time to stop the old one working. Never paste it anywhere else." />
-          <WrapPanel ItemSpacing="8" LineSpacing="6">
-            <Button Content="Get my key on speedrun.com" Click="OnOpenKeyPage" AutomationProperties.Name="Open speedrun.com to get your API key" />
-            <TextBox Text="{Binding KeyInput}" PasswordChar="•" Watermark="Paste your API key" MinWidth="260"
-                     AutomationProperties.Name="speedrun.com API key" />
-            <Button Content="Save key" Command="{Binding SaveKeyCommand}" Classes="accent" />
-            <Button Content="Remove key" Command="{Binding RemoveKeyCommand}" IsVisible="{Binding HasKey}" />
-          </WrapPanel>
-          <TextBlock Text="{Binding KeyStatus}" TextWrapping="Wrap"
-                     IsVisible="{Binding KeyStatus, Converter={x:Static StringConverters.IsNotNullOrEmpty}}" />
-        </StackPanel>
-      </Border>
-
-      <!-- Game display -->
-      <Border Classes="card" DataContext="{Binding GameDisplay}">
-        <StackPanel Spacing="8" x:DataType="vm:GameDisplayViewModel">
-          <StackPanel Classes="cardhead">
-            <c:LucideIcon Data="{StaticResource Icon.LayoutDashboard}" />
-            <TextBlock Classes="caption" Text="GAME DISPLAY" />
-          </StackPanel>
-          <TextBlock TextWrapping="Wrap" Foreground="{StaticResource LpMutedBrush}"
-                     Text="How Resident Evil shows itself: its own display settings, changed only when you press Apply (your original is kept and can be put back). The game reads them when it starts." />
-          <!-- Every setting on screen as one aligned list (the labels share a column through the size scope). -->
-          <StackPanel Spacing="6" Grid.IsSharedSizeScope="True" IsEnabled="{Binding Available}">
-            <Grid ColumnSpacing="8">
-              <Grid.ColumnDefinitions><ColumnDefinition SharedSizeGroup="DisplayLabel" Width="Auto" /><ColumnDefinition Width="*" /></Grid.ColumnDefinitions>
-              <TextBlock Classes="label" Text="Display" VerticalAlignment="Center" />
-              <ComboBox Grid.Column="1" ItemsSource="{Binding ModeChoices}" SelectedItem="{Binding Mode}" HorizontalAlignment="Stretch" MaxWidth="460" AutomationProperties.Name="Game display mode" />
-            </Grid>
-            <Grid ColumnSpacing="8">
-              <Grid.ColumnDefinitions><ColumnDefinition SharedSizeGroup="DisplayLabel" Width="Auto" /><ColumnDefinition Width="*" /></Grid.ColumnDefinitions>
-              <TextBlock Classes="label" Text="Resolution" VerticalAlignment="Center" />
-              <ComboBox Grid.Column="1" ItemsSource="{Binding ResolutionChoices}" SelectedItem="{Binding Resolution}" IsEnabled="{Binding CanChooseResolution}" HorizontalAlignment="Stretch" MaxWidth="460" AutomationProperties.Name="Game resolution" />
-            </Grid>
-            <Grid ColumnSpacing="8">
-              <Grid.ColumnDefinitions><ColumnDefinition SharedSizeGroup="DisplayLabel" Width="Auto" /><ColumnDefinition Width="*" /></Grid.ColumnDefinitions>
-              <TextBlock Classes="label" Text="Picture" VerticalAlignment="Center" />
-              <ComboBox Grid.Column="1" ItemsSource="{Binding ScalingChoices}" SelectedItem="{Binding Scaling}" HorizontalAlignment="Stretch" MaxWidth="460" AutomationProperties.Name="Game picture scaling" />
-            </Grid>
-            <ItemsControl ItemsSource="{Binding Options}">
-              <ItemsControl.ItemsPanel>
-                <ItemsPanelTemplate><StackPanel Spacing="6" /></ItemsPanelTemplate>
-              </ItemsControl.ItemsPanel>
+      <c:CardColumns MinColumnWidth="480" MaxColumns="3" IsVisible="{Binding SelectedSection, Converter={x:Static c:SectionIs.Instance}, ConverterParameter=hotkeys}">
+        <!-- Trainer hotkeys -->
+        <Border Classes="card">
+          <StackPanel Spacing="8">
+            <StackPanel Classes="cardhead">
+              <c:LucideIcon Data="{StaticResource Icon.Wrench}" />
+              <TextBlock Classes="caption" Text="HOTKEYS" />
+            </StackPanel>
+            <TextBlock TextWrapping="Wrap" Foreground="{StaticResource LpMutedBrush}"
+                       Text="Keys that work while you play, without leaving the game. Trainer actions work only while Trainer Mode is on and Lockpick has write access; the overlay, map and run keys work any time. A controller button can do the same: pick one Resident Evil doesn't use (L2 does nothing in the game)." />
+            <ItemsControl ItemsSource="{Binding TrainerHotkeyRows}">
               <ItemsControl.ItemTemplate>
-                <DataTemplate x:DataType="vm:DisplayOptionRow">
-                  <Grid ColumnSpacing="8">
-                    <Grid.ColumnDefinitions><ColumnDefinition SharedSizeGroup="DisplayLabel" Width="Auto" /><ColumnDefinition Width="*" /></Grid.ColumnDefinitions>
-                    <TextBlock Classes="label" Text="{Binding Label}" VerticalAlignment="Center" />
-                    <ComboBox Grid.Column="1" ItemsSource="{Binding Choices}" SelectedItem="{Binding Selected}" HorizontalAlignment="Stretch" MaxWidth="460"
-                              AutomationProperties.Name="{Binding Label}" />
-                  </Grid>
+                <DataTemplate x:DataType="vm:TrainerHotkeyRow">
+                  <StackPanel Spacing="2" Margin="0,2">
+                    <WrapPanel ItemSpacing="8" LineSpacing="4">
+                      <TextBlock Classes="label" Text="{Binding Name}" VerticalAlignment="Center" MinWidth="180" />
+                      <ComboBox ItemsSource="{Binding Choices}" SelectedItem="{Binding Key}" MinWidth="160"
+                                AutomationProperties.Name="{Binding Name}" />
+                      <TextBlock Text="{Binding ButtonName, StringFormat='Controller: {0}'}" VerticalAlignment="Center" Foreground="{StaticResource LpMutedBrush}" />
+                      <Button Content="Set button…" Command="{Binding BindButtonCommand}" AutomationProperties.Name="{Binding Name, StringFormat='Controller button for {0}'}" />
+                      <Button Content="Clear" Command="{Binding ClearButtonCommand}" IsVisible="{Binding HasButton}" />
+                    </WrapPanel>
+                    <TextBlock Text="{Binding Status}" Classes="warning" TextWrapping="Wrap"
+                               IsVisible="{Binding Status, Converter={x:Static StringConverters.IsNotNullOrEmpty}}" />
+                  </StackPanel>
                 </DataTemplate>
               </ItemsControl.ItemTemplate>
             </ItemsControl>
           </StackPanel>
-          <TextBlock Text="{Binding Warning}" Classes="warning" TextWrapping="Wrap" IsVisible="{Binding Warning, Converter={x:Static StringConverters.IsNotNullOrEmpty}}" />
-          <WrapPanel ItemSpacing="8" LineSpacing="8">
-            <Button Content="Apply" Command="{Binding ApplyCommand}" Classes="accent" IsEnabled="{Binding Available}" AutomationProperties.Name="Apply the game display settings" />
-            <Button Content="Restore my original" Command="{Binding RestoreCommand}" AutomationProperties.Name="Restore the original game display settings" />
-            <!-- Next to the setting it applies: shown while the running game still has the old settings. -->
-            <Button Content="{Binding RestartText}" Command="{Binding RestartGameCommand}" IsVisible="{Binding NeedsRestart}"
-                    AutomationProperties.Name="Restart the game to use the new settings" />
-          </WrapPanel>
-          <TextBlock Text="{Binding Status}" TextWrapping="Wrap" Foreground="{StaticResource LpMutedBrush}" IsVisible="{Binding Status, Converter={x:Static StringConverters.IsNotNullOrEmpty}}" />
-          <WrapPanel ItemSpacing="8" LineSpacing="8">
-            <TextBlock Classes="label" Text="Move the game to" VerticalAlignment="Center" />
-            <ComboBox ItemsSource="{Binding MonitorChoices}" SelectedItem="{Binding MoveTarget}" MinWidth="200" AutomationProperties.Name="Monitor to move the game to" />
-            <Button Content="Move" Command="{Binding MoveGameCommand}" AutomationProperties.Name="Move the game window" />
-          </WrapPanel>
-          <TextBlock Text="{Binding MoveStatus}" TextWrapping="Wrap" Foreground="{StaticResource LpMutedBrush}" IsVisible="{Binding MoveStatus, Converter={x:Static StringConverters.IsNotNullOrEmpty}}" />
-        </StackPanel>
-      </Border>
+        </Border>
 
-      <Border Classes="card">
-        <StackPanel Spacing="8">
-          <StackPanel Classes="cardhead">
-            <c:LucideIcon Data="{StaticResource Icon.Flag}" />
-            <TextBlock Classes="caption" Text="CAPTURE MARKERS" />
-          </StackPanel>
-          <TextBlock TextWrapping="Wrap" Foreground="{StaticResource LpMutedBrush}"
-                     Text="While a capture is running, this key or controller button marks the current moment even while the game has focus. Pick ones that do nothing in your game (F9 closes Resident Evil; L2 does nothing with the PlayStation layout)." />
-          <WrapPanel ItemSpacing="8" LineSpacing="8">
-            <TextBlock Classes="label" Text="Marker hotkey" VerticalAlignment="Center" />
-            <ComboBox ItemsSource="{Binding MarkerHotkeyChoices}" SelectedItem="{Binding MarkerHotkey}" MinWidth="160" AutomationProperties.Name="Marker hotkey" />
-          </WrapPanel>
-          <TextBlock Text="{Binding MarkerHotkeyStatus}" Classes="warning" TextWrapping="Wrap" IsVisible="{Binding MarkerHotkeyStatus, Converter={x:Static StringConverters.IsNotNullOrEmpty}}" />
-          <WrapPanel ItemSpacing="8" LineSpacing="8">
-            <TextBlock Classes="label" Text="Controller button" VerticalAlignment="Center" />
-            <TextBlock Classes="mono" Text="{Binding MarkerButtonName}" VerticalAlignment="Center" MinWidth="120" />
-            <Button Content="Bind…" Command="{Binding BindMarkerButtonCommand}" AutomationProperties.Name="Bind the controller marker button" />
-            <Button Content="L2 / LT" Command="{Binding UseL2ForMarkersCommand}" AutomationProperties.Name="Use L2 or LT for markers" />
-            <Button Content="Off" Command="{Binding TurnOffMarkerButtonCommand}" AutomationProperties.Name="No controller button for markers" />
-          </WrapPanel>
-          <TextBlock Text="{Binding MarkerButtonStatus}" TextWrapping="Wrap" Foreground="{StaticResource LpMutedBrush}"
-                     IsVisible="{Binding MarkerButtonStatus, Converter={x:Static StringConverters.IsNotNullOrEmpty}}" />
-        </StackPanel>
-      </Border>
-
-      <!-- API -->
-      <Border Classes="card">
-        <StackPanel Spacing="8">
-          <StackPanel Classes="cardhead">
-            <c:LucideIcon Data="{StaticResource Icon.Plug}" />
-            <TextBlock Classes="caption" Text="API FOR OTHER TOOLS" />
-          </StackPanel>
-          <TextBlock TextWrapping="Wrap" Foreground="{StaticResource LpMutedBrush}"
-                     Text="Lets scripts, OBS, LiveSplit, a Stream Deck or macro tools read the game state and events, add capture markers and, if you allow it, use trainer commands. Every request needs the token below. See docs/API.md." />
-          <CheckBox Content="Turn on the API" IsChecked="{Binding ApiEnabled}" AutomationProperties.Name="Turn on the API" />
-          <StackPanel Spacing="8" IsEnabled="{Binding ApiEnabled}">
-            <CheckBox Content="Allow other devices on my network (a phone, a Steam Deck, another PC)" IsChecked="{Binding ApiAllowNetwork}"
-                      AutomationProperties.Name="Allow other devices on my network" />
-            <TextBlock TextWrapping="Wrap" Foreground="{StaticResource LpMutedBrush}" IsVisible="{Binding ApiAllowNetwork}"
-                       Text="Windows may ask to allow Lockpick through the firewall. Anyone on your network with the token can use the API." />
-            <CheckBox Content="Allow trainer commands (only while Trainer Mode is on)" IsChecked="{Binding ApiAllowTrainer}"
-                      AutomationProperties.Name="Allow trainer commands from the API" />
+        <Border Classes="card">
+          <StackPanel Spacing="8">
+            <StackPanel Classes="cardhead">
+              <c:LucideIcon Data="{StaticResource Icon.Flag}" />
+              <TextBlock Classes="caption" Text="CAPTURE MARKERS" />
+            </StackPanel>
+            <TextBlock TextWrapping="Wrap" Foreground="{StaticResource LpMutedBrush}"
+                       Text="While a capture is running, this key or controller button marks the current moment even while the game has focus. Pick ones that do nothing in your game (F9 closes Resident Evil; L2 does nothing with the PlayStation layout)." />
             <WrapPanel ItemSpacing="8" LineSpacing="8">
-              <TextBlock Classes="label" Text="Port" VerticalAlignment="Center" />
-              <NumericUpDown Value="{Binding ApiPort}" Minimum="1024" Maximum="65535" Increment="1" FormatString="0" MinWidth="130"
-                             AutomationProperties.Name="API port" />
+              <TextBlock Classes="label" Text="Marker hotkey" VerticalAlignment="Center" />
+              <ComboBox ItemsSource="{Binding MarkerHotkeyChoices}" SelectedItem="{Binding MarkerHotkey}" MinWidth="160" AutomationProperties.Name="Marker hotkey" />
             </WrapPanel>
+            <TextBlock Text="{Binding MarkerHotkeyStatus}" Classes="warning" TextWrapping="Wrap" IsVisible="{Binding MarkerHotkeyStatus, Converter={x:Static StringConverters.IsNotNullOrEmpty}}" />
             <WrapPanel ItemSpacing="8" LineSpacing="8">
-              <TextBlock Classes="label" Text="Token" VerticalAlignment="Center" />
-              <TextBox Classes="mono" Text="{Binding ApiToken}" IsReadOnly="True" MinWidth="260" MaxWidth="460" TextWrapping="Wrap"
-                       AutomationProperties.Name="API token" />
-              <Button Content="New token" Command="{Binding NewApiTokenCommand}" AutomationProperties.Name="Make a new API token"
-                      ToolTip.Tip="Programs using the old token stop working." />
+              <TextBlock Classes="label" Text="Controller button" VerticalAlignment="Center" />
+              <TextBlock Classes="mono" Text="{Binding MarkerButtonName}" VerticalAlignment="Center" MinWidth="120" />
+              <Button Content="Bind…" Command="{Binding BindMarkerButtonCommand}" AutomationProperties.Name="Bind the controller marker button" />
+              <Button Content="L2 / LT" Command="{Binding UseL2ForMarkersCommand}" AutomationProperties.Name="Use L2 or LT for markers" />
+              <Button Content="Off" Command="{Binding TurnOffMarkerButtonCommand}" AutomationProperties.Name="No controller button for markers" />
             </WrapPanel>
+            <TextBlock Text="{Binding MarkerButtonStatus}" TextWrapping="Wrap" Foreground="{StaticResource LpMutedBrush}"
+                       IsVisible="{Binding MarkerButtonStatus, Converter={x:Static StringConverters.IsNotNullOrEmpty}}" />
           </StackPanel>
-          <TextBlock Text="{Binding ApiStatus}" TextWrapping="Wrap" Classes.warning="{Binding ApiProblem}" />
-        </StackPanel>
-      </Border>
+        </Border>
+      </c:CardColumns>
 
-      <!-- Trainer hotkeys -->
-      <Border Classes="card">
-        <StackPanel Spacing="8">
-          <StackPanel Classes="cardhead">
-            <c:LucideIcon Data="{StaticResource Icon.Wrench}" />
-            <TextBlock Classes="caption" Text="HOTKEYS" />
-          </StackPanel>
-          <TextBlock TextWrapping="Wrap" Foreground="{StaticResource LpMutedBrush}"
-                     Text="Keys that work while you play, without leaving the game. Trainer actions work only while Trainer Mode is on and Lockpick has write access; the overlay, map and run keys work any time. A controller button can do the same: pick one Resident Evil doesn't use (L2 does nothing in the game)." />
-          <ItemsControl ItemsSource="{Binding TrainerHotkeyRows}">
-            <ItemsControl.ItemTemplate>
-              <DataTemplate x:DataType="vm:TrainerHotkeyRow">
-                <StackPanel Spacing="2" Margin="0,2">
-                  <WrapPanel ItemSpacing="8" LineSpacing="4">
-                    <TextBlock Classes="label" Text="{Binding Name}" VerticalAlignment="Center" MinWidth="180" />
-                    <ComboBox ItemsSource="{Binding Choices}" SelectedItem="{Binding Key}" MinWidth="160"
-                              AutomationProperties.Name="{Binding Name}" />
-                    <TextBlock Text="{Binding ButtonName, StringFormat='Controller: {0}'}" VerticalAlignment="Center" Foreground="{StaticResource LpMutedBrush}" />
-                    <Button Content="Set button…" Command="{Binding BindButtonCommand}" AutomationProperties.Name="{Binding Name, StringFormat='Controller button for {0}'}" />
-                    <Button Content="Clear" Command="{Binding ClearButtonCommand}" IsVisible="{Binding HasButton}" />
-                  </WrapPanel>
-                  <TextBlock Text="{Binding Status}" Classes="warning" TextWrapping="Wrap"
-                             IsVisible="{Binding Status, Converter={x:Static StringConverters.IsNotNullOrEmpty}}" />
-                </StackPanel>
-              </DataTemplate>
-            </ItemsControl.ItemTemplate>
-          </ItemsControl>
-        </StackPanel>
-      </Border>
+      <c:CardColumns MinColumnWidth="480" MaxColumns="3" IsVisible="{Binding SelectedSection, Converter={x:Static c:SectionIs.Instance}, ConverterParameter=speedrun}">
+        <!-- speedrun.com account: the name for the leaderboards, and the API key, kept encrypted -->
+        <Border Classes="card" DataContext="{Binding Speedrun}">
+          <StackPanel Spacing="8" x:DataType="vm:SpeedrunAccountViewModel">
+            <StackPanel Classes="cardhead">
+              <c:LucideIcon Data="{StaticResource Icon.Trophy}" />
+              <TextBlock Classes="caption" Text="SPEEDRUN.COM" />
+            </StackPanel>
+            <TextBlock TextWrapping="Wrap" Foreground="{StaticResource LpMutedBrush}"
+                       Text="Your speedrun.com name marks your runs on the leaderboards (Runs → Leaderboard). No password or key is needed for that." />
+            <WrapPanel ItemSpacing="8" LineSpacing="6">
+              <TextBox Text="{Binding UserName}" Watermark="Your speedrun.com name" MinWidth="220" AutomationProperties.Name="speedrun.com name" />
+              <Button Content="Use this name" Command="{Binding UseNameCommand}" />
+            </WrapPanel>
+            <TextBlock Text="{Binding NameStatus}" TextWrapping="Wrap"
+                       IsVisible="{Binding NameStatus, Converter={x:Static StringConverters.IsNotNullOrEmpty}}" />
 
-      <!-- Game -->
-      <Border Classes="card">
-        <StackPanel Spacing="8">
-          <StackPanel Classes="cardhead">
-            <c:LucideIcon Data="{StaticResource Icon.Gamepad}" />
-            <TextBlock Classes="caption" Text="GAME INSTALLATION" />
+            <TextBlock Classes="label" Text="API key (optional)" Margin="0,6,0,0" />
+            <TextBlock TextWrapping="Wrap" Foreground="{StaticResource LpMutedBrush}"
+                       Text="Only needed to submit runs from Lockpick. Your key lets an app act as you on speedrun.com, so Lockpick: checks it with speedrun.com before keeping it; keeps it encrypted for your Windows account on this PC (not in its settings, logs, captures or its own API); sends it only to speedrun.com; and never shows it again. You can remove it here, and make a new one on speedrun.com at any time to stop the old one working. Never paste it anywhere else." />
+            <WrapPanel ItemSpacing="8" LineSpacing="6">
+              <Button Content="Get my key on speedrun.com" Click="OnOpenKeyPage" AutomationProperties.Name="Open speedrun.com to get your API key" />
+              <TextBox Text="{Binding KeyInput}" PasswordChar="•" Watermark="Paste your API key" MinWidth="260"
+                       AutomationProperties.Name="speedrun.com API key" />
+              <Button Content="Save key" Command="{Binding SaveKeyCommand}" Classes="accent" />
+              <Button Content="Remove key" Command="{Binding RemoveKeyCommand}" IsVisible="{Binding HasKey}" />
+            </WrapPanel>
+            <TextBlock Text="{Binding KeyStatus}" TextWrapping="Wrap"
+                       IsVisible="{Binding KeyStatus, Converter={x:Static StringConverters.IsNotNullOrEmpty}}" />
           </StackPanel>
-          <TextBlock Text="{Binding DetectedInstall}" TextWrapping="Wrap" />
-          <TextBlock Classes="label" Text="Executable override (leave empty to use the detected GOG install)" />
-          <Grid ColumnDefinitions="*,Auto" ColumnSpacing="8">
-            <TextBox Text="{Binding GameExecutablePath}" PlaceholderText="e.g. D:\Games\Resident Evil\ResidentEvil.exe" FontFamily="{StaticResource LpMono}" />
-            <Button Grid.Column="1" Content="Browse..." Click="OnBrowse" />
-          </Grid>
-          <StackPanel Orientation="Horizontal" Spacing="8">
-            <Button Content="Check build" Command="{Binding CheckInstalledBuildCommand}" />
-            <Button Content="Save" Command="{Binding SaveCommand}" />
-            <TextBlock Text="{Binding SaveResult}" VerticalAlignment="Center" Foreground="{StaticResource LpMutedBrush}" />
-          </StackPanel>
-          <SelectableTextBlock Classes="mono" Text="{Binding BuildCheckResult}" TextWrapping="Wrap" />
-        </StackPanel>
-      </Border>
+        </Border>
+      </c:CardColumns>
 
-      <!-- Credits -->
-      <Border Classes="card">
-        <StackPanel Spacing="10">
-          <StackPanel Classes="cardhead">
-            <c:LucideIcon Data="{StaticResource Icon.Users}" />
-            <TextBlock Classes="caption" Text="CREDITS" />
+      <c:CardColumns MinColumnWidth="480" MaxColumns="3" IsVisible="{Binding SelectedSection, Converter={x:Static c:SectionIs.Instance}, ConverterParameter=advanced}">
+        <!-- API -->
+        <Border Classes="card">
+          <StackPanel Spacing="8">
+            <StackPanel Classes="cardhead">
+              <c:LucideIcon Data="{StaticResource Icon.Plug}" />
+              <TextBlock Classes="caption" Text="API FOR OTHER TOOLS" />
+            </StackPanel>
+            <TextBlock TextWrapping="Wrap" Foreground="{StaticResource LpMutedBrush}"
+                       Text="Lets scripts, OBS, LiveSplit, a Stream Deck or macro tools read the game state and events, add capture markers and, if you allow it, use trainer commands. Every request needs the token below. See docs/API.md." />
+            <CheckBox Content="Turn on the API" IsChecked="{Binding ApiEnabled}" AutomationProperties.Name="Turn on the API" />
+            <StackPanel Spacing="8" IsEnabled="{Binding ApiEnabled}">
+              <CheckBox Content="Allow other devices on my network (a phone, a Steam Deck, another PC)" IsChecked="{Binding ApiAllowNetwork}"
+                        AutomationProperties.Name="Allow other devices on my network" />
+              <TextBlock TextWrapping="Wrap" Foreground="{StaticResource LpMutedBrush}" IsVisible="{Binding ApiAllowNetwork}"
+                         Text="Windows may ask to allow Lockpick through the firewall. Anyone on your network with the token can use the API." />
+              <CheckBox Content="Allow trainer commands (only while Trainer Mode is on)" IsChecked="{Binding ApiAllowTrainer}"
+                        AutomationProperties.Name="Allow trainer commands from the API" />
+              <WrapPanel ItemSpacing="8" LineSpacing="8">
+                <TextBlock Classes="label" Text="Port" VerticalAlignment="Center" />
+                <NumericUpDown Value="{Binding ApiPort}" Minimum="1024" Maximum="65535" Increment="1" FormatString="0" MinWidth="130"
+                               AutomationProperties.Name="API port" />
+              </WrapPanel>
+              <WrapPanel ItemSpacing="8" LineSpacing="8">
+                <TextBlock Classes="label" Text="Token" VerticalAlignment="Center" />
+                <TextBox Classes="mono" Text="{Binding ApiToken}" IsReadOnly="True" MinWidth="260" MaxWidth="460" TextWrapping="Wrap"
+                         AutomationProperties.Name="API token" />
+                <Button Content="New token" Command="{Binding NewApiTokenCommand}" AutomationProperties.Name="Make a new API token"
+                        ToolTip.Tip="Programs using the old token stop working." />
+              </WrapPanel>
+            </StackPanel>
+            <TextBlock Text="{Binding ApiStatus}" TextWrapping="Wrap" Classes.warning="{Binding ApiProblem}" />
           </StackPanel>
-          <TextBlock TextWrapping="Wrap" Foreground="{StaticResource LpMutedBrush}"
-                     Text="Lockpick is free and built with help from its community. Capture a play session (Debug page) or complete a bounty to be listed here — contributions are unpaid; the credit is the reward." />
-          <ItemsControl ItemsSource="{Binding Credits}">
-            <ItemsControl.ItemTemplate>
-              <DataTemplate x:DataType="svc:CreditSection">
-                <StackPanel Spacing="4" Margin="0,4,0,6">
-                  <TextBlock Text="{Binding Title}" FontWeight="SemiBold" />
-                  <ItemsControl ItemsSource="{Binding Entries}">
-                    <ItemsControl.ItemTemplate>
-                      <DataTemplate x:DataType="svc:CreditEntry">
-                        <StackPanel Orientation="Horizontal" Spacing="8">
-                          <TextBlock Text="{Binding Name}" Foreground="{StaticResource LpGreenBrush}" FontWeight="SemiBold" />
-                          <TextBlock Text="{Binding Detail}" Foreground="{StaticResource LpMutedBrush}" TextWrapping="Wrap" />
-                        </StackPanel>
-                      </DataTemplate>
-                    </ItemsControl.ItemTemplate>
-                  </ItemsControl>
-                  <TextBlock Text="Nobody yet — this could be you." Foreground="{StaticResource LpMutedBrush}" FontStyle="Italic" IsVisible="{Binding IsEmpty}" />
-                </StackPanel>
-              </DataTemplate>
-            </ItemsControl.ItemTemplate>
-          </ItemsControl>
-        </StackPanel>
-      </Border>
+        </Border>
 
-      <!-- Setup and data -->
-      <Border Classes="card">
-        <StackPanel Spacing="8">
-          <TextBlock Classes="caption" Text="SETUP AND DATA" />
-          <Button Content="Run first-time setup again" Command="{Binding RunSetupCommand}" />
-          <TextBlock Classes="label" Text="Lockpick data folder (logs, captures, settings)" />
-          <SelectableTextBlock Classes="mono" Text="{Binding DataFolder}" />
-        </StackPanel>
-      </Border>
-
-      <!-- Profiles -->
-      <Border Classes="card">
-        <StackPanel Spacing="8">
-          <StackPanel Classes="cardhead">
-            <c:LucideIcon Data="{StaticResource Icon.Fingerprint}" />
-            <TextBlock Classes="caption" Text="VERSION PROFILES" />
+        <!-- Profiles -->
+        <Border Classes="card">
+          <StackPanel Spacing="8">
+            <StackPanel Classes="cardhead">
+              <c:LucideIcon Data="{StaticResource Icon.Fingerprint}" />
+              <TextBlock Classes="caption" Text="VERSION PROFILES" />
+            </StackPanel>
+            <TextBlock TextWrapping="Wrap" Foreground="{StaticResource LpMutedBrush}"
+                       Text="Built-in profiles are embedded. Additional or overriding profiles (*.json) are loaded at startup from:" />
+            <SelectableTextBlock Classes="mono" Text="{Binding ProfileDirectory}" />
+            <TextBlock Classes="label" Text="Loaded" />
+            <SelectableTextBlock Classes="mono" Text="{Binding LoadedProfiles}" TextWrapping="Wrap" />
           </StackPanel>
-          <TextBlock TextWrapping="Wrap" Foreground="{StaticResource LpMutedBrush}"
-                     Text="Built-in profiles are embedded. Additional or overriding profiles (*.json) are loaded at startup from:" />
-          <SelectableTextBlock Classes="mono" Text="{Binding ProfileDirectory}" />
-          <TextBlock Classes="label" Text="Loaded" />
-          <SelectableTextBlock Classes="mono" Text="{Binding LoadedProfiles}" TextWrapping="Wrap" />
-        </StackPanel>
-      </Border>
-    </c:CardColumns>
+        </Border>
+      </c:CardColumns>
+    </Panel>
   </ScrollViewer>
 </UserControl>

@@ -56,3 +56,14 @@ public sealed class IconKeyConverter : IValueConverter
 
     public object? ConvertBack(object? value, Type targetType, object? parameter, CultureInfo culture) => throw new NotSupportedException();
 }
+
+/// <summary>True when the page's selected section (a <c>PageSection</c>) has the id given as the parameter.</summary>
+public sealed class SectionIs : IValueConverter
+{
+    public static readonly SectionIs Instance = new();
+
+    public object? Convert(object? value, Type targetType, object? parameter, CultureInfo culture) =>
+        value is ViewModels.PageSection section && parameter is string id && section.Id == id;
+
+    public object? ConvertBack(object? value, Type targetType, object? parameter, CultureInfo culture) => throw new NotSupportedException();
+}

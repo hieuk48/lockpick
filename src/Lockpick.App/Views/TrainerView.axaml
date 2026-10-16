@@ -16,9 +16,8 @@
     </Style>
   </UserControl.Styles>
 
-  <ScrollViewer>
+  <ScrollViewer c:SectionScroll.Section="{Binding SelectedSection}">
     <StackPanel Spacing="12">
-
       <!-- Cheats on / off -->
       <Border Classes="card">
         <StackPanel Spacing="8">
@@ -39,111 +38,116 @@
       <TextBlock Text="{Binding LastResult}" TextWrapping="Wrap"
                  IsVisible="{Binding LastResult, Converter={x:Static StringConverters.IsNotNullOrEmpty}}" />
 
-      <c:CardColumns MinColumnWidth="420" MaxColumns="3">
-      <!-- Health -->
-      <Border Classes="card" IsEnabled="{Binding CanWrite}">
-        <StackPanel Spacing="8">
-          <StackPanel Classes="cardhead">
-            <c:LucideIcon Data="{StaticResource Icon.HeartPulse}" />
-            <TextBlock Classes="caption" Text="HEALTH" />
-          </StackPanel>
-          <WrapPanel ItemSpacing="8" LineSpacing="8">
-            <TextBlock Classes="label" Text="HP" VerticalAlignment="Center" />
-            <TextBlock Classes="mono" Text="{Binding HealthText}" VerticalAlignment="Center" MinWidth="80" />
-            <NumericUpDown Value="{Binding HealthTarget}" Minimum="1" Maximum="{Binding HealthMax}" Increment="1" FormatString="0"
-                           MinWidth="130" AutomationProperties.Name="HP to set" />
-            <Button Content="Set" Command="{Binding SetHealthCommand}" AutomationProperties.Name="Set HP" />
-            <Button Content="Full" Command="{Binding FillHealthCommand}" AutomationProperties.Name="Set HP to full" />
-            <CheckBox Content="Lock" IsChecked="{Binding HealthLocked}" VerticalAlignment="Center"
-                      ToolTip.Tip="Keep HP at this value: whenever the game lowers it, Lockpick puts it back." />
-          </WrapPanel>
-        </StackPanel>
-      </Border>
+      <Panel>
+        <c:CardColumns MinColumnWidth="420" MaxColumns="3" IsVisible="{Binding SelectedSection, Converter={x:Static c:SectionIs.Instance}, ConverterParameter=cheats}">
+          <!-- Health -->
+          <Border Classes="card" IsEnabled="{Binding CanWrite}">
+            <StackPanel Spacing="8">
+              <StackPanel Classes="cardhead">
+                <c:LucideIcon Data="{StaticResource Icon.HeartPulse}" />
+                <TextBlock Classes="caption" Text="HEALTH" />
+              </StackPanel>
+              <WrapPanel ItemSpacing="8" LineSpacing="8">
+                <TextBlock Classes="label" Text="HP" VerticalAlignment="Center" />
+                <TextBlock Classes="mono" Text="{Binding HealthText}" VerticalAlignment="Center" MinWidth="80" />
+                <NumericUpDown Value="{Binding HealthTarget}" Minimum="1" Maximum="{Binding HealthMax}" Increment="1" FormatString="0"
+                               MinWidth="130" AutomationProperties.Name="HP to set" />
+                <Button Content="Set" Command="{Binding SetHealthCommand}" AutomationProperties.Name="Set HP" />
+                <Button Content="Full" Command="{Binding FillHealthCommand}" AutomationProperties.Name="Set HP to full" />
+                <CheckBox Content="Lock" IsChecked="{Binding HealthLocked}" VerticalAlignment="Center"
+                          ToolTip.Tip="Keep HP at this value: whenever the game lowers it, Lockpick puts it back." />
+              </WrapPanel>
+            </StackPanel>
+          </Border>
 
-      <!-- Ammo -->
-      <Border Classes="card" IsEnabled="{Binding CanWrite}">
-        <StackPanel Spacing="8">
-          <StackPanel Classes="cardhead">
-            <c:LucideIcon Data="{StaticResource Icon.Package}" />
-            <TextBlock Classes="caption" Text="AMMO" />
-          </StackPanel>
-          <CheckBox Content="Infinite ammo" IsChecked="{Binding InfiniteAmmo}"
-                    AutomationProperties.Name="Infinite ammo" />
-          <TextBlock TextWrapping="Wrap" Foreground="{StaticResource LpMutedBrush}"
-                     Text="The equipped weapon's rounds never go down: each shot is put back, and a reload raises the count it keeps." />
-        </StackPanel>
-      </Border>
+          <!-- Ammo -->
+          <Border Classes="card" IsEnabled="{Binding CanWrite}">
+            <StackPanel Spacing="8">
+              <StackPanel Classes="cardhead">
+                <c:LucideIcon Data="{StaticResource Icon.Package}" />
+                <TextBlock Classes="caption" Text="AMMO" />
+              </StackPanel>
+              <CheckBox Content="Infinite ammo" IsChecked="{Binding InfiniteAmmo}"
+                        AutomationProperties.Name="Infinite ammo" />
+              <TextBlock TextWrapping="Wrap" Foreground="{StaticResource LpMutedBrush}"
+                         Text="The equipped weapon's rounds never go down: each shot is put back, and a reload raises the count it keeps." />
+            </StackPanel>
+          </Border>
+        </c:CardColumns>
 
-      <!-- Inventory -->
-      <Border Classes="card" IsEnabled="{Binding CanWrite}">
-        <StackPanel Spacing="8">
-          <StackPanel Classes="cardhead">
-            <c:LucideIcon Data="{StaticResource Icon.Package}" />
-            <TextBlock Classes="caption" Text="INVENTORY" />
-          </StackPanel>
-          <TextBlock TextWrapping="Wrap" Foreground="{StaticResource LpMutedBrush}"
-                     Text="Change the count of what you carry (a weapon's loaded rounds, ammo, ink ribbons). New items go into the item box: take them out at any item box and the game loads them like a pickup." />
-          <!-- Rows share one width (at most 520) so the counts line up; the name wraps in a narrow window and the
-               count and Set stay on its line. -->
-          <Grid>
-            <Grid.ColumnDefinitions>
-              <ColumnDefinition Width="*" MaxWidth="520" />
-              <ColumnDefinition Width="Auto" />
-            </Grid.ColumnDefinitions>
-          <ItemsControl ItemsSource="{Binding Slots}">
-            <ItemsControl.ItemTemplate>
-              <DataTemplate x:DataType="vm:TrainerSlotRow">
-                <Grid ColumnDefinitions="*,Auto,Auto" ColumnSpacing="8" Margin="0,2">
-                  <TextBlock Text="{Binding Label}" VerticalAlignment="Center" TextWrapping="Wrap" />
-                  <NumericUpDown Grid.Column="1" Value="{Binding Target}" Minimum="0" Maximum="255" Increment="1" FormatString="0" Width="120"
-                                 IsVisible="{Binding Editable}" AutomationProperties.Name="{Binding Name, StringFormat='{}{0} count'}" />
-                  <Button Grid.Column="2" Content="Set" Command="{Binding SetCommand}" IsVisible="{Binding Editable}"
-                          AutomationProperties.Name="{Binding Name, StringFormat='Set {0} count'}" />
-                </Grid>
-              </DataTemplate>
-            </ItemsControl.ItemTemplate>
-          </ItemsControl>
-          </Grid>
-          <WrapPanel ItemSpacing="8" LineSpacing="8">
-            <TextBlock Classes="label" Text="Put in the item box" VerticalAlignment="Center" />
-            <ComboBox ItemsSource="{Binding GivableItems}" SelectedItem="{Binding GiveItem}" MinWidth="200"
-                      AutomationProperties.Name="Item to put in the item box">
-              <ComboBox.ItemTemplate>
-                <DataTemplate x:DataType="trainer:GivableItem">
-                  <TextBlock Text="{Binding Name}" />
-                </DataTemplate>
-              </ComboBox.ItemTemplate>
-            </ComboBox>
-            <NumericUpDown Value="{Binding GiveQuantity}" Minimum="1" Maximum="255" Increment="1" FormatString="0" MinWidth="110"
-                           IsVisible="{Binding GiveItem.HasQuantity, FallbackValue=False}" AutomationProperties.Name="How many" />
-            <Button Content="Put in box" Command="{Binding PutInItemBoxCommand}" AutomationProperties.Name="Put in the item box" />
-          </WrapPanel>
-        </StackPanel>
-      </Border>
+        <c:CardColumns MinColumnWidth="420" MaxColumns="3" IsVisible="{Binding SelectedSection, Converter={x:Static c:SectionIs.Instance}, ConverterParameter=inventory}">
+          <!-- Inventory -->
+          <Border Classes="card" IsEnabled="{Binding CanWrite}">
+            <StackPanel Spacing="8">
+              <StackPanel Classes="cardhead">
+                <c:LucideIcon Data="{StaticResource Icon.Package}" />
+                <TextBlock Classes="caption" Text="INVENTORY" />
+              </StackPanel>
+              <TextBlock TextWrapping="Wrap" Foreground="{StaticResource LpMutedBrush}"
+                         Text="Change the count of what you carry (a weapon's loaded rounds, ammo, ink ribbons). New items go into the item box: take them out at any item box and the game loads them like a pickup." />
+              <!-- Rows share one width (at most 520) so the counts line up; the name wraps in a narrow window and the
+                   count and Set stay on its line. -->
+              <Grid>
+                <Grid.ColumnDefinitions>
+                  <ColumnDefinition Width="*" MaxWidth="520" />
+                  <ColumnDefinition Width="Auto" />
+                </Grid.ColumnDefinitions>
+              <ItemsControl ItemsSource="{Binding Slots}">
+                <ItemsControl.ItemTemplate>
+                  <DataTemplate x:DataType="vm:TrainerSlotRow">
+                    <Grid ColumnDefinitions="*,Auto,Auto" ColumnSpacing="8" Margin="0,2">
+                      <TextBlock Text="{Binding Label}" VerticalAlignment="Center" TextWrapping="Wrap" />
+                      <NumericUpDown Grid.Column="1" Value="{Binding Target}" Minimum="0" Maximum="255" Increment="1" FormatString="0" Width="120"
+                                     IsVisible="{Binding Editable}" AutomationProperties.Name="{Binding Name, StringFormat='{}{0} count'}" />
+                      <Button Grid.Column="2" Content="Set" Command="{Binding SetCommand}" IsVisible="{Binding Editable}"
+                              AutomationProperties.Name="{Binding Name, StringFormat='Set {0} count'}" />
+                    </Grid>
+                  </DataTemplate>
+                </ItemsControl.ItemTemplate>
+              </ItemsControl>
+              </Grid>
+              <WrapPanel ItemSpacing="8" LineSpacing="8">
+                <TextBlock Classes="label" Text="Put in the item box" VerticalAlignment="Center" />
+                <ComboBox ItemsSource="{Binding GivableItems}" SelectedItem="{Binding GiveItem}" MinWidth="200"
+                          AutomationProperties.Name="Item to put in the item box">
+                  <ComboBox.ItemTemplate>
+                    <DataTemplate x:DataType="trainer:GivableItem">
+                      <TextBlock Text="{Binding Name}" />
+                    </DataTemplate>
+                  </ComboBox.ItemTemplate>
+                </ComboBox>
+                <NumericUpDown Value="{Binding GiveQuantity}" Minimum="1" Maximum="255" Increment="1" FormatString="0" MinWidth="110"
+                               IsVisible="{Binding GiveItem.HasQuantity, FallbackValue=False}" AutomationProperties.Name="How many" />
+                <Button Content="Put in box" Command="{Binding PutInItemBoxCommand}" AutomationProperties.Name="Put in the item box" />
+              </WrapPanel>
+            </StackPanel>
+          </Border>
+        </c:CardColumns>
 
-
-      <!-- Log -->
-      <Border Classes="card">
-        <StackPanel Spacing="6">
-          <StackPanel Classes="cardhead">
-            <c:LucideIcon Data="{StaticResource Icon.ScrollText}" />
-            <TextBlock Classes="caption" Text="ACTION LOG" />
-          </StackPanel>
-          <TextBlock TextWrapping="Wrap" Foreground="{StaticResource LpMutedBrush}"
-                     Text="{Binding LogPath, StringFormat='Every trainer action, with the value before and after. Kept in {0}'}" />
-          <ItemsControl ItemsSource="{Binding Actions}">
-            <ItemsControl.ItemTemplate>
-              <DataTemplate x:DataType="vm:TrainerActionRow">
-                <Grid ColumnDefinitions="72,*" Margin="0,2" AutomationProperties.Name="{Binding Text}">
-                  <TextBlock Classes="mono" Text="{Binding Time}" Foreground="{StaticResource LpMutedBrush}" FontSize="11.5" />
-                  <TextBlock Grid.Column="1" Text="{Binding Text}" TextWrapping="Wrap" />
-                </Grid>
-              </DataTemplate>
-            </ItemsControl.ItemTemplate>
-          </ItemsControl>
-        </StackPanel>
-      </Border>
-      </c:CardColumns>
+        <c:CardColumns MinColumnWidth="420" MaxColumns="3" IsVisible="{Binding SelectedSection, Converter={x:Static c:SectionIs.Instance}, ConverterParameter=log}">
+          <!-- Log -->
+          <Border Classes="card">
+            <StackPanel Spacing="6">
+              <StackPanel Classes="cardhead">
+                <c:LucideIcon Data="{StaticResource Icon.ScrollText}" />
+                <TextBlock Classes="caption" Text="ACTION LOG" />
+              </StackPanel>
+              <TextBlock TextWrapping="Wrap" Foreground="{StaticResource LpMutedBrush}"
+                         Text="{Binding LogPath, StringFormat='Every trainer action, with the value before and after. Kept in {0}'}" />
+              <ItemsControl ItemsSource="{Binding Actions}">
+                <ItemsControl.ItemTemplate>
+                  <DataTemplate x:DataType="vm:TrainerActionRow">
+                    <Grid ColumnDefinitions="72,*" Margin="0,2" AutomationProperties.Name="{Binding Text}">
+                      <TextBlock Classes="mono" Text="{Binding Time}" Foreground="{StaticResource LpMutedBrush}" FontSize="11.5" />
+                      <TextBlock Grid.Column="1" Text="{Binding Text}" TextWrapping="Wrap" />
+                    </Grid>
+                  </DataTemplate>
+                </ItemsControl.ItemTemplate>
+              </ItemsControl>
+            </StackPanel>
+          </Border>
+        </c:CardColumns>
+      </Panel>
     </StackPanel>
   </ScrollViewer>
 </UserControl>

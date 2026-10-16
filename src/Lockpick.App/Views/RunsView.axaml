@@ -47,9 +47,8 @@
     </Style>
   </UserControl.Styles>
 
-  <ScrollViewer>
+  <ScrollViewer c:SectionScroll.Section="{Binding SelectedSection}">
     <StackPanel Spacing="12">
-
       <!-- Where the run stands -->
       <Border Classes="card">
         <StackPanel Spacing="6">
@@ -69,224 +68,238 @@
         </StackPanel>
       </Border>
 
-      <!-- Leaderboard runs: Lockpick hands-off and the rules checked -->
-      <Border Classes="card">
-        <StackPanel Spacing="6">
-          <TextBlock Classes="caption" Text="LEADERBOARD RUN" />
-          <ToggleSwitch IsChecked="{Binding LeaderboardRun}" OnContent="Leaderboard run on" OffContent="Leaderboard run off"
-                        AutomationProperties.Name="Leaderboard run" />
-          <TextBlock TextWrapping="Wrap" Foreground="{StaticResource LpMutedBrush}"
-                     Text="For runs you'll submit: Lockpick locks its trainer read-only, keeps ask mode off (it would pause the game), and checks your game files against the official release (no mods). Each attempt's record says whether every check passed when it began." />
-          <TextBlock Text="{Binding GuardSummary}" FontWeight="SemiBold" TextWrapping="Wrap"
-                     IsVisible="{Binding GuardSummary, Converter={x:Static StringConverters.IsNotNullOrEmpty}}" />
-          <ItemsControl ItemsSource="{Binding GuardChecks}" IsVisible="{Binding LeaderboardRun}">
-            <ItemsControl.ItemTemplate>
-              <DataTemplate x:DataType="svc:GuardCheck">
-                <Grid ColumnDefinitions="Auto,*" ColumnSpacing="6" Margin="0,1">
-                  <TextBlock Classes="mark" Classes.pass="{Binding IsPass}" Classes.fail="{Binding IsFail}" Classes.warn="{Binding IsWarn}" Text="{Binding Mark}" />
-                  <TextBlock Grid.Column="1" Text="{Binding Text}" TextWrapping="Wrap" />
-                </Grid>
-              </DataTemplate>
-            </ItemsControl.ItemTemplate>
-          </ItemsControl>
-          <StackPanel Spacing="2" IsVisible="{Binding LeaderboardRun}">
-            <TextBlock Classes="label" Text="Up to you (the rules Lockpick can't check)" Margin="0,4,0,0" />
-            <ItemsControl ItemsSource="{Binding GuardReminders}">
-              <ItemsControl.ItemTemplate>
-                <DataTemplate x:DataType="x:String">
-                  <TextBlock Text="{Binding StringFormat='• {0}'}" TextWrapping="Wrap" Foreground="{StaticResource LpMutedBrush}" />
-                </DataTemplate>
-              </ItemsControl.ItemTemplate>
-            </ItemsControl>
-            <Button Content="Check again" Command="{Binding CheckAgainCommand}" Margin="0,4,0,0" />
-          </StackPanel>
-        </StackPanel>
-      </Border>
-
-      <c:CardColumns MinColumnWidth="380" MaxColumns="2">
-        <!-- Choosing the splits -->
-        <Border Classes="card">
-          <StackPanel Spacing="8">
-            <TextBlock Classes="caption" Text="SPLITS" />
-            <ComboBox ItemsSource="{Binding Sets}" SelectedItem="{Binding Selected}" HorizontalAlignment="Stretch"
-                      AutomationProperties.Name="Splits to run against" />
-            <TextBlock Text="{Binding SetNote}" TextWrapping="Wrap" Foreground="{StaticResource LpMutedBrush}"
-                       IsVisible="{Binding SetNote, Converter={x:Static StringConverters.IsNotNullOrEmpty}}" />
-            <WrapPanel ItemSpacing="8" LineSpacing="8">
-              <Button Content="Import LiveSplit file…" Click="OnImport" AutomationProperties.Name="Import a LiveSplit splits file" />
-              <Button Content="Save as LiveSplit file…" Click="OnExport" IsEnabled="{Binding HasSet}"
-                      AutomationProperties.Name="Save the splits with your times as a LiveSplit file" />
-              <Button Content="Remove" Command="{Binding RemoveImportedCommand}" IsVisible="{Binding IsImported}"
-                      AutomationProperties.Name="Remove the imported splits" />
-            </WrapPanel>
-            <CheckBox IsChecked="{Binding StartOnLoad}" AutomationProperties.Name="Start a run when a save is loaded">
-              <TextBlock TextWrapping="Wrap" Text="Also start when I load a save (practice from a save; the time counts from the save)" />
-            </CheckBox>
-            <TextBlock TextWrapping="Wrap" Foreground="{StaticResource LpMutedBrush}"
-                       Text="Lockpick only watches: it splits on rooms, key items and the ending, and keys for split, undo, skip and reset are in Settings → Hotkeys." />
-            <TextBlock Classes="label" Text="LiveSplit" Margin="0,4,0,0" />
-            <ComboBox ItemsSource="{Binding LiveSplitChoices}" SelectedItem="{Binding LiveSplitMode}" HorizontalAlignment="Stretch"
-                      AutomationProperties.Name="Work with LiveSplit" />
-            <TextBlock TextWrapping="Wrap" Foreground="{StaticResource LpMutedBrush}"
-                       Text="Leaderboard runs time with LiveSplit's own autosplitter: choose Follow and Lockpick moves with LiveSplit's splits instead of splitting itself. Without an autosplitter, Drive lets Lockpick split LiveSplit and set its game time. Both need LiveSplit's server (Control → Start TCP Server)." />
-            <TextBlock Text="{Binding LiveSplitStatus}" TextWrapping="Wrap" />
-            <TextBlock Text="{Binding Message}" TextWrapping="Wrap"
-                       IsVisible="{Binding Message, Converter={x:Static StringConverters.IsNotNullOrEmpty}}" />
-          </StackPanel>
-        </Border>
-
-        <!-- The splits, live -->
-        <Border Classes="card" IsVisible="{Binding HasSet}">
-          <StackPanel Spacing="2">
-            <Grid ColumnDefinitions="*,Auto" Margin="0,0,0,6">
-              <TextBlock Classes="caption" Text="THIS RUN" VerticalAlignment="Center" />
-              <ComboBox Grid.Column="1" ItemsSource="{Binding Comparisons}" SelectedItem="{Binding CompareAgainst}" MinWidth="170"
-                        IsVisible="{Binding HasComparisons}" AutomationProperties.Name="Compare against"
-                        ToolTip.Tip="What your splits are compared against, here, on the overlay and in LiveSplit's layout: your personal best, your best segments, your average, your latest run…" />
-            </Grid>
-            <ItemsControl ItemsSource="{Binding Rows}">
-              <ItemsControl.ItemTemplate>
-                <DataTemplate x:DataType="vm:SplitRowData">
-                  <Border Classes="splitrow" Classes.current="{Binding IsCurrent}" ToolTip.Tip="{Binding Trigger}">
-                    <Grid ColumnDefinitions="*,Auto,Auto" ColumnSpacing="12">
-                      <TextBlock Text="{Binding Name}" TextTrimming="CharacterEllipsis" />
-                      <TextBlock Grid.Column="1" Classes="delta" Classes.ahead="{Binding IsAhead}" Classes.behind="{Binding IsBehind}"
-                                 Classes.gold="{Binding IsGold}" Text="{Binding Delta}" FontFamily="{StaticResource LpMono}" />
-                      <TextBlock Grid.Column="2" Text="{Binding Time}" FontFamily="{StaticResource LpMono}" MinWidth="74" TextAlignment="Right" />
-                    </Grid>
-                  </Border>
-                </DataTemplate>
-              </ItemsControl.ItemTemplate>
-            </ItemsControl>
-          </StackPanel>
-        </Border>
-
-        <!-- Training: where the personal best loses time -->
-        <Border Classes="card" IsVisible="{Binding HasSet}">
-          <StackPanel Spacing="4">
-            <TextBlock Classes="caption" Text="WHERE THE TIME IS" Margin="0,0,0,4" />
-            <TextBlock Text="{Binding TimeSaveSummary}" TextWrapping="Wrap" Foreground="{StaticResource LpMutedBrush}" />
-            <ItemsControl ItemsSource="{Binding TimeSaves}">
-              <ItemsControl.ItemTemplate>
-                <DataTemplate x:DataType="vm:TimeSaveRow">
-                  <Grid ColumnDefinitions="*,Auto,Auto,Auto" ColumnSpacing="12" Margin="0,2">
-                    <TextBlock Text="{Binding Name}" TextTrimming="CharacterEllipsis" />
-                    <TextBlock Grid.Column="1" Text="{Binding PersonalBest}" FontFamily="{StaticResource LpMono}" ToolTip.Tip="This segment in your personal best" />
-                    <TextBlock Grid.Column="2" Text="{Binding Best}" FontFamily="{StaticResource LpMono}" Foreground="#E8C547" ToolTip.Tip="Your best ever for this segment" />
-                    <TextBlock Grid.Column="3" Text="{Binding Gain}" FontFamily="{StaticResource LpMono}" Foreground="{StaticResource LpGreenBrush}"
-                               MinWidth="56" TextAlignment="Right" ToolTip.Tip="Time to gain" />
-                  </Grid>
-                </DataTemplate>
-              </ItemsControl.ItemTemplate>
-            </ItemsControl>
-          </StackPanel>
-        </Border>
-
-        <!-- speedrun.com leaderboard for these splits -->
-        <Border Classes="card" IsVisible="{Binding HasSet}">
-          <StackPanel Spacing="6" DataContext="{Binding Leaderboard}" x:DataType="vm:LeaderboardViewModel">
-            <TextBlock Classes="caption" Text="LEADERBOARD" />
-            <ToggleSwitch IsChecked="{Binding Enabled}" OnContent="speedrun.com leaderboard on" OffContent="speedrun.com leaderboard off"
-                          AutomationProperties.Name="Show the speedrun.com leaderboard" IsEnabled="{Binding Available}" />
-            <TextBlock TextWrapping="Wrap" Foreground="{StaticResource LpMutedBrush}" IsVisible="{Binding !Enabled}"
-                       Text="Shows the world record, the top runs and where your best would place. Lockpick goes online for this only while it's on (once an hour per board, or when you press Refresh)." />
-            <StackPanel Spacing="6" IsVisible="{Binding Enabled}">
-              <ItemsControl ItemsSource="{Binding Filters}">
-                <ItemsControl.ItemsPanel>
-                  <ItemsPanelTemplate><WrapPanel ItemSpacing="8" LineSpacing="6" /></ItemsPanelTemplate>
-                </ItemsControl.ItemsPanel>
-                <ItemsControl.ItemTemplate>
-                  <DataTemplate x:DataType="vm:LeaderboardFilterRow">
-                    <ComboBox ItemsSource="{Binding Choices}" SelectedItem="{Binding Selected}" MinWidth="150"
-                              AutomationProperties.Name="{Binding Label}" ToolTip.Tip="{Binding Label}" />
-                  </DataTemplate>
-                </ItemsControl.ItemTemplate>
-              </ItemsControl>
-              <TextBlock Text="{Binding Record}" FontWeight="SemiBold" TextWrapping="Wrap"
-                         IsVisible="{Binding Record, Converter={x:Static StringConverters.IsNotNullOrEmpty}}" />
-              <ItemsControl ItemsSource="{Binding Top}">
-                <ItemsControl.ItemTemplate>
-                  <DataTemplate x:DataType="vm:LeaderboardRow">
-                    <Grid ColumnDefinitions="40,*,Auto,90" ColumnSpacing="8" Margin="0,1">
-                      <TextBlock Text="{Binding Place}" FontFamily="{StaticResource LpMono}" Foreground="{StaticResource LpMutedBrush}" />
-                      <TextBlock Grid.Column="1" Text="{Binding Runner}" TextTrimming="CharacterEllipsis" Classes.you="{Binding IsYou}" />
-                      <TextBlock Grid.Column="2" Text="{Binding Time}" FontFamily="{StaticResource LpMono}" />
-                      <TextBlock Grid.Column="3" Text="{Binding Date}" Foreground="{StaticResource LpMutedBrush}" TextAlignment="Right" />
-                    </Grid>
-                  </DataTemplate>
-                </ItemsControl.ItemTemplate>
-              </ItemsControl>
-              <TextBlock Text="{Binding YourPlace}" TextWrapping="Wrap"
-                         IsVisible="{Binding YourPlace, Converter={x:Static StringConverters.IsNotNullOrEmpty}}" />
-              <WrapPanel ItemSpacing="8" LineSpacing="6">
-                <Button Content="Refresh" Command="{Binding ReloadCommand}" />
-                <Button Content="Open on speedrun.com" Click="OnOpenBoard" />
+      <Panel>
+        <c:CardColumns MinColumnWidth="380" MaxColumns="2" IsVisible="{Binding SelectedSection, Converter={x:Static c:SectionIs.Instance}, ConverterParameter=splits}">
+          <!-- Choosing the splits -->
+          <Border Classes="card">
+            <StackPanel Spacing="8">
+              <TextBlock Classes="caption" Text="SPLITS" />
+              <ComboBox ItemsSource="{Binding Sets}" SelectedItem="{Binding Selected}" HorizontalAlignment="Stretch"
+                        AutomationProperties.Name="Splits to run against" />
+              <TextBlock Text="{Binding SetNote}" TextWrapping="Wrap" Foreground="{StaticResource LpMutedBrush}"
+                         IsVisible="{Binding SetNote, Converter={x:Static StringConverters.IsNotNullOrEmpty}}" />
+              <WrapPanel ItemSpacing="8" LineSpacing="8">
+                <Button Content="Import LiveSplit file…" Click="OnImport" AutomationProperties.Name="Import a LiveSplit splits file" />
+                <Button Content="Save as LiveSplit file…" Click="OnExport" IsEnabled="{Binding HasSet}"
+                        AutomationProperties.Name="Save the splits with your times as a LiveSplit file" />
+                <Button Content="Remove" Command="{Binding RemoveImportedCommand}" IsVisible="{Binding IsImported}"
+                        AutomationProperties.Name="Remove the imported splits" />
               </WrapPanel>
-              <TextBlock Text="{Binding Status}" TextWrapping="Wrap" Foreground="{StaticResource LpMutedBrush}" />
-              <TextBlock Text="{Binding Credit}" TextWrapping="Wrap" FontSize="11" Foreground="{StaticResource LpMutedBrush}" />
-            </StackPanel>
-          </StackPanel>
-        </Border>
-
-        <!-- Submitting a finished attempt to speedrun.com -->
-        <Border Classes="card" IsVisible="{Binding HasSet}">
-          <StackPanel Spacing="6" DataContext="{Binding Submit}" x:DataType="vm:SubmitRunViewModel">
-            <TextBlock Classes="caption" Text="SUBMIT TO SPEEDRUN.COM" />
-            <TextBlock TextWrapping="Wrap" Foreground="{StaticResource LpMutedBrush}" IsVisible="{Binding !HasKey}"
-                       Text="Save your speedrun.com API key in Settings → speedrun.com to submit finished runs from here." />
-            <TextBlock TextWrapping="Wrap" Foreground="{StaticResource LpMutedBrush}" IsVisible="{Binding !HasAttempts}"
-                       Text="Finished attempts appear here." />
-            <StackPanel Spacing="6" IsVisible="{Binding HasAttempts}">
+              <CheckBox IsChecked="{Binding StartOnLoad}" AutomationProperties.Name="Start a run when a save is loaded">
+                <TextBlock TextWrapping="Wrap" Text="Also start when I load a save (practice from a save; the time counts from the save)" />
+              </CheckBox>
               <TextBlock TextWrapping="Wrap" Foreground="{StaticResource LpMutedBrush}"
-                         Text="The leaderboard's PC rules: start at the title; the video must show the final in-game time on the end screen and LiveSplit's in-game time script; no tabbing out, mods or music over the game. The moderators check your run against the video." />
-              <ComboBox ItemsSource="{Binding Attempts}" SelectedItem="{Binding Attempt}" HorizontalAlignment="Stretch" AutomationProperties.Name="Attempt to submit" />
-              <TextBlock Text="{Binding BoardText, StringFormat='Board: {0} (change it in the Leaderboard card)'}" TextWrapping="Wrap" />
-              <WrapPanel ItemSpacing="8" LineSpacing="6">
-                <TextBox Text="{Binding Time}" Watermark="In-game time" MinWidth="140" AutomationProperties.Name="Time to submit"
-                         ToolTip.Tip="The in-game time on the game's end screen, as in your video." />
-                <TextBox Text="{Binding Date}" Watermark="yyyy-mm-dd" MinWidth="120" AutomationProperties.Name="Date played" />
-              </WrapPanel>
-              <TextBox Text="{Binding Video}" Watermark="Video link (YouTube, Twitch…)" AutomationProperties.Name="Video link" />
-              <TextBox Text="{Binding Comment}" AcceptsReturn="True" TextWrapping="Wrap" MinHeight="90" AutomationProperties.Name="Comment" />
-              <WrapPanel ItemSpacing="8" LineSpacing="6">
-                <Button Content="{Binding SubmitLabel}" Command="{Binding SubmitCommand}" Classes="accent" IsEnabled="{Binding HasKey}"
-                        AutomationProperties.Name="Submit the run to speedrun.com" />
-                <Button Content="Open the submitted run" Click="OnOpenSubmitted"
-                        IsVisible="{Binding SubmittedLink, Converter={x:Static StringConverters.IsNotNullOrEmpty}}" />
-              </WrapPanel>
+                         Text="Lockpick only watches: it splits on rooms, key items and the ending, and keys for split, undo, skip and reset are in Settings → Hotkeys." />
+              <TextBlock Text="{Binding Message}" TextWrapping="Wrap"
+                         IsVisible="{Binding Message, Converter={x:Static StringConverters.IsNotNullOrEmpty}}" />
             </StackPanel>
-            <TextBlock Text="{Binding Status}" TextWrapping="Wrap"
-                       IsVisible="{Binding Status, Converter={x:Static StringConverters.IsNotNullOrEmpty}}" />
-          </StackPanel>
-        </Border>
+          </Border>
 
-        <!-- Attempts -->
-        <Border Classes="card" IsVisible="{Binding HasSet}">
-          <StackPanel Spacing="4">
-            <TextBlock Classes="caption" Text="ATTEMPTS" Margin="0,0,0,4" />
-            <WrapPanel ItemSpacing="8" LineSpacing="8" IsVisible="{Binding HasLatest}" Margin="0,0,0,6">
-              <Button Content="Copy run summary" Click="OnCopySummary"
-                      AutomationProperties.Name="Copy the latest attempt's summary" ToolTip.Tip="The latest attempt in a few lines (times, splits, game build, trainer off or on), to paste into a submission or a post." />
-              <Button Content="Save run record…" Click="OnSaveRecord"
-                      AutomationProperties.Name="Save the latest attempt's record" ToolTip.Tip="Every split's in-game and real time, the result, the game build and its executable's hash, as a file." />
-            </WrapPanel>
-            <TextBlock Text="None yet." Foreground="{StaticResource LpMutedBrush}"
-                       IsVisible="{Binding !History.Count}" />
-            <ItemsControl ItemsSource="{Binding History}">
-              <ItemsControl.ItemTemplate>
-                <DataTemplate x:DataType="vm:RunHistoryRow">
-                  <Grid ColumnDefinitions="Auto,*,Auto,Auto" ColumnSpacing="10" Margin="0,2">
-                    <TextBlock Text="{Binding Attempt}" FontFamily="{StaticResource LpMono}" Foreground="{StaticResource LpMutedBrush}" />
-                    <TextBlock Grid.Column="1" Text="{Binding Result}" TextTrimming="CharacterEllipsis" />
-                    <TextBlock Grid.Column="2" Text="{Binding Time}" FontFamily="{StaticResource LpMono}" />
-                    <TextBlock Grid.Column="3" Text="{Binding When}" Foreground="{StaticResource LpMutedBrush}" />
-                  </Grid>
-                </DataTemplate>
-              </ItemsControl.ItemTemplate>
-            </ItemsControl>
-          </StackPanel>
-        </Border>
-      </c:CardColumns>
+          <!-- The splits, live -->
+          <Border Classes="card" IsVisible="{Binding HasSet}">
+            <StackPanel Spacing="2">
+              <Grid ColumnDefinitions="*,Auto" Margin="0,0,0,6">
+                <TextBlock Classes="caption" Text="THIS RUN" VerticalAlignment="Center" />
+                <ComboBox Grid.Column="1" ItemsSource="{Binding Comparisons}" SelectedItem="{Binding CompareAgainst}" MinWidth="170"
+                          IsVisible="{Binding HasComparisons}" AutomationProperties.Name="Compare against"
+                          ToolTip.Tip="What your splits are compared against, here, on the overlay and in LiveSplit's layout: your personal best, your best segments, your average, your latest run…" />
+              </Grid>
+              <ItemsControl ItemsSource="{Binding Rows}">
+                <ItemsControl.ItemTemplate>
+                  <DataTemplate x:DataType="vm:SplitRowData">
+                    <Border Classes="splitrow" Classes.current="{Binding IsCurrent}" ToolTip.Tip="{Binding Trigger}">
+                      <Grid ColumnDefinitions="*,Auto,Auto" ColumnSpacing="12">
+                        <TextBlock Text="{Binding Name}" TextTrimming="CharacterEllipsis" />
+                        <TextBlock Grid.Column="1" Classes="delta" Classes.ahead="{Binding IsAhead}" Classes.behind="{Binding IsBehind}"
+                                   Classes.gold="{Binding IsGold}" Text="{Binding Delta}" FontFamily="{StaticResource LpMono}" />
+                        <TextBlock Grid.Column="2" Text="{Binding Time}" FontFamily="{StaticResource LpMono}" MinWidth="74" TextAlignment="Right" />
+                      </Grid>
+                    </Border>
+                  </DataTemplate>
+                </ItemsControl.ItemTemplate>
+              </ItemsControl>
+            </StackPanel>
+          </Border>
+        </c:CardColumns>
+
+        <c:CardColumns MinColumnWidth="380" MaxColumns="2" IsVisible="{Binding SelectedSection, Converter={x:Static c:SectionIs.Instance}, ConverterParameter=training}">
+          <!-- Training: where the personal best loses time -->
+          <Border Classes="card" IsVisible="{Binding HasSet}">
+            <StackPanel Spacing="4">
+              <TextBlock Classes="caption" Text="WHERE THE TIME IS" Margin="0,0,0,4" />
+              <TextBlock Text="{Binding TimeSaveSummary}" TextWrapping="Wrap" Foreground="{StaticResource LpMutedBrush}" />
+              <ItemsControl ItemsSource="{Binding TimeSaves}">
+                <ItemsControl.ItemTemplate>
+                  <DataTemplate x:DataType="vm:TimeSaveRow">
+                    <Grid ColumnDefinitions="*,Auto,Auto,Auto" ColumnSpacing="12" Margin="0,2">
+                      <TextBlock Text="{Binding Name}" TextTrimming="CharacterEllipsis" />
+                      <TextBlock Grid.Column="1" Text="{Binding PersonalBest}" FontFamily="{StaticResource LpMono}" ToolTip.Tip="This segment in your personal best" />
+                      <TextBlock Grid.Column="2" Text="{Binding Best}" FontFamily="{StaticResource LpMono}" Foreground="#E8C547" ToolTip.Tip="Your best ever for this segment" />
+                      <TextBlock Grid.Column="3" Text="{Binding Gain}" FontFamily="{StaticResource LpMono}" Foreground="{StaticResource LpGreenBrush}"
+                                 MinWidth="56" TextAlignment="Right" ToolTip.Tip="Time to gain" />
+                    </Grid>
+                  </DataTemplate>
+                </ItemsControl.ItemTemplate>
+              </ItemsControl>
+            </StackPanel>
+          </Border>
+
+          <!-- Attempts -->
+          <Border Classes="card" IsVisible="{Binding HasSet}">
+            <StackPanel Spacing="4">
+              <TextBlock Classes="caption" Text="ATTEMPTS" Margin="0,0,0,4" />
+              <WrapPanel ItemSpacing="8" LineSpacing="8" IsVisible="{Binding HasLatest}" Margin="0,0,0,6">
+                <Button Content="Copy run summary" Click="OnCopySummary"
+                        AutomationProperties.Name="Copy the latest attempt's summary" ToolTip.Tip="The latest attempt in a few lines (times, splits, game build, trainer off or on), to paste into a submission or a post." />
+                <Button Content="Save run record…" Click="OnSaveRecord"
+                        AutomationProperties.Name="Save the latest attempt's record" ToolTip.Tip="Every split's in-game and real time, the result, the game build and its executable's hash, as a file." />
+              </WrapPanel>
+              <TextBlock Text="None yet." Foreground="{StaticResource LpMutedBrush}"
+                         IsVisible="{Binding !History.Count}" />
+              <ItemsControl ItemsSource="{Binding History}">
+                <ItemsControl.ItemTemplate>
+                  <DataTemplate x:DataType="vm:RunHistoryRow">
+                    <Grid ColumnDefinitions="Auto,*,Auto,Auto" ColumnSpacing="10" Margin="0,2">
+                      <TextBlock Text="{Binding Attempt}" FontFamily="{StaticResource LpMono}" Foreground="{StaticResource LpMutedBrush}" />
+                      <TextBlock Grid.Column="1" Text="{Binding Result}" TextTrimming="CharacterEllipsis" />
+                      <TextBlock Grid.Column="2" Text="{Binding Time}" FontFamily="{StaticResource LpMono}" />
+                      <TextBlock Grid.Column="3" Text="{Binding When}" Foreground="{StaticResource LpMutedBrush}" />
+                    </Grid>
+                  </DataTemplate>
+                </ItemsControl.ItemTemplate>
+              </ItemsControl>
+            </StackPanel>
+          </Border>
+        </c:CardColumns>
+
+        <c:CardColumns MinColumnWidth="380" MaxColumns="2" IsVisible="{Binding SelectedSection, Converter={x:Static c:SectionIs.Instance}, ConverterParameter=leaderboard}">
+          <!-- speedrun.com leaderboard for these splits -->
+          <Border Classes="card" IsVisible="{Binding HasSet}">
+            <StackPanel Spacing="6" DataContext="{Binding Leaderboard}" x:DataType="vm:LeaderboardViewModel">
+              <TextBlock Classes="caption" Text="LEADERBOARD" />
+              <ToggleSwitch IsChecked="{Binding Enabled}" OnContent="speedrun.com leaderboard on" OffContent="speedrun.com leaderboard off"
+                            AutomationProperties.Name="Show the speedrun.com leaderboard" IsEnabled="{Binding Available}" />
+              <TextBlock TextWrapping="Wrap" Foreground="{StaticResource LpMutedBrush}" IsVisible="{Binding !Enabled}"
+                         Text="Shows the world record, the top runs and where your best would place. Lockpick goes online for this only while it's on (once an hour per board, or when you press Refresh)." />
+              <StackPanel Spacing="6" IsVisible="{Binding Enabled}">
+                <ItemsControl ItemsSource="{Binding Filters}">
+                  <ItemsControl.ItemsPanel>
+                    <ItemsPanelTemplate><WrapPanel ItemSpacing="8" LineSpacing="6" /></ItemsPanelTemplate>
+                  </ItemsControl.ItemsPanel>
+                  <ItemsControl.ItemTemplate>
+                    <DataTemplate x:DataType="vm:LeaderboardFilterRow">
+                      <ComboBox ItemsSource="{Binding Choices}" SelectedItem="{Binding Selected}" MinWidth="150"
+                                AutomationProperties.Name="{Binding Label}" ToolTip.Tip="{Binding Label}" />
+                    </DataTemplate>
+                  </ItemsControl.ItemTemplate>
+                </ItemsControl>
+                <TextBlock Text="{Binding Record}" FontWeight="SemiBold" TextWrapping="Wrap"
+                           IsVisible="{Binding Record, Converter={x:Static StringConverters.IsNotNullOrEmpty}}" />
+                <ItemsControl ItemsSource="{Binding Top}">
+                  <ItemsControl.ItemTemplate>
+                    <DataTemplate x:DataType="vm:LeaderboardRow">
+                      <Grid ColumnDefinitions="40,*,Auto,90" ColumnSpacing="8" Margin="0,1">
+                        <TextBlock Text="{Binding Place}" FontFamily="{StaticResource LpMono}" Foreground="{StaticResource LpMutedBrush}" />
+                        <TextBlock Grid.Column="1" Text="{Binding Runner}" TextTrimming="CharacterEllipsis" Classes.you="{Binding IsYou}" />
+                        <TextBlock Grid.Column="2" Text="{Binding Time}" FontFamily="{StaticResource LpMono}" />
+                        <TextBlock Grid.Column="3" Text="{Binding Date}" Foreground="{StaticResource LpMutedBrush}" TextAlignment="Right" />
+                      </Grid>
+                    </DataTemplate>
+                  </ItemsControl.ItemTemplate>
+                </ItemsControl>
+                <TextBlock Text="{Binding YourPlace}" TextWrapping="Wrap"
+                           IsVisible="{Binding YourPlace, Converter={x:Static StringConverters.IsNotNullOrEmpty}}" />
+                <WrapPanel ItemSpacing="8" LineSpacing="6">
+                  <Button Content="Refresh" Command="{Binding ReloadCommand}" />
+                  <Button Content="Open on speedrun.com" Click="OnOpenBoard" />
+                </WrapPanel>
+                <TextBlock Text="{Binding Status}" TextWrapping="Wrap" Foreground="{StaticResource LpMutedBrush}" />
+                <TextBlock Text="{Binding Credit}" TextWrapping="Wrap" FontSize="11" Foreground="{StaticResource LpMutedBrush}" />
+              </StackPanel>
+            </StackPanel>
+          </Border>
+
+          <!-- Submitting a finished attempt to speedrun.com -->
+          <Border Classes="card" IsVisible="{Binding HasSet}">
+            <StackPanel Spacing="6" DataContext="{Binding Submit}" x:DataType="vm:SubmitRunViewModel">
+              <TextBlock Classes="caption" Text="SUBMIT TO SPEEDRUN.COM" />
+              <TextBlock TextWrapping="Wrap" Foreground="{StaticResource LpMutedBrush}" IsVisible="{Binding !HasKey}"
+                         Text="Save your speedrun.com API key in Settings → speedrun.com to submit finished runs from here." />
+              <TextBlock TextWrapping="Wrap" Foreground="{StaticResource LpMutedBrush}" IsVisible="{Binding !HasAttempts}"
+                         Text="Finished attempts appear here." />
+              <StackPanel Spacing="6" IsVisible="{Binding HasAttempts}">
+                <TextBlock TextWrapping="Wrap" Foreground="{StaticResource LpMutedBrush}"
+                           Text="The leaderboard's PC rules: start at the title; the video must show the final in-game time on the end screen and LiveSplit's in-game time script; no tabbing out, mods or music over the game. The moderators check your run against the video." />
+                <ComboBox ItemsSource="{Binding Attempts}" SelectedItem="{Binding Attempt}" HorizontalAlignment="Stretch" AutomationProperties.Name="Attempt to submit" />
+                <TextBlock Text="{Binding BoardText, StringFormat='Board: {0} (change it in the Leaderboard card)'}" TextWrapping="Wrap" />
+                <WrapPanel ItemSpacing="8" LineSpacing="6">
+                  <TextBox Text="{Binding Time}" Watermark="In-game time" MinWidth="140" AutomationProperties.Name="Time to submit"
+                           ToolTip.Tip="The in-game time on the game's end screen, as in your video." />
+                  <TextBox Text="{Binding Date}" Watermark="yyyy-mm-dd" MinWidth="120" AutomationProperties.Name="Date played" />
+                </WrapPanel>
+                <TextBox Text="{Binding Video}" Watermark="Video link (YouTube, Twitch…)" AutomationProperties.Name="Video link" />
+                <TextBox Text="{Binding Comment}" AcceptsReturn="True" TextWrapping="Wrap" MinHeight="90" AutomationProperties.Name="Comment" />
+                <WrapPanel ItemSpacing="8" LineSpacing="6">
+                  <Button Content="{Binding SubmitLabel}" Command="{Binding SubmitCommand}" Classes="accent" IsEnabled="{Binding HasKey}"
+                          AutomationProperties.Name="Submit the run to speedrun.com" />
+                  <Button Content="Open the submitted run" Click="OnOpenSubmitted"
+                          IsVisible="{Binding SubmittedLink, Converter={x:Static StringConverters.IsNotNullOrEmpty}}" />
+                </WrapPanel>
+              </StackPanel>
+              <TextBlock Text="{Binding Status}" TextWrapping="Wrap"
+                         IsVisible="{Binding Status, Converter={x:Static StringConverters.IsNotNullOrEmpty}}" />
+            </StackPanel>
+          </Border>
+
+          <!-- Leaderboard runs: Lockpick hands-off and the rules checked -->
+          <Border Classes="card">
+            <StackPanel Spacing="6">
+              <TextBlock Classes="caption" Text="LEADERBOARD RUN" />
+              <ToggleSwitch IsChecked="{Binding LeaderboardRun}" OnContent="Leaderboard run on" OffContent="Leaderboard run off"
+                            AutomationProperties.Name="Leaderboard run" />
+              <TextBlock TextWrapping="Wrap" Foreground="{StaticResource LpMutedBrush}"
+                         Text="For runs you'll submit: Lockpick locks its trainer read-only, keeps ask mode off (it would pause the game), and checks your game files against the official release (no mods). Each attempt's record says whether every check passed when it began." />
+              <TextBlock Text="{Binding GuardSummary}" FontWeight="SemiBold" TextWrapping="Wrap"
+                         IsVisible="{Binding GuardSummary, Converter={x:Static StringConverters.IsNotNullOrEmpty}}" />
+              <ItemsControl ItemsSource="{Binding GuardChecks}" IsVisible="{Binding LeaderboardRun}">
+                <ItemsControl.ItemTemplate>
+                  <DataTemplate x:DataType="svc:GuardCheck">
+                    <Grid ColumnDefinitions="Auto,*" ColumnSpacing="6" Margin="0,1">
+                      <TextBlock Classes="mark" Classes.pass="{Binding IsPass}" Classes.fail="{Binding IsFail}" Classes.warn="{Binding IsWarn}" Text="{Binding Mark}" />
+                      <TextBlock Grid.Column="1" Text="{Binding Text}" TextWrapping="Wrap" />
+                    </Grid>
+                  </DataTemplate>
+                </ItemsControl.ItemTemplate>
+              </ItemsControl>
+              <StackPanel Spacing="2" IsVisible="{Binding LeaderboardRun}">
+                <TextBlock Classes="label" Text="Up to you (the rules Lockpick can't check)" Margin="0,4,0,0" />
+                <ItemsControl ItemsSource="{Binding GuardReminders}">
+                  <ItemsControl.ItemTemplate>
+                    <DataTemplate x:DataType="x:String">
+                      <TextBlock Text="{Binding StringFormat='• {0}'}" TextWrapping="Wrap" Foreground="{StaticResource LpMutedBrush}" />
+                    </DataTemplate>
+                  </ItemsControl.ItemTemplate>
+                </ItemsControl>
+                <Button Content="Check again" Command="{Binding CheckAgainCommand}" Margin="0,4,0,0" />
+              </StackPanel>
+            </StackPanel>
+          </Border>
+        </c:CardColumns>
+
+        <c:CardColumns MinColumnWidth="380" MaxColumns="2" IsVisible="{Binding SelectedSection, Converter={x:Static c:SectionIs.Instance}, ConverterParameter=livesplit}">
+          <!-- Working with the runner's LiveSplit -->
+          <Border Classes="card">
+            <StackPanel Spacing="8">
+              <TextBlock Classes="caption" Text="LIVESPLIT" />
+              <ComboBox ItemsSource="{Binding LiveSplitChoices}" SelectedItem="{Binding LiveSplitMode}" HorizontalAlignment="Stretch"
+                        AutomationProperties.Name="Work with LiveSplit" />
+              <TextBlock TextWrapping="Wrap" Foreground="{StaticResource LpMutedBrush}"
+                         Text="Leaderboard runs time with LiveSplit's own autosplitter: choose Follow and Lockpick moves with LiveSplit's splits instead of splitting itself. Without an autosplitter, Drive lets Lockpick split LiveSplit and set its game time. Both need LiveSplit's server (Control → Start TCP Server)." />
+              <TextBlock Text="{Binding LiveSplitStatus}" TextWrapping="Wrap" />
+            </StackPanel>
+          </Border>
+        </c:CardColumns>
+      </Panel>
     </StackPanel>
   </ScrollViewer>
 </UserControl>
