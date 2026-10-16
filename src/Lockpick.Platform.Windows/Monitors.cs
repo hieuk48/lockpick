@@ -6,7 +6,10 @@ namespace Lockpick.Platform.Windows;
 /// <summary>A monitor: where it is (physical pixels), its work area, and the resolutions its driver offers.</summary>
 public sealed record MonitorDescription(string Device, PixelRect Bounds, PixelRect Work, bool Primary, IReadOnlyList<(int Width, int Height, int Hz)> Modes)
 {
-    public override string ToString() => $"{(Primary ? "Main monitor" : Device.TrimStart('\\', '.'))} — {Bounds.Width}×{Bounds.Height}";
+    /// <summary>"Main monitor", "Monitor 2", … in the order <see cref="Monitors.List"/> gives.</summary>
+    public string Name { get; init; } = Primary ? "Main monitor" : "Monitor";
+
+    public override string ToString() => $"{Name} — {Bounds.Width}×{Bounds.Height}";
 }
 
 /// <summary>The monitors and their resolutions (for the game's display settings and moving its window).</summary>
@@ -46,7 +49,7 @@ public static partial class Monitors
             found.Add(new MonitorDescription(device.DeviceName, bounds, work, (device.StateFlags & 4) != 0, Modes(device.DeviceName)));
         }
 
-        return [.. found.OrderByDescending(m => m.Primary)];
+        return [.. found.OrderByDescending(m => m.Primary).Select((m, i) => m with { Name = m.Primary ? "Main monitor" : $"Monitor {i + 1}" })];
     }
 
     /// <summary>

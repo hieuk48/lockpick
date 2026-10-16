@@ -64,21 +64,46 @@
           </StackPanel>
           <TextBlock TextWrapping="Wrap" Foreground="{StaticResource LpMutedBrush}"
                      Text="How Resident Evil shows itself: its own display settings, changed only when you press Apply (your original is kept and can be put back). The game reads them when it starts." />
-          <Grid ColumnDefinitions="Auto,*" RowDefinitions="Auto,Auto,Auto" ColumnSpacing="8" RowSpacing="8" IsEnabled="{Binding Available}">
-            <TextBlock Classes="label" Text="Display" VerticalAlignment="Center" />
-            <ComboBox Grid.Column="1" ItemsSource="{Binding ModeChoices}" SelectedItem="{Binding Mode}" HorizontalAlignment="Stretch" MaxWidth="460"
-                      AutomationProperties.Name="Game display mode" />
-            <TextBlock Grid.Row="1" Classes="label" Text="Resolution" VerticalAlignment="Center" />
-            <ComboBox Grid.Row="1" Grid.Column="1" ItemsSource="{Binding ResolutionChoices}" SelectedItem="{Binding Resolution}"
-                      IsEnabled="{Binding CanChooseResolution}" HorizontalAlignment="Stretch" MaxWidth="460" AutomationProperties.Name="Game resolution" />
-            <TextBlock Grid.Row="2" Classes="label" Text="Picture" VerticalAlignment="Center" />
-            <ComboBox Grid.Row="2" Grid.Column="1" ItemsSource="{Binding ScalingChoices}" SelectedItem="{Binding Scaling}" HorizontalAlignment="Stretch" MaxWidth="460"
-                      AutomationProperties.Name="Game picture scaling" />
-          </Grid>
+          <!-- Every setting on screen as one aligned list (the labels share a column through the size scope). -->
+          <StackPanel Spacing="6" Grid.IsSharedSizeScope="True" IsEnabled="{Binding Available}">
+            <Grid ColumnSpacing="8">
+              <Grid.ColumnDefinitions><ColumnDefinition SharedSizeGroup="DisplayLabel" Width="Auto" /><ColumnDefinition Width="*" /></Grid.ColumnDefinitions>
+              <TextBlock Classes="label" Text="Display" VerticalAlignment="Center" />
+              <ComboBox Grid.Column="1" ItemsSource="{Binding ModeChoices}" SelectedItem="{Binding Mode}" HorizontalAlignment="Stretch" MaxWidth="460" AutomationProperties.Name="Game display mode" />
+            </Grid>
+            <Grid ColumnSpacing="8">
+              <Grid.ColumnDefinitions><ColumnDefinition SharedSizeGroup="DisplayLabel" Width="Auto" /><ColumnDefinition Width="*" /></Grid.ColumnDefinitions>
+              <TextBlock Classes="label" Text="Resolution" VerticalAlignment="Center" />
+              <ComboBox Grid.Column="1" ItemsSource="{Binding ResolutionChoices}" SelectedItem="{Binding Resolution}" IsEnabled="{Binding CanChooseResolution}" HorizontalAlignment="Stretch" MaxWidth="460" AutomationProperties.Name="Game resolution" />
+            </Grid>
+            <Grid ColumnSpacing="8">
+              <Grid.ColumnDefinitions><ColumnDefinition SharedSizeGroup="DisplayLabel" Width="Auto" /><ColumnDefinition Width="*" /></Grid.ColumnDefinitions>
+              <TextBlock Classes="label" Text="Picture" VerticalAlignment="Center" />
+              <ComboBox Grid.Column="1" ItemsSource="{Binding ScalingChoices}" SelectedItem="{Binding Scaling}" HorizontalAlignment="Stretch" MaxWidth="460" AutomationProperties.Name="Game picture scaling" />
+            </Grid>
+            <ItemsControl ItemsSource="{Binding Options}">
+              <ItemsControl.ItemsPanel>
+                <ItemsPanelTemplate><StackPanel Spacing="6" /></ItemsPanelTemplate>
+              </ItemsControl.ItemsPanel>
+              <ItemsControl.ItemTemplate>
+                <DataTemplate x:DataType="vm:DisplayOptionRow">
+                  <Grid ColumnSpacing="8">
+                    <Grid.ColumnDefinitions><ColumnDefinition SharedSizeGroup="DisplayLabel" Width="Auto" /><ColumnDefinition Width="*" /></Grid.ColumnDefinitions>
+                    <TextBlock Classes="label" Text="{Binding Label}" VerticalAlignment="Center" />
+                    <ComboBox Grid.Column="1" ItemsSource="{Binding Choices}" SelectedItem="{Binding Selected}" HorizontalAlignment="Stretch" MaxWidth="460"
+                              AutomationProperties.Name="{Binding Label}" />
+                  </Grid>
+                </DataTemplate>
+              </ItemsControl.ItemTemplate>
+            </ItemsControl>
+          </StackPanel>
           <TextBlock Text="{Binding Warning}" Classes="warning" TextWrapping="Wrap" IsVisible="{Binding Warning, Converter={x:Static StringConverters.IsNotNullOrEmpty}}" />
           <WrapPanel ItemSpacing="8" LineSpacing="8">
             <Button Content="Apply" Command="{Binding ApplyCommand}" Classes="accent" IsEnabled="{Binding Available}" AutomationProperties.Name="Apply the game display settings" />
             <Button Content="Restore my original" Command="{Binding RestoreCommand}" AutomationProperties.Name="Restore the original game display settings" />
+            <!-- Next to the setting it applies: shown while the running game still has the old settings. -->
+            <Button Content="{Binding RestartText}" Command="{Binding RestartGameCommand}" IsVisible="{Binding NeedsRestart}"
+                    AutomationProperties.Name="Restart the game to use the new settings" />
           </WrapPanel>
           <TextBlock Text="{Binding Status}" TextWrapping="Wrap" Foreground="{StaticResource LpMutedBrush}" IsVisible="{Binding Status, Converter={x:Static StringConverters.IsNotNullOrEmpty}}" />
           <WrapPanel ItemSpacing="8" LineSpacing="8">

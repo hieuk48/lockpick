@@ -15,10 +15,12 @@ All notable changes to this project are documented here. The format follows
   minimized. A hotkey shows or hides it without leaving the game (Settings → Hotkeys); it costs the
   game no frames (30 per second with and without it).
 - **Game display** (Settings → Game display): switch Resident Evil between windowed, borderless (fills the screen —
-  best for the overlay and streaming) and fullscreen, pick a resolution your main monitor supports and how the
-  picture is scaled (4:3, whole multiples, stretched). Lockpick changes the game's display settings only when you
-  press Apply, keeps your original (Restore my original puts it back) and warns when fullscreen would change your
-  monitor's resolution. It can also move the game window to another monitor, which the game itself doesn't allow.
+  best for the overlay and streaming) and fullscreen, pick a resolution your main monitor supports, how the picture
+  is scaled (4:3, whole multiples, stretched), vertical sync, gamma, texture filtering and antialiasing — every
+  setting of the game's display file, all on one screen. Lockpick changes them only when you press Apply, keeps your
+  original (Restore my original puts it back), warns when fullscreen would change your monitor's resolution, and
+  offers Restart Resident Evil right there (two clicks: anything since your last save is lost). It can also move
+  the game window to another monitor, which the game itself doesn't allow.
 - **OBS HUD page:** with the API on, `http://127.0.0.1:1996/overlay/hud?token=…` is a transparent page for an OBS
   Browser Source with the same time, HP, room and challenge state, in the corner and size you choose
   ([docs/API.md](docs/API.md)).

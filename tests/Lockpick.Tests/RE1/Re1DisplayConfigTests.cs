@@ -67,6 +67,38 @@ public sealed class Re1DisplayConfigTests : IDisposable
         Assert.Contains("vsync=application", lines);
     }
 
+    [Fact]
+    public void Options_read_the_file_or_fall_back_to_their_defaults()
+    {
+        var values = _config.ReadOptions();
+        Assert.Equal("application", values["vsync"]);
+        Assert.Equal("1.0", values["gamma"]);
+        Assert.Equal("application", values["anisotropic"]); // not in the file: the default
+        Assert.Equal("application", values["antialiasing"]);
+    }
+
+    [Fact]
+    public void Options_are_written_and_values_the_game_doesnt_know_are_refused()
+    {
+        _config.WriteOptions(new Dictionary<string, string> { ["gamma"] = "1.2", ["antialiasing"] = "msaa_4x", ["vsync"] = "sometimes", ["mystery"] = "1" });
+        var lines = File.ReadAllLines(_config.Path);
+        Assert.Contains("gamma=1.2", lines);
+        Assert.Contains("antialiasing=msaa_4x", lines);
+        Assert.Contains("vsync=application", lines);
+        Assert.DoesNotContain(lines, l => l.StartsWith("mystery", StringComparison.Ordinal));
+        Assert.Equal("1.2", _config.ReadOptions()["gamma"]);
+        Assert.True(_config.HasBackup);
+    }
+
+    [Fact]
+    public void Every_option_offers_its_default()
+    {
+        foreach (var option in _config.Options)
+        {
+            Assert.Contains(option.Choices, c => c.Value == option.Default);
+        }
+    }
+
     [Theory]
     [InlineData("1920x1080@60", 1920, 1080)]
     [InlineData("640x480@60", 640, 480)]

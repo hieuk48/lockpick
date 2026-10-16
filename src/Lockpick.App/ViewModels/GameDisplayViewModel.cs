@@ -26,8 +26,12 @@ public sealed partial class GameDisplayViewModel : ObservableObject
     public const string Borderless = "borderless";
     public const string Fullscreen = "fullscreen";
 
+    private const string RestartLabel = "Restart Resident Evil";
+    private const string RestartConfirmLabel = "Click again to restart — unsaved progress is lost";
+
     private readonly AppServices _services;
     private IGameDisplayConfig? _config;
+    private int _armed;
     private IReadOnlyList<MonitorDescription> _monitors = [];
     private bool _loading;
 
@@ -55,6 +59,9 @@ public sealed partial class GameDisplayViewModel : ObservableObject
 
     public ObservableCollection<MonitorDescription> MonitorChoices { get; } = [];
 
+    /// <summary>The game's other display options (vsync, gamma, filtering, antialiasing for RE1).</summary>
+    public ObservableCollection<DisplayOptionRow> Options { get; } = [];
+
     /// <summary>False when the game's settings file can't be found (no install found yet).</summary>
     [ObservableProperty]
     public partial bool Available { get; private set; }
@@ -81,6 +88,13 @@ public sealed partial class GameDisplayViewModel : ObservableObject
     [NotifyCanExecuteChangedFor(nameof(RestoreCommand))]
     public partial bool HasBackup { get; private set; }
 
+    /// <summary>True after Apply / Restore while the game runs with its old settings (it reads them when it starts).</summary>
+    [ObservableProperty]
+    public partial bool NeedsRestart { get; private set; }
+
+    [ObservableProperty]
+    public partial string RestartText { get; private set; } = RestartLabel;
+
     [ObservableProperty]
     public partial MonitorDescription? MoveTarget { get; set; }
 
@@ -102,9 +116,19 @@ public sealed partial class GameDisplayViewModel : ObservableObject
         try
         {
             _config.Write(new DisplayConfiguration(presentation, resolution, Enum.Parse<PictureScaling>(Scaling.Value)));
+
+            // Only options the player changed: an untouched default isn't added to the file.
+            var changed = Options.Where(o => o.Selected is { } s && s.Value != o.Loaded).ToDictionary(o => o.Key, o => o.Selected!.Value);
+            if (changed.Count > 0)
+            {
+                _config.WriteOptions(changed);
+                ReloadOptions();
+            }
+
             HasBackup = _config.HasBackup;
-            Status = _services.Source.Status.State == ConnectionState.Attached
-                ? "Saved. Restart Resident Evil to use it (the game reads these settings when it starts)."
+            NeedsRestart = _services.Source.Status.State == ConnectionState.Attached;
+            Status = NeedsRestart
+                ? "Saved. The game reads these settings when it starts — restart it to use them."
                 : "Saved. Resident Evil uses it the next time it starts.";
         }
         catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
@@ -125,12 +149,56 @@ public sealed partial class GameDisplayViewModel : ObservableObject
         {
             _config.RestoreBackup();
             Load();
-            Status = "Your original settings are back. Restart Resident Evil to use them.";
+            NeedsRestart = _services.Source.Status.State == ConnectionState.Attached;
+            Status = NeedsRestart ? "Your original settings are back — restart the game to use them." : "Your original settings are back.";
         }
         catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
         {
             Status = $"Couldn't restore {_config.Path}: {ex.Message}";
         }
+    }
+
+    /// <summary>
+    /// Restarts the game so it reads the new settings. The first click arms it (anything since the last typewriter save
+    /// is lost), a second click within 5 seconds restarts — no dialog.
+    /// </summary>
+    [RelayCommand(AllowConcurrentExecutions = true)] // the confirming click comes while the first one waits
+    private async Task RestartGameAsync()
+    {
+        var status = _services.Source.Status;
+        if (status.State != ConnectionState.Attached || status.Process is not { } process)
+        {
+            NeedsRestart = false;
+            Status = "Resident Evil isn't running; it uses the new settings when you start it.";
+            return;
+        }
+
+        if (RestartText == RestartLabel)
+        {
+            RestartText = RestartConfirmLabel;
+            var armed = ++_armed;
+            await Task.Delay(TimeSpan.FromSeconds(5));
+            if (armed == _armed && RestartText == RestartConfirmLabel)
+            {
+                RestartText = RestartLabel; // not confirmed in time
+            }
+
+            return;
+        }
+
+        _armed++;
+        RestartText = RestartLabel;
+        if ((process.ExecutablePath ?? _services.ResolveInstalledExecutable()) is not { } executable)
+        {
+            Status = "The game's location isn't known — set it under Game installation.";
+            return;
+        }
+
+        NeedsRestart = false;
+        Status = "Restarting Resident Evil…";
+        var problem = await GameProcess.RestartAsync(process.ProcessId, executable, _services.Adapter.WindowClass, TimeSpan.FromSeconds(5));
+        Status = problem ?? "Restarted with the new settings.";
+        NeedsRestart = problem is not null;
     }
 
     [RelayCommand]
@@ -181,6 +249,7 @@ public sealed partial class GameDisplayViewModel : ObservableObject
 
             var current = _config.Read();
             HasBackup = _config.HasBackup;
+            ReloadOptions();
             Mode = ModeChoices.First(c => c.Value == (current.Presentation == DisplayPresentation.Fullscreen ? Fullscreen
                 : current.Resolution == DisplayConfiguration.Desktop ? Borderless : Windowed));
             Scaling = ScalingChoices.First(c => c.Value == current.Scaling.ToString());
@@ -190,6 +259,21 @@ public sealed partial class GameDisplayViewModel : ObservableObject
         {
             _loading = false;
             Check();
+        }
+    }
+
+    private void ReloadOptions()
+    {
+        Options.Clear();
+        if (_config is null)
+        {
+            return;
+        }
+
+        var values = _config.ReadOptions();
+        foreach (var option in _config.Options)
+        {
+            Options.Add(new DisplayOptionRow(option, values.GetValueOrDefault(option.Key, option.Default)));
         }
     }
 
@@ -231,6 +315,14 @@ public sealed partial class GameDisplayViewModel : ObservableObject
         }
 
         var keepSize = keep is null ? null : DisplayConfiguration.Size(keep);
+        // The file's own value for a listed size stays as it is (e.g. "1920x1080@60" — not the monitor's fastest rate),
+        // so Apply never changes what the player didn't.
+        var index = keepSize is null ? -1 : ResolutionChoices.ToList().FindIndex(c => DisplayConfiguration.Size(c.Value) == keepSize);
+        if (index >= 0 && keep is not null)
+        {
+            ResolutionChoices[index] = ResolutionChoices[index] with { Value = keep };
+        }
+
         Resolution = ResolutionChoices.FirstOrDefault(c => c.Value == keep)
             ?? ResolutionChoices.FirstOrDefault(c => keepSize is not null && DisplayConfiguration.Size(c.Value) == keepSize)
             ?? ResolutionChoices.FirstOrDefault(c => c.Value == DisplayConfiguration.Desktop)
