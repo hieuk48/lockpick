@@ -80,6 +80,7 @@ public sealed partial class OverlayViewModel : ObservableObject
         });
         services.RunLibrary.Changed += (_, _) => Dispatcher.UIThread.Post(() => ShowRun(state.Snapshot));
         services.SpeedrunCom.ShownChanged += (_, _) => Dispatcher.UIThread.Post(() => ShowRun(state.Snapshot));
+        services.LiveSplitEngine.Changed += (_, _) => Dispatcher.UIThread.Post(() => ShowRun(state.Snapshot));
         Show(state.Snapshot);
         Show(services.Challenges.Status);
     }
@@ -354,7 +355,7 @@ public sealed partial class OverlayViewModel : ObservableObject
             return;
         }
 
-        var comparison = _services.RunLibrary.Comparison(set);
+        var comparison = _services.ComparisonFor(set);
         var now = status.GameTime(snapshot);
         var rows = RunRows.Build(status, comparison, now);
         var current = status.State == RunState.Running ? status.Current : status.State == RunState.Ready ? 0 : rows.Count - 1;

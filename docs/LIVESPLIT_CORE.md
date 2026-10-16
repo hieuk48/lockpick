@@ -49,5 +49,13 @@ Gotcha: `SoftwareRenderer.Render`'s stride is in **pixels**, not bytes (a byte s
 4. **CI and the release** check out the submodule and install Rust 1.99.1 (CI caches the build); code scanning skips
    the native build.
 
-Next: livesplit-core's comparisons and statistics on the Runs page (replacing Lockpick's own PB / best segments),
-the *Save as LiveSplit file* button through livesplit-core, and the RE1 WebAssembly autosplitter.
+5. **Comparisons** (Runs page → This run → *Compare against*): LiveSplit's own — Personal Best, Best Segments, Best
+   Split Times, Average Segments, Median Segments, Worst Segments, Balanced PB, Latest Run — and any in the player's
+   file. The choice applies to the Runs page's rows, the overlay and LiveSplit's layout; Personal Best keeps
+   Lockpick's own personal best (its records, which leave out practice and trainer attempts). A comparison without
+   times yet falls back to it.
+6. **Only attempts that count** reach livesplit-core's history: an attempt with the trainer on or started from a
+   save is reset with `updateSplits = false`, so it never becomes a PB or a gold (LiveSplit still counts the start
+   in `AttemptCount`, as it counts every reset).
+
+Next: the *Save as LiveSplit file* button through livesplit-core, and the RE1 WebAssembly autosplitter.

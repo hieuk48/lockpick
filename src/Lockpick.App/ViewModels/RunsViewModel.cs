@@ -46,6 +46,7 @@ public sealed partial class RunsViewModel : PageViewModel
     private readonly LeaderboardGuard _guard;
     private readonly LiveSplitLink _liveSplit;
     private readonly LiveState _state;
+    private readonly AppServices _services;
     private bool _syncing;
     private bool _visible;
     private DateTimeOffset _lastTick;
@@ -53,6 +54,7 @@ public sealed partial class RunsViewModel : PageViewModel
     public RunsViewModel(AppServices services, LiveState state)
         : base("Runs", "Icon.Timer")
     {
+        _services = services;
         _runs = services.Runs;
         _appVersion = services.AppVersion;
         _library = services.RunLibrary;
@@ -148,6 +150,37 @@ public sealed partial class RunsViewModel : PageViewModel
 
     [ObservableProperty]
     public partial string Comparison { get; private set; } = string.Empty;
+
+    /// <summary>What the splits can be compared against (LiveSplit's comparisons); empty without livesplit-core.</summary>
+    [ObservableProperty]
+    public partial IReadOnlyList<string> Comparisons { get; private set; } = [];
+
+    /// <summary>The comparison the rows, the overlay and LiveSplit's layout use.</summary>
+    [ObservableProperty]
+    public partial string? CompareAgainst { get; set; }
+
+    public bool HasComparisons => Comparisons.Count > 1;
+
+    /// <summary>The segments with the most time to gain (personal best against best segments).</summary>
+    [ObservableProperty]
+    public partial IReadOnlyList<TimeSaveRow> TimeSaves { get; private set; } = [];
+
+    [ObservableProperty]
+    public partial string TimeSaveSummary { get; private set; } = string.Empty;
+
+    partial void OnComparisonsChanged(IReadOnlyList<string> value) => OnPropertyChanged(nameof(HasComparisons));
+
+    partial void OnCompareAgainstChanged(string? value)
+    {
+        if (_syncing || value is null || _services is null || value == _services.LiveSplitEngine.Comparison)
+        {
+            return;
+        }
+
+        _services.LiveSplitEngine.SetComparison(value);
+        _settings.Save(_settings.Current with { RunComparison = value });
+        Sync();
+    }
 
     /// <summary>Where the chosen splits come from and whether their triggers were checked in a real run.</summary>
     [ObservableProperty]
@@ -347,16 +380,36 @@ public sealed partial class RunsViewModel : PageViewModel
             return;
         }
 
-        var comparison = _library.Comparison(set);
+        var own = _library.Comparison(set);
+        var comparison = _services.ComparisonFor(set);
         var now = status.GameTime(_state.Snapshot);
         Rows = RunRows.Build(status, comparison, now);
         RunTime = now is { } t ? RunRows.Clock(t) : status.State == RunState.Ready ? "0:00.0" : string.Empty;
-        var pb = comparison.PersonalBest.Count > 0 ? comparison.PersonalBest[^1] : null;
+        var pb = own.PersonalBest.Count > 0 ? own.PersonalBest[^1] : null;
+        var chosen = _services.LiveSplitEngine.Comparison;
+        var against = ReferenceEquals(comparison, own) ? null
+            : comparison.PersonalBest.Count > 0 && comparison.PersonalBest[^1] is { } end ? $"against {chosen} ({RunRows.Clock(end)})" : $"against {chosen}";
         Comparison = string.Join(" · ", new[]
         {
             pb is { } p ? $"Personal best {RunRows.Clock(p)}" : "No personal best yet",
-            comparison.SumOfBest is { } sob ? $"best possible {RunRows.Clock(sob)}" : null,
+            own.SumOfBest is { } sob ? $"best possible {RunRows.Clock(sob)}" : null,
+            against,
         }.Where(s => s is not null));
+        _syncing = true;
+        if (_services.LiveSplitEngine.Comparisons is var names && !names.SequenceEqual(Comparisons))
+        {
+            Comparisons = names; // only when they change: a new list would close the open dropdown
+        }
+
+        CompareAgainst = Comparisons.Contains(chosen) ? chosen : Comparisons.Count > 0 ? Comparisons[0] : null;
+        _syncing = false;
+        if (status.State != RunState.Running || TimeSaves.Count == 0)
+        {
+            TimeSaves = [.. RunRows.TimeSaves(set, own).Take(6)];
+            TimeSaveSummary = pb is { } total && own.SumOfBest is { } best && total > best
+                ? $"Your personal best is {RunRows.Clock(total - best)} slower than your best segments put together ({RunRows.Clock(best)}). Most of it is here:"
+                : pb is null ? "Finish a clean run to see where your time goes." : "Your personal best already matches your best segments.";
+        }
         SetNote = (set.ImportedFrom is not null ? $"From {Path.GetFileName(set.ImportedFrom)}. " : "Built in. ")
             + (set.Verified ? string.Empty : "Its split points come from the community's autosplitter and aren't yet checked in a full run with Lockpick; the split key fixes a missed one.");
         (Headline, Detail) = status.State switch

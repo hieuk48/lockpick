@@ -92,11 +92,69 @@ public sealed class LiveSplitTimer : IDisposable
     /// <summary>The split being run (−1 before the start, the split count after the end).</summary>
     public int CurrentSplitIndex => Locked(() => (int)_timer.CurrentSplitIndex());
 
-    /// <summary>A new attempt: the previous one goes into the history, then the timer starts on game time, its own
-    /// count paused so only <see cref="SetGameTime"/> moves it.</summary>
-    public void Start() => Locked(() =>
+    /// <summary>The comparisons the splits can be compared against (Personal Best, Best Segments, Average Segments, …
+    /// and the file's own), in LiveSplit's order.</summary>
+    public IReadOnlyList<string> Comparisons => Locked(() =>
     {
-        _timer.Reset(updateSplits: true);
+        var run = _timer.GetRun();
+        var names = new List<string>((int)run.ComparisonsLen());
+        for (ulong i = 0; i < run.ComparisonsLen(); i++)
+        {
+            names.Add(run.Comparison(i));
+        }
+
+        return names;
+    });
+
+    /// <summary>The comparison the layout shows and splits are judged against.</summary>
+    public string CurrentComparison => Locked(() => _timer.CurrentComparison());
+
+    /// <summary>Compares against <paramref name="comparison"/> (false when the splits have no such comparison).</summary>
+    public bool SetComparison(string comparison) => Locked(() =>
+    {
+        _timer.SetCurrentComparison(comparison);
+        return _timer.CurrentComparison() == comparison;
+    });
+
+    /// <summary>Each split's time in <paramref name="comparison"/> (game time from the start; null where it has none).</summary>
+    public IReadOnlyList<TimeSpan?> SplitTimes(string comparison) => Locked(() =>
+    {
+        var run = _timer.GetRun();
+        var times = new TimeSpan?[(int)run.Len()];
+        for (var i = 0; i < times.Length; i++)
+        {
+            times[i] = Seconds(run.Segment((ulong)i).Comparison(comparison).GameTime());
+        }
+
+        return times;
+    });
+
+    /// <summary>Each segment's best time ever (game time; null where there is none).</summary>
+    public IReadOnlyList<TimeSpan?> BestSegments() => Locked(() =>
+    {
+        var run = _timer.GetRun();
+        var times = new TimeSpan?[(int)run.Len()];
+        for (var i = 0; i < times.Length; i++)
+        {
+            times[i] = Seconds(run.Segment((ulong)i).BestSegmentTime().GameTime());
+        }
+
+        return times;
+    });
+
+    /// <summary>LiveSplit's sum of best segments (game time), null until every segment has a time.</summary>
+    public TimeSpan? SumOfBest() => Locked(() =>
+    {
+        using var sum = Native.Analysis.CalculateSumOfBest(_timer.GetRun(), simpleCalculation: false, useCurrentRun: false, GameTime);
+        return Seconds(sum);
+    });
+
+    /// <summary>A new attempt, the timer starting on game time with its own count paused so only
+    /// <see cref="SetGameTime"/> moves it. The previous attempt goes into the history, or is dropped when
+    /// <paramref name="keepPrevious"/> is false (an attempt that mustn't count: the trainer was on, from a save).</summary>
+    public void Start(bool keepPrevious = true) => Locked(() =>
+    {
+        _timer.Reset(updateSplits: keepPrevious);
         _timer.Start();
         _timer.InitializeGameTime();
         _timer.PauseGameTime();
@@ -116,8 +174,9 @@ public sealed class LiveSplitTimer : IDisposable
 
     public void Skip() => Locked(() => _timer.SkipSplit());
 
-    /// <summary>Ends the attempt; its times go into the history (PB and golds updated as LiveSplit does).</summary>
-    public void Reset() => Locked(() => _timer.Reset(updateSplits: true));
+    /// <summary>Ends the attempt; its times go into the history (PB and golds updated as LiveSplit does), or are
+    /// dropped when <paramref name="keep"/> is false.</summary>
+    public void Reset(bool keep = true) => Locked(() => _timer.Reset(updateSplits: keep));
 
     /// <summary>
     /// LiveSplit's default layout with, when given, one more line under it (e.g. "World record" / "38:01.0 Hamo").
@@ -181,6 +240,8 @@ public sealed class LiveSplitTimer : IDisposable
             _timer.Dispose();
         }
     }
+
+    private static TimeSpan? Seconds(Native.TimeSpanRef? time) => time is null ? null : TimeSpan.FromSeconds(time.TotalSeconds());
 
     private void SetGameTimeLocked(TimeSpan time)
     {

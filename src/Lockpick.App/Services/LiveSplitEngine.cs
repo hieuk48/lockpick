@@ -11,10 +11,16 @@ namespace Lockpick.App.Services;
 /// attempt starts it on game time, every split, undo, skip and reset is mirrored, and its game time is set from the
 /// game's clock — so the times, PB, golds and history are LiveSplit's own and its layout can be drawn on the overlay and
 /// the OBS page. Each split set's LiveSplit file is kept in the runs folder (<c>&lt;set&gt;.lss</c>), whole; an imported
-/// set starts from the player's file (which Lockpick never writes to). Off when the native library is missing.
+/// set starts from the player's file (which Lockpick never writes to). An attempt that doesn't count for Lockpick
+/// (the trainer was on, or it began from a save) is dropped, not kept in the history, so it can't become a PB or a
+/// gold. The player picks the comparison (Runs page); Personal Best is the default. Off when the native library is
+/// missing.
 /// </summary>
 public sealed class LiveSplitEngine : IDisposable
 {
+    /// <summary>LiveSplit's own comparison names.</summary>
+    public const string PersonalBest = "Personal Best";
+
     private static readonly TimeSpan GameTimeEvery = TimeSpan.FromMilliseconds(100);
 
     private readonly RunService _runs;
@@ -27,13 +33,16 @@ public sealed class LiveSplitEngine : IDisposable
     private int _current;
     private DateTimeOffset _lastGameTime;
     private string? _record;
+    private string _comparison;
+    private bool _lastCounts = true;
 
-    public LiveSplitEngine(RunService runs, IGameStateSource source, string directory, ILogger log)
+    public LiveSplitEngine(RunService runs, IGameStateSource source, string directory, ILogger log, string? comparison = null)
     {
         _runs = runs;
         _source = source;
         _directory = directory;
         _log = log;
+        _comparison = string.IsNullOrEmpty(comparison) ? PersonalBest : comparison;
         Available = LiveSplitTimer.Available;
         if (!Available)
         {
@@ -62,6 +71,61 @@ public sealed class LiveSplitEngine : IDisposable
         lock (_gate)
         {
             return _timer?.Render(width, height);
+        }
+    }
+
+    /// <summary>The comparisons the chosen splits offer (LiveSplit's: Personal Best, Best Segments, Average
+    /// Segments, …, and the file's own); empty without a timer.</summary>
+    public IReadOnlyList<string> Comparisons
+    {
+        get
+        {
+            lock (_gate)
+            {
+                return _timer?.Comparisons ?? [];
+            }
+        }
+    }
+
+    /// <summary>The comparison chosen (it applies to every split set that has it, else Personal Best).</summary>
+    public string Comparison
+    {
+        get
+        {
+            lock (_gate)
+            {
+                return _comparison;
+            }
+        }
+    }
+
+    public void SetComparison(string comparison)
+    {
+        lock (_gate)
+        {
+            _comparison = comparison;
+            _timer?.SetComparison(comparison);
+        }
+
+        Changed?.Invoke(this, EventArgs.Empty);
+    }
+
+    /// <summary>
+    /// What <paramref name="set"/>'s splits are judged against: Lockpick's own (<paramref name="own"/>: its personal
+    /// best and best segments) for Personal Best, else the chosen comparison's split times from LiveSplit's history,
+    /// with the best segments kept.
+    /// </summary>
+    public RunComparison Against(SplitSet set, RunComparison own)
+    {
+        lock (_gate)
+        {
+            if (_timer is not { } timer || _setId != set.Id || _comparison == PersonalBest || timer.CurrentComparison != _comparison)
+            {
+                return own;
+            }
+
+            var times = timer.SplitTimes(_comparison);
+            return times.Count == set.Splits.Count && times.Any(t => t is not null) ? own with { PersonalBest = times } : own;
         }
     }
 
@@ -101,7 +165,7 @@ public sealed class LiveSplitEngine : IDisposable
             // An attempt still on the clock (or finished but not yet reset) goes into the history before saving.
             if (_timer is { Phase: not LiveSplitPhase.NotRunning } timer)
             {
-                timer.Reset();
+                timer.Reset(keep: _runs.Status.State == RunState.Running ? Counts(_runs.Status) : _lastCounts);
             }
 
             Save();
@@ -116,6 +180,12 @@ public sealed class LiveSplitEngine : IDisposable
         {
             if (status.Set?.Id != _setId)
             {
+                if (_timer is { Phase: not LiveSplitPhase.NotRunning } previous)
+                {
+                    previous.Reset(keep: _lastCounts); // a finished attempt goes into its file's history first
+                    _lastCounts = true;
+                }
+
                 Save();
                 _timer?.Dispose();
                 _timer = null;
@@ -131,6 +201,8 @@ public sealed class LiveSplitEngine : IDisposable
                         {
                             _timer.SetFooter("World record", _record);
                         }
+
+                        _timer.SetComparison(_comparison);
                     }
                     catch (Exception ex) when (ex is IOException or InvalidDataException or UnauthorizedAccessException)
                     {
@@ -174,7 +246,8 @@ public sealed class LiveSplitEngine : IDisposable
             switch (e)
             {
                 case RunStarted:
-                    timer.Start();
+                    timer.Start(keepPrevious: _lastCounts);
+                    _lastCounts = true;
                     _current = 0;
                     break;
                 case SplitReached split:
@@ -182,9 +255,11 @@ public sealed class LiveSplitEngine : IDisposable
                     _current = split.Index + 1;
                     break;
                 case RunEnded ended:
+                    _lastCounts = Counts(_runs.Status);
                     if (ended.Result != RunResult.Finished)
                     {
-                        timer.Reset();
+                        timer.Reset(keep: _lastCounts);
+                        _lastCounts = true;
                     }
 
                     Save();
@@ -232,6 +307,9 @@ public sealed class LiveSplitEngine : IDisposable
             _log.LogWarning("The LiveSplit file for {Set} couldn't be saved: {Message}", _setId, ex.Message);
         }
     }
+
+    /// <summary>The attempt counts in LiveSplit's history the way it does in Lockpick's (no trainer, not from a save).</summary>
+    private static bool Counts(RunStatus status) => !status.CheatsUsed && !status.FromSave;
 
     private string PathFor(SplitSet set) => Path.Combine(_directory, Safe(set.Id) + ".lss");
 

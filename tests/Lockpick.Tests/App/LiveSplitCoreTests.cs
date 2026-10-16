@@ -102,6 +102,85 @@ public sealed class LiveSplitCoreTests : IDisposable
     }
 
     [Fact]
+    public void Comparisons_best_segments_and_the_sum_of_best_come_from_the_history()
+    {
+        using var timer = LiveSplitTimer.Create(null, "Resident Evil", "Jill - Test", Names);
+        timer.Start();
+        foreach (var at in new[] { 20.0, 80, 140, 200 })
+        {
+            timer.Split(TimeSpan.FromSeconds(at));
+        }
+
+        timer.Start(); // the first attempt (the PB) goes into the history
+        foreach (var at in new[] { 25.0, 75, 150, 215 })
+        {
+            timer.Split(TimeSpan.FromSeconds(at));
+        }
+
+        timer.Reset();
+
+        Assert.Contains("Personal Best", timer.Comparisons);
+        Assert.Contains("Best Segments", timer.Comparisons);
+        Assert.Contains("Average Segments", timer.Comparisons);
+        Assert.Equal([20.0, 80, 140, 200], timer.SplitTimes("Personal Best").Select(t => t!.Value.TotalSeconds));
+        Assert.Equal([20.0, 50, 60, 60], timer.BestSegments().Select(t => t!.Value.TotalSeconds)); // 50: the second attempt's Yawn 1
+        Assert.Equal(190, timer.SumOfBest()!.Value.TotalSeconds, precision: 3);
+        Assert.True(timer.SetComparison("Best Segments"));
+        Assert.Equal("Best Segments", timer.CurrentComparison);
+        Assert.False(timer.SetComparison("No such comparison"));
+        Assert.Equal("Best Segments", timer.CurrentComparison);
+    }
+
+    [Fact]
+    public void An_attempt_that_doesn_t_count_is_dropped()
+    {
+        using var timer = LiveSplitTimer.Create(null, "Resident Evil", "Jill - Test", Names);
+        timer.Start();
+        timer.Split(TimeSpan.FromSeconds(20));
+        timer.Reset(keep: false);
+        // LiveSplit counts every start, but the attempt leaves no history, times or golds.
+        Assert.Contains("<AttemptHistory/>", timer.SaveLss(), StringComparison.Ordinal);
+        Assert.Null(timer.BestSegments()[0]);
+    }
+
+    [Fact]
+    public void The_engine_keeps_attempts_from_a_save_out_of_livesplit_s_history_and_compares_as_chosen()
+    {
+        var source = new FakeStateSource();
+        source.Attach(1, TrainerServiceTests.Profile);
+        using var runs = new RunService(source, null, _ => null) { StartOnLoad = true };
+        var set = new SplitSet("t", "Test", "Jill - Test", PlayableCharacter.Jill, [.. Names.Select(n => new SplitDefinition(n, new ManualSplit()))], false, "test");
+        using (var engine = new LiveSplitEngine(runs, source, _folder, NullLogger.Instance, "Best Segments"))
+        {
+            runs.Choose(set);
+            source.Poll(new GameSnapshot { InGameplay = Field<bool>.Valid(true), GameTime = Field<TimeSpan>.Valid(TimeSpan.FromSeconds(1)) });
+            source.Raise(new GameLoaded(DateTimeOffset.UtcNow, TimeSpan.FromSeconds(1), IsNewGame: false)); // practice from a save
+            Assert.True(engine.Running);
+            runs.Split();
+            runs.Reset();
+            Assert.Equal("Best Segments", engine.Comparison);
+            var own = RunComparison.None(Names.Length);
+            Assert.Same(own, engine.Against(set, own)); // nothing in Best Segments yet: no times to take, keep Lockpick's
+        }
+
+        var kept = File.ReadAllText(Path.Combine(_folder, "t.lss"));
+        Assert.Contains("<AttemptHistory/>", kept, StringComparison.Ordinal);
+        Assert.Contains("<BestSegmentTime/>", kept, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public void The_time_to_gain_is_the_personal_best_against_the_best_segments()
+    {
+        var set = new SplitSet("t", "Test", "Jill - Test", PlayableCharacter.Jill, [.. Names.Select(n => new SplitDefinition(n, new ManualSplit()))], false, "test");
+        TimeSpan? S(double seconds) => TimeSpan.FromSeconds(seconds);
+        var comparison = new RunComparison([S(20), S(80), S(140), S(200)], [S(20), S(50), S(60), S(58)]);
+        var rows = Lockpick.App.ViewModels.RunRows.TimeSaves(set, comparison);
+        Assert.Equal(["Yawn 1", "End"], rows.Select(r => r.Name)); // 10 s and 2 s to gain; the others are already best
+        Assert.Equal("−10.0", rows[0].Gain);
+        Assert.Equal("1:00.0", rows[0].PersonalBest);
+    }
+
+    [Fact]
     public void Pictures_are_written_as_png()
     {
         byte[] bgra = [0, 0, 128, 128, 255, 255, 255, 255]; // half-transparent red, opaque white

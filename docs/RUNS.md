@@ -145,6 +145,16 @@ timed by in-game time but the board keeps that time in its `realtime` field, so 
   last changed 2024-07-01 for the GOG English build) is byte for byte the one Lockpick's built-in split points come
   from (checked 2026-10-16).
 
+## Comparisons and where the time is
+
+- **Compare against** (This run): your personal best by default, or one of LiveSplit's comparisons from your
+  history — best segments, best split times, average or median segments, worst segments, balanced PB, latest run —
+  or a comparison in your imported file. The rows, the overlay and LiveSplit's layout all follow it.
+- **Where the time is:** the segments where your personal best lost most against your best segments (LiveSplit's
+  "possible time save"), with the total between your PB and your sum of best. Practice those first.
+- Attempts with the trainer on or started from a save never count: not in Lockpick's personal best and golds, and
+  not in the LiveSplit file's history.
+
 ## On the overlay and elsewhere
 
 - The **Run splits** widget (Settings → Overlay) is LiveSplit's layout drawn by livesplit-core: the splits with their

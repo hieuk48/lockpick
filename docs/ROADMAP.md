@@ -251,7 +251,9 @@ is decided later. Keep-running stays out of challenges (it patches the game, and
         real submission is the owner's). Next: splits.io upload with a submission.
      2. *livesplit-core* — **done 2026-10-16 (ADR-019, docs/LIVESPLIT_CORE.md):** built from a pinned submodule
         with Rust (6.3 MB), following Lockpick's run, kept as a LiveSplit file per split set, drawn as an overlay
-        widget and an OBS page; CI builds it. Next: its comparisons on the Runs page, saving through it.
+        widget and an OBS page; CI builds it. **Comparisons done 2026-10-16:** LiveSplit's comparisons on the Runs
+        page, the overlay and its layout; where the PB loses time against the best segments; practice and trainer
+        attempts kept out of its history. Next: saving through it.
      3. *An RE1 autosplitter in livesplit-core's WebAssembly format* from Lockpick's verified addresses, run by
         Lockpick and offered to the community (LiveSplit loads it too) — alongside the community `.asl`.
      4. *Managed LiveSplit* for leaderboard runs (the rules require LiveSplit's `.asl` IGT script): Lockpick finds

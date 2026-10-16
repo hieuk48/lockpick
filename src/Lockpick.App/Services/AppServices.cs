@@ -55,7 +55,7 @@ public sealed class AppServices : IAsyncDisposable
         Feed = new Core.Insight.EventFeed(source, adapter.CreateChangeExplainer, adapter.RoomName);
         Runs = new Core.Runs.RunService(source, Trainer, adapter.CreateRunRules, new Core.Runs.RunHistoryStore(AppPaths.Runs));
         RunLibrary = new RunLibrary(Runs, adapter, Runs.History!, settings, loggerFactory.CreateLogger("Runs"));
-        LiveSplitEngine = new LiveSplitEngine(Runs, source, AppPaths.Runs, loggerFactory.CreateLogger("LiveSplitCore"));
+        LiveSplitEngine = new LiveSplitEngine(Runs, source, AppPaths.Runs, loggerFactory.CreateLogger("LiveSplitCore"), settings.Current.RunComparison);
         SpeedrunCom = new SpeedrunCom(Updates.CurrentVersion);
         SpeedrunAccount = new SpeedrunAccount(SpeedrunCom, new SecretStore(AppPaths.Secrets), settings);
         LiveSplit = new LiveSplitLink(Runs, source, settings.Current.LiveSplitMode, settings.Current.LiveSplitPort, loggerFactory.CreateLogger("LiveSplit"));
@@ -132,9 +132,13 @@ public sealed class AppServices : IAsyncDisposable
     /// <summary>Why the API isn't listening although it is on (e.g. the port is taken), or null.</summary>
     public string? ApiError { get; private set; }
 
+    /// <summary>What a split set's splits are judged against: the comparison the player chose (Runs page; LiveSplit's
+    /// history), or Lockpick's own personal best and best segments.</summary>
+    public Core.Runs.RunComparison ComparisonFor(Core.Runs.SplitSet set) => LiveSplitEngine.Against(set, RunLibrary.Comparison(set));
+
     public void CreateApi(ICaptureControl capture)
     {
-        Api ??= new ApiServer(new ApiHost(Source, Adapter, Trainer, capture, AppVersion, Challenges, Runs, RunLibrary.Comparison, Feed,
+        Api ??= new ApiServer(new ApiHost(Source, Adapter, Trainer, capture, AppVersion, Challenges, Runs, ComparisonFor, Feed,
                 LiveSplitEngine.Available ? LiveSplitEngine.Render : null),
             LoggerFactory.CreateLogger("Api"));
     }

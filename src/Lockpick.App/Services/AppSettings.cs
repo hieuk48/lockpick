@@ -108,6 +108,9 @@ public sealed record AppSettings
     /// <summary>LiveSplit's TCP server port (its default).</summary>
     public int LiveSplitPort { get; init; } = 16834;
 
+    /// <summary>What splits are compared against (a LiveSplit comparison name: Personal Best, Best Segments, …).</summary>
+    public string RunComparison { get; init; } = "Personal Best";
+
     /// <summary>Overlay widgets in their own windows (widget id → its window's place and options).</summary>
     public IReadOnlyDictionary<string, PopOutOptions> PopOuts { get; init; } = new Dictionary<string, PopOutOptions>();
 

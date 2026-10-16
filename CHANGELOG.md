@@ -40,6 +40,11 @@ All notable changes to this project are documented here. The format follows
   LiveSplit's own engine, so no LiveSplit is needed — its layout is the overlay's one splits widget (*Run splits*,
   with the world record from speedrun.com when the leaderboard is on) and an OBS page (`/overlay/livesplit`), and
   each split set is kept as a LiveSplit file with every attempt.
+- **Comparisons and where the time is** (Runs page): compare your splits against your personal best or any of
+  LiveSplit's comparisons (best segments, average, median, latest run, balanced PB, …) on the page, the overlay and
+  LiveSplit's layout; a new card lists the segments where your PB loses most against your best segments. Practice and
+  trainer attempts no longer reach the LiveSplit file's history (they could have set a PB or a gold there), and a
+  finished attempt is kept when you switch splits right after it.
 - **Widgets off the game:** every overlay widget can also **pop out** into a window of its own (Settings → Overlay →
   Pop out): move it to any monitor, resize it, and right-click it for a green background (OBS's chroma key) or to
   keep it on top; windows remember their place and reopen with Lockpick. The new **Stream page** shows the widgets

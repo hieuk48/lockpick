@@ -22,6 +22,9 @@ public sealed record SplitRowData(int Index, string Name, string Trigger, string
     public bool IsGold => Mark == SplitMark.Gold;
 }
 
+/// <summary>A segment with time to gain: its personal-best time against the best it has ever been.</summary>
+public sealed record TimeSaveRow(string Name, string PersonalBest, string Best, string Gain, TimeSpan GainTime);
+
 /// <summary>Works out the split rows (times, differences to the best, gold segments) the way LiveSplit shows them.</summary>
 public static class RunRows
 {
@@ -64,6 +67,26 @@ public static class RunRows
         }
 
         return rows;
+    }
+
+    /// <summary>
+    /// The segments where the personal best lost most against the player's best segments (LiveSplit's "possible time
+    /// save"), biggest first; segments without both times are left out.
+    /// </summary>
+    public static IReadOnlyList<TimeSaveRow> TimeSaves(SplitSet set, RunComparison comparison)
+    {
+        var rows = new List<TimeSaveRow>();
+        for (var i = 0; i < set.Splits.Count; i++)
+        {
+            var end = comparison.PersonalBest.ElementAtOrDefault(i);
+            var start = i == 0 ? TimeSpan.Zero : comparison.PersonalBest.ElementAtOrDefault(i - 1);
+            if (end is { } e && start is { } s && comparison.BestSegments.ElementAtOrDefault(i) is { } best && e - s > best)
+            {
+                rows.Add(new TimeSaveRow(set.Splits[i].Name, Clock(e - s), Clock(best), Delta(best - (e - s)), e - s - best));
+            }
+        }
+
+        return [.. rows.OrderByDescending(r => r.GainTime)];
     }
 
     /// <summary>"1:02:03.4", "2:03.4" under an hour.</summary>
