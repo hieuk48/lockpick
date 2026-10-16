@@ -45,7 +45,7 @@
             <TextBlock Classes="caption" Text="OVERLAY" />
           </StackPanel>
           <TextBlock TextWrapping="Wrap" Foreground="{StaticResource LpMutedBrush}"
-                     Text="Shows the in-game time, HP, the room, your challenge and a minimap on top of the game. Clicks go through it and it never takes focus, so the game keeps running. It works with the game windowed, borderless or fullscreen. Widgets in the same corner stack." />
+                     Text="Shows the in-game time and HP, a map, the enemies in the room, your run's splits and what just happened on top of the game. Clicks go through it and it never takes focus, so the game keeps running. It works with the game windowed, borderless or fullscreen. Put each widget in a corner or turn it off; widgets in the same corner stack." />
           <ToggleSwitch IsChecked="{Binding OverlayEnabled}" OnContent="Overlay on" OffContent="Overlay off" AutomationProperties.Name="Show the overlay over the game" />
           <ItemsControl ItemsSource="{Binding OverlayWidgetRows}">
             <ItemsControl.ItemTemplate>
@@ -218,7 +218,7 @@
             <TextBlock Classes="caption" Text="HOTKEYS" />
           </StackPanel>
           <TextBlock TextWrapping="Wrap" Foreground="{StaticResource LpMutedBrush}"
-                     Text="Keys that work while you play, without leaving the game. Trainer actions work only while Trainer Mode is on and Lockpick has write access; the overlay keys work any time." />
+                     Text="Keys that work while you play, without leaving the game. Trainer actions work only while Trainer Mode is on and Lockpick has write access; the overlay, map and run keys work any time." />
           <ItemsControl ItemsSource="{Binding TrainerHotkeyRows}">
             <ItemsControl.ItemTemplate>
               <DataTemplate x:DataType="vm:TrainerHotkeyRow">
