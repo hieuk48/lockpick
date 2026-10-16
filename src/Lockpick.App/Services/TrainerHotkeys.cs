@@ -26,6 +26,9 @@ public sealed class TrainerHotkeys : IDisposable
     /// <summary>Shows the overlay map's next view (Settings: minimap, full-screen room, …); works any time.</summary>
     public const string NextMapView = "map-view";
 
+    /// <summary>Zooms the overlay's whole-floor map: the whole floor, then closer on the player; works any time.</summary>
+    public const string MapZoom = "map-zoom";
+
     private readonly Dictionary<string, GlobalHotkey> _keys = [];
     private readonly ILogger _log;
 
@@ -42,6 +45,7 @@ public sealed class TrainerHotkeys : IDisposable
         (ToggleInfiniteAmmo, "Infinite ammo on / off"),
         (ToggleOverlay, "Overlay on / off"),
         (NextMapView, "Map: next view"),
+        (MapZoom, "Map: zoom the whole floor"),
         (RunSplit, "Run: split"),
         (RunUndo, "Run: undo split"),
         (RunSkip, "Run: skip split"),

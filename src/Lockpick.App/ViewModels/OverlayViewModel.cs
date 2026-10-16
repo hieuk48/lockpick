@@ -41,7 +41,7 @@ public sealed partial class OverlayViewModel : ObservableObject
         MapView = Views(_mapSettings)[0];
         map.PropertyChanged += (_, e) =>
         {
-            if (e.PropertyName is nameof(MapViewModel.Map) or nameof(MapViewModel.HasPlayer))
+            if (e.PropertyName is nameof(MapViewModel.Map) or nameof(MapViewModel.HasPlayer) or nameof(MapViewModel.Floor))
             {
                 UpdateMinimap();
             }
@@ -51,6 +51,10 @@ public sealed partial class OverlayViewModel : ObservableObject
             if (action == TrainerHotkeys.NextMapView)
             {
                 Dispatcher.UIThread.Post(NextMapView);
+            }
+            else if (action == TrainerHotkeys.MapZoom)
+            {
+                Dispatcher.UIThread.Post(() => MinimapZoomLevel = (MinimapZoomLevel + 1) % FloorZooms.Length);
             }
         };
         state.PropertyChanged += (_, e) =>
@@ -97,6 +101,24 @@ public sealed partial class OverlayViewModel : ObservableObject
 
     [ObservableProperty]
     public partial bool MinimapNames { get; private set; }
+
+    /// <summary>The map shows the whole floor (a floor view) rather than a room.</summary>
+    [ObservableProperty]
+    public partial bool MinimapIsFloor { get; private set; }
+
+    /// <summary>Which of <see cref="FloorZooms"/> the floor views use (the zoom key).</summary>
+    [ObservableProperty]
+    public partial int MinimapZoomLevel { get; set; }
+
+    /// <summary>The floor view's zoom: 1 is the whole floor.</summary>
+    [ObservableProperty]
+    public partial double MinimapFloorZoom { get; private set; } = 1;
+
+    /// <summary>Closer than the whole floor: the floor view keeps the player in the middle.</summary>
+    [ObservableProperty]
+    public partial bool MinimapFollow { get; private set; }
+
+    private static readonly double[] FloorZooms = [1, 2.5, 5];
 
     [ObservableProperty]
     public partial double MinimapOpacity { get; private set; } = 1;
@@ -190,11 +212,16 @@ public sealed partial class OverlayViewModel : ObservableObject
 
     partial void OnMapViewChanged(string value) => UpdateMinimap();
 
+    partial void OnMinimapZoomLevelChanged(int value) => UpdateMinimap();
+
     private void UpdateMinimap()
     {
-        HasMinimap = Map.Map is not null && Map.HasPlayer && MapView != MapViews.Hidden;
+        MinimapIsFloor = MapViews.IsFloor(MapView);
+        HasMinimap = MapView != MapViews.Hidden && (MinimapIsFloor ? Map.Floor is not null : Map.Map is not null && Map.HasPlayer);
         MinimapFull = MapViews.IsFull(MapView);
-        var seeThrough = MapView == MapViews.RoomSeeThrough;
+        MinimapFloorZoom = FloorZooms[Math.Clamp(MinimapZoomLevel, 0, FloorZooms.Length - 1)];
+        MinimapFollow = MinimapFloorZoom > 1;
+        var seeThrough = MapViews.IsSeeThrough(MapView);
         MinimapViewRadius = MinimapFull ? 0 : Math.Clamp(_mapSettings.Reach, 1000, 30000);
         MinimapNames = MinimapFull && _mapSettings.Names;
         MinimapOpacity = seeThrough ? Math.Clamp(_mapSettings.SeeThroughOpacity, 10, 100) / 100.0 : 1;

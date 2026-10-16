@@ -100,16 +100,23 @@ public static class GameWindows
     }
 
     /// <summary>
-    /// Puts <paramref name="window"/> directly below <paramref name="above"/> in the window stack (e.g. the full-screen
-    /// map under the time panel), without activating it. Does nothing when it already is.
+    /// Puts <paramref name="window"/> directly above <paramref name="below"/> in the window stack (e.g. the time panel
+    /// over the full-screen map), without activating it. Does nothing when it is already somewhere above it.
     /// </summary>
-    public static void PlaceBelow(nint window, nint above)
+    public static void PlaceAbove(nint window, nint below)
     {
-        if (NativeMethods.GetWindow(above, NativeMethods.GwHwndNext) != window)
+        for (var w = NativeMethods.GetWindow(below, NativeMethods.GwHwndPrev); w != 0; w = NativeMethods.GetWindow(w, NativeMethods.GwHwndPrev))
         {
-            NativeMethods.SetWindowPos(window, above, 0, 0, 0, 0,
-                NativeMethods.SwpNoMove | NativeMethods.SwpNoSize | NativeMethods.SwpNoActivate | NativeMethods.SwpNoOwnerZOrder);
+            if (w == window)
+            {
+                return;
+            }
         }
+
+        // SetWindowPos puts a window below the one named: name the window just above `below`.
+        var above = NativeMethods.GetWindow(below, NativeMethods.GwHwndPrev);
+        NativeMethods.SetWindowPos(window, above != 0 ? above : NativeMethods.HwndTop, 0, 0, 0, 0,
+            NativeMethods.SwpNoMove | NativeMethods.SwpNoSize | NativeMethods.SwpNoActivate | NativeMethods.SwpNoOwnerZOrder);
     }
 
     /// <summary>A window's outer rectangle (physical pixels).</summary>

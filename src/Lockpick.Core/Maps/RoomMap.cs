@@ -12,8 +12,11 @@ public enum MapShapeKind
 /// <summary>A collision record: walls and furniture block movement; soft zones (floors, steps) don't.</summary>
 public sealed record MapShape(MapShapeKind Kind, int X0, int Z0, int X1, int Z1, bool Blocks);
 
-/// <summary>A door zone in this room and the room it leads to (adapter-specific id, e.g. "106").</summary>
-public sealed record MapDoor(int X, int Z, int Width, int Depth, string Target);
+/// <summary>
+/// A door zone in this room and the room it leads to (adapter-specific id, e.g. "106"), with where the player arrives
+/// in that room when the game says (for placing rooms on a floor map).
+/// </summary>
+public sealed record MapDoor(int X, int Z, int Width, int Depth, string Target, int? ArrivalX = null, int? ArrivalZ = null);
 
 /// <summary>An item pickup zone placed by the room's own data for this character; <paramref name="Flag"/> is the
 /// adapter's pickup flag (−1 when none).</summary>

@@ -158,6 +158,12 @@ public static class MapViews
     /// <summary>The whole room over the game's picture, see-through.</summary>
     public const string RoomSeeThrough = "room-see-through";
 
+    /// <summary>Every room of the floor in place, over the game's picture (the map's zoom key moves in on the player).</summary>
+    public const string Floor = "floor";
+
+    /// <summary>The same, see-through.</summary>
+    public const string FloorSeeThrough = "floor-see-through";
+
     /// <summary>No map until the key is pressed again.</summary>
     public const string Hidden = "hidden";
 
@@ -166,18 +172,26 @@ public static class MapViews
         (Around, "Minimap (around you)"),
         (Room, "Whole room, full screen"),
         (RoomSeeThrough, "Whole room, full screen, see-through"),
+        (Floor, "Whole floor, full screen"),
+        (FloorSeeThrough, "Whole floor, full screen, see-through"),
         (Hidden, "Hidden"),
     ];
 
     /// <summary>Covers the game's picture instead of sitting in a corner.</summary>
-    public static bool IsFull(string view) => view is Room or RoomSeeThrough;
+    public static bool IsFull(string view) => view is Room or RoomSeeThrough or Floor or FloorSeeThrough;
+
+    /// <summary>Shows the whole floor rather than one room.</summary>
+    public static bool IsFloor(string view) => view is Floor or FloorSeeThrough;
+
+    /// <summary>Drawn see-through over the game.</summary>
+    public static bool IsSeeThrough(string view) => view is RoomSeeThrough or FloorSeeThrough;
 }
 
 /// <summary>The overlay map's options (Settings).</summary>
 public sealed record MapOverlaySettings
 {
     /// <summary>The views the map hotkey cycles through (<see cref="MapViews"/>); the first is shown at start.</summary>
-    public IReadOnlyList<string> Views { get; init; } = [MapViews.Around, MapViews.Room, MapViews.RoomSeeThrough];
+    public IReadOnlyList<string> Views { get; init; } = [MapViews.Around, MapViews.Room, MapViews.RoomSeeThrough, MapViews.Floor];
 
     /// <summary>World units from the player to the minimap's nearer edge.</summary>
     public int Reach { get; init; } = 6000;

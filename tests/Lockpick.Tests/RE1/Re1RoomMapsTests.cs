@@ -39,6 +39,7 @@ public class Re1RoomMapsTests
         data[s] = 0x0C;
         U16(s + 2, 31600); U16(s + 4, 6300); U16(s + 6, 2000); U16(s + 8, 4000);
         data[s + 0x0F] = 0x06;
+        U16(s + 0x10, 18500); U16(s + 0x14, 2500); // arrival in 106 (x, z)
         s += 26;
         for (var copy = 0; copy < 2; copy++)
         {
@@ -90,7 +91,7 @@ public class Re1RoomMapsTests
     public void Reads_doors_with_their_target_room()
     {
         var door = Assert.Single(Parse().Doors);
-        Assert.Equal(new MapDoor(31600, 6300, 2000, 4000, "106"), door);
+        Assert.Equal(new MapDoor(31600, 6300, 2000, 4000, "106", 18500, 2500), door);
     }
 
     [Fact]

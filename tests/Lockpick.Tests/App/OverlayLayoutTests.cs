@@ -61,7 +61,7 @@ public sealed class OverlayLayoutTests : IDisposable
         Directory.CreateDirectory(_folder);
         File.WriteAllText(path, "{\"overlayEnabled\": true, \"overlayCorner\": \"Top left\"}");
         var loaded = new SettingsStore(path, NullLogger.Instance).Load();
-        Assert.Equal([MapViews.Around, MapViews.Room, MapViews.RoomSeeThrough], loaded.MapOverlay.Views);
+        Assert.Equal([MapViews.Around, MapViews.Room, MapViews.RoomSeeThrough, MapViews.Floor], loaded.MapOverlay.Views);
         Assert.Equal(OverlayCorners.TopLeft, OverlayLayout.Corner(loaded, OverlayLayout.Status));
     }
 

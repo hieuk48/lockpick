@@ -34,6 +34,8 @@ public partial class MapView : UserControl
         };
     }
 
+    private void OnFit(object? sender, Avalonia.Interactivity.RoutedEventArgs e) => FloorMap.Fit();
+
     private void Arrange(Size size)
     {
         _arranging = true;

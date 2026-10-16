@@ -19,6 +19,10 @@ All notable changes to this project are documented here. The format follows
   "Map: next view") cycles through the views you tick in Settings → Overlay: the minimap, the whole room over the
   game's picture on a dark backdrop, the same see-through, or hidden. Options: how far the minimap reaches, its
   size, how strong the see-through map is, and names of doors, items and people on the full-screen map.
+- **Whole-floor map:** every room of the floor you're on, put together from the doors between them (Map → Whole
+  floor: scroll to zoom, drag to move, double-click or Fit to see it all), with the room you're in outlined, you on
+  it, and the items you haven't taken yet. On the overlay it is two more map views (whole floor, also see-through):
+  the whole floor, then closer around you with the map's zoom key.
 - **Condition on the overlay:** Fine, Caution, Danger or Poison next to your HP, worked out the way the game's
   status screen does it (poison read from the player's status), with the HP bar in the same colour; also in the API
   (`health.condition`) and on the OBS HUD page.

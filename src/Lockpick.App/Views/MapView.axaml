@@ -31,6 +31,9 @@
         <TextBlock Grid.Column="1" Classes="headline" Text="{Binding Heading}" TextTrimming="CharacterEllipsis"
                    VerticalAlignment="Center" ToolTip.Tip="{Binding Details}" />
         <StackPanel x:Name="HeaderButtons" Grid.Column="2" Orientation="Horizontal" Spacing="8" Margin="8,0,0,0" VerticalAlignment="Center">
+          <ToggleButton Content="Whole floor" IsChecked="{Binding ShowFloor}" AutomationProperties.Name="Show the whole floor"
+                        ToolTip.Tip="Every room of this floor in place, put together from the doors between them. Scroll to zoom, drag to move, double-click to see it all." />
+          <Button Content="Fit" Click="OnFit" IsVisible="{Binding ShowFloor}" AutomationProperties.Name="Show the whole floor again" />
           <ToggleButton x:Name="LegendToggle" Content="Legend" AutomationProperties.Name="Show the legend"
                         ToolTip.Tip="Show what the colours and shapes on the map mean." />
           <ToggleButton Content="Taken &amp; later" IsChecked="{Binding ShowAbsentItems}" AutomationProperties.Name="Show taken and later items"
@@ -42,12 +45,20 @@
     </Border>
 
     <Border x:Name="MapCard" Classes="card" Grid.Row="1" Grid.Column="0" MinHeight="160" Padding="6">
-      <c:RoomMapControl Map="{Binding Map}" PlacedItems="{Binding PlacedItems}" TakenItems="{Binding TakenItems}" FilledSockets="{Binding FilledSockets}" DoorNames="{Binding DoorNames}" Actors="{Binding Actors}" LiveFixtures="{Binding LiveFixtures}" ShowAbsentItems="{Binding ShowAbsentItems}" PlayerX="{Binding PlayerX}" PlayerZ="{Binding PlayerZ}"
+      <Panel>
+      <c:FloorMapControl x:Name="FloorMap" IsVisible="{Binding ShowFloor}" Interactive="True" ClipToBounds="True"
+                         Floor="{Binding Floor}" CurrentRoom="{Binding CurrentRoom}" TakenItems="{Binding FloorTaken}"
+                         PlayerX="{Binding PlayerX}" PlayerZ="{Binding PlayerZ}" PlayerAngle="{Binding PlayerAngle}" HasPlayer="{Binding HasPlayer}"
+                         FloorBrush="#1C2421" WallBrush="#5A6762" SoftBrush="#2C3833"
+                         DoorBrush="{StaticResource LpGreenBrush}" ItemBrush="{StaticResource LpAmberBrush}" PlayerBrush="{StaticResource LpRedBrush}"
+                         LabelBrush="{StaticResource LpTextBrush}" HighlightBrush="{StaticResource LpRedBrush}" />
+      <c:RoomMapControl IsVisible="{Binding !ShowFloor}" Map="{Binding Map}" PlacedItems="{Binding PlacedItems}" TakenItems="{Binding TakenItems}" FilledSockets="{Binding FilledSockets}" DoorNames="{Binding DoorNames}" Actors="{Binding Actors}" LiveFixtures="{Binding LiveFixtures}" ShowAbsentItems="{Binding ShowAbsentItems}" PlayerX="{Binding PlayerX}" PlayerZ="{Binding PlayerZ}"
                         PlayerAngle="{Binding PlayerAngle}" HasPlayer="{Binding HasPlayer}"
                         WallBrush="{StaticResource LpMutedBrush}" SoftBrush="{StaticResource LpBorderBrush}"
                         DoorBrush="{StaticResource LpGreenBrush}" ItemBrush="{StaticResource LpAmberBrush}"
                         PlayerBrush="{StaticResource LpRedBrush}" FaintTextBrush="{StaticResource LpMutedBrush}"
                         LabelPlateBrush="{StaticResource LpBgBrush}" />
+      </Panel>
     </Border>
 
     <!-- The legend lists only what this room holds: beside the map on a wide window, under it on a narrow one. -->

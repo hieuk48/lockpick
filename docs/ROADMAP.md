@@ -184,9 +184,11 @@ is decided later. Keep-running stays out of challenges (it patches the game, and
    north-up minimap around the player; its hotkey cycles through the views the player ticks (minimap, the whole room
    over the picture on a dark backdrop, the same see-through, hidden), with the minimap's reach and size, the
    see-through strength and names on the full-screen map as options; the time panel stays above a full-screen map
-   (verified live in 105). Next: the floor map (rooms stitched by their doors, pan and zoom on the Map page and as
-   an overlay view), HP band and poison, enemy HP (#42), the event feed (#43), the layout editor (#55), never
-   activating Lockpick's windows over exclusive fullscreen.
+   (verified live in 105). **Floor map done 2026-10-16:** rooms placed from their doors (FloorLayout, the
+   tools/rdt/floor_map.py method: door zone centre = arrival spot, least squares), on the Map page with pan and zoom
+   and as overlay views (whole floor, see-through; a zoom key follows the player); stage 1 checked by eye against
+   the game's own layout. HP band, poison and enemy HP done (#42). Next: the event feed (#43), the layout editor
+   (#55), a controller button for the map, never activating Lockpick's windows over exclusive fullscreen.
    - follow the game window (PID → class `RESIDENT EVIL`): client rectangle in physical pixels, monitor, DPI,
      minimized, exclusive fullscreen; move/size events;
    - a click-through, topmost, non-activating overlay window over the 4:3 picture (computed from `dxcfg.ini`'s

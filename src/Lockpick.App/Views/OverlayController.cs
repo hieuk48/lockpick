@@ -41,6 +41,8 @@ public sealed class OverlayController : IDisposable
             new Widget(OverlayLayout.Enemies, _host.EnemiesPanel, () => model.Enemies.Count > 0, () => false),
             new Widget(OverlayLayout.Splits, _host.SplitsPanel, () => model.SplitRows.Count > 0, () => false),
         ];
+        _host.ShowEnemies(model.Enemies);
+        _host.ShowSplits(model);
         model.PropertyChanged += OnModelChanged;
         model.Map.PropertyChanged += OnMapChanged;
         _timer = new DispatcherTimer(TimeSpan.FromMilliseconds(100), DispatcherPriority.Background, (_, _) => Tick());
@@ -199,12 +201,12 @@ public sealed class OverlayController : IDisposable
             GameWindows.KeepAbove(handle, game.Handle, windows);
         }
 
-        // A full-screen widget goes under the others (the time and HP stay readable on top of the map).
+        // The other widgets go above a full-screen one (the time and HP stay readable on top of the map).
         foreach (var full in visible.Where(w => w.Full()))
         {
             foreach (var other in visible.Where(w => !w.Full()))
             {
-                GameWindows.PlaceBelow(full.Window!.Handle, other.Window!.Handle);
+                GameWindows.PlaceAbove(other.Window!.Handle, full.Window!.Handle);
             }
         }
 

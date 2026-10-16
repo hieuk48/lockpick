@@ -53,7 +53,15 @@
        framed or see-through (the map key cycles the player's chosen views). -->
   <LayoutTransformControl x:Name="MinimapPanel">
     <Border Background="{Binding MinimapBackdrop}" BorderBrush="{Binding MinimapBorder}" BorderThickness="1" CornerRadius="3" Padding="2">
-      <c:RoomMapControl FloorBrush="{Binding MinimapFloor}" Width="{Binding MinimapWidth}" Height="{Binding MinimapHeight}" ClipToBounds="True"
+      <Panel Width="{Binding MinimapWidth}" Height="{Binding MinimapHeight}">
+      <c:FloorMapControl IsVisible="{Binding MinimapIsFloor}" ClipToBounds="True" ShowLabels="{Binding MinimapNames}" Opacity="{Binding MinimapOpacity}"
+                         Zoom="{Binding MinimapFloorZoom}" FollowPlayer="{Binding MinimapFollow}"
+                         Floor="{Binding Map.Floor}" CurrentRoom="{Binding Map.CurrentRoom}" TakenItems="{Binding Map.FloorTaken}"
+                         PlayerX="{Binding Map.PlayerX}" PlayerZ="{Binding Map.PlayerZ}" PlayerAngle="{Binding Map.PlayerAngle}" HasPlayer="{Binding Map.HasPlayer}"
+                         FloorBrush="{Binding MinimapFloor}" WallBrush="{Binding MinimapWalls}" SoftBrush="#33423C"
+                         DoorBrush="{StaticResource LpGreenBrush}" ItemBrush="{StaticResource LpAmberBrush}" PlayerBrush="{StaticResource LpRedBrush}"
+                         LabelBrush="{StaticResource LpTextBrush}" HighlightBrush="{StaticResource LpRedBrush}" />
+      <c:RoomMapControl IsVisible="{Binding !MinimapIsFloor}" FloorBrush="{Binding MinimapFloor}" ClipToBounds="True"
                         ShowLabels="{Binding MinimapNames}" Opacity="{Binding MinimapOpacity}"
                         ViewRadius="{Binding MinimapViewRadius}"
                         Map="{Binding Map.Map}" PlacedItems="{Binding Map.PlacedItems}" TakenItems="{Binding Map.TakenItems}"
@@ -63,6 +71,7 @@
                         DoorBrush="{StaticResource LpGreenBrush}" ItemBrush="{StaticResource LpAmberBrush}"
                         PlayerBrush="{StaticResource LpRedBrush}" FaintTextBrush="{StaticResource LpMutedBrush}"
                         LabelPlateBrush="{StaticResource LpBgBrush}" />
+      </Panel>
     </Border>
   </LayoutTransformControl>
   </Panel>

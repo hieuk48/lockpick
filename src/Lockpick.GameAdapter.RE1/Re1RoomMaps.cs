@@ -197,7 +197,8 @@ public sealed class Re1RoomMaps : IRoomMapSource
             {
                 var dest = b[0x0F];
                 var stage = dest >> 5 == 0 ? room.Stage : dest >> 5;
-                doors.Add(new MapDoor(I16(b, 2), I16(b, 4), U16(b, 6), U16(b, 8), $"{stage}{dest & 0x1F:X2}"));
+                // +0x10: arrival x, y, z and facing in the next room (i16 each).
+                doors.Add(new MapDoor(I16(b, 2), I16(b, 4), U16(b, 6), U16(b, 8), $"{stage}{dest & 0x1F:X2}", I16(b, 0x10), I16(b, 0x14)));
             }
             else if (op == 0x18)
             {

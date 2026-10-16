@@ -25,6 +25,8 @@ public sealed partial class MapViewModel : PageViewModel
     private bool _mapsTried;
     private bool _visible;
     private bool _keepUpdating;
+    private (int Stage, PlayableCharacter Character)? _floorKey;
+    private int _floorBuilds;
     private DateTimeOffset _lastUpdate;
 
     public MapViewModel(AppServices services, LiveState state)
@@ -103,6 +105,22 @@ public sealed partial class MapViewModel : PageViewModel
 
     [ObservableProperty]
     public partial string Heading { get; private set; } = "Start or load a game to see the room you're in.";
+
+    /// <summary>Every room of the player's stage in place (built in the background on entering a stage).</summary>
+    [ObservableProperty]
+    public partial FloorMap? Floor { get; private set; }
+
+    /// <summary>The room the player is in (id), for the floor map.</summary>
+    [ObservableProperty]
+    public partial string? CurrentRoom { get; private set; }
+
+    /// <summary>Items already taken anywhere on the floor (the floor map leaves them out).</summary>
+    [ObservableProperty]
+    public partial IReadOnlySet<MapItem>? FloorTaken { get; private set; }
+
+    /// <summary>The Map page shows the whole floor instead of the room.</summary>
+    [ObservableProperty]
+    public partial bool ShowFloor { get; set; }
 
     [ObservableProperty]
     public partial string Details { get; private set; } = string.Empty;
@@ -202,6 +220,17 @@ public sealed partial class MapViewModel : PageViewModel
         }
 
         var character = s.Character.TryGet(out var c) ? c : PlayableCharacter.Unknown;
+        CurrentRoom = room.Id;
+        BuildFloor(maps, room.Stage, character);
+        if (Floor is { } floor)
+        {
+            var taken = floor.Rooms.SelectMany(r => r.Map.Items).Where(i => maps.IsTaken(i, s) == true).ToHashSet();
+            if (FloorTaken is null || !taken.SetEquals(FloorTaken))
+            {
+                FloorTaken = taken;
+            }
+        }
+
         var map = maps.Load(room, character);
         if (!ReferenceEquals(map, Map))
         {
@@ -265,6 +294,46 @@ public sealed partial class MapViewModel : PageViewModel
         {
             HasPlayer = false;
         }
+    }
+
+    /// <summary>Places the stage's rooms (FloorLayout) off the UI thread, once per stage and character.</summary>
+    private void BuildFloor(IRoomMapSource maps, int stage, PlayableCharacter character)
+    {
+        if (_floorKey == (stage, character))
+        {
+            return;
+        }
+
+        _floorKey = (stage, character);
+        var build = ++_floorBuilds;
+        var adapter = _services.Adapter;
+        _ = Task.Run(() =>
+        {
+            var rooms = new Dictionary<string, RoomMap>();
+            for (var r = 0; r <= 0x1F; r++)
+            {
+                try
+                {
+                    if (maps.Load(new RoomLocation(stage, r), character) is { } loaded)
+                    {
+                        rooms[loaded.RoomId] = loaded;
+                    }
+                }
+                catch (Exception ex) when (ex is IOException or InvalidDataException or ArgumentException or IndexOutOfRangeException)
+                {
+                    // A room file that can't be read is left off the floor.
+                }
+            }
+
+            var floor = FloorLayout.Build(stage, rooms, adapter.RoomName);
+            Avalonia.Threading.Dispatcher.UIThread.Post(() =>
+            {
+                if (build == _floorBuilds)
+                {
+                    Floor = floor;
+                }
+            });
+        });
     }
 
     private static string Count(int n, string noun) =>
