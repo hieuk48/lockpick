@@ -109,6 +109,21 @@ public sealed class ChallengeServiceTests : IDisposable
         Assert.Equal(TrainerMode.ReadOnly, _trainer.Mode);
     }
 
+    [Fact]
+    public void Closing_the_game_ends_the_attempt_and_the_next_game_starts_another()
+    {
+        _source.Poll(Game());
+        _challenges.Start(Preset("speedrun"));
+        Assert.Equal(ChallengeState.Running, _challenges.Status.State);
+
+        _source.Raise(new GameStopped(DateTimeOffset.UtcNow, "Game process exited"));
+        Assert.Equal(ChallengeState.Waiting, _challenges.Status.State);
+
+        _source.Poll(Game());
+        Assert.Equal(ChallengeState.Running, _challenges.Status.State);
+        Assert.Equal(2, _challenges.Status.Attempt);
+    }
+
     private sealed class StubRules : IChallengeRules
     {
         public string? Shot { get; set; }

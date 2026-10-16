@@ -155,6 +155,12 @@ public sealed class ChallengeService : IDisposable
                     BeginAttempt();
                     changed = true;
                     break;
+                case GameStopped when Status.State == ChallengeState.Running:
+                    // The game closed: that attempt is over; the next game or load starts another.
+                    Status = Status with { State = ChallengeState.Waiting };
+                    _previous = null;
+                    changed = true;
+                    break;
                 case PlayerDamaged damaged when Status.State == ChallengeState.Running && Status.Rules.Contains(ChallengeRule.NoDamage):
                     Fail($"took {damaged.Amount} damage", _source.Latest);
                     changed = true;

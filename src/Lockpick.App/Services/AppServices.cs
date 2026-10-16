@@ -89,19 +89,13 @@ public sealed class AppServices : IAsyncDisposable
         // The optional alert (Challenges page): a challenge failing, or a death.
         Challenges.StatusChanged += (_, status) =>
         {
-            if (status.State == Core.Challenges.ChallengeState.Failed && status.FailedAt != _alertedFail && Settings.Current.AlertSound)
+            if (status.State == Core.Challenges.ChallengeState.Failed && status.FailedAt != _alertedFail)
             {
                 _alertedFail = status.FailedAt;
-                AlertSound.Play();
+                Alert();
             }
         };
-        Runs.Died += (_, _) =>
-        {
-            if (Settings.Current.AlertSound && Challenges.Status.State != Core.Challenges.ChallengeState.Failed)
-            {
-                AlertSound.Play(); // a death that fails a challenge already sounded
-            }
-        };
+        Runs.Died += (_, _) => Alert();
         foreach (var (action, key) in settings.Current.TrainerHotkeys)
         {
             TrainerHotkeys.Set(action, key, MarkerHotkeyName);
@@ -114,6 +108,17 @@ public sealed class AppServices : IAsyncDisposable
     }
 
     private DateTimeOffset? _alertedFail;
+    private long _lastAlert;
+
+    /// <summary>The alert sound when it's on — once for a death that also fails the challenge (both report it).</summary>
+    private void Alert()
+    {
+        var now = Environment.TickCount64;
+        if (Settings.Current.AlertSound && now - Interlocked.Exchange(ref _lastAlert, now) > 2000)
+        {
+            AlertSound.Play();
+        }
+    }
 
     /// <summary>The challenge the player chose (Challenges page, API).</summary>
     public Core.Challenges.ChallengeService Challenges { get; }
