@@ -23,6 +23,22 @@ jobs:
     runs-on: windows-latest
     steps:
       - uses: actions/checkout@v7
+        with:
+          submodules: true
+
+      - name: Set up Rust (livesplit-core, docs/LIVESPLIT_CORE.md)
+        run: |
+          rustup toolchain install 1.99.1 --profile minimal
+          rustup default 1.99.1
+
+      - name: Cache livesplit-core's build
+        uses: actions/cache@v4
+        with:
+          path: |
+            artifacts/livesplit-core
+            ~/.cargo/registry
+          key: livesplit-core-${{ runner.os }}-1.99.1-${{ hashFiles('.gitmodules') }}-${{ github.sha }}
+          restore-keys: livesplit-core-${{ runner.os }}-1.99.1-
 
       - name: Set up .NET
         uses: actions/setup-dotnet@v6

@@ -33,6 +33,9 @@ All notable changes to this project are documented here. The format follows
 - **Condition on the overlay:** Fine, Caution, Danger or Poison next to your HP, worked out the way the game's
   status screen does it (poison read from the player's status), with the HP bar in the same colour; also in the API
   (`health.condition`) and on the OBS HUD page.
+- **LiveSplit's engine inside Lockpick** (livesplit-core, docs/LIVESPLIT_CORE.md): Lockpick's runs are also timed by
+  LiveSplit's own engine, so no LiveSplit is needed — its layout as an overlay widget (*LiveSplit timer*) and an OBS
+  page (`/overlay/livesplit`), and each split set kept as a LiveSplit file with every attempt.
 - **Runs and splits** (new Runs page; [docs/RUNS.md](docs/RUNS.md)): pick the community's splits (Jill or Chris,
   either ending, NMG or MG), a key-item route, or import a LiveSplit file (the community's from speedrun.com or your
   own), and every new game is timed on the game's own clock — the in-game time the leaderboard uses — splitting by

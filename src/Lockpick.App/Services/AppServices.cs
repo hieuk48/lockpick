@@ -55,6 +55,7 @@ public sealed class AppServices : IAsyncDisposable
         Feed = new Core.Insight.EventFeed(source, adapter.CreateChangeExplainer, adapter.RoomName);
         Runs = new Core.Runs.RunService(source, Trainer, adapter.CreateRunRules, new Core.Runs.RunHistoryStore(AppPaths.Runs));
         RunLibrary = new RunLibrary(Runs, adapter, Runs.History!, settings, loggerFactory.CreateLogger("Runs"));
+        LiveSplitEngine = new LiveSplitEngine(Runs, source, AppPaths.Runs, loggerFactory.CreateLogger("LiveSplitCore"));
         SpeedrunCom = new SpeedrunCom(Updates.CurrentVersion);
         SpeedrunAccount = new SpeedrunAccount(SpeedrunCom, new SecretStore(AppPaths.Secrets), settings);
         LiveSplit = new LiveSplitLink(Runs, source, settings.Current.LiveSplitMode, settings.Current.LiveSplitPort, loggerFactory.CreateLogger("LiveSplit"));
@@ -103,6 +104,9 @@ public sealed class AppServices : IAsyncDisposable
     /// <summary>The link to the runner's LiveSplit (Runs page).</summary>
     public LiveSplitLink LiveSplit { get; }
 
+    /// <summary>livesplit-core following Lockpick's run (LiveSplit's timer, layout and files).</summary>
+    public LiveSplitEngine LiveSplitEngine { get; }
+
     /// <summary>speedrun.com's API (leaderboards, the player's account).</summary>
     public SpeedrunCom SpeedrunCom { get; }
 
@@ -120,7 +124,8 @@ public sealed class AppServices : IAsyncDisposable
 
     public void CreateApi(ICaptureControl capture)
     {
-        Api ??= new ApiServer(new ApiHost(Source, Adapter, Trainer, capture, AppVersion, Challenges, Runs, RunLibrary.Comparison, Feed),
+        Api ??= new ApiServer(new ApiHost(Source, Adapter, Trainer, capture, AppVersion, Challenges, Runs, RunLibrary.Comparison, Feed,
+                LiveSplitEngine.Available ? LiveSplitEngine.Render : null),
             LoggerFactory.CreateLogger("Api"));
     }
 
@@ -360,6 +365,7 @@ public sealed class AppServices : IAsyncDisposable
 
         Challenges.Dispose();
         LiveSplit.Dispose();
+        LiveSplitEngine.Dispose();
         SpeedrunCom.Dispose();
         Runs.Dispose();
         Feed.Dispose();

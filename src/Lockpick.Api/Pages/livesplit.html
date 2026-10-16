@@ -1,0 +1,39 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Lockpick LiveSplit timer</title>
+<!--
+  LiveSplit's own layout, drawn by livesplit-core inside Lockpick (docs/LIVESPLIT_CORE.md), for an OBS Browser Source:
+  the splits Lockpick times, with LiveSplit's look. No LiveSplit needed.
+  URL: http://127.0.0.1:<port>/overlay/livesplit?token=<token>[&width=300][&height=500][&fps=10]
+  Size the browser source to width × height. Nothing here can change the game.
+-->
+<style>
+  html, body { margin: 0; background: transparent; overflow: hidden; }
+  img { display: block; }
+</style>
+</head>
+<body>
+<img id="a" alt=""><img id="b" alt="" style="display:none">
+<script>
+  const params = new URLSearchParams(location.search);
+  const token = params.get("token") || "";
+  const width = Math.min(1200, Math.max(100, parseInt(params.get("width")) || 300));
+  const height = Math.min(2000, Math.max(100, parseInt(params.get("height")) || 500));
+  const every = 1000 / Math.min(30, Math.max(1, parseFloat(params.get("fps")) || 10));
+  const shown = [document.getElementById("a"), document.getElementById("b")];
+  let front = 0;
+
+  // Two images in turn: the next picture loads behind the shown one, so the timer never flickers.
+  function next() {
+    const back = shown[1 - front];
+    back.onload = () => { back.style.display = "block"; shown[front].style.display = "none"; front = 1 - front; setTimeout(next, every); };
+    back.onerror = () => setTimeout(next, 1000);
+    back.src = "/api/v1/livesplit.png?token=" + encodeURIComponent(token) + "&width=" + width + "&height=" + height + "&t=" + Date.now();
+  }
+
+  next();
+</script>
+</body>
+</html>

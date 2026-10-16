@@ -246,6 +246,7 @@ public static class OverlayLayout
     public const string Splits = "splits";
     public const string Feed = "feed";
     public const string Banner = "banner";
+    public const string LiveSplit = "livesplit";
 
     public static IReadOnlyList<(string Id, string Name, string Default)> Widgets { get; } =
     [
@@ -255,6 +256,7 @@ public static class OverlayLayout
         (Splits, "Run splits", OverlayCorners.TopRight),
         (Feed, "What just happened", OverlayCorners.BottomLeft),
         (Banner, "Big messages (challenge failed, died, run finished)", OverlayCorners.TopCentre),
+        (LiveSplit, "LiveSplit timer (LiveSplit's look, by livesplit-core)", Off),
     ];
 
     /// <summary>A corner, or off.</summary>

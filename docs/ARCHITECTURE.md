@@ -28,6 +28,7 @@ Projects:
 | `Lockpick.Core` | Game-agnostic model (`GameSnapshot`, `Field<T>`), events + detector, adapter contract, version profiles (load/validate/match/verify), memory abstractions, `GameMonitor`, recording/replay, JSON-lines logging; challenges, the trainer service, runs and splits (`Runs`: `RunService`, split sets and triggers, records, LiveSplit files — docs/RUNS.md) | M.E.Logging.Abstractions |
 | `Lockpick.Platform.Windows` | Win32 process discovery, read-only handles, `ReadProcessMemory`, high-resolution waits, GOG registry lookup | Core |
 | `Lockpick.GameAdapter.RE1` | RE1 build profiles and interpretation of raw values. **The only place that knows RE1 addresses.** | Core |
+| `Lockpick.LiveSplit` | livesplit-core (MIT/Apache) as the timer engine: generated bindings, the native build from `extern/livesplit-core` (Rust), `LiveSplitTimer` (docs/LIVESPLIT_CORE.md) | — |
 | `Lockpick.Api` | Optional HTTP API for other tools (Kestrel; off by default, token, local unless allowed; docs/API.md) | Core |
 | `Lockpick.App` | Avalonia desktop UI and composition root; first-time setup; Velopack self-update; Debug page with capture | all of the above |
 | `tools/Lockpick.Probe` | Headless identify / watch / trace / record | Core, Platform, RE1 |
@@ -205,6 +206,16 @@ adapter computes from the game's display settings (`DisplaySettings` → `GameDi
 the price is that window and game captures don't include it (OBS gets browser-source pages instead). It is kept
 directly above the game and the game's own windows in the window stack (`GameWindows.KeepAbove`), topmost only while
 the game is, so other windows cover it with the game and it shows over exclusive fullscreen (docs/DISPLAY.md).
+
+**ADR-019 — livesplit-core as the timer engine (the first native component, by ADR-002's bar).** Lockpick wants
+to be the one tool for a run (no LiveSplit to open), with LiveSplit's own timing, comparisons, files and look.
+Rewriting those would drift from LiveSplit; desktop LiveSplit (.NET Framework, WinForms) can't be hosted in .NET 10.
+livesplit-core (MIT/Apache, the engine of LiveSplit One) has a C API made for embedding, so it is built from a
+pinned submodule (`extern/livesplit-core`) with Rust and called through its generated C# bindings
+(`src/Lockpick.LiveSplit`). It follows Lockpick's run — Lockpick's triggers decide when to split — and draws
+LiveSplit's layout for the overlay and OBS. Its WebAssembly autosplitting runtime is left out (6.3 MB instead of
+21 MB); an RE1 autosplitter in that format is for LiveSplit users. Cost: Rust in the build (CI caches it; code scanning
+skips it). Details: docs/LIVESPLIT_CORE.md.
 
 **ADR-009 — Responsive UI.** The window switches to an icon-rail + single-column layout below 760 px
 (window) / 780 px (dashboard content), for portrait monitors and side-by-side use with the game.

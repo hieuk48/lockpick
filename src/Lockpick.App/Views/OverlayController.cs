@@ -42,11 +42,18 @@ public sealed class OverlayController : IDisposable
             new Widget(OverlayLayout.Splits, _host.SplitsPanel, () => model.SplitRows.Count > 0, () => false),
             new Widget(OverlayLayout.Feed, _host.FeedPanel, () => model.FeedLines.Count > 0, () => false),
             new Widget(OverlayLayout.Banner, _host.BannerPanel, () => model.HasBanner, () => false),
+            // Drawn by livesplit-core itself (LiveSplit's layout), not by the hidden host.
+            new Widget(OverlayLayout.LiveSplit, null, () => services.LiveSplitEngine.Available && services.Runs.Status.Set is not null, () => false)
+            {
+                Draw = (width, height) => services.LiveSplitEngine.Render(width, height),
+                Base = (LiveSplitWidth, LiveSplitHeight),
+            },
         ];
         _host.ShowEnemies(model.Enemies);
         _host.ShowSplits(model);
         model.PropertyChanged += OnModelChanged;
         model.Map.PropertyChanged += OnMapChanged;
+        services.LiveSplitEngine.Changed += (_, _) => Dispatcher.UIThread.Post(() => Find(OverlayLayout.LiveSplit).Dirty = true);
         _timer = new DispatcherTimer(TimeSpan.FromMilliseconds(100), DispatcherPriority.Background, (_, _) => Tick());
         _timer.Start();
     }
@@ -233,12 +240,32 @@ public sealed class OverlayController : IDisposable
     private byte[]? Render(Widget widget, GameWindowInfo game)
     {
         widget.Window ??= new LayeredWindow($"Lockpick overlay ({widget.Id})");
-        if (!widget.Dirty && game.Dpi == widget.RenderedDpi && _model.Scale == widget.RenderedScale && widget.Window.IsVisible)
+        // LiveSplit's timer counts on every tick while running, so it is drawn again each time.
+        var live = widget.Draw is not null && _services.LiveSplitEngine.Running;
+        if (!live && !widget.Dirty && game.Dpi == widget.RenderedDpi && _model.Scale == widget.RenderedScale && widget.Window.IsVisible)
         {
             return null;
         }
 
-        var (pixels, width, height) = OverlayWindow.Render(widget.Panel, _model.Scale, game.Dpi);
+        byte[] pixels;
+        int width, height;
+        if (widget.Draw is { } draw)
+        {
+            var dpiScale = Math.Max(1, game.Dpi) / 96.0;
+            width = Math.Max(1, (int)Math.Round(widget.Base.Width * _model.Scale * dpiScale));
+            height = Math.Max(1, (int)Math.Round(widget.Base.Height * _model.Scale * dpiScale));
+            if (draw(width, height) is not { } drawn)
+            {
+                return null;
+            }
+
+            pixels = drawn;
+        }
+        else
+        {
+            (pixels, width, height) = OverlayWindow.Render(widget.Panel!, _model.Scale, game.Dpi);
+        }
+
         widget.Size = (width, height);
         widget.RenderedDpi = game.Dpi;
         widget.RenderedScale = _model.Scale;
@@ -257,11 +284,21 @@ public sealed class OverlayController : IDisposable
     }
 
     /// <summary>One widget: its panel in the hidden host, and the layered window that shows it over the game.</summary>
-    private sealed class Widget(string id, LayoutTransformControl panel, Func<bool> hasContent, Func<bool> full)
+    /// <summary>The LiveSplit timer's size in the overlay's own units (LiveSplit's layout scales to fit it).</summary>
+    private const double LiveSplitWidth = 170;
+    private const double LiveSplitHeight = 300;
+
+    private sealed class Widget(string id, LayoutTransformControl? panel, Func<bool> hasContent, Func<bool> full)
     {
         public string Id { get; } = id;
 
-        public LayoutTransformControl Panel { get; } = panel;
+        public LayoutTransformControl? Panel { get; } = panel;
+
+        /// <summary>Draws the widget itself (premultiplied BGRA at the size asked), instead of the host's panel.</summary>
+        public Func<int, int, byte[]?>? Draw { get; init; }
+
+        /// <summary>A drawn widget's size in the overlay's own units.</summary>
+        public (double Width, double Height) Base { get; init; }
 
         public Func<bool> HasContent { get; } = hasContent;
 

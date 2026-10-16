@@ -1,0 +1,37 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <RootNamespace>Lockpick.LiveSplit</RootNamespace>
+    <Description>livesplit-core (MIT or Apache-2.0, the engine of LiveSplit One) as Lockpick's timer engine: bindings, native build, wrapper. See docs/LIVESPLIT_CORE.md.</Description>
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+  </PropertyGroup>
+
+  <!--
+    The native library is built from the pinned submodule (extern/livesplit-core) with Rust's cargo; it is incremental,
+    so a build with nothing changed takes about a second. The features must match the generated bindings
+    (tools/livesplit/bindings.sh). Set SkipLiveSplitCoreBuild=true to use a library built elsewhere (e.g. by CI).
+  -->
+  <PropertyGroup>
+    <LiveSplitCoreSource>$(MSBuildThisFileDirectory)..\..\extern\livesplit-core\</LiveSplitCoreSource>
+    <LiveSplitCoreTargetDir>$(MSBuildThisFileDirectory)..\..\artifacts\livesplit-core\</LiveSplitCoreTargetDir>
+    <LiveSplitCoreLibrary>$(LiveSplitCoreTargetDir)release\livesplit_core.dll</LiveSplitCoreLibrary>
+  </PropertyGroup>
+
+  <Target Name="BuildLiveSplitCore" BeforeTargets="BeforeBuild" Condition="'$(SkipLiveSplitCoreBuild)' != 'true'">
+    <Error Condition="!Exists('$(LiveSplitCoreSource)Cargo.toml')"
+           Text="extern/livesplit-core is missing: run 'git submodule update --init' (docs/DEVELOPMENT.md)." />
+    <Exec Command="cargo --version" ConsoleToMSBuild="true" IgnoreExitCode="true" StandardOutputImportance="low">
+      <Output TaskParameter="ExitCode" PropertyName="CargoExitCode" />
+    </Exec>
+    <Error Condition="'$(CargoExitCode)' != '0'"
+           Text="Rust's cargo is needed to build livesplit-core: install Rust from https://rustup.rs (docs/DEVELOPMENT.md)." />
+    <Exec Command="cargo build --release -p livesplit-core-capi --features software-rendering --target-dir &quot;$(LiveSplitCoreTargetDir.TrimEnd('\'))&quot;"
+          WorkingDirectory="$(LiveSplitCoreSource)" />
+  </Target>
+
+  <!-- Copied next to Lockpick when it is there (it isn't when the native build is skipped, e.g. code scanning). -->
+  <Target Name="CopyLiveSplitCore" AfterTargets="BuildLiveSplitCore" BeforeTargets="BeforeBuild">
+    <ItemGroup Condition="Exists('$(LiveSplitCoreLibrary)')">
+      <None Include="$(LiveSplitCoreLibrary)" Link="livesplit_core.dll" CopyToOutputDirectory="PreserveNewest" Visible="false" />
+    </ItemGroup>
+  </Target>
+</Project>

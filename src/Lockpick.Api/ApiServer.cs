@@ -42,7 +42,7 @@ public sealed class ApiServer : IAsyncDisposable
         "POST /trainer/health/unlock", "POST /trainer/ammo {enabled}", "GET /trainer/items",
         "POST /trainer/inventory/quantity {slot, quantity}", "POST /trainer/itembox {itemId, quantity}",
         "GET /challenges", "GET /challenge", "POST /challenge/start {id, rules}", "POST /challenge/retry", "POST /challenge/stop",
-        "GET /run", "POST /run/split", "POST /run/undo", "POST /run/skip", "POST /run/reset"
+        "GET /run", "GET /livesplit.png?width&height", "POST /run/split", "POST /run/undo", "POST /run/skip", "POST /run/reset"
     ];
 
     private readonly ApiHost _host;
@@ -208,6 +208,15 @@ public sealed class ApiServer : IAsyncDisposable
             return Ok(challenges.Status);
         });
         app.MapGet(Prefix + "/run", () => _host.Runs is { } runs ? Ok(Run(runs)) : Error(404, "runs aren't available"));
+        app.MapGet(Prefix + "/livesplit.png", (int? width, int? height) =>
+        {
+            // LiveSplit's layout drawn by livesplit-core (the OBS page /overlay/livesplit shows it).
+            var w = Math.Clamp(width ?? 300, 100, 1200);
+            var h = Math.Clamp(height ?? 500, 100, 2000);
+            return _host.LiveSplitPicture?.Invoke(w, h) is { } pixels
+                ? Results.Bytes(Png.FromPremultipliedBgra(pixels, w, h), "image/png")
+                : Error(404, "no LiveSplit timer: choose splits on the Runs page");
+        });
         app.MapPost(Prefix + "/run/split", () => RunCommand(r => r.Split()));
         app.MapPost(Prefix + "/run/undo", () => RunCommand(r => r.Undo()));
         app.MapPost(Prefix + "/run/skip", () => RunCommand(r => r.Skip()));

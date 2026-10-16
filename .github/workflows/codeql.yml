@@ -31,6 +31,7 @@ jobs:
           build-mode: manual
 
       - name: Build
-        run: dotnet build Lockpick.sln -c Release
+        # The C# is analysed; livesplit-core's native library (Rust) isn't needed for that.
+        run: dotnet build Lockpick.sln -c Release -p:SkipLiveSplitCoreBuild=true
 
       - uses: github/codeql-action/analyze@v4

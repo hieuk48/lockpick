@@ -51,4 +51,5 @@ public sealed record ApiHost(
     Lockpick.Core.Challenges.ChallengeService? Challenges = null,
     Lockpick.Core.Runs.RunService? Runs = null,
     Func<Lockpick.Core.Runs.SplitSet, Lockpick.Core.Runs.RunComparison>? Comparison = null,
-    Lockpick.Core.Insight.EventFeed? Feed = null);
+    Lockpick.Core.Insight.EventFeed? Feed = null,
+    Func<int, int, byte[]?>? LiveSplitPicture = null);

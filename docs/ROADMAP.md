@@ -240,10 +240,9 @@ is decided later. Keep-running stays out of challenges (it patches the game, and
         the API key kept with DPAPI and only sent to speedrun.com); **submission done 2026-10-16** (a finished clean
         attempt, board, IGT, date, video, the summary as comment; two presses; tested against a stand-in — the first
         real submission is the owner's). Next: splits.io upload with a submission.
-     2. *livesplit-core* (MIT/Apache, the engine of LiveSplit One) embedded through its C API (a native DLL built
-        from a pinned submodule with Rust): LiveSplit's own timing and comparisons, `.lss` read and written without
-        loss, LiveSplit layouts drawn for the overlay and OBS. Start with a spike on a branch (size, the community
-        files, CI with Rust).
+     2. *livesplit-core* — **done 2026-10-16 (ADR-019, docs/LIVESPLIT_CORE.md):** built from a pinned submodule
+        with Rust (6.3 MB), following Lockpick's run, kept as a LiveSplit file per split set, drawn as an overlay
+        widget and an OBS page; CI builds it. Next: its comparisons on the Runs page, saving through it.
      3. *An RE1 autosplitter in livesplit-core's WebAssembly format* from Lockpick's verified addresses, run by
         Lockpick and offered to the community (LiveSplit loads it too) — alongside the community `.asl`.
      4. *Managed LiveSplit* for leaderboard runs (the rules require LiveSplit's `.asl` IGT script): Lockpick finds

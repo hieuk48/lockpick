@@ -9,10 +9,16 @@ Everything needed to build, test, verify and release Lockpick.
 | Windows | 10/11 x64 | Process access is Win32-only |
 | .NET SDK | 10.0.1xx or later | Pinned by `global.json` (`rollForward: latestFeature`) |
 | Resident Evil (GOG) | build in `data/games/re1/profiles/` | Only needed for live validation |
+| Rust (rustup, MSVC) | 1.96 or later (CI: 1.99.1) | Builds livesplit-core, the timer engine, from `extern/livesplit-core` (ADR-019) |
 | Python 3 | optional | `tools/fixtures/trace_to_fixture.py`, static-analysis notes |
 
-No C++ toolchain is required: v0.1 does all process access through P/Invoke. A native component will
-only be added when it has a demonstrated advantage (see ARCHITECTURE.md, ADR-002).
+Clone with the submodule: `git clone --recursive …`, or `git submodule update --init` in an existing clone. The first
+build compiles livesplit-core (about 40 s); later builds check it in about a second. `-p:SkipLiveSplitCoreBuild=true`
+builds without it (Lockpick then runs with the LiveSplit timer off). After moving the submodule, regenerate the C#
+bindings with `tools/livesplit/bindings.sh`.
+
+Process access needs no native code: it is all P/Invoke. The one native component is livesplit-core (ADR-019),
+added because it gives LiveSplit's own timing, files and look, which can't be had otherwise (ADR-002).
 
 ## Build, run, test
 
