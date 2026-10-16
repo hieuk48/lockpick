@@ -237,8 +237,9 @@ is decided later. Keep-running stays out of challenges (it patches the game, and
      shows no dialogs and never takes focus while a run is on (update prompts wait).
    - **Speedrun suite — Lockpick as the one stop from practice to submission** (owner's direction 2026-10-16):
      1. *speedrun.com* — **leaderboard and account done 2026-10-16** (board per split set, WR / top / your place,
-        the API key kept with DPAPI and only sent to speedrun.com); next: submit a finished run (category and
-        subcategories, in-game time, date, video link, the run summary as the comment) after the player checks it.
+        the API key kept with DPAPI and only sent to speedrun.com); **submission done 2026-10-16** (a finished clean
+        attempt, board, IGT, date, video, the summary as comment; two presses; tested against a stand-in — the first
+        real submission is the owner's). Next: splits.io upload with a submission.
      2. *livesplit-core* (MIT/Apache, the engine of LiveSplit One) embedded through its C API (a native DLL built
         from a pinned submodule with Rust): LiveSplit's own timing and comparisons, `.lss` read and written without
         loss, LiveSplit layouts drawn for the overlay and OBS. Start with a spike on a branch (size, the community

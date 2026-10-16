@@ -27,6 +27,16 @@ public partial class RunsView : UserControl
         }
     }
 
+    private async void OnOpenSubmitted(object? sender, RoutedEventArgs e)
+    {
+        if (DataContext is RunsViewModel { Submit.SubmittedLink: { } link } && Uri.TryCreate(link, UriKind.Absolute, out var uri)
+            && uri.Scheme == Uri.UriSchemeHttps && uri.Host.EndsWith("speedrun.com", StringComparison.OrdinalIgnoreCase)
+            && TopLevel.GetTopLevel(this)?.Launcher is { } launcher)
+        {
+            await launcher.LaunchUriAsync(uri);
+        }
+    }
+
     private async void OnCopySummary(object? sender, RoutedEventArgs e)
     {
         if (DataContext is RunsViewModel { LatestSummary: { } summary } && TopLevel.GetTopLevel(this)?.Clipboard is { } clipboard)

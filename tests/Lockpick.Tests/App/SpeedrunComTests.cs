@@ -118,6 +118,42 @@ public sealed class SpeedrunComTests : IDisposable
         Assert.Null(account.Key());
     }
 
+    private static RunSubmission Submission() => new("mke5yl9k", "8gej2n93",
+        new Dictionary<string, string> { ["p85077ng"] = "21gny96l", ["yn2koen5"] = "5le2d2ml" }, "realtime",
+        TimeSpan.FromSeconds(2401.456), new DateOnly(2026, 10, 16), new Uri("https://youtu.be/abc"), "Timed by Lockpick");
+
+    [Fact]
+    public async Task A_run_is_submitted_as_the_api_documents_it()
+    {
+        _handler.Respond(HttpStatusCode.Created, """{"data":{"id":"r1","weblink":"https://www.speedrun.com/residentevil/run/r1"}}""");
+        var run = await _client.SubmitAsync("abcdef123456", Submission());
+
+        Assert.Equal(new SubmittedRun("r1", "https://www.speedrun.com/residentevil/run/r1"), run);
+        var request = Assert.Single(_handler.Requests);
+        Assert.Equal("POST", request.Method);
+        Assert.EndsWith("/api/v1/runs", request.Uri.AbsolutePath, StringComparison.Ordinal);
+        Assert.Equal("abcdef123456", request.Key);
+        using var body = System.Text.Json.JsonDocument.Parse(request.Body!);
+        var sent = body.RootElement.GetProperty("run");
+        Assert.Equal("mke5yl9k", sent.GetProperty("category").GetString());
+        Assert.Equal("8gej2n93", sent.GetProperty("platform").GetString());
+        Assert.Equal("2026-10-16", sent.GetProperty("date").GetString());
+        Assert.False(sent.GetProperty("verified").GetBoolean()); // the moderators verify, never Lockpick
+        Assert.Equal(2401.456, sent.GetProperty("times").GetProperty("realtime").GetDouble()); // RE1 keeps IGT in 'realtime'
+        Assert.Equal("https://youtu.be/abc", sent.GetProperty("video").GetString());
+        Assert.Equal("pre-defined", sent.GetProperty("variables").GetProperty("p85077ng").GetProperty("type").GetString());
+        Assert.Equal("21gny96l", sent.GetProperty("variables").GetProperty("p85077ng").GetProperty("value").GetString());
+        Assert.DoesNotContain("abcdef123456", request.Body!, StringComparison.Ordinal); // the key only ever in the header
+    }
+
+    [Fact]
+    public async Task A_refused_run_says_why_in_speedrun_com_s_words()
+    {
+        _handler.Respond(HttpStatusCode.BadRequest, """{"status":400,"message":"no","errors":["[video] is missing and it is required"]}""");
+        var refused = await Assert.ThrowsAsync<SpeedrunComException>(() => _client.SubmitAsync("abcdef123456", Submission()));
+        Assert.Contains("[video] is missing", refused.Message, StringComparison.Ordinal);
+    }
+
     [Fact]
     public void The_secret_store_reads_back_what_it_keeps_and_nothing_once_deleted()
     {
@@ -149,7 +185,7 @@ public sealed class SpeedrunComTests : IDisposable
         Assert.Equal("knife", new Re1RunRules().LeaderboardFor(set)["restriction"]);
     }
 
-    private sealed record Seen(Uri Uri, string? Key, string UserAgent);
+    private sealed record Seen(Uri Uri, string? Key, string UserAgent, string Method = "GET", string? Body = null);
 
     private sealed class StubHandler : HttpMessageHandler
     {
@@ -162,7 +198,8 @@ public sealed class SpeedrunComTests : IDisposable
         protected override Task<HttpResponseMessage> SendAsync(HttpRequestMessage request, CancellationToken cancellationToken)
         {
             Requests.Add(new Seen(request.RequestUri!, request.Headers.TryGetValues("X-API-Key", out var keys) ? keys.Single() : null,
-                request.Headers.UserAgent.ToString()));
+                request.Headers.UserAgent.ToString(), request.Method.Method,
+                request.Content?.ReadAsStringAsync(cancellationToken).GetAwaiter().GetResult()));
             var response = new HttpResponseMessage(_next.Status) { Content = new StringContent(_next.Body, Encoding.UTF8, "application/json") };
             if (_next.Location is { } location)
             {

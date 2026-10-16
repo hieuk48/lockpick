@@ -112,6 +112,13 @@ timed by in-game time but the board keeps that time in its `realtime` field, so 
   Lockpick's own API; sends it only to `https://www.speedrun.com` and follows no redirects (so it can't be carried
   elsewhere); clears the box the moment you press Save and never shows it again. *Remove key* deletes it from the
   PC; making a new key on speedrun.com stops the old one working anywhere.
+- **Submit** (Runs → Submit to speedrun.com, with a key saved): a finished attempt from a new game with the trainer
+  off, on the board picked in the Leaderboard card, with its in-game time (editable: it must match the end screen in
+  the video), the date, the video link (RE1 requires one) and the run summary as the comment. Nothing is sent until
+  the player presses Submit, reads what will be sent and presses it again; the run goes in unverified for the
+  moderators (`POST /runs`; the time in the board's `realtime` field, as RE1 keeps it). Attempts with the trainer on
+  or started from a save are refused before anything is sent. The form shows the PC rules (title start, final IGT on
+  the end screen, LiveSplit's IGT script on screen, no tabbing out).
 - The autosplitter LiveSplit's registry lists for RE1 (LiveSplit.AutoSplitters → deserteagle417's `RE1aio.asl`,
   last changed 2024-07-01 for the GOG English build) is byte for byte the one Lockpick's built-in split points come
   from (checked 2026-10-16).

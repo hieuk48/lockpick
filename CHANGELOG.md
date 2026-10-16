@@ -52,8 +52,11 @@ All notable changes to this project are documented here. The format follows
   the game window to another monitor, which the game itself doesn't allow.
 - **speedrun.com leaderboard** (Runs → Leaderboard, off until you turn it on): the board for your splits, the world
   record, the top runs, where your best would place and your own run; the overlay shows the world record too.
+- **Submit runs to speedrun.com** (Runs → Submit, with your API key saved): a finished attempt with its in-game
+  time, the board, the date, your video link and the run summary, sent only after you press Submit twice; the
+  moderators verify it as usual. Runs with the trainer on or from a save can't be sent.
 - **speedrun.com account** (Settings → speedrun.com): your name for the boards, and an optional API key for
-  submitting runs later — checked with speedrun.com, kept encrypted for your Windows account (never in settings or
+  submitting runs — checked with speedrun.com, kept encrypted for your Windows account (never in settings or
   logs), sent only to speedrun.com, never shown again, removable any time.
 - **Run summary and record for submissions:** Runs → Attempts → *Copy run summary* (category, result and in-game
   time, every split, the game build and its executable's SHA-256, trainer off) and *Save run record…* (the same as

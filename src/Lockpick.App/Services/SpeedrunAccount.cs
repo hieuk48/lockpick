@@ -64,6 +64,12 @@ public sealed class SpeedrunAccount(SpeedrunCom client, SecretStore secrets, Set
         return user;
     }
 
+    /// <summary>Submits a run as the player with the kept key (after they checked it and confirmed).</summary>
+    public Task<SubmittedRun> SubmitAsync(RunSubmission run, CancellationToken cancel = default) =>
+        Key() is { } key
+            ? client.SubmitAsync(key, run, cancel)
+            : throw new SpeedrunComException("No API key is saved (Settings → speedrun.com).");
+
     /// <summary>The kept key, for a request that needs it (submitting a run). Null when there is none or it can't be read.</summary>
     internal string? Key() => secrets.Load(KeyName);
 

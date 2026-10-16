@@ -67,6 +67,7 @@ public sealed partial class RunsViewModel : PageViewModel
         LiveSplitStatus = _liveSplit.Status;
         _liveSplit.StatusChanged += (_, _) => Dispatcher.UIThread.Post(() => LiveSplitStatus = _liveSplit.Status);
         Leaderboard = new LeaderboardViewModel(services);
+        Submit = new SubmitRunViewModel(services, Leaderboard);
         _runs.AttemptEnded += (_, _) => Dispatcher.UIThread.Post(Leaderboard.Refresh);
         Reload();
     }
@@ -75,6 +76,9 @@ public sealed partial class RunsViewModel : PageViewModel
 
     /// <summary>The speedrun.com leaderboard for the chosen splits.</summary>
     public LeaderboardViewModel Leaderboard { get; }
+
+    /// <summary>Submitting a finished attempt to speedrun.com.</summary>
+    public SubmitRunViewModel Submit { get; }
 
     [ObservableProperty]
     public partial SplitSetChoice? Selected { get; set; }
@@ -290,6 +294,10 @@ public sealed partial class RunsViewModel : PageViewModel
 
         var set = status.Set;
         Leaderboard?.Show(set);
+        if (status.State != RunState.Running)
+        {
+            Submit?.Show(set); // not while a run is going: the form would reset under the player
+        }
         HasSet = set is not null;
         IsImported = set?.ImportedFrom is not null;
         IsRunning = status.State == RunState.Running;

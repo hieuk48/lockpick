@@ -5,6 +5,23 @@ using Lockpick.Core.Runs;
 
 namespace Lockpick.App.Services;
 
+/// <summary>
+/// A run to submit (POST /runs): the board (category, platform, subcategory values), the time in the board's own time
+/// field, the date, the video (speedrun.com requires one for RE1) and a comment.
+/// </summary>
+public sealed record RunSubmission(
+    string Category,
+    string Platform,
+    IReadOnlyDictionary<string, string> Variables,
+    string TimeField,
+    TimeSpan Time,
+    DateOnly Date,
+    Uri Video,
+    string Comment);
+
+/// <summary>A submitted run: its id and page on speedrun.com (waiting for the moderators).</summary>
+public sealed record SubmittedRun(string Id, string? Weblink);
+
 /// <summary>The speedrun.com account Lockpick knows: from the API key, or just a name to find the player's runs.</summary>
 public sealed record SpeedrunComUser(string Id, string Name);
 
@@ -88,6 +105,78 @@ public sealed class SpeedrunCom : IDisposable
         using var document = await GetAsync("profile", key, cancel).ConfigureAwait(false);
         return User(document.RootElement.GetProperty("data"));
     }
+
+    /// <summary>
+    /// Submits <paramref name="run"/> as the key's owner (POST /runs). The moderators verify it from the video; it is
+    /// never marked verified by Lockpick. Throws <see cref="SpeedrunComException"/> with speedrun.com's reasons.
+    /// </summary>
+    public async Task<SubmittedRun> SubmitAsync(string key, RunSubmission run, CancellationToken cancel = default)
+    {
+        var body = new
+        {
+            run = new Dictionary<string, object>
+            {
+                ["category"] = run.Category,
+                ["platform"] = run.Platform,
+                ["date"] = run.Date.ToString("yyyy-MM-dd", CultureInfo.InvariantCulture),
+                ["verified"] = false,
+                ["emulated"] = false,
+                ["times"] = new Dictionary<string, double> { [run.TimeField] = Math.Round(run.Time.TotalSeconds, 3) },
+                ["video"] = run.Video.AbsoluteUri,
+                ["comment"] = run.Comment,
+                ["variables"] = run.Variables.ToDictionary(v => v.Key, v => (object)new { type = "pre-defined", value = v.Value }),
+            },
+        };
+        using var request = new HttpRequestMessage(HttpMethod.Post, "runs") { Content = JsonContent(body) };
+        request.Headers.Add("X-API-Key", key);
+        HttpResponseMessage response;
+        try
+        {
+            response = await _http.SendAsync(request, cancel).ConfigureAwait(false);
+        }
+        catch (Exception ex) when (ex is HttpRequestException or TaskCanceledException)
+        {
+            throw new SpeedrunComException($"speedrun.com didn't answer ({ex.Message}); the run wasn't sent.", ex);
+        }
+
+        using (response)
+        {
+            var text = await response.Content.ReadAsStringAsync(cancel).ConfigureAwait(false);
+            if (response.StatusCode == HttpStatusCode.Forbidden)
+            {
+                throw new SpeedrunComException("speedrun.com didn't accept your key. Save it again in Settings → speedrun.com.");
+            }
+
+            if (!response.IsSuccessStatusCode)
+            {
+                var reasons = string.Empty;
+                try
+                {
+                    using var problem = JsonDocument.Parse(text);
+                    if (problem.RootElement.TryGetProperty("errors", out var errors) && errors.ValueKind == JsonValueKind.Array)
+                    {
+                        reasons = string.Join("; ", errors.EnumerateArray().Select(e => e.GetString()));
+                    }
+                    else if (problem.RootElement.TryGetProperty("message", out var message))
+                    {
+                        reasons = message.GetString() ?? string.Empty;
+                    }
+                }
+                catch (JsonException)
+                {
+                }
+
+                throw new SpeedrunComException($"speedrun.com refused the run ({(int)response.StatusCode}){(reasons.Length > 0 ? ": " + reasons : ".")}");
+            }
+
+            using var created = JsonDocument.Parse(text);
+            var data = created.RootElement.GetProperty("data");
+            return new SubmittedRun(data.GetProperty("id").GetString()!, data.TryGetProperty("weblink", out var link) ? link.GetString() : null);
+        }
+    }
+
+    private static StringContent JsonContent(object body) =>
+        new(JsonSerializer.Serialize(body), System.Text.Encoding.UTF8, "application/json");
 
     /// <summary>The account with this name, or null (GET /users?lookup=…, anonymous).</summary>
     public async Task<SpeedrunComUser?> FindUserAsync(string name, CancellationToken cancel = default)

@@ -154,6 +154,38 @@
           </StackPanel>
         </Border>
 
+        <!-- Submitting a finished attempt to speedrun.com -->
+        <Border Classes="card" IsVisible="{Binding HasSet}">
+          <StackPanel Spacing="6" DataContext="{Binding Submit}" x:DataType="vm:SubmitRunViewModel">
+            <TextBlock Classes="caption" Text="SUBMIT TO SPEEDRUN.COM" />
+            <TextBlock TextWrapping="Wrap" Foreground="{StaticResource LpMutedBrush}" IsVisible="{Binding !HasKey}"
+                       Text="Save your speedrun.com API key in Settings → speedrun.com to submit finished runs from here." />
+            <TextBlock TextWrapping="Wrap" Foreground="{StaticResource LpMutedBrush}" IsVisible="{Binding !HasAttempts}"
+                       Text="Finished attempts appear here." />
+            <StackPanel Spacing="6" IsVisible="{Binding HasAttempts}">
+              <TextBlock TextWrapping="Wrap" Foreground="{StaticResource LpMutedBrush}"
+                         Text="The leaderboard's PC rules: start at the title; the video must show the final in-game time on the end screen and LiveSplit's in-game time script; no tabbing out, mods or music over the game. The moderators check your run against the video." />
+              <ComboBox ItemsSource="{Binding Attempts}" SelectedItem="{Binding Attempt}" HorizontalAlignment="Stretch" AutomationProperties.Name="Attempt to submit" />
+              <TextBlock Text="{Binding BoardText, StringFormat='Board: {0} (change it in the Leaderboard card)'}" TextWrapping="Wrap" />
+              <WrapPanel ItemSpacing="8" LineSpacing="6">
+                <TextBox Text="{Binding Time}" Watermark="In-game time" MinWidth="140" AutomationProperties.Name="Time to submit"
+                         ToolTip.Tip="The in-game time on the game's end screen, as in your video." />
+                <TextBox Text="{Binding Date}" Watermark="yyyy-mm-dd" MinWidth="120" AutomationProperties.Name="Date played" />
+              </WrapPanel>
+              <TextBox Text="{Binding Video}" Watermark="Video link (YouTube, Twitch…)" AutomationProperties.Name="Video link" />
+              <TextBox Text="{Binding Comment}" AcceptsReturn="True" TextWrapping="Wrap" MinHeight="90" AutomationProperties.Name="Comment" />
+              <WrapPanel ItemSpacing="8" LineSpacing="6">
+                <Button Content="{Binding SubmitLabel}" Command="{Binding SubmitCommand}" Classes="accent" IsEnabled="{Binding HasKey}"
+                        AutomationProperties.Name="Submit the run to speedrun.com" />
+                <Button Content="Open the submitted run" Click="OnOpenSubmitted"
+                        IsVisible="{Binding SubmittedLink, Converter={x:Static StringConverters.IsNotNullOrEmpty}}" />
+              </WrapPanel>
+            </StackPanel>
+            <TextBlock Text="{Binding Status}" TextWrapping="Wrap"
+                       IsVisible="{Binding Status, Converter={x:Static StringConverters.IsNotNullOrEmpty}}" />
+          </StackPanel>
+        </Border>
+
         <!-- Attempts -->
         <Border Classes="card" IsVisible="{Binding HasSet}">
           <StackPanel Spacing="4">
