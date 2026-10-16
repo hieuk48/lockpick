@@ -134,3 +134,9 @@ public sealed record RunEnded(DateTimeOffset Timestamp, string SplitSet, Runs.Ru
         _ => $"Run reset at {SplitReached.Clock(GameTime)}",
     };
 }
+
+/// <summary>Something that happened in the game, in plain words (the event feed): "Picked up Emblem", "Yawn appears".</summary>
+public sealed record Happened(DateTimeOffset Timestamp, string Text, TimeSpan? GameTime) : GameEvent(Timestamp)
+{
+    public override string Describe() => Text;
+}

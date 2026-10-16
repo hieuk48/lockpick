@@ -187,7 +187,9 @@ is decided later. Keep-running stays out of challenges (it patches the game, and
    (verified live in 105). **Floor map done 2026-10-16:** rooms placed from their doors (FloorLayout, the
    tools/rdt/floor_map.py method: door zone centre = arrival spot, least squares), on the Map page with pan and zoom
    and as overlay views (whole floor, see-through; a zoom key follows the player); stage 1 checked by eye against
-   the game's own layout. HP band, poison and enemy HP done (#42). Next: the event feed (#43), the layout editor
+   the game's own layout. HP band, poison and enemy HP done (#42). Event feed (#43) first pass done: the change
+   explainer's plain words in the event log and an overlay widget (attackers by name and zombies getting back up
+   still to come). Next: the layout editor
    (#55), a controller button for the map, never activating Lockpick's windows over exclusive fullscreen.
    - follow the game window (PID → class `RESIDENT EVIL`): client rectangle in physical pixels, monitor, DPI,
      minimized, exclusive fullscreen; move/size events;

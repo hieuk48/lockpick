@@ -35,6 +35,13 @@
     </Border>
   </LayoutTransformControl>
 
+  <!-- What just happened; lines are built in code (OverlayWindow.ShowFeed). -->
+  <LayoutTransformControl x:Name="FeedPanel">
+    <Border Background="#C80B0F0E" BorderBrush="{StaticResource LpBorderBrush}" BorderThickness="1" CornerRadius="3" Padding="7,4" MaxWidth="260">
+      <StackPanel x:Name="FeedList" Spacing="1" />
+    </Border>
+  </LayoutTransformControl>
+
   <!-- Run splits; rows are built in code (OverlayWindow.ShowSplits). -->
   <LayoutTransformControl x:Name="SplitsPanel">
     <Border Background="#C80B0F0E" BorderBrush="{StaticResource LpBorderBrush}" BorderThickness="1" CornerRadius="3" Padding="7,4" Width="190">

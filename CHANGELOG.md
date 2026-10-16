@@ -19,6 +19,9 @@ All notable changes to this project are documented here. The format follows
   "Map: next view") cycles through the views you tick in Settings → Overlay: the minimap, the whole room over the
   game's picture on a dark backdrop, the same see-through, or hidden. Options: how far the minimap reaches, its
   size, how strong the see-through map is, and names of doors, items and people on the full-screen map.
+- **What just happened** (#43): items picked up, used, received or combined, documents and maps taken, first visits,
+  unlocks, kills, enemies appearing, damage and named story events in plain words — in the event log and as an
+  overlay widget (the last few, for 20 seconds), from the same knowledge as captures and the Progress page.
 - **Whole-floor map:** every room of the floor you're on, put together from the doors between them (Map → Whole
   floor: scroll to zoom, drag to move, double-click or Fit to see it all), with the room you're in outlined, you on
   it, and the items you haven't taken yet. On the overlay it is two more map views (whole floor, also see-through):

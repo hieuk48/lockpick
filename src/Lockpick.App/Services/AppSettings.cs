@@ -218,6 +218,7 @@ public static class OverlayLayout
     public const string Minimap = "minimap";
     public const string Enemies = "enemies";
     public const string Splits = "splits";
+    public const string Feed = "feed";
 
     public static IReadOnlyList<(string Id, string Name, string Default)> Widgets { get; } =
     [
@@ -225,6 +226,7 @@ public static class OverlayLayout
         (Minimap, "Minimap", OverlayCorners.BottomRight),
         (Enemies, "Enemies in the room (HP)", OverlayCorners.BottomLeft),
         (Splits, "Run splits", OverlayCorners.TopRight),
+        (Feed, "What just happened", OverlayCorners.BottomLeft),
     ];
 
     /// <summary>A corner, or off.</summary>

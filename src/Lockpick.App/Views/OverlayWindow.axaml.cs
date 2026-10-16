@@ -55,6 +55,22 @@ public partial class OverlayWindow : Window
         }
     }
 
+    /// <summary>Fills the event feed widget: a line per thing that happened, the newest brightest.</summary>
+    public void ShowFeed(IReadOnlyList<string> lines)
+    {
+        FeedList.Children.Clear();
+        for (var i = 0; i < lines.Count; i++)
+        {
+            FeedList.Children.Add(new TextBlock
+            {
+                Text = lines[i],
+                FontSize = 10,
+                TextWrapping = TextWrapping.Wrap,
+                Foreground = i == lines.Count - 1 ? Brush("LpTextBrush") : Brush("LpMutedBrush"),
+            });
+        }
+    }
+
     /// <summary>Fills the splits widget: the category, a row per split shown, the run's clock and the comparison.</summary>
     public void ShowSplits(ViewModels.OverlayViewModel model)
     {

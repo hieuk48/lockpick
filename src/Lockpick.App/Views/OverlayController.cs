@@ -40,6 +40,7 @@ public sealed class OverlayController : IDisposable
             new Widget(OverlayLayout.Minimap, _host.MinimapPanel, () => model.HasMinimap, () => model.MinimapFull),
             new Widget(OverlayLayout.Enemies, _host.EnemiesPanel, () => model.Enemies.Count > 0, () => false),
             new Widget(OverlayLayout.Splits, _host.SplitsPanel, () => model.SplitRows.Count > 0, () => false),
+            new Widget(OverlayLayout.Feed, _host.FeedPanel, () => model.FeedLines.Count > 0, () => false),
         ];
         _host.ShowEnemies(model.Enemies);
         _host.ShowSplits(model);
@@ -81,6 +82,13 @@ public sealed class OverlayController : IDisposable
         {
             _host.ShowSplits(_model);
             Find(OverlayLayout.Splits).Dirty = true;
+            return;
+        }
+
+        if (e.PropertyName == nameof(OverlayViewModel.FeedLines))
+        {
+            _host.ShowFeed(_model.FeedLines);
+            Find(OverlayLayout.Feed).Dirty = true;
             return;
         }
 

@@ -7,6 +7,7 @@ using CommunityToolkit.Mvvm.ComponentModel;
 using Lockpick.App.Controls;
 using Lockpick.App.Services;
 using Lockpick.Core.Challenges;
+using Lockpick.Core.Events;
 using Lockpick.Core.Runs;
 using Lockpick.Core.State;
 
@@ -30,6 +31,9 @@ public sealed partial class OverlayViewModel : ObservableObject
     private readonly AppServices _services;
     private MapOverlaySettings _mapSettings;
     private (double Width, double Height) _picture = (640, 480);
+    private const int FeedShown = 5;
+    private static readonly TimeSpan FeedKeep = TimeSpan.FromSeconds(20);
+    private readonly List<(DateTimeOffset At, Happened Event)> _feed = [];
     private readonly Dictionary<(int Slot, int Type), int> _enemyMax = [];
     private string? _enemyRoom;
 
@@ -66,6 +70,11 @@ public sealed partial class OverlayViewModel : ObservableObject
         };
         services.Challenges.StatusChanged += (_, s) => Dispatcher.UIThread.Post(() => Show(s));
         services.Runs.StatusChanged += (_, _) => Dispatcher.UIThread.Post(() => ShowRun(state.Snapshot));
+        services.Feed.EventRaised += (_, e) => Dispatcher.UIThread.Post(() =>
+        {
+            _feed.Add((DateTimeOffset.UtcNow, e));
+            ShowFeed();
+        });
         services.RunLibrary.Changed += (_, _) => Dispatcher.UIThread.Post(() => ShowRun(state.Snapshot));
         Show(state.Snapshot);
         Show(services.Challenges.Status);
@@ -285,6 +294,27 @@ public sealed partial class OverlayViewModel : ObservableObject
             : string.Empty;
         ShowEnemies(inGame ? snapshot : null);
         ShowRun(snapshot);
+        ShowFeed();
+    }
+
+    /// <summary>The event feed widget's lines ("1:23 Picked up Emblem"), newest last; empty when nothing happened lately.</summary>
+    [ObservableProperty]
+    public partial IReadOnlyList<string> FeedLines { get; private set; } = [];
+
+    private void ShowFeed()
+    {
+        var now = DateTimeOffset.UtcNow;
+        _feed.RemoveAll(f => now - f.At > FeedKeep);
+        if (_feed.Count > FeedShown)
+        {
+            _feed.RemoveRange(0, _feed.Count - FeedShown);
+        }
+
+        var lines = _feed.Select(f => f.Event.GameTime is { } t ? $"{(int)t.TotalMinutes}:{t.Seconds:D2}  {f.Event.Text}" : f.Event.Text).ToList();
+        if (!lines.SequenceEqual(FeedLines))
+        {
+            FeedLines = lines;
+        }
     }
 
     /// <summary>The splits widget's rows: a window around the current split, with the last split always shown.</summary>

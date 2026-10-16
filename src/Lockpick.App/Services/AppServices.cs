@@ -52,6 +52,7 @@ public sealed class AppServices : IAsyncDisposable
         }
 
         Challenges = new Core.Challenges.ChallengeService(source, Trainer, adapter.CreateChallengeRules);
+        Feed = new Core.Insight.EventFeed(source, adapter.CreateChangeExplainer, adapter.RoomName);
         Runs = new Core.Runs.RunService(source, Trainer, adapter.CreateRunRules, new Core.Runs.RunHistoryStore(AppPaths.Runs));
         RunLibrary = new RunLibrary(Runs, adapter, Runs.History!, settings, loggerFactory.CreateLogger("Runs"));
         TrainerHotkeys = new TrainerHotkeys(_log);
@@ -81,6 +82,9 @@ public sealed class AppServices : IAsyncDisposable
 
     /// <summary>The challenge the player chose (Challenges page, API).</summary>
     public Core.Challenges.ChallengeService Challenges { get; }
+
+    /// <summary>What just happened in the game, in plain words (event log, overlay).</summary>
+    public Core.Insight.EventFeed Feed { get; }
 
     /// <summary>Run timing and splits (Runs page, overlay, API).</summary>
     public Core.Runs.RunService Runs { get; }
@@ -308,6 +312,7 @@ public sealed class AppServices : IAsyncDisposable
 
         Challenges.Dispose();
         Runs.Dispose();
+        Feed.Dispose();
         Trainer?.Dispose();
         await Source.DisposeAsync().ConfigureAwait(false);
         Updates.Dispose();
