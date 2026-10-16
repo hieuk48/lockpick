@@ -7,11 +7,13 @@
   One of Lockpick's overlay widgets (the same picture as on the overlay and in its pop-out window) for an OBS
   Browser Source: status (time, HP, room, challenge), minimap, enemies, splits, feed or banner.
   URL: http://127.0.0.1:<port>/overlay/widget?id=<widget>&token=<token>[&width=400][&height=400][&fps=10]
-  Size the browser source to width × height; the widget is drawn as large as fits, at the top left, on a transparent
-  background. Nothing here can change the game.
+       [&align=center|left|right][&valign=top|middle|bottom]
+  Size the browser source to width × height; the widget is drawn as large as fits on a transparent background,
+  centred along the width and at the top unless align / valign say otherwise. Nothing here can change the game.
 -->
 <style>
-  html, body { margin: 0; background: transparent; overflow: hidden; }
+  html, body { margin: 0; background: transparent; overflow: hidden; height: 100%; }
+  body { display: flex; justify-content: center; align-items: flex-start; }
   img { display: block; }
 </style>
 </head>
@@ -24,6 +26,9 @@
   const width = Math.min(2000, Math.max(64, parseInt(params.get("width")) || 400));
   const height = Math.min(2000, Math.max(64, parseInt(params.get("height")) || 400));
   const every = 1000 / Math.min(30, Math.max(1, parseFloat(params.get("fps")) || 10));
+  const place = { left: "flex-start", center: "center", right: "flex-end", top: "flex-start", middle: "center", bottom: "flex-end" };
+  document.body.style.justifyContent = place[params.get("align")] || "center";
+  document.body.style.alignItems = place[params.get("valign")] || "flex-start";
   const shown = [document.getElementById("a"), document.getElementById("b")];
   let front = 0;
 

@@ -52,7 +52,7 @@ http://127.0.0.1:1996/overlay/hud?token=<token>&corner=top-right&scale=1
 |---|---|---|
 | `/overlay/hud` | In-game time, HP, the room, the challenge (clean, or failed with the reason) | `corner` = `top-right` (default), `top-left`, `bottom-right`, `bottom-left`; `scale` 0.5–4 |
 | `/overlay/splits` | The run's splits: the category, the splits around the current one with times and differences to the personal best (gold for a best segment), the in-game clock, PB and sum of best | `corner` = `top-left` (default) or another; `scale` 0.5–4; `rows` 3–30 (default 8) |
-| `/overlay/widget` | Any overlay widget, live (`id` = `status`, `minimap`, `enemies`, `splits`, `feed` or `banner`), as large as fits, top left | `width` and `height` (size the source to them); `fps` 1–30 (default 10) |
+| `/overlay/widget` | Any overlay widget, live (`id` = `status`, `minimap`, `enemies`, `splits`, `feed` or `banner`), as large as fits, top left | `width` and `height` (size the source to them); `align` = `center` (default), `left`, `right`; `valign` = `top` (default), `middle`, `bottom`; `fps` 1–30 (default 10) |
 | `/overlay/livesplit` | The run with LiveSplit's look (livesplit-core) | `width`, `height`, `fps` |
 | `/overlay/feed` | What just happened, in plain words (pickups, kills, enemies appearing, damage, story events), the newest at the bottom, each line for a while | `corner` = `bottom-left` (default) or another; `scale`; `lines` 1–20 (default 5); `seconds` (default 20); `types` = event types to show (default `Happened`; e.g. add `SplitReached,RunEnded,ChallengeFailed`) |
 

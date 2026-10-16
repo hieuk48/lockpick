@@ -203,10 +203,13 @@ local function add_to_scene(props, prop)
     fit_to_canvas(add_source(scene, "game_capture", "Resident Evil (game)", settings, 0, 0), w, h)
     obs.obs_data_release(settings)
   end
-  local function widget(id, ww, wh) return root .. "widget?id=" .. id .. "&" .. token .. "&width=" .. ww .. "&height=" .. wh end
-  browser(scene, "Lockpick: time, HP, room", widget("status", 420, 160), 420, 160, w - 440, 20)
-  browser(scene, "Lockpick: minimap", widget("minimap", 360, 360), 360, 360, w - 380, h - 380)
-  browser(scene, "Lockpick: enemies", widget("enemies", 320, 240), 320, 240, w - 760, h - 260)
+  local function widget(id, ww, wh, align)
+    return root .. "widget?id=" .. id .. "&" .. token .. "&width=" .. ww .. "&height=" .. wh .. "&align=" .. (align or "center")
+  end
+  -- Widgets in the right-hand corners sit against the right edge of their box; big messages centred.
+  browser(scene, "Lockpick: time, HP, room", widget("status", 420, 160, "right"), 420, 160, w - 440, 20)
+  browser(scene, "Lockpick: minimap", widget("minimap", 360, 360, "right") .. "&valign=bottom", 360, 360, w - 380, h - 380)
+  browser(scene, "Lockpick: enemies", widget("enemies", 320, 240, "right") .. "&valign=bottom", 320, 240, w - 760, h - 260)
   if c.livesplit then
     browser(scene, "Lockpick: splits", root .. "livesplit?" .. token .. "&width=300&height=500", 300, 500, 20, 20)
   else
