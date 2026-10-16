@@ -50,6 +50,9 @@ All notable changes to this project are documented here. The format follows
   original (Restore my original puts it back), warns when fullscreen would change your monitor's resolution, and
   offers Restart Resident Evil right there (two clicks: anything since your last save is lost). It can also move
   the game window to another monitor, which the game itself doesn't allow.
+- **Run summary and record for submissions:** Runs → Attempts → *Copy run summary* (category, result and in-game
+  time, every split, the game build and its executable's SHA-256, trainer off) and *Save run record…* (the same as
+  JSON). Attempts are numbered across sessions, and closing Lockpick keeps the attempt that was running.
 - **LiveSplit** (Runs → LiveSplit, through LiveSplit's TCP server): *Follow* moves Lockpick's run with your
   LiveSplit and its autosplitter (as leaderboard runs require) without splitting twice; *Drive* lets Lockpick start,
   split and reset LiveSplit and set its game time from the game's clock.

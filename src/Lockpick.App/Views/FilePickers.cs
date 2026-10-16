@@ -48,6 +48,24 @@ internal static class FilePickers
         return file?.TryGetLocalPath();
     }
 
+    /// <summary>Asks where to save a run record (JSON); returns the local path or null when cancelled.</summary>
+    public static async Task<string?> SaveRecordFileAsync(Visual anchor, string suggestedName)
+    {
+        if (TopLevel.GetTopLevel(anchor)?.StorageProvider is not { CanSave: true } storage)
+        {
+            return null;
+        }
+
+        var file = await storage.SaveFilePickerAsync(new FilePickerSaveOptions
+        {
+            Title = "Save run record",
+            SuggestedFileName = suggestedName,
+            DefaultExtension = "json",
+            FileTypeChoices = [new FilePickerFileType("Run record (*.json)") { Patterns = ["*.json"] }],
+        });
+        return file?.TryGetLocalPath();
+    }
+
     /// <summary>Lets the user pick the game executable; returns its local path or null when cancelled.</summary>
     public static async Task<string?> PickGameExecutableAsync(Visual anchor)
     {

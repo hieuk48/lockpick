@@ -31,6 +31,9 @@ public enum RunResult
     QuitToTitle,
     GameClosed,
     Reset,
+
+    /// <summary>Lockpick was closed during the attempt.</summary>
+    LockpickClosed,
 }
 
 /// <summary>When a split was reached: the game's clock (the run's in-game time) and real time since the start.</summary>
@@ -232,6 +235,16 @@ public sealed class RunService : IDisposable
 
     public void Dispose()
     {
+        // An attempt still going is kept, not lost.
+        List<GameEvent> raised = [];
+        lock (_gate)
+        {
+            if (Status.State == RunState.Running)
+            {
+                End(RunResult.LockpickClosed, raised);
+            }
+        }
+
         _source.Polled -= OnPolled;
         _source.EventRaised -= OnEvent;
         if (_trainer is not null)
@@ -378,7 +391,8 @@ public sealed class RunService : IDisposable
         {
             State = RunState.Running,
             Set = set,
-            Attempt = Status.Attempt + 1,
+            // Numbered across sessions: after the attempts already kept for these splits.
+            Attempt = Math.Max(Status.Attempt, SavedAttempts(set)) + 1,
             Times = new SplitTime?[set.Splits.Count],
             // A new game's clock is the run's (as on the leaderboard); from a save, the run starts at the save's time.
             GameTimeOffset = loaded.IsNewGame ? TimeSpan.Zero : loaded.GameTime,
@@ -387,6 +401,18 @@ public sealed class RunService : IDisposable
             CheatsUsed = _trainer?.Mode == TrainerMode.Trainer,
         };
         raised.Add(new RunStarted(now, set.Name, Status.Attempt, !loaded.IsNewGame));
+    }
+
+    private int SavedAttempts(SplitSet set)
+    {
+        try
+        {
+            return _history?.Load(set.Id) is { Count: > 0 } records ? records.Max(r => r.Attempt) : 0;
+        }
+        catch (IOException)
+        {
+            return 0;
+        }
     }
 
     private void SplitNow(List<GameEvent> raised)
@@ -425,7 +451,7 @@ public sealed class RunService : IDisposable
             EndGameTime = gameTime,
         };
         raised.Add(new RunEnded(now, Status.Set!.Name, result, gameTime));
-        var record = RunRecord.From(Status, _source.Status.Profile?.Id);
+        var record = RunRecord.From(Status, _source.Status.Profile?.Id, _source.Status.Fingerprint?.Sha256);
         try
         {
             _history?.Add(record);

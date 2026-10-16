@@ -135,6 +135,7 @@ public sealed record RunEnded(DateTimeOffset Timestamp, string SplitSet, Runs.Ru
         Runs.RunResult.Died => $"Run over: died at {SplitReached.Clock(GameTime)}",
         Runs.RunResult.QuitToTitle => $"Run over: back at the title at {SplitReached.Clock(GameTime)}",
         Runs.RunResult.GameClosed => "Run over: the game closed",
+        Runs.RunResult.LockpickClosed => "Run over: Lockpick was closed",
         _ => $"Run reset at {SplitReached.Clock(GameTime)}",
     };
 }

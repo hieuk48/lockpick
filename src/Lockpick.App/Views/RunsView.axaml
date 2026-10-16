@@ -108,6 +108,12 @@
         <Border Classes="card" IsVisible="{Binding HasSet}">
           <StackPanel Spacing="4">
             <TextBlock Classes="caption" Text="ATTEMPTS" Margin="0,0,0,4" />
+            <WrapPanel ItemSpacing="8" LineSpacing="8" IsVisible="{Binding HasLatest}" Margin="0,0,0,6">
+              <Button Content="Copy run summary" Click="OnCopySummary"
+                      AutomationProperties.Name="Copy the latest attempt's summary" ToolTip.Tip="The latest attempt in a few lines (times, splits, game build, trainer off or on), to paste into a submission or a post." />
+              <Button Content="Save run record…" Click="OnSaveRecord"
+                      AutomationProperties.Name="Save the latest attempt's record" ToolTip.Tip="Every split's in-game and real time, the result, the game build and its executable's hash, as a file." />
+            </WrapPanel>
             <TextBlock Text="None yet." Foreground="{StaticResource LpMutedBrush}"
                        IsVisible="{Binding !History.Count}" />
             <ItemsControl ItemsSource="{Binding History}">

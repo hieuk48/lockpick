@@ -159,6 +159,22 @@ public sealed class RunServiceTests : IDisposable
     }
 
     [Fact]
+    public void Attempts_are_numbered_after_the_kept_ones_and_closing_keeps_the_one_running()
+    {
+        _runs.Choose(Set);
+        NewGame();
+        _runs.Reset();
+        Assert.Equal(1, Assert.Single(_history.Load("test")).Attempt);
+
+        using var again = new RunService(_source, null, _ => _rules, _history, _clock);
+        again.Choose(Set);
+        _source.Raise(new GameLoaded(T0, TimeSpan.Zero, IsNewGame: true));
+        Assert.Equal(2, again.Status.Attempt);
+        again.Dispose();
+        Assert.Equal(RunResult.LockpickClosed, _history.Load("test")[^1].Result);
+    }
+
+    [Fact]
     public void The_title_menu_ends_the_attempt()
     {
         _runs.Choose(Set);
@@ -208,6 +224,20 @@ public sealed class RunServiceTests : IDisposable
         _source.Raise(new GameStopped(T0, "exited"));
         Assert.Equal(22, Assert.Single(_ended).DamageTaken);
         Assert.Equal(RunResult.GameClosed, _ended[0].Result);
+    }
+
+    [Fact]
+    public void A_record_s_summary_has_the_time_the_splits_and_what_timed_it()
+    {
+        var record = new RunRecord("s", "S", "Jill Any% NMG", PlayableCharacter.Jill, 3, T0, T0.AddMinutes(70), RunResult.Finished,
+            new TimeSpan(1, 2, 3) + TimeSpan.FromMilliseconds(450), TimeSpan.FromMinutes(70),
+            [new RecordedSplit("Emblem", TimeSpan.FromSeconds(75), null), new RecordedSplit("End", new TimeSpan(1, 2, 3), null)],
+            false, 22, false, "re1-gog-usa-hotfix4", "205BD6FE");
+        var summary = record.Summary("Resident Evil (PC)", "Lockpick 0.3.0");
+
+        Assert.Contains("Resident Evil (PC) — Jill Any% NMG — finished in 1:02:03.45 in-game time", summary, StringComparison.Ordinal);
+        Assert.Contains("Emblem 1:15.00", summary, StringComparison.Ordinal);
+        Assert.Contains("Timed by Lockpick 0.3.0 on re1-gog-usa-hotfix4, ResidentEvil.exe SHA-256 205BD6FE; read-only, the trainer was off", summary, StringComparison.Ordinal);
     }
 
     [Fact]

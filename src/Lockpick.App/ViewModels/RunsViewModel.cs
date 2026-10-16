@@ -32,7 +32,15 @@ public sealed partial class RunsViewModel : PageViewModel
 {
     private static readonly TimeSpan Throttle = TimeSpan.FromMilliseconds(200);
 
+    private static readonly System.Text.Json.JsonSerializerOptions RecordJson = new()
+    {
+        WriteIndented = true,
+        PropertyNamingPolicy = System.Text.Json.JsonNamingPolicy.CamelCase,
+        Converters = { new System.Text.Json.Serialization.JsonStringEnumConverter(System.Text.Json.JsonNamingPolicy.CamelCase) },
+    };
+
     private readonly RunService _runs;
+    private readonly string _appVersion;
     private readonly RunLibrary _library;
     private readonly SettingsStore _settings;
     private readonly LiveSplitLink _liveSplit;
@@ -45,6 +53,7 @@ public sealed partial class RunsViewModel : PageViewModel
         : base("Runs", "Icon.Timer")
     {
         _runs = services.Runs;
+        _appVersion = services.AppVersion;
         _library = services.RunLibrary;
         _state = state;
         _runs.EventRaised += (_, e) => state.Add(e);
@@ -185,6 +194,38 @@ public sealed partial class RunsViewModel : PageViewModel
         }
     }
 
+    /// <summary>The latest attempt against the chosen splits, for its summary and record.</summary>
+    [ObservableProperty]
+    public partial RunRecord? Latest { get; private set; }
+
+    [ObservableProperty]
+    public partial bool HasLatest { get; private set; }
+
+    /// <summary>The latest attempt in a few lines (to paste into a submission).</summary>
+    public string? LatestSummary => Latest?.Summary("Resident Evil (PC)", $"Lockpick {_appVersion}");
+
+    /// <summary>Saves the latest attempt's record (JSON, with Lockpick's version and the summary).</summary>
+    public void SaveRecord(string path)
+    {
+        if (Latest is not { } record)
+        {
+            return;
+        }
+
+        try
+        {
+            File.WriteAllText(path, System.Text.Json.JsonSerializer.Serialize(new { lockpick = _appVersion, summary = LatestSummary, record }, RecordJson));
+            Message = $"Saved {Path.GetFileName(path)}.";
+        }
+        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
+        {
+            Message = $"Couldn't save: {ex.Message}";
+        }
+    }
+
+    /// <summary>A file name for the latest attempt's record.</summary>
+    public string RecordName => Latest is { } r ? $"Resident Evil - {r.Category} - attempt {r.Attempt}.json" : "run.json";
+
     /// <summary>A file name for an export of the chosen set.</summary>
     public string ExportName => Selected?.Set is { } set ? $"Resident Evil - {set.Category}.lss" : "splits.lss";
 
@@ -279,7 +320,10 @@ public sealed partial class RunsViewModel : PageViewModel
                 (status.CheatsUsed ? "The trainer was on, so it doesn't count as a personal best. " : string.Empty) + "Start a new game for the next attempt."),
             _ => ($"Attempt {status.Attempt}: {Result(status.Result)}", "Start a new game for the next attempt."),
         };
-        History = [.. _library.Records(set).AsEnumerable().Reverse().Take(10).Select(r => new RunHistoryRow(
+        var records = _library.Records(set);
+        Latest = records.Count > 0 ? records[^1] : null;
+        HasLatest = Latest is not null;
+        History = [.. records.AsEnumerable().Reverse().Take(10).Select(r => new RunHistoryRow(
             $"#{r.Attempt}", Result(r.Result) + (r.CheatsUsed ? " · trainer on" : string.Empty) + (r.FromSave ? " · from a save" : string.Empty),
             RunRows.Clock(r.GameTime), r.StartedAt.ToLocalTime().ToString("yyyy-MM-dd HH:mm", CultureInfo.CurrentCulture)))];
     }
@@ -290,6 +334,7 @@ public sealed partial class RunsViewModel : PageViewModel
         RunResult.Died => "died",
         RunResult.QuitToTitle => "back to the title",
         RunResult.GameClosed => "the game closed",
+        RunResult.LockpickClosed => "Lockpick was closed",
         RunResult.Reset => "reset",
         _ => string.Empty,
     };

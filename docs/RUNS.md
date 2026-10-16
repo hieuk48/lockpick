@@ -23,6 +23,7 @@ Lockpick (LiveSplit can still run next to it). This page says how it works and w
 | A death (HP below 0) | The attempt is over (died) |
 | The title menu | The attempt is over (back to the title) |
 | The game closes | The attempt is over |
+| Lockpick closes | The attempt is kept as it stands (Lockpick was closed) |
 | Split / undo / skip / reset keys | As in LiveSplit (Settings → Hotkeys); any time, also during a run |
 
 Only the current split's trigger is checked, so the same room can end two different splits (e.g. entering 300 ends
@@ -30,7 +31,15 @@ Only the current split's trigger is checked, so the same room can end two differ
 
 Every attempt is kept on the PC in `%LOCALAPPDATA%\Lockpick\runs\<split set>.jsonl` (one JSON line each): split
 times (in-game and real), result, damage taken, whether it started from a save and whether the trainer was on or
-used. A **personal best** is the fastest finished attempt from a new game with every split timed and no trainer;
+used. Attempts are numbered on from the ones kept for the same splits, across sessions.
+
+**For a submission or a challenge post**, Runs → Attempts → *Copy run summary* gives the latest attempt in a few
+lines (category, result and in-game time, every split, the game build and `ResidentEvil.exe`'s SHA-256, whether
+Lockpick's trainer was off), and *Save run record…* writes the same attempt as a JSON file with Lockpick's
+version. Whether a leaderboard accepts Lockpick's timing is up to its moderators; the RE1 rules ask for LiveSplit's
+autosplitter today, which Lockpick can follow (below).
+
+A **personal best** is the fastest finished attempt from a new game with every split timed and no trainer;
 **best segments** come from every attempt without the trainer.
 
 ## Split triggers
