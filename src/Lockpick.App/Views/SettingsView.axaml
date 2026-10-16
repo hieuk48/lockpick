@@ -55,6 +55,41 @@
         </StackPanel>
       </Border>
 
+      <!-- Game display -->
+      <Border Classes="card" DataContext="{Binding GameDisplay}">
+        <StackPanel Spacing="8" x:DataType="vm:GameDisplayViewModel">
+          <StackPanel Classes="cardhead">
+            <c:LucideIcon Data="{StaticResource Icon.LayoutDashboard}" />
+            <TextBlock Classes="caption" Text="GAME DISPLAY" />
+          </StackPanel>
+          <TextBlock TextWrapping="Wrap" Foreground="{StaticResource LpMutedBrush}"
+                     Text="How Resident Evil shows itself: its own display settings, changed only when you press Apply (your original is kept and can be put back). The game reads them when it starts." />
+          <Grid ColumnDefinitions="Auto,*" RowDefinitions="Auto,Auto,Auto" ColumnSpacing="8" RowSpacing="8" IsEnabled="{Binding Available}">
+            <TextBlock Classes="label" Text="Display" VerticalAlignment="Center" />
+            <ComboBox Grid.Column="1" ItemsSource="{Binding ModeChoices}" SelectedItem="{Binding Mode}" HorizontalAlignment="Stretch" MaxWidth="460"
+                      AutomationProperties.Name="Game display mode" />
+            <TextBlock Grid.Row="1" Classes="label" Text="Resolution" VerticalAlignment="Center" />
+            <ComboBox Grid.Row="1" Grid.Column="1" ItemsSource="{Binding ResolutionChoices}" SelectedItem="{Binding Resolution}"
+                      IsEnabled="{Binding CanChooseResolution}" HorizontalAlignment="Stretch" MaxWidth="460" AutomationProperties.Name="Game resolution" />
+            <TextBlock Grid.Row="2" Classes="label" Text="Picture" VerticalAlignment="Center" />
+            <ComboBox Grid.Row="2" Grid.Column="1" ItemsSource="{Binding ScalingChoices}" SelectedItem="{Binding Scaling}" HorizontalAlignment="Stretch" MaxWidth="460"
+                      AutomationProperties.Name="Game picture scaling" />
+          </Grid>
+          <TextBlock Text="{Binding Warning}" Classes="warning" TextWrapping="Wrap" IsVisible="{Binding Warning, Converter={x:Static StringConverters.IsNotNullOrEmpty}}" />
+          <WrapPanel ItemSpacing="8" LineSpacing="8">
+            <Button Content="Apply" Command="{Binding ApplyCommand}" Classes="accent" IsEnabled="{Binding Available}" AutomationProperties.Name="Apply the game display settings" />
+            <Button Content="Restore my original" Command="{Binding RestoreCommand}" AutomationProperties.Name="Restore the original game display settings" />
+          </WrapPanel>
+          <TextBlock Text="{Binding Status}" TextWrapping="Wrap" Foreground="{StaticResource LpMutedBrush}" IsVisible="{Binding Status, Converter={x:Static StringConverters.IsNotNullOrEmpty}}" />
+          <WrapPanel ItemSpacing="8" LineSpacing="8">
+            <TextBlock Classes="label" Text="Move the game to" VerticalAlignment="Center" />
+            <ComboBox ItemsSource="{Binding MonitorChoices}" SelectedItem="{Binding MoveTarget}" MinWidth="200" AutomationProperties.Name="Monitor to move the game to" />
+            <Button Content="Move" Command="{Binding MoveGameCommand}" AutomationProperties.Name="Move the game window" />
+          </WrapPanel>
+          <TextBlock Text="{Binding MoveStatus}" TextWrapping="Wrap" Foreground="{StaticResource LpMutedBrush}" IsVisible="{Binding MoveStatus, Converter={x:Static StringConverters.IsNotNullOrEmpty}}" />
+        </StackPanel>
+      </Border>
+
       <Border Classes="card">
         <StackPanel Spacing="8">
           <StackPanel Classes="cardhead">

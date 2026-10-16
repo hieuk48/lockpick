@@ -70,6 +70,11 @@ public interface IGameAdapter
     /// </summary>
     Display.GameDisplaySettings? DisplaySettings(string installDirectory) => null;
 
+    /// <summary>The game's display settings in the install at <paramref name="installDirectory"/>, for the player to
+    /// change from Lockpick (windowed / fullscreen, resolution, scaling); the original is kept in
+    /// <paramref name="backupDirectory"/> (outside the game folder). Null when the game has none.</summary>
+    Display.IGameDisplayConfig? DisplayConfig(string installDirectory, string backupDirectory) => null;
+
     /// <summary>What challenges need to know about the game (e.g. what counts as a shot); null when unsupported.</summary>
     Challenges.IChallengeRules? CreateChallengeRules(VersionProfile profile) => null;
 

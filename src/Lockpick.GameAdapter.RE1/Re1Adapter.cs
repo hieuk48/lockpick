@@ -84,6 +84,9 @@ public sealed class Re1Adapter : IGameAdapter
     public Core.Display.GameDisplaySettings DisplaySettings(string installDirectory) =>
         Re1Display.Read(Path.Combine(installDirectory, "dxcfg.ini"));
 
+    public Core.Display.IGameDisplayConfig DisplayConfig(string installDirectory, string backupDirectory) =>
+        new Re1DisplayConfig(Path.Combine(installDirectory, "dxcfg.ini"), backupDirectory);
+
     public Core.Insight.IProgressTracker CreateProgressTracker(VersionProfile profile) =>
         new Re1ProgressTracker(Re1Knowledge.LoadEmbedded());
 

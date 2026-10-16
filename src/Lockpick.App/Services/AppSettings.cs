@@ -21,6 +21,9 @@ public static class AppPaths
 
     /// <summary>Every trainer action (JSON lines): what was written, from what to what, and the result.</summary>
     public static string TrainerLog => Path.Combine(DataRoot, "trainer", "actions.jsonl");
+
+    /// <summary>The game's display settings file as it was before Lockpick first changed it (kept outside the game folder).</summary>
+    public static string DisplayBackup => Path.Combine(DataRoot, "backup", "game-display");
 }
 
 public sealed record AppSettings

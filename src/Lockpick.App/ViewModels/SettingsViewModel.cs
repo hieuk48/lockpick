@@ -18,6 +18,7 @@ public sealed partial class SettingsViewModel : PageViewModel
         _services = services;
         _runSetup = runSetup;
         Overlay = overlay;
+        GameDisplay = new GameDisplayViewModel(services);
         services.TrainerHotkeys.Pressed += (_, action) =>
         {
             if (action == TrainerHotkeys.ToggleOverlay)
@@ -265,6 +266,18 @@ public sealed partial class SettingsViewModel : PageViewModel
 
     [RelayCommand]
     private void RunSetup() => _runSetup();
+
+    /// <summary>The game's own display settings (windowed / fullscreen, resolution, scaling) and moving its window.</summary>
+    public GameDisplayViewModel GameDisplay { get; }
+
+    public override void OnVisibilityChanged(bool visible)
+    {
+        base.OnVisibilityChanged(visible);
+        if (visible)
+        {
+            GameDisplay.Load();
+        }
+    }
 
     /// <summary>The overlay's state (its status line shows whether it's up, or why not).</summary>
     public OverlayViewModel Overlay { get; }
