@@ -126,8 +126,18 @@
       </Border>
 
       <!-- Page content (in the compact layout, the page's sections as a row above it) -->
-      <Grid Grid.Column="1" RowDefinitions="Auto,*">
-        <Border Classes="sectionbarhost" Padding="8,8,8,0">
+      <Grid Grid.Column="1" RowDefinitions="Auto,Auto,*">
+        <!-- An unexpected error: what happened, with a support bundle on offer (#63). -->
+        <Border IsVisible="{Binding HasError}" Background="{StaticResource LpRedDimBrush}" Padding="12,8" Margin="16,12,16,0" CornerRadius="3">
+          <Grid ColumnDefinitions="*,Auto" ColumnSpacing="8">
+            <TextBlock Text="{Binding ErrorNotice}" TextWrapping="Wrap" VerticalAlignment="Center" />
+            <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="6">
+              <Button Content="Make a support bundle" Command="{Binding MakeSupportBundleCommand}" />
+              <Button Content="Dismiss" Command="{Binding DismissErrorCommand}" />
+            </StackPanel>
+          </Grid>
+        </Border>
+        <Border Grid.Row="1" Classes="sectionbarhost" Padding="8,8,8,0">
           <ListBox Classes="sectionbar" ItemsSource="{Binding SelectedPage.Sections}" SelectedItem="{Binding SelectedPage.SelectedSection}"
                    IsVisible="{Binding SelectedPage.HasSections}" AutomationProperties.Name="Sections">
             <ListBox.ItemsPanel>
@@ -140,7 +150,7 @@
             </ListBox.ItemTemplate>
           </ListBox>
         </Border>
-        <ContentControl Grid.Row="1" Classes="page" Content="{Binding SelectedPage}" />
+        <ContentControl Grid.Row="2" Classes="page" Content="{Binding SelectedPage}" />
       </Grid>
     </Grid>
   </Grid>

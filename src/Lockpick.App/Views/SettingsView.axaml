@@ -65,6 +65,10 @@
             <ToggleSwitch IsChecked="{Binding StreamerMode}" OnContent="Streamer mode on" OffContent="Streamer mode off"
                           AutomationProperties.Name="Streamer mode"
                           ToolTip.Tip="Blurs file paths, process ids and the API token wherever Lockpick shows them, so you can show its window on stream." />
+            <Button Content="Make a support bundle" Command="{Binding MakeSupportBundleCommand}" HorizontalAlignment="Left"
+                    ToolTip.Tip="Zips the last few days&apos; logs, your settings without the API token and the versions, to attach to a GitHub issue." />
+            <TextBlock Text="{Binding SupportStatus}" TextWrapping="Wrap" Foreground="{StaticResource LpMutedBrush}"
+                       IsVisible="{Binding SupportStatus, Converter={x:Static StringConverters.IsNotNullOrEmpty}}" />
             <Button Content="Run first-time setup again" Command="{Binding RunSetupCommand}" />
             <TextBlock Classes="label" Text="Lockpick data folder (logs, captures, settings)" />
             <SelectableTextBlock Classes="mono private" Text="{Binding DataFolder}" />

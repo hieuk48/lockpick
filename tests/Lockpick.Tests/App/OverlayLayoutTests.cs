@@ -156,6 +156,18 @@ public sealed class OverlayLayoutTests : IDisposable
     }
 
     [Fact]
+    public void Support_bundles_leave_out_the_windows_user_folder()
+    {
+        var profile = Environment.GetFolderPath(Environment.SpecialFolder.UserProfile);
+        var escaped = profile.Replace("\\", "\\\\", StringComparison.Ordinal); // as JSON logs write it
+        var log = "{\"message\":\"Saved to " + escaped + "\\\\x.json\"} and " + profile + "\\y and " + profile.Replace('\\', '/') + "/z";
+        var clean = SupportBundle.Anonymize(log);
+        Assert.DoesNotContain(profile, clean, StringComparison.OrdinalIgnoreCase);
+        Assert.DoesNotContain(escaped, clean, StringComparison.OrdinalIgnoreCase);
+        Assert.Equal(3, clean.Split("%USERPROFILE%").Length - 1);
+    }
+
+    [Fact]
     public void Only_the_room_views_cover_the_picture()
     {
         Assert.True(MapViews.IsFull(MapViews.Room));

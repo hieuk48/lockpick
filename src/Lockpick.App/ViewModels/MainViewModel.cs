@@ -88,6 +88,36 @@ public sealed partial class MainViewModel : ObservableObject, IDisposable
 
     public void Dispose() => Debug.Dispose();
 
+    /// <summary>What went wrong (shown above the page with an offer of a support bundle), or null.</summary>
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(HasError))]
+    public partial string? ErrorNotice { get; private set; }
+
+    public bool HasError => ErrorNotice is not null;
+
+    /// <summary>Reports an unexpected error to the player (it's in the log already).</summary>
+    public void ReportError(string message) =>
+        ErrorNotice = $"Something went wrong: {message} It's in Lockpick's log; a support bundle helps us fix it.";
+
+    [RelayCommand]
+    private void DismissError() => ErrorNotice = null;
+
+    /// <summary>Makes a support bundle and shows it in Explorer.</summary>
+    [RelayCommand]
+    private void MakeSupportBundle()
+    {
+        try
+        {
+            var path = SupportBundle.Create(_services);
+            ErrorNotice = null;
+            System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo("explorer.exe", $"/select,\"{path}\"") { UseShellExecute = true });
+        }
+        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
+        {
+            ErrorNotice = $"The support bundle couldn't be made: {ex.Message}";
+        }
+    }
+
     /// <summary>The version label in the navigation opens the update controls in Settings.</summary>
     [RelayCommand]
     private void OpenUpdates()

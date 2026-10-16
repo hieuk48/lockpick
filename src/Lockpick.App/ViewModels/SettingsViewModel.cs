@@ -93,6 +93,25 @@ public sealed partial class SettingsViewModel : PageViewModel
     public string DataFolder => AppPaths.DataRoot;
 
     [ObservableProperty]
+    public partial string SupportStatus { get; private set; } = string.Empty;
+
+    /// <summary>Makes a support bundle (logs, settings without secrets, versions) and shows it in Explorer.</summary>
+    [RelayCommand]
+    private void MakeSupportBundle()
+    {
+        try
+        {
+            var path = SupportBundle.Create(_services);
+            SupportStatus = $"Saved {Path.GetFileName(path)} — attach it to a GitHub issue. It holds the last few days' logs, your settings without the API token, and versions; no game files or saves.";
+            System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo("explorer.exe", $"/select,\"{path}\"") { UseShellExecute = true });
+        }
+        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
+        {
+            SupportStatus = $"The support bundle couldn't be made: {ex.Message}";
+        }
+    }
+
+    [ObservableProperty]
     public partial string GameExecutablePath { get; set; }
 
     [ObservableProperty]

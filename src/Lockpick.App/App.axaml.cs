@@ -5,6 +5,7 @@ using Avalonia.Markup.Xaml;
 using Lockpick.App.Services;
 using Lockpick.App.ViewModels;
 using Lockpick.App.Views;
+using Microsoft.Extensions.Logging;
 
 namespace Lockpick.App;
 
@@ -19,12 +20,60 @@ public partial class App : Application
 
     public override void Initialize() => AvaloniaXamlLoader.Load(this);
 
+    /// <summary>
+    /// Unexpected errors are logged and the app offers a support bundle (#63): an error in the UI is reported and the
+    /// app carries on; a crash leaves a note, so the next start offers the bundle.
+    /// </summary>
+    private static void WatchForErrors(AppServices services, MainViewModel main)
+    {
+        var log = services.LoggerFactory.CreateLogger("Errors");
+        var crashNote = Path.Combine(AppPaths.DataRoot, "crashed.txt");
+        if (File.Exists(crashNote))
+        {
+            main.ReportError("Lockpick closed unexpectedly last time.");
+            try
+            {
+                File.Delete(crashNote);
+            }
+            catch (IOException)
+            {
+                // Shown once more next time.
+            }
+        }
+
+        AppDomain.CurrentDomain.UnhandledException += (_, e) =>
+        {
+            log.LogCritical(e.ExceptionObject as Exception, "Lockpick is closing on an unexpected error");
+            try
+            {
+                File.WriteAllText(crashNote, $"{DateTimeOffset.Now:O} {(e.ExceptionObject as Exception)?.GetType().Name}");
+            }
+            catch (IOException)
+            {
+                // Nothing more can be done while closing.
+            }
+        };
+        TaskScheduler.UnobservedTaskException += (_, e) =>
+        {
+            log.LogError(e.Exception, "Unexpected error in background work");
+            e.SetObserved();
+            Avalonia.Threading.Dispatcher.UIThread.Post(() => main.ReportError(e.Exception.InnerException?.Message ?? e.Exception.Message));
+        };
+        Avalonia.Threading.Dispatcher.UIThread.UnhandledException += (_, e) =>
+        {
+            log.LogError(e.Exception, "Unexpected error");
+            e.Handled = true;
+            main.ReportError(e.Exception.Message);
+        };
+    }
+
     public override void OnFrameworkInitializationCompleted()
     {
         if (ApplicationLifetime is IClassicDesktopStyleApplicationLifetime desktop)
         {
             _services = AppServices.Create(desktop.Args ?? []);
             _main = new MainViewModel(_services);
+            WatchForErrors(_services, _main);
             desktop.MainWindow = new MainWindow { DataContext = _main };
 
             // The overlay is a window of its own; the app still ends with the main window.
