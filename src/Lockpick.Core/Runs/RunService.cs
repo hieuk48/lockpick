@@ -110,6 +110,12 @@ public sealed class RunService : IDisposable
     /// <summary>Start an attempt when a save is loaded too (practice from a save), not only on a new game.</summary>
     public bool StartOnLoad { get; set; }
 
+    /// <summary>
+    /// Split on the triggers and the ending (the default). Off while another timer splits (LiveSplit's autosplitter,
+    /// followed through its server): the split key then moves the run on, so a split is never counted twice.
+    /// </summary>
+    public bool AutoSplit { get; set; } = true;
+
     /// <summary>Raised when the status changes (any thread).</summary>
     public event EventHandler<RunStatus>? StatusChanged;
 
@@ -254,6 +260,10 @@ public sealed class RunService : IDisposable
                 else if (rules.AtTitle(snapshot))
                 {
                     End(RunResult.QuitToTitle, raised);
+                }
+                else if (!AutoSplit)
+                {
+                    // Another timer splits; deaths and the title menu still end the attempt.
                 }
                 else if (_previous is { } previous && rules.RunFinished(previous, snapshot))
                 {

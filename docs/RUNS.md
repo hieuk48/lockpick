@@ -71,6 +71,20 @@ fixes a missed split.
 
 Reading is defensive (no DTDs or external entities, size and split limits): these are files from the internet.
 
+## LiveSplit
+
+Lockpick talks to LiveSplit through LiveSplit's own TCP server (in LiveSplit: Control → Start TCP Server; port 16834,
+Runs → LiveSplit):
+
+- **Follow** — for leaderboard runs, which must be timed by LiveSplit's own autosplitter: Lockpick doesn't split by
+  itself; LiveSplit's splits, undos and resets move Lockpick's run (its records, overlay and OBS page), so nothing is
+  split twice. Lockpick still starts an attempt on a new game and ends it on a death or the title menu.
+- **Drive** — with no autosplitter: Lockpick's splits start, split, undo, skip and reset LiveSplit, and LiveSplit's
+  game time is set from the game's clock (Lockpick pauses LiveSplit's own game-time count and sets it every
+  quarter second), so the runner keeps their LiveSplit layout and comparisons.
+
+Checked against a stand-in for LiveSplit's server (tests); a check with LiveSplit itself is capture bounty B208.
+
 ## On the overlay and elsewhere
 
 - The **Run splits** widget (Settings → Overlay) shows the category, a few splits around the current one and the

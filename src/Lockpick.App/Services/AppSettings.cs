@@ -96,6 +96,12 @@ public sealed record AppSettings
     /// <summary>A loaded save starts an attempt too (practice from a save), not only a new game.</summary>
     public bool RunStartOnLoad { get; init; }
 
+    /// <summary>How Lockpick works with LiveSplit (<see cref="LiveSplitModes"/>): off, follow or drive.</summary>
+    public string LiveSplitMode { get; init; } = LiveSplitModes.Off;
+
+    /// <summary>LiveSplit's TCP server port (its default).</summary>
+    public int LiveSplitPort { get; init; } = 16834;
+
     /// <summary>Set only while ask mode has the game frozen; lets the next start unfreeze it after a crash.</summary>
     public PausedGame? PausedGame { get; init; }
 }

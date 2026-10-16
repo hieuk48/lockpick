@@ -71,7 +71,13 @@
               <TextBlock TextWrapping="Wrap" Text="Also start when I load a save (practice from a save; the time counts from the save)" />
             </CheckBox>
             <TextBlock TextWrapping="Wrap" Foreground="{StaticResource LpMutedBrush}"
-                       Text="Lockpick only watches: it splits on rooms, key items and the ending, and keys for split, undo, skip and reset are in Settings → Hotkeys. With LiveSplit running too, both time the same in-game clock." />
+                       Text="Lockpick only watches: it splits on rooms, key items and the ending, and keys for split, undo, skip and reset are in Settings → Hotkeys." />
+            <TextBlock Classes="label" Text="LiveSplit" Margin="0,4,0,0" />
+            <ComboBox ItemsSource="{Binding LiveSplitChoices}" SelectedItem="{Binding LiveSplitMode}" HorizontalAlignment="Stretch"
+                      AutomationProperties.Name="Work with LiveSplit" />
+            <TextBlock TextWrapping="Wrap" Foreground="{StaticResource LpMutedBrush}"
+                       Text="Leaderboard runs time with LiveSplit's own autosplitter: choose Follow and Lockpick moves with LiveSplit's splits instead of splitting itself. Without an autosplitter, Drive lets Lockpick split LiveSplit and set its game time. Both need LiveSplit's server (Control → Start TCP Server)." />
+            <TextBlock Text="{Binding LiveSplitStatus}" TextWrapping="Wrap" />
             <TextBlock Text="{Binding Message}" TextWrapping="Wrap"
                        IsVisible="{Binding Message, Converter={x:Static StringConverters.IsNotNullOrEmpty}}" />
           </StackPanel>

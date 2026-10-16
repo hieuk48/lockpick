@@ -14,6 +14,12 @@ public sealed record SplitSetChoice(SplitSet? Set, string Label)
     public override string ToString() => Label;
 }
 
+/// <summary>A LiveSplit mode in the Runs page's list.</summary>
+public sealed record LiveSplitChoice(string Id, string Name)
+{
+    public override string ToString() => Name;
+}
+
 /// <summary>One past attempt in the Runs page's history.</summary>
 public sealed record RunHistoryRow(string Attempt, string Result, string Time, string When);
 
@@ -28,6 +34,8 @@ public sealed partial class RunsViewModel : PageViewModel
 
     private readonly RunService _runs;
     private readonly RunLibrary _library;
+    private readonly SettingsStore _settings;
+    private readonly LiveSplitLink _liveSplit;
     private readonly LiveState _state;
     private bool _syncing;
     private bool _visible;
@@ -44,6 +52,11 @@ public sealed partial class RunsViewModel : PageViewModel
         _library.Changed += (_, _) => Dispatcher.UIThread.Post(Reload);
         state.PropertyChanged += OnStateChanged;
         StartOnLoad = services.Settings.Current.RunStartOnLoad;
+        _settings = services.Settings;
+        _liveSplit = services.LiveSplit;
+        LiveSplitMode = LiveSplitChoices.FirstOrDefault(c => c.Id == services.Settings.Current.LiveSplitMode) ?? LiveSplitChoices[0];
+        LiveSplitStatus = _liveSplit.Status;
+        _liveSplit.StatusChanged += (_, _) => Dispatcher.UIThread.Post(() => LiveSplitStatus = _liveSplit.Status);
         Reload();
     }
 
@@ -54,6 +67,15 @@ public sealed partial class RunsViewModel : PageViewModel
 
     [ObservableProperty]
     public partial bool StartOnLoad { get; set; }
+
+    public IReadOnlyList<LiveSplitChoice> LiveSplitChoices { get; } = [.. LiveSplitModes.All.Select(m => new LiveSplitChoice(m.Id, m.Name))];
+
+    /// <summary>Off, follow or drive the runner's LiveSplit.</summary>
+    [ObservableProperty]
+    public partial LiveSplitChoice LiveSplitMode { get; set; }
+
+    [ObservableProperty]
+    public partial string LiveSplitStatus { get; private set; } = string.Empty;
 
     [ObservableProperty]
     public partial IReadOnlyList<SplitRowData> Rows { get; private set; } = [];
@@ -104,6 +126,17 @@ public sealed partial class RunsViewModel : PageViewModel
         {
             _library.Choose(value?.Set);
         }
+    }
+
+    partial void OnLiveSplitModeChanged(LiveSplitChoice value)
+    {
+        if (_liveSplit is null || value.Id == _settings.Current.LiveSplitMode)
+        {
+            return;
+        }
+
+        _settings.Save(_settings.Current with { LiveSplitMode = value.Id });
+        _liveSplit.Configure(value.Id, _settings.Current.LiveSplitPort);
     }
 
     partial void OnStartOnLoadChanged(bool value)

@@ -55,6 +55,7 @@ public sealed class AppServices : IAsyncDisposable
         Feed = new Core.Insight.EventFeed(source, adapter.CreateChangeExplainer, adapter.RoomName);
         Runs = new Core.Runs.RunService(source, Trainer, adapter.CreateRunRules, new Core.Runs.RunHistoryStore(AppPaths.Runs));
         RunLibrary = new RunLibrary(Runs, adapter, Runs.History!, settings, loggerFactory.CreateLogger("Runs"));
+        LiveSplit = new LiveSplitLink(Runs, source, settings.Current.LiveSplitMode, settings.Current.LiveSplitPort, loggerFactory.CreateLogger("LiveSplit"));
         TrainerHotkeys = new TrainerHotkeys(_log);
         TrainerHotkeys.Pressed += (_, action) =>
         {
@@ -91,6 +92,9 @@ public sealed class AppServices : IAsyncDisposable
 
     /// <summary>The split sets, attempt records and comparisons.</summary>
     public RunLibrary RunLibrary { get; }
+
+    /// <summary>The link to the runner's LiveSplit (Runs page).</summary>
+    public LiveSplitLink LiveSplit { get; }
 
     /// <summary>System-wide keys for trainer actions (Settings); presses are acted on by the Trainer page.</summary>
     public TrainerHotkeys TrainerHotkeys { get; }
@@ -312,6 +316,7 @@ public sealed class AppServices : IAsyncDisposable
         }
 
         Challenges.Dispose();
+        LiveSplit.Dispose();
         Runs.Dispose();
         Feed.Dispose();
         Trainer?.Dispose();
