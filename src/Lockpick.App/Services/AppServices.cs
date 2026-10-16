@@ -79,6 +79,11 @@ public sealed class AppServices : IAsyncDisposable
         {
             TrainerHotkeys.Set(action, key, MarkerHotkeyName);
         }
+
+        foreach (var (action, button) in settings.Current.GamepadActions)
+        {
+            SetActionButton(action, button);
+        }
     }
 
     /// <summary>The challenge the player chose (Challenges page, API).</summary>
@@ -191,6 +196,28 @@ public sealed class AppServices : IAsyncDisposable
     /// <summary>The controller button that adds a marker (the same event as the hotkey).</summary>
     public GamepadBinding MarkerButton => _markerButton;
 
+    // Set on the UI thread, read on the controller thread.
+    private readonly System.Collections.Concurrent.ConcurrentDictionary<string, GamepadBinding> _actionButtons = new();
+
+    /// <summary>The controller button bound to an action (TrainerHotkeys.Actions ids), or Off.</summary>
+    public GamepadBinding ActionButton(string action) => _actionButtons.GetValueOrDefault(action) ?? new GamepadBinding(GamepadBinding.Off);
+
+    /// <summary>Binds a controller button to an action (a GamepadBinding value; Off removes it).</summary>
+    public void SetActionButton(string action, string value)
+    {
+        var binding = new GamepadBinding(value);
+        if (binding.IsOff)
+        {
+            _actionButtons.TryRemove(action, out _);
+        }
+        else
+        {
+            _actionButtons[action] = binding;
+        }
+
+        EnsureGamepad();
+    }
+
     /// <summary>Uses <paramref name="value"/> (a <see cref="GamepadBinding"/> value) for markers from the controller.</summary>
     public void SetMarkerButton(string value)
     {
@@ -222,7 +249,7 @@ public sealed class AppServices : IAsyncDisposable
     /// <summary>Reads the controllers only while a button is bound or being bound.</summary>
     private void EnsureGamepad()
     {
-        var needed = !_markerButton.IsOff || _binding is not null;
+        var needed = !_markerButton.IsOff || _binding is not null || !_actionButtons.IsEmpty;
         if (needed && _gamepad is null)
         {
             _gamepad = new GamepadButtons();
@@ -251,6 +278,14 @@ public sealed class AppServices : IAsyncDisposable
         if (_markerButton.Matches(button))
         {
             MarkerHotkeyPressed?.Invoke(this, EventArgs.Empty);
+        }
+
+        foreach (var (action, bound) in _actionButtons)
+        {
+            if (bound.Matches(button))
+            {
+                TrainerHotkeys.Fire(action);
+            }
         }
     }
 

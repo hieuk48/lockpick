@@ -218,7 +218,7 @@
             <TextBlock Classes="caption" Text="HOTKEYS" />
           </StackPanel>
           <TextBlock TextWrapping="Wrap" Foreground="{StaticResource LpMutedBrush}"
-                     Text="Keys that work while you play, without leaving the game. Trainer actions work only while Trainer Mode is on and Lockpick has write access; the overlay, map and run keys work any time." />
+                     Text="Keys that work while you play, without leaving the game. Trainer actions work only while Trainer Mode is on and Lockpick has write access; the overlay, map and run keys work any time. A controller button can do the same: pick one Resident Evil doesn't use (L2 does nothing in the game)." />
           <ItemsControl ItemsSource="{Binding TrainerHotkeyRows}">
             <ItemsControl.ItemTemplate>
               <DataTemplate x:DataType="vm:TrainerHotkeyRow">
@@ -227,6 +227,9 @@
                     <TextBlock Classes="label" Text="{Binding Name}" VerticalAlignment="Center" MinWidth="180" />
                     <ComboBox ItemsSource="{Binding Choices}" SelectedItem="{Binding Key}" MinWidth="160"
                               AutomationProperties.Name="{Binding Name}" />
+                    <TextBlock Text="{Binding ButtonName, StringFormat='Controller: {0}'}" VerticalAlignment="Center" Foreground="{StaticResource LpMutedBrush}" />
+                    <Button Content="Set button…" Command="{Binding BindButtonCommand}" AutomationProperties.Name="{Binding Name, StringFormat='Controller button for {0}'}" />
+                    <Button Content="Clear" Command="{Binding ClearButtonCommand}" IsVisible="{Binding HasButton}" />
                   </WrapPanel>
                   <TextBlock Text="{Binding Status}" Classes="warning" TextWrapping="Wrap"
                              IsVisible="{Binding Status, Converter={x:Static StringConverters.IsNotNullOrEmpty}}" />

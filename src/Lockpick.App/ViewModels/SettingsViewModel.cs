@@ -48,7 +48,8 @@ public sealed partial class SettingsViewModel : PageViewModel
         TrainerHotkeyRows = [.. TrainerHotkeys.Actions.Select(a =>
         {
             var key = current.TrainerHotkeys.TryGetValue(a.Id, out var k) && MarkerHotkeyChoices.Contains(k) ? k : "Off";
-            var row = new TrainerHotkeyRow(a.Id, a.Name, key, MarkerHotkeyChoices, ApplyTrainerHotkey);
+            var row = new TrainerHotkeyRow(a.Id, a.Name, key, MarkerHotkeyChoices, ApplyTrainerHotkey,
+                services.ActionButton(a.Id).DisplayName, BindActionButtonAsync, ClearActionButton);
             if (key != "Off" && !registered.ContainsKey(a.Id))
             {
                 row.Status = $"{key} is used by another program.";
@@ -174,6 +175,28 @@ public sealed partial class SettingsViewModel : PageViewModel
 
     /// <summary>Keys for trainer actions; they do nothing unless Trainer Mode has write access.</summary>
     public IReadOnlyList<TrainerHotkeyRow> TrainerHotkeyRows { get; }
+
+    private async Task<string?> BindActionButtonAsync(TrainerHotkeyRow row)
+    {
+        if (await _services.NextGamepadButtonAsync(TimeSpan.FromSeconds(10)) is not { } button)
+        {
+            return "No controller button was pressed; nothing changed.";
+        }
+
+        _services.SetActionButton(row.Id, button.ToString());
+        row.ButtonName = button.DisplayName;
+        var saved = new Dictionary<string, string>(_services.Settings.Current.GamepadActions) { [row.Id] = button.ToString() };
+        Persist(s => s with { GamepadActions = saved });
+        return null;
+    }
+
+    private void ClearActionButton(TrainerHotkeyRow row)
+    {
+        _services.SetActionButton(row.Id, GamepadBinding.Off);
+        var saved = new Dictionary<string, string>(_services.Settings.Current.GamepadActions);
+        saved.Remove(row.Id);
+        Persist(s => s with { GamepadActions = saved });
+    }
 
     private string? ApplyTrainerHotkey(TrainerHotkeyRow row, string key)
     {

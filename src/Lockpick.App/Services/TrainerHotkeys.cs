@@ -34,8 +34,11 @@ public sealed class TrainerHotkeys : IDisposable
 
     public TrainerHotkeys(ILogger log) => _log = log;
 
-    /// <summary>Raised on a background thread with the action's id.</summary>
+    /// <summary>Raised on a background thread with the action's id (from a key, or a controller button bound to it).</summary>
     public event EventHandler<string>? Pressed;
+
+    /// <summary>The action's controller button was pressed: the same as its key.</summary>
+    public void Fire(string action) => Pressed?.Invoke(this, action);
 
     /// <summary>The actions a hotkey can trigger, with the names shown in Settings.</summary>
     public static IReadOnlyList<(string Id, string Name)> Actions { get; } =

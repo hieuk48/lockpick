@@ -61,6 +61,9 @@ public sealed record AppSettings
     /// </summary>
     public IReadOnlyDictionary<string, string> TrainerHotkeys { get; init; } = new Dictionary<string, string>();
 
+    /// <summary>Controller buttons for the same actions (TrainerHotkeys.Actions ids → GamepadBinding values).</summary>
+    public IReadOnlyDictionary<string, string> GamepadActions { get; init; } = new Dictionary<string, string>();
+
     /// <summary>Lockpick's API for other tools (docs/API.md): off unless the player turns it on.</summary>
     public bool ApiEnabled { get; init; }
 
