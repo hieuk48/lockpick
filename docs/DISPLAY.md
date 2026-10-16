@@ -96,6 +96,15 @@ until it is active again. Measured in windowed 1280×720 and 1920×1080. Consequ
 Our overlay window is **not** part of any window/game capture (PrintWindow, WGC, game capture) — only of a display
 capture. For OBS, the HUD should therefore be a browser source (planned), not the on-screen overlay.
 
+### OBS browser sources can control OBS
+
+Verified 2026-10-15 in OBS 32.2.2 (obs-browser 2.26.9): a browser source whose `webpage_control_level` is 4 (the
+setting's default is 1) gets `window.obsstudio` — it read the status and the current scene, received
+`obsSceneChanged` events and a live server-sent event stream. Levels: 3 BASIC (`saveReplayBuffer`), 4 ADVANCED
+(`setCurrentScene`, replay buffer start/stop), 5 ALL (recording, streaming). Chapter markers are not in this API;
+an OBS script has them (`obs_frontend_recording_add_chapter`, OBS 30.2+). So Lockpick's HUD pages and its shipped
+OBS script need no WebSocket password.
+
 ## Overlay
 
 Test overlay: a layered, click-through, topmost, non-activating tool window (`WS_EX_LAYERED | WS_EX_TRANSPARENT |

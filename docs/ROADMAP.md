@@ -148,12 +148,26 @@ ship in it).
   `CreateRecordChapter`, `SaveReplayBuffer`, scene and source switching, creating inputs).
 - Already in the app: challenges (no damage, knife only, speedrun) with live rule checks, the API with a live event
   stream (`/api/v1/events/stream`), controller markers, captures, the room map, progress and the layouts.
+- speedrun.com's PC rules (checked 2026-10-15 through its API): runs are timed by **in-game time**, start at the
+  title screen and end on the end screen showing the final IGT; the options menu pauses IGT (so using it as a pause
+  is banned); **tabbing out or clicking off the game is not allowed during a run**; no mods; LiveSplit with its IGT
+  script must be used and IGT shown (autosplits optional). Categories: Jill / Chris, Bad / Best ending, No Major /
+  Major Glitches, No Restriction / **Knife Only**.
+- OBS's browser source exposes `window.obsstudio` (obs-browser 2.26.9 in OBS 32.2.2, verified 2026-10-15): a page
+  with `webpage_control_level` 4 read the status and current scene, got scene-change events and a live event
+  stream; level 4 allows switching scenes and saving the replay buffer, 5 starting/stopping recording.
 - Known in memory: in-game clock `0xD22730` (frames at 30/s; zeroed on New Game, restored on load — the docs disagree
   whether it runs in menus: bounty B206), player dead (`0x01000000` in the state flags, HP below 0), the results
   screen (reads the saved clock), named story flags, item pickups and rooms (split triggers), the input words
   `0xBE9840`/`0xBE9842` and the raw pad word `0xBF0A04`.
 
-**Sprints.** 0.3.0 ships after sprints 1–6; OBS automation and the keep-running option follow as 0.3.1.
+**Owner decisions (2026-10-15):** challenges are made for streaming and recording — nothing during a run needs a
+click outside the game (speedrun.com bans it anyway): hotkeys and the controller for Lockpick, OBS reacting by
+itself through an **OBS script shipped with Lockpick**; the timer defaults to the game's clock (matches
+speedrun.com); Lockpick may switch the game to borderless by editing `dxcfg.ini` on the player's click; code signing
+is decided later. Keep-running stays out of challenges (it patches the game, and runners can't click off anyway).
+
+**Sprints.** 0.3.0 ships after sprints 1–6; the keep-running option and OBS WebSocket control follow as 0.3.1.
 
 1. **Responsive app — done 2026-10-15:** every page at ultrawide (full, half, third, quarter), 1080p, 720p, 1024×768,
    800×600, portrait (720×1280 at 150 %) and the 150 % 1080p monitor (full to quarter); content scrolls instead of
@@ -176,19 +190,33 @@ ship in it).
      (B703), a death / Game Over (B205), quitting to the title, or the game closing; a local record per attempt
      (category, character, in-game time, splits, deaths, damage taken, result, whether cheats were on);
    - a "Playthrough" mode (no rules: timer, splits and progress only) next to the challenges;
-   - timer from the game's own clock (matching how it behaves in menus — B206), real time as an option;
+   - timer from the game's own clock (the speedrun.com timing; how it behaves in menus — B206), real time as an
+     option; a run starts at the title screen, as on the leaderboard;
    - splits: built-in RE1 sets — the community segments (Yawn 1 › Mansion 1 › … › End) and the key-item routes
      (Jill / Chris NMG) — triggered by named story flags, item pickups and rooms (B701, B702, B706); a split editor;
      comparison against the player's best (local);
    - challenge feedback: the fail reason in the overlay and an optional sound; a death counter; retry from a
      controller button; challenges end on a death (B205);
-   - **LiveSplit:** drive the runner's own LiveSplit through LiveSplit Server (start, split, reset, set game time —
-     their layouts and comparisons stay theirs), import a `.lss` file's segment names onto Lockpick's split
-     triggers, and drop a capture marker at each split (B208).
-4. **OBS, the simple way:** the API serves browser-source pages — timer, splits, HP, challenge status, event feed,
-   room map — transparent, live through the event stream, options in the URL; "Copy OBS link" buttons in the app;
-   a pop-out HUD window for window capture; the docs recommend Game Capture (works in every mode, 640×480 native,
-   no pillarbox). Our in-game overlay is not part of any capture, so these pages are the stream's HUD.
+   - **LiveSplit:** leaderboard runs must use LiveSplit's own IGT script, so by default Lockpick *follows* the
+     runner's LiveSplit through LiveSplit Server (split index, times — for the overlay, markers and run records)
+     and never splits twice; only with no autosplitter does Lockpick drive it (start, split, reset, set game
+     time). Import a `.lss` file's segment names onto Lockpick's split triggers; a capture marker at each split
+     (B208);
+   - nothing during a run needs a click: retry, marker and overlay toggle from hotkeys or the controller; Lockpick
+     shows no dialogs and never takes focus while a run is on (update prompts wait).
+4. **OBS (stream- and record-friendly challenges):**
+   - the API serves browser-source pages — timer, splits, HP, challenge status, event feed, room map —
+     transparent, live through the event stream, options in the URL; "Copy OBS link" buttons; a pop-out HUD
+     window for window capture; our in-game overlay is not part of any capture, so these pages are the stream's
+     HUD;
+   - **`lockpick.lua`, an OBS script shipped with Lockpick** (Tools → Scripts; Lua needs nothing installed): finds
+     Lockpick's API address and token itself, adds the Lockpick sources (and a Game Capture of the game) to a
+     scene, and automates runs through OBS's own frontend API — start/stop recording with a run, chapter markers
+     at splits, fails and deaths, save the replay buffer on a death, a fail or a new best, switch to a "paused"
+     scene while the game is inactive or minimized and back. It reads Lockpick's events from a local file
+     (OBS Lua has no network), so no WebSocket password is involved; browser pages that need OBS access get the
+     lowest control level that works (4 for scenes and replays);
+   - the docs recommend Game Capture (works in every mode, 640×480 native, no pillarbox).
 5. **Training captures:** opt-in, every game frame (the in-game clock's ticks): state, the held and new input words
    and the raw pad word, control type, room and camera, enemies; a consent screen (what is recorded, nothing
    personal); submitted like play captures; checked by `tools/rl/dataset.py` and a small behaviour-cloning model
@@ -202,10 +230,9 @@ ship in it).
 
 ### 0.3.1 — OBS automation and keep-running
 
-- **OBS WebSocket (optional; the password kept with Windows DPAPI):** "Set up OBS" creates a Lockpick scene (Game
-  Capture of the game plus the browser sources); start and stop recording with a run; recording chapters at splits,
-  fails and deaths (`CreateRecordChapter`); save the replay buffer on a death, a failed challenge or a new best;
-  switch to a "paused" scene while the game is inactive (a vanilla game goes black) and back when it returns.
+- **OBS WebSocket (optional, for setups the script can't cover, e.g. OBS on another PC; the password kept with
+  Windows DPAPI):** the same automation as `lockpick.lua` from Lockpick's side — scene setup, recording with runs,
+  chapters (`CreateRecordChapter`), replay buffer, the "paused" scene.
 - **Keep the game running when it isn't the active window** (opt-in, Trainer Mode only, never in challenges; the
   in-process focus patch `0x44126B`, MEMORY_MAP "Focus and input"; chosen by the owner 2026-10-13) — the alternative
   to the OBS "paused" scene for people who aren't running a challenge.
