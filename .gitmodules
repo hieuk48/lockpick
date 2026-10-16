@@ -1,0 +1,3 @@
+[submodule "extern/livesplit-core"]
+	path = extern/livesplit-core
+	url = https://github.com/LiveSplit/livesplit-core.git
