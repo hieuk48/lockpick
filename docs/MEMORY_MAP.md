@@ -338,7 +338,7 @@ message closed, state-flag bits `0x100000` (camera lock), `0x20000` (voice), `0x
 | Address / rule | What | Evidence |
 |---|---|---|
 | `0xD22730` (u32) | In-game timer, frames at 30 fps (counts in menus too — contradicts "frozen in menus" in the table at the top; to settle: bounty B206) | live: 153 frames in 5.07 s |
-| `0xAE9F2F` (u8) | Status-screen ECG band, only updated while the screen is drawn: `(HP − 1) / (maxHP >> 2)` → 0 Danger, 1 Caution, 2–3 Fine; 4 while poisoned | live: Jill at HP 1, 24, 25, 48, 49, 72, 73, 96 gave 0,0,1,1,2,2,3,3; poisoned 4 |
+| `0xAE9F2F` (u8) | Status-screen ECG band, only updated while the screen is drawn: `(HP − 1) / (maxHP >> 2)` → 0 Danger, 1 Caution, 2–3 Fine; 4 while poisoned | live: Jill at HP 1, 24, 25, 48, 49, 72, 73, 96 gave 0,0,1,1,2,2,3,3; poisoned 4. The screen's word, seen 2026-10-15: HP 60 (band 2) "Fine" with a yellow trace, HP 30 (band 1) "Caution" in orange |
 | `0xBE63C0` (u8, player +0xDC; profile field `playerStatus`) | Status: `0x02` poisoned (`0x20` Yawn poison per the decomp; `0x10`/`0x80` are other bits) | live: wasp stings (408) set `0x02`; the blue herb cleared it; the serum said "You don't need to use this item at the moment." |
 | `0xBE6458` (u8, player +0x174) | Poison timer: counts down per frame; at 0 it reloads to ~120 and HP drops 2 | live: −2 HP at frames 7988, 8108, 8230 |
 | healing | Green herb +⅓ max HP, green+green and green+green+blue +⅔, three greens / green+red / green+red+blue / first aid spray full, green+blue +⅓ and cures; red or blue alone: "You don't need to use this item at the moment." | live (Jill, from HP 10): +32, +64, +86 (full) … |
