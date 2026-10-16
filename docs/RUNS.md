@@ -147,9 +147,12 @@ timed by in-game time but the board keeps that time in its `realtime` field, so 
 
 ## On the overlay and elsewhere
 
-- The **Run splits** widget (Settings → Overlay) shows the category, a few splits around the current one and the
-  last, each with its time and its difference to the personal best (green ahead, red behind, gold for a best
-  segment), the run's clock and the personal best.
+- The **Run splits** widget (Settings → Overlay) is LiveSplit's layout drawn by livesplit-core: the splits with their
+  times and differences, the timer, the previous segment and the world record (from speedrun.com when the
+  leaderboard is on). Without livesplit-core it falls back to Lockpick's own panel (a few splits around the current
+  one, the clock and the personal best).
+- Like every widget it can pop out into a window of its own (move it anywhere, capture it in OBS) or sit on the
+  **Stream page**, so it needn't cover the game.
 - Starts, splits and ends are in the event log (and in captures).
 - With the API on, `GET /api/v1/run` serves the run and `/overlay/splits` is an OBS browser source with the same
   splits for the stream (docs/API.md); `POST /api/v1/run/split` (and undo, skip, reset) let a Stream Deck or a bot

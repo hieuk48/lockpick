@@ -66,6 +66,41 @@ public sealed class OverlayLayoutTests : IDisposable
     }
 
     [Fact]
+    public void Pop_out_windows_and_the_stream_page_survive_a_save_and_load()
+    {
+        var path = Path.Combine(_folder, "settings.json");
+        var popOuts = new Dictionary<string, PopOutOptions>
+        {
+            [OverlayLayout.Splits] = new() { Open = true, X = -1900, Y = 40, Width = 300, Height = 560, Green = true, Topmost = true },
+        };
+        new SettingsStore(path, NullLogger.Instance).Save(new AppSettings { PopOuts = popOuts, StreamWidgets = ["minimap:Large", "splits:Small"] });
+
+        var loaded = new SettingsStore(path, NullLogger.Instance).Load();
+        Assert.Equal(popOuts[OverlayLayout.Splits], loaded.PopOuts[OverlayLayout.Splits]);
+        Assert.Equal(["minimap:Large", "splits:Small"], loaded.StreamWidgets);
+        Assert.Null(new AppSettings().StreamWidgets); // none saved: the page's default layout
+    }
+
+    [Fact]
+    public void Widget_windows_report_each_change_once()
+    {
+        var windows = new WidgetWindows();
+        var changes = 0;
+        string? asked = null;
+        windows.Changed += (_, _) => changes++;
+        windows.ToggleRequested += (_, id) => asked = id;
+
+        windows.Toggle(OverlayLayout.Minimap);
+        windows.SetOpen(OverlayLayout.Minimap, true);
+        windows.SetOpen(OverlayLayout.Minimap, true);
+        Assert.Equal(OverlayLayout.Minimap, asked);
+        Assert.True(windows.IsOpen(OverlayLayout.Minimap));
+        windows.SetOpen(OverlayLayout.Minimap, false);
+        Assert.False(windows.IsOpen(OverlayLayout.Minimap));
+        Assert.Equal(2, changes);
+    }
+
+    [Fact]
     public void Only_the_room_views_cover_the_picture()
     {
         Assert.True(MapViews.IsFull(MapViews.Room));

@@ -1,0 +1,66 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:vm="using:Lockpick.App.ViewModels"
+             xmlns:c="using:Lockpick.App.Controls"
+             x:Class="Lockpick.App.Views.StreamView"
+             x:DataType="vm:StreamViewModel">
+
+  <ScrollViewer>
+    <StackPanel Spacing="12">
+
+      <Border Classes="card">
+        <StackPanel Spacing="6">
+          <Grid ColumnDefinitions="*,Auto">
+            <StackPanel Classes="cardhead">
+              <c:LucideIcon Data="{StaticResource Icon.PanelsTopLeft}" />
+              <TextBlock Classes="caption" Text="STREAM" />
+            </StackPanel>
+            <Button Grid.Column="1" Content="{Binding EditText}" Command="{Binding ToggleEditingCommand}"
+                    AutomationProperties.Name="Customize the Stream page" />
+          </Grid>
+          <TextBlock TextWrapping="Wrap" Foreground="{StaticResource LpMutedBrush}"
+                     Text="The overlay's widgets here, as big as you like, so the game's picture can stay clean (turn the overlay's widgets off in Settings). Customize picks the widgets, their order and sizes. Pop a widget out to put it on another monitor or capture it in OBS (Window Capture; right-click the window for a green background)." />
+          <WrapPanel ItemSpacing="8" LineSpacing="6" IsVisible="{Binding Editing}">
+            <ComboBox ItemsSource="{Binding Addable}" SelectedItem="{Binding ToAdd}" MinWidth="240"
+                      AutomationProperties.Name="A widget to add" />
+            <Button Content="Add" Command="{Binding AddCommand}" />
+            <Button Content="Default layout" Command="{Binding ResetLayoutCommand}" />
+          </WrapPanel>
+          <TextBlock IsVisible="{Binding !HasTiles}" Foreground="{StaticResource LpMutedBrush}"
+                     Text="No widgets on the page: Customize to add some." />
+        </StackPanel>
+      </Border>
+
+      <ItemsControl ItemsSource="{Binding Tiles}">
+        <ItemsControl.ItemsPanel>
+          <ItemsPanelTemplate>
+            <WrapPanel ItemSpacing="12" LineSpacing="12" />
+          </ItemsPanelTemplate>
+        </ItemsControl.ItemsPanel>
+        <ItemsControl.ItemTemplate>
+          <DataTemplate x:DataType="vm:StreamTile">
+            <Border Classes="card" Width="{Binding Width}" Height="{Binding Height}" Padding="10" VerticalAlignment="Top">
+              <Grid RowDefinitions="Auto,*">
+                <Grid ColumnDefinitions="*,Auto">
+                  <TextBlock Classes="caption" Text="{Binding Name}" TextTrimming="CharacterEllipsis" VerticalAlignment="Center" />
+                  <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="4">
+                    <StackPanel Orientation="Horizontal" Spacing="4" IsVisible="{Binding Editing}">
+                      <Button Content="◀" Command="{Binding EarlierCommand}" ToolTip.Tip="Earlier" AutomationProperties.Name="Move earlier" />
+                      <Button Content="▶" Command="{Binding LaterCommand}" ToolTip.Tip="Later" AutomationProperties.Name="Move later" />
+                      <Button Content="{Binding SizeText}" Command="{Binding BiggerCommand}" ToolTip.Tip="Size: small, medium or large"
+                              AutomationProperties.Name="Change the size" />
+                      <Button Content="✕" Command="{Binding RemoveCommand}" ToolTip.Tip="Take it off the page" AutomationProperties.Name="Remove" />
+                    </StackPanel>
+                    <Button Content="{Binding PopOutText}" Command="{Binding PopOutCommand}" ToolTip.Tip="Show this widget in a window of its own" />
+                  </StackPanel>
+                </Grid>
+                <c:WidgetView Grid.Row="1" Margin="0,8,0,0" WidgetId="{Binding Id}" EmptyBrush="{StaticResource LpMutedBrush}" />
+              </Grid>
+            </Border>
+          </DataTemplate>
+        </ItemsControl.ItemTemplate>
+      </ItemsControl>
+
+    </StackPanel>
+  </ScrollViewer>
+</UserControl>

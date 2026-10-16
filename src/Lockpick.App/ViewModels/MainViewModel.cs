@@ -23,7 +23,7 @@ public sealed partial class MainViewModel : ObservableObject, IDisposable
         Pages =
         [
             new DashboardViewModel(State, services.Adapter.RoomName), new ChallengesViewModel(services, State), new RunsViewModel(services, State), new TrainerViewModel(services, State),
-            new ProgressViewModel(services, State), map, new ItemsViewModel(services, State), Debug, _settings,
+            new ProgressViewModel(services, State), map, new ItemsViewModel(services, State), new StreamViewModel(services), Debug, _settings,
         ];
         SelectedPage = Pages[0];
         services.LeaderboardGuard.AskModeOn = () => Debug.AskAboutUnknownEvents;

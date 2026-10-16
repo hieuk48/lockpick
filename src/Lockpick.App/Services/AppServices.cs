@@ -60,6 +60,9 @@ public sealed class AppServices : IAsyncDisposable
         SpeedrunAccount = new SpeedrunAccount(SpeedrunCom, new SecretStore(AppPaths.Secrets), settings);
         LiveSplit = new LiveSplitLink(Runs, source, settings.Current.LiveSplitMode, settings.Current.LiveSplitPort, loggerFactory.CreateLogger("LiveSplit"));
         LeaderboardGuard = new LeaderboardGuard(this, loggerFactory.CreateLogger("Leaderboard"));
+        SpeedrunCom.ShownChanged += (_, _) => LiveSplitEngine.SetRecord(SpeedrunCom.Shown?.Record is { } wr
+            ? string.Create(System.Globalization.CultureInfo.InvariantCulture, $"{(int)wr.Time.TotalMinutes}:{wr.Time.Seconds:D2}.{wr.Time.Milliseconds / 100} {wr.Runner}")
+            : null);
         TrainerHotkeys = new TrainerHotkeys(_log);
         TrainerHotkeys.Pressed += (_, action) =>
         {
@@ -110,6 +113,9 @@ public sealed class AppServices : IAsyncDisposable
 
     /// <summary>Leaderboard runs: Lockpick hands-off and the rules checked.</summary>
     public LeaderboardGuard LeaderboardGuard { get; }
+
+    /// <summary>Overlay widgets open in their own windows (pop-outs).</summary>
+    public WidgetWindows WidgetWindows { get; } = new();
 
     /// <summary>speedrun.com's API (leaderboards, the player's account).</summary>
     public SpeedrunCom SpeedrunCom { get; }

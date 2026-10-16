@@ -127,6 +127,11 @@ WS_EX_TOPMOST | WS_EX_NOACTIVATE | WS_EX_TOOLWINDOW`, shown with `SW_SHOWNOACTIV
 - The overlay sits directly above the game in the window stack, not above everything (owner report: a topmost
   overlay floated over other apps); topmost only while the game is.
 - Owner-verified on the 150 % monitor too: the overlay panel in the picture's corner, the game fully visible.
+- **Widgets off the game** (owner, 2026-10-16: the overlay started to cover the picture): the same widgets also draw
+  into ordinary windows (pop-outs: movable, resizable, dark or chroma-green background, optional always-on-top,
+  place remembered) and onto the Stream page. Pop-outs are normal windows, so OBS's Window Capture (WGC) records
+  them, unlike the layered overlay. One renderer (`WidgetRenderer`) draws each widget for all three; each place
+  redraws only when the widget changed (every tick while the LiveSplit timer runs).
 - **Discord's overlay** shows a "use the overlay" toast in the game's top-left corner the first time a game is
   focused, covering anything there. Keep Lockpick's widgets away from the top-left by default and let players move
   them.

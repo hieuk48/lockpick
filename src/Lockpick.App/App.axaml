@@ -67,6 +67,9 @@
     <DataTemplate DataType="vm:DebugViewModel">
       <views:DebugView />
     </DataTemplate>
+    <DataTemplate DataType="vm:StreamViewModel">
+      <views:StreamView />
+    </DataTemplate>
     <DataTemplate DataType="vm:SettingsViewModel">
       <views:SettingsView />
     </DataTemplate>

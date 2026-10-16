@@ -108,6 +108,12 @@ public sealed record AppSettings
     /// <summary>LiveSplit's TCP server port (its default).</summary>
     public int LiveSplitPort { get; init; } = 16834;
 
+    /// <summary>Overlay widgets in their own windows (widget id → its window's place and options).</summary>
+    public IReadOnlyDictionary<string, PopOutOptions> PopOuts { get; init; } = new Dictionary<string, PopOutOptions>();
+
+    /// <summary>The Stream page's widgets, in order ("id:size", size small / medium / large).</summary>
+    public IReadOnlyList<string>? StreamWidgets { get; init; }
+
     /// <summary>Leaderboard runs: Lockpick locked read-only and the rules checked (Runs → Leaderboard run).</summary>
     public bool LeaderboardMode { get; init; }
 
@@ -239,6 +245,25 @@ public sealed record MapOverlaySettings
     public static IReadOnlyList<(int Value, string Name)> SizeChoices { get; } = [(100, "Small"), (130, "Medium"), (170, "Large")];
 }
 
+/// <summary>A pop-out widget window: open, where, how big, and its background and stacking.</summary>
+public sealed record PopOutOptions
+{
+    public bool Open { get; init; }
+
+    public int? X { get; init; }
+
+    public int? Y { get; init; }
+
+    public double Width { get; init; } = 320;
+
+    public double Height { get; init; } = 260;
+
+    /// <summary>A green background, for OBS's chroma key (else dark).</summary>
+    public bool Green { get; init; }
+
+    public bool Topmost { get; init; }
+}
+
 /// <summary>The overlay's widgets and where each sits. Widgets sharing a corner stack in this order from the corner.</summary>
 public static class OverlayLayout
 {
@@ -249,17 +274,15 @@ public static class OverlayLayout
     public const string Splits = "splits";
     public const string Feed = "feed";
     public const string Banner = "banner";
-    public const string LiveSplit = "livesplit";
 
     public static IReadOnlyList<(string Id, string Name, string Default)> Widgets { get; } =
     [
         (Status, "Time, HP, room, challenge", OverlayCorners.TopRight),
         (Minimap, "Minimap", OverlayCorners.BottomRight),
         (Enemies, "Enemies in the room (HP)", OverlayCorners.BottomLeft),
-        (Splits, "Run splits", OverlayCorners.TopRight),
+        (Splits, "Run splits (LiveSplit's look)", OverlayCorners.TopRight),
         (Feed, "What just happened", OverlayCorners.BottomLeft),
         (Banner, "Big messages (challenge failed, died, run finished)", OverlayCorners.TopCentre),
-        (LiveSplit, "LiveSplit timer (LiveSplit's look, by livesplit-core)", Off),
     ];
 
     /// <summary>A corner, or off.</summary>

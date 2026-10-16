@@ -43,8 +43,8 @@ Gotcha: `SoftwareRenderer.Render`'s stride is in **pixels**, not bytes (a byte s
 2. **`LiveSplitEngine`** (App) follows Lockpick's run and keeps each split set's file in the runs folder
    (`<set>.lss`, LiveSplit's own format with every attempt); an imported set starts from the player's file, which
    Lockpick never writes to.
-3. **On screen** — the overlay's *LiveSplit timer* widget (Settings → Overlay; drawn by livesplit-core at the
-   overlay's scale) and the OBS page `/overlay/livesplit` (`GET /api/v1/livesplit.png`). Live: in a Jill game the
+3. **On screen** — the overlay's one splits widget, *Run splits* (Settings → Overlay; drawn by livesplit-core at the
+   overlay's scale, also in a pop-out window or on the Stream page at any size) and the OBS page `/overlay/livesplit` (`GET /api/v1/livesplit.png`). Live: in a Jill game the
    widget showed King Henry at 0:07 and the timer at 12.80, the same as Lockpick's splits.
 4. **CI and the release** check out the submodule and install Rust 1.99.1 (CI caches the build); code scanning skips
    the native build.

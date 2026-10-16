@@ -25,7 +25,7 @@ public sealed class LiveSplitTimer : IDisposable
     private readonly object _gate = new();
     private readonly byte _lang;
     private readonly Native.Timer _timer;
-    private readonly Native.Layout _layout;
+    private Native.Layout _layout;
     private readonly Native.ImageCache _images = new();
     private readonly Native.SoftwareRenderer _renderer = new();
     private bool _disposed;
@@ -118,6 +118,24 @@ public sealed class LiveSplitTimer : IDisposable
 
     /// <summary>Ends the attempt; its times go into the history (PB and golds updated as LiveSplit does).</summary>
     public void Reset() => Locked(() => _timer.Reset(updateSplits: true));
+
+    /// <summary>
+    /// LiveSplit's default layout with, when given, one more line under it (e.g. "World record" / "38:01.0 Hamo").
+    /// </summary>
+    public void SetFooter(string? left, string? right) => Locked(() =>
+    {
+        var layout = Native.Layout.DefaultLayout(_lang);
+        if (left is not null || right is not null)
+        {
+            using var text = new Native.TextComponent();
+            text.SetLeft(left ?? string.Empty);
+            text.SetRight(right ?? string.Empty);
+            layout.Push(text.IntoGeneric());
+        }
+
+        _layout.Dispose();
+        _layout = layout;
+    });
 
     /// <summary>The splits as a LiveSplit file, with every attempt so far.</summary>
     public string SaveLss() => Locked(() => _timer.SaveAsLss());

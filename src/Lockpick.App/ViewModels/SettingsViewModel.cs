@@ -38,7 +38,7 @@ public sealed partial class SettingsViewModel : PageViewModel
         MarkerButtonName = services.MarkerButton.DisplayName;
         OverlayEnabled = current.OverlayEnabled;
         OverlayWidgetRows = [.. OverlayLayout.Widgets.Select(w =>
-            new OverlayWidgetRow(w.Id, w.Name, OverlayLayout.Corner(current, w.Id), OverlayLayout.Choices, ApplyOverlayWidget))];
+            new OverlayWidgetRow(w.Id, w.Name, OverlayLayout.Corner(current, w.Id), OverlayLayout.Choices, ApplyOverlayWidget, services.WidgetWindows))];
         ApiEnabled = current.ApiEnabled;
         ApiAllowNetwork = current.ApiAllowNetwork;
         ApiAllowTrainer = current.ApiAllowTrainer;

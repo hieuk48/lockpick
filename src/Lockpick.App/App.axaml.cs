@@ -14,6 +14,8 @@ public partial class App : Application
     private AppServices? _services;
     private MainViewModel? _main;
     private OverlayController? _overlay;
+    private WidgetRenderer? _widgets;
+    private PopOutManager? _popOuts;
 
     public override void Initialize() => AvaloniaXamlLoader.Load(this);
 
@@ -27,7 +29,11 @@ public partial class App : Application
 
             // The overlay is a window of its own; the app still ends with the main window.
             desktop.ShutdownMode = ShutdownMode.OnMainWindowClose;
-            _overlay = new OverlayController(_services, _main.Overlay);
+            _widgets = new WidgetRenderer(_services, _main.Overlay);
+            WidgetRenderer.Current = _widgets;
+            _overlay = new OverlayController(_services, _main.Overlay, _widgets);
+            _popOuts = new PopOutManager(_services, _widgets);
+            _popOuts.RestoreOpen();
             _services.Source.Start();
             _services.Updates.StartBackgroundChecks();
             desktop.ShutdownRequested += (_, _) => Shutdown();
@@ -40,6 +46,10 @@ public partial class App : Application
     {
         _overlay?.Dispose();
         _overlay = null;
+        _popOuts?.Dispose();
+        _popOuts = null;
+        _widgets?.Dispose();
+        _widgets = null;
         _main?.Dispose();
 
         // Stop the monitor (closing the process handle) before the logger is torn down. On the thread pool: this

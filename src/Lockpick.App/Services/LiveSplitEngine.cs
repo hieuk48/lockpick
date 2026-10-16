@@ -26,6 +26,7 @@ public sealed class LiveSplitEngine : IDisposable
     private string? _setId;
     private int _current;
     private DateTimeOffset _lastGameTime;
+    private string? _record;
 
     public LiveSplitEngine(RunService runs, IGameStateSource source, string directory, ILogger log)
     {
@@ -62,6 +63,18 @@ public sealed class LiveSplitEngine : IDisposable
         {
             return _timer?.Render(width, height);
         }
+    }
+
+    /// <summary>The world record line under LiveSplit's layout ("38:01.0 Hamo"), or null for none.</summary>
+    public void SetRecord(string? record)
+    {
+        lock (_gate)
+        {
+            _record = record;
+            _timer?.SetFooter(record is null ? null : "World record", record);
+        }
+
+        Changed?.Invoke(this, EventArgs.Empty);
     }
 
     /// <summary>The chosen splits as a LiveSplit file with every attempt (LiveSplit's own format), or null.</summary>
@@ -114,6 +127,10 @@ public sealed class LiveSplitEngine : IDisposable
                         var kept = PathFor(set);
                         _timer = LiveSplitTimer.Create(File.Exists(kept) ? kept : set.ImportedFrom, "Resident Evil", set.Category,
                             [.. set.Splits.Select(s => s.Name)]);
+                        if (_record is not null)
+                        {
+                            _timer.SetFooter("World record", _record);
+                        }
                     }
                     catch (Exception ex) when (ex is IOException or InvalidDataException or UnauthorizedAccessException)
                     {

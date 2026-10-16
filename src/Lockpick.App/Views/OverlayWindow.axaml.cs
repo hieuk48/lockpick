@@ -128,6 +128,19 @@ public partial class OverlayWindow : Window
     private static FontFamily Font(string key) =>
         Application.Current?.TryFindResource(key, out var value) == true && value is FontFamily font ? font : FontFamily.Default;
 
+    /// <summary>The panel's own size (in the overlay's units, at scale 1), for fitting it into a box.</summary>
+    public static Size Measure(LayoutTransformControl panel)
+    {
+        panel.LayoutTransform = new Avalonia.Media.ScaleTransform(1, 1);
+        foreach (var control in panel.GetSelfAndVisualDescendants().OfType<Layoutable>())
+        {
+            control.InvalidateMeasure();
+        }
+
+        panel.Measure(Size.Infinity);
+        return panel.DesiredSize;
+    }
+
     /// <summary>
     /// Renders <paramref name="panel"/> (<see cref="StatusPanel"/>, <see cref="MinimapPanel"/>) at
     /// <paramref name="size"/> (1 = designed for a 480-pixel-high picture) for a monitor at <paramref name="dpi"/>;

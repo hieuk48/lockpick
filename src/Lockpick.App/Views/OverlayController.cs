@@ -20,40 +20,21 @@ public sealed class OverlayController : IDisposable
 {
     private readonly AppServices _services;
     private readonly OverlayViewModel _model;
+    private readonly WidgetRenderer _renderer;
     private readonly ILogger _log;
     private readonly DispatcherTimer _timer;
-    private readonly OverlayWindow _host;
     private readonly List<Widget> _widgets;
     private nint _game;
     private string? _installDirectory;
     private GameDisplaySettings? _display;
 
-    public OverlayController(AppServices services, OverlayViewModel model)
+    public OverlayController(AppServices services, OverlayViewModel model, WidgetRenderer renderer)
     {
         _services = services;
         _model = model;
+        _renderer = renderer;
         _log = services.LoggerFactory.CreateLogger("Overlay");
-        _host = new OverlayWindow { DataContext = model };
-        _widgets =
-        [
-            new Widget(OverlayLayout.Status, _host.StatusPanel, () => true, () => false),
-            new Widget(OverlayLayout.Minimap, _host.MinimapPanel, () => model.HasMinimap, () => model.MinimapFull),
-            new Widget(OverlayLayout.Enemies, _host.EnemiesPanel, () => model.Enemies.Count > 0, () => false),
-            new Widget(OverlayLayout.Splits, _host.SplitsPanel, () => model.SplitRows.Count > 0, () => false),
-            new Widget(OverlayLayout.Feed, _host.FeedPanel, () => model.FeedLines.Count > 0, () => false),
-            new Widget(OverlayLayout.Banner, _host.BannerPanel, () => model.HasBanner, () => false),
-            // Drawn by livesplit-core itself (LiveSplit's layout), not by the hidden host.
-            new Widget(OverlayLayout.LiveSplit, null, () => services.LiveSplitEngine.Available && services.Runs.Status.Set is not null, () => false)
-            {
-                Draw = (width, height) => services.LiveSplitEngine.Render(width, height),
-                Base = (LiveSplitWidth, LiveSplitHeight),
-            },
-        ];
-        _host.ShowEnemies(model.Enemies);
-        _host.ShowSplits(model);
-        model.PropertyChanged += OnModelChanged;
-        model.Map.PropertyChanged += OnMapChanged;
-        services.LiveSplitEngine.Changed += (_, _) => Dispatcher.UIThread.Post(() => Find(OverlayLayout.LiveSplit).Dirty = true);
+        _widgets = [.. renderer.Ids.Select(id => new Widget(id))];
         _timer = new DispatcherTimer(TimeSpan.FromMilliseconds(100), DispatcherPriority.Background, (_, _) => Tick());
         _timer.Start();
     }
@@ -64,67 +45,22 @@ public sealed class OverlayController : IDisposable
     public void Dispose()
     {
         _timer.Stop();
-        _model.PropertyChanged -= OnModelChanged;
-        _model.Map.PropertyChanged -= OnMapChanged;
         _model.Map.KeepUpdating = false;
         foreach (var widget in _widgets)
         {
             widget.Window?.Dispose();
             widget.Window = null;
         }
-
-        _host.Close();
     }
-
-    private Widget Find(string id) => _widgets.First(w => w.Id == id);
-
-    private void OnModelChanged(object? sender, PropertyChangedEventArgs e)
-    {
-        if (e.PropertyName == nameof(OverlayViewModel.Status))
-        {
-            return;
-        }
-
-        if (e.PropertyName is nameof(OverlayViewModel.SplitRows) or nameof(OverlayViewModel.RunClock) or nameof(OverlayViewModel.RunTitle)
-            or nameof(OverlayViewModel.RunComparison) or nameof(OverlayViewModel.RunBehind))
-        {
-            _host.ShowSplits(_model);
-            Find(OverlayLayout.Splits).Dirty = true;
-            return;
-        }
-
-        if (e.PropertyName is nameof(OverlayViewModel.HasBanner) || e.PropertyName?.StartsWith("Banner", StringComparison.Ordinal) == true)
-        {
-            Find(OverlayLayout.Banner).Dirty = true;
-            return;
-        }
-
-        if (e.PropertyName == nameof(OverlayViewModel.FeedLines))
-        {
-            _host.ShowFeed(_model.FeedLines);
-            Find(OverlayLayout.Feed).Dirty = true;
-            return;
-        }
-
-        if (e.PropertyName == nameof(OverlayViewModel.Enemies))
-        {
-            _host.ShowEnemies(_model.Enemies);
-            Find(OverlayLayout.Enemies).Dirty = true;
-            return;
-        }
-
-        Find(e.PropertyName?.StartsWith("Minimap", StringComparison.Ordinal) == true ? OverlayLayout.Minimap : OverlayLayout.Status).Dirty = true;
-    }
-
-    private void OnMapChanged(object? sender, PropertyChangedEventArgs e) => Find(OverlayLayout.Minimap).Dirty = true;
 
     private void Tick()
     {
         var settings = _services.Settings.Current;
         _model.UseMapSettings(settings.MapOverlay);
         var status = _services.Source.Status;
-        var minimapOn = settings.OverlayEnabled && OverlayLayout.Corner(settings, OverlayLayout.Minimap) != OverlayLayout.Off;
-        _model.Map.KeepUpdating = minimapOn && status.State == ConnectionState.Attached;
+        var minimapOn = (settings.OverlayEnabled && OverlayLayout.Corner(settings, OverlayLayout.Minimap) != OverlayLayout.Off)
+            || _renderer.Watched(OverlayLayout.Minimap); // a pop-out or the Stream page shows it
+        _model.Map.KeepUpdating = minimapOn && status.State is ConnectionState.Attached or ConnectionState.Replaying;
         if (status.State != ConnectionState.Attached || status.Process is not { } process)
         {
             Game = null;
@@ -178,7 +114,7 @@ public sealed class OverlayController : IDisposable
             var offset = margin; // from the corner, along the picture's height
             foreach (var widget in _widgets.Where(w => OverlayLayout.Corner(settings, w.Id) == corner))
             {
-                if (!widget.HasContent())
+                if (!_renderer.HasContent(widget.Id))
                 {
                     widget.Window?.Hide();
                     continue;
@@ -187,7 +123,7 @@ public sealed class OverlayController : IDisposable
                 var pixels = Render(widget, game);
                 var (w, h) = widget.Size;
                 int x, y;
-                if (widget.Full())
+                if (_renderer.Full(widget.Id))
                 {
                     // Over the whole picture (its size follows the picture), out of the corner's stack.
                     (x, y) = (picture.X + margin, picture.Y + margin);
@@ -225,9 +161,9 @@ public sealed class OverlayController : IDisposable
         }
 
         // The other widgets go above a full-screen one (the time and HP stay readable on top of the map).
-        foreach (var full in visible.Where(w => w.Full()))
+        foreach (var full in visible.Where(w => _renderer.Full(w.Id)))
         {
-            foreach (var other in visible.Where(w => !w.Full()))
+            foreach (var other in visible.Where(w => !_renderer.Full(w.Id)))
             {
                 GameWindows.PlaceAbove(other.Window!.Handle, full.Window!.Handle);
             }
@@ -240,36 +176,22 @@ public sealed class OverlayController : IDisposable
     private byte[]? Render(Widget widget, GameWindowInfo game)
     {
         widget.Window ??= new LayeredWindow($"Lockpick overlay ({widget.Id})");
-        // LiveSplit's timer counts on every tick while running, so it is drawn again each time.
-        var live = widget.Draw is not null && _services.LiveSplitEngine.Running;
-        if (!live && !widget.Dirty && game.Dpi == widget.RenderedDpi && _model.Scale == widget.RenderedScale && widget.Window.IsVisible)
+        var version = _renderer.Version(widget.Id);
+        if (!_renderer.Live(widget.Id) && version == widget.RenderedVersion && game.Dpi == widget.RenderedDpi
+            && _model.Scale == widget.RenderedScale && widget.Window.IsVisible)
         {
             return null;
         }
 
-        byte[] pixels;
-        int width, height;
-        if (widget.Draw is { } draw)
+        if (_renderer.Render(widget.Id, _model.Scale, game.Dpi) is not var (pixels, width, height))
         {
-            var dpiScale = Math.Max(1, game.Dpi) / 96.0;
-            width = Math.Max(1, (int)Math.Round(widget.Base.Width * _model.Scale * dpiScale));
-            height = Math.Max(1, (int)Math.Round(widget.Base.Height * _model.Scale * dpiScale));
-            if (draw(width, height) is not { } drawn)
-            {
-                return null;
-            }
-
-            pixels = drawn;
-        }
-        else
-        {
-            (pixels, width, height) = OverlayWindow.Render(widget.Panel!, _model.Scale, game.Dpi);
+            return null;
         }
 
         widget.Size = (width, height);
         widget.RenderedDpi = game.Dpi;
         widget.RenderedScale = _model.Scale;
-        widget.Dirty = false;
+        widget.RenderedVersion = version;
         return pixels;
     }
 
@@ -283,31 +205,14 @@ public sealed class OverlayController : IDisposable
         _model.Status = reason;
     }
 
-    /// <summary>One widget: its panel in the hidden host, and the layered window that shows it over the game.</summary>
-    /// <summary>The LiveSplit timer's size in the overlay's own units (LiveSplit's layout scales to fit it).</summary>
-    private const double LiveSplitWidth = 170;
-    private const double LiveSplitHeight = 300;
-
-    private sealed class Widget(string id, LayoutTransformControl? panel, Func<bool> hasContent, Func<bool> full)
+    /// <summary>One widget on the overlay: the layered window that shows it over the game, and what it last drew.</summary>
+    private sealed class Widget(string id)
     {
         public string Id { get; } = id;
 
-        public LayoutTransformControl? Panel { get; } = panel;
-
-        /// <summary>Draws the widget itself (premultiplied BGRA at the size asked), instead of the host's panel.</summary>
-        public Func<int, int, byte[]?>? Draw { get; init; }
-
-        /// <summary>A drawn widget's size in the overlay's own units.</summary>
-        public (double Width, double Height) Base { get; init; }
-
-        public Func<bool> HasContent { get; } = hasContent;
-
-        /// <summary>Covers the game's picture now instead of sitting in its corner.</summary>
-        public Func<bool> Full { get; } = full;
-
         public LayeredWindow? Window { get; set; }
 
-        public bool Dirty { get; set; } = true;
+        public int RenderedVersion { get; set; }
 
         public int RenderedDpi { get; set; }
 

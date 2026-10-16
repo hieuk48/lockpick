@@ -37,8 +37,14 @@ All notable changes to this project are documented here. The format follows
   checks every game file against GOG's release (no mods) and lists the rules only you can keep; each attempt's
   record says whether every check passed.
 - **LiveSplit's engine inside Lockpick** (livesplit-core, docs/LIVESPLIT_CORE.md): Lockpick's runs are also timed by
-  LiveSplit's own engine, so no LiveSplit is needed — its layout as an overlay widget (*LiveSplit timer*) and an OBS
-  page (`/overlay/livesplit`), and each split set kept as a LiveSplit file with every attempt.
+  LiveSplit's own engine, so no LiveSplit is needed — its layout is the overlay's one splits widget (*Run splits*,
+  with the world record from speedrun.com when the leaderboard is on) and an OBS page (`/overlay/livesplit`), and
+  each split set is kept as a LiveSplit file with every attempt.
+- **Widgets off the game:** every overlay widget can also **pop out** into a window of its own (Settings → Overlay →
+  Pop out): move it to any monitor, resize it, and right-click it for a green background (OBS's chroma key) or to
+  keep it on top; windows remember their place and reopen with Lockpick. The new **Stream page** shows the widgets
+  inside Lockpick as large as you like — Customize picks which, their order and sizes — so the game's picture can
+  stay clean.
 - **Runs and splits** (new Runs page; [docs/RUNS.md](docs/RUNS.md)): pick the community's splits (Jill or Chris,
   either ending, NMG or MG), a key-item route, or import a LiveSplit file (the community's from speedrun.com or your
   own), and every new game is timed on the game's own clock — the in-game time the leaderboard uses — splitting by

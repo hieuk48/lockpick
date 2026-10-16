@@ -194,11 +194,13 @@ is decided later. Keep-running stays out of challenges (it patches the game, and
    (#55), a controller button for the map, never activating Lockpick's windows over exclusive fullscreen.
    - **Leaderboard runs — done 2026-10-16:** trainer locked read-only, ask mode off, the install hashed against
      GOG's release (no mods), the rules only the player can keep as reminders, the result on each attempt's record;
-   - **Widgets off the game too** (owner, 2026-10-16: the overlays start to cover the picture): one splits widget,
-     drawn by livesplit-core (LiveSplit's look) with the world record, instead of two; every widget also as a
-     **pop-out window** (movable, resizable, on any monitor, plain or green background for OBS's window capture,
-     position remembered) and on a **Stream page** in the app — a dashboard of the widgets the player picks, sizes
-     and orders; the overlay, pop-outs and Stream page all draw the same widgets, so each can be used alone;
+   - **Widgets off the game too — done 2026-10-16** (owner: the overlays start to cover the picture): one splits
+     widget, drawn by livesplit-core (LiveSplit's look) with the world record, instead of two; every widget also as
+     a **pop-out window** (movable, resizable, on any monitor, plain or green background for OBS's window capture,
+     always on top if wanted, place and open state remembered) and on a **Stream page** in the app — a dashboard of
+     the widgets the player picks, sizes and orders; the overlay, pop-outs and Stream page all draw the same widgets
+     (one renderer), so each can be used alone. Checked in a replay: map, splits and status in pop-outs and tiles,
+     reopened after a restart;
    - follow the game window (PID → class `RESIDENT EVIL`): client rectangle in physical pixels, monitor, DPI,
      minimized, exclusive fullscreen; move/size events;
    - a click-through, topmost, non-activating overlay window over the 4:3 picture (computed from `dxcfg.ini`'s
