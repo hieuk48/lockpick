@@ -106,46 +106,38 @@ public sealed class OverlayController : IDisposable
         _model.SetPicture(picture.Width / dpiScale, picture.Height / dpiScale);
         var margin = (int)Math.Round(OverlayViewModel.Margin * _model.Scale * dpiScale);
         var shown = 0;
-        foreach (var corner in OverlayCorners.All)
+        // Draw what changed, then place every widget with content (corners stack; spots placed by hand).
+        List<(Widget Widget, byte[]? Pixels)> drawn = [];
+        foreach (var widget in _widgets.Where(w => OverlayLayout.Corner(settings, w.Id) != OverlayLayout.Off))
         {
-            var left = corner is OverlayCorners.TopLeft or OverlayCorners.BottomLeft;
-            var centre = corner == OverlayCorners.TopCentre;
-            var top = corner is OverlayCorners.TopLeft or OverlayCorners.TopRight or OverlayCorners.TopCentre;
-            var offset = margin; // from the corner, along the picture's height
-            foreach (var widget in _widgets.Where(w => OverlayLayout.Corner(settings, w.Id) == corner))
+            if (!_renderer.HasContent(widget.Id))
             {
-                if (!_renderer.HasContent(widget.Id))
-                {
-                    widget.Window?.Hide();
-                    continue;
-                }
-
-                var pixels = Render(widget, game);
-                var (w, h) = widget.Size;
-                int x, y;
-                if (_renderer.Full(widget.Id))
-                {
-                    // Over the whole picture (its size follows the picture), out of the corner's stack.
-                    (x, y) = (picture.X + margin, picture.Y + margin);
-                }
-                else
-                {
-                    x = centre ? picture.X + ((picture.Width - w) / 2) : left ? picture.X + margin : picture.Right - margin - w;
-                    y = top ? picture.Y + offset : picture.Bottom - offset - h;
-                    offset += h + margin;
-                }
-
-                if (pixels is not null)
-                {
-                    widget.Window!.Show(x, y, w, h, pixels);
-                }
-                else if (widget.Window!.Bounds is var b && (b.X != x || b.Y != y))
-                {
-                    widget.Window.Move(x, y);
-                }
-
-                shown++;
+                widget.Window?.Hide();
+                continue;
             }
+
+            drawn.Add((widget, Render(widget, game)));
+        }
+
+        var places = OverlayPlacement.Place(
+            drawn.Select(d => new OverlayPlacement.Item(d.Widget.Id, OverlayLayout.Corner(settings, d.Widget.Id),
+                settings.OverlayWidgetSpots.TryGetValue(d.Widget.Id, out var spot) ? spot : null,
+                d.Widget.Size.Width, d.Widget.Size.Height, _renderer.Full(d.Widget.Id))),
+            picture.X, picture.Y, picture.Width, picture.Height, margin);
+        foreach (var (widget, pixels) in drawn)
+        {
+            var (w, h) = widget.Size;
+            var (x, y) = ((int)Math.Round(places[widget.Id].X), (int)Math.Round(places[widget.Id].Y));
+            if (pixels is not null)
+            {
+                widget.Window!.Show(x, y, w, h, pixels);
+            }
+            else if (widget.Window!.Bounds is var b && (b.X != x || b.Y != y))
+            {
+                widget.Window.Move(x, y);
+            }
+
+            shown++;
         }
 
         foreach (var widget in _widgets.Where(w => OverlayLayout.Corner(settings, w.Id) == OverlayLayout.Off))

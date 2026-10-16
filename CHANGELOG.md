@@ -48,6 +48,9 @@ All notable changes to this project are documented here. The format follows
   overlay's challenge line), optional sounds when a challenge fails or you die — each its own, from Windows' sounds
   or a .wav file of yours (Challenges → Feedback, with a Play button) — and **Challenge: try again** as a key or
   controller button (Settings → Hotkeys). Closing the game ends a challenge's attempt.
+- **Overlay layout editor** (#55, Settings → Overlay → Layout): the game's picture in small with every widget that's
+  on, drawn as it looks; drag one anywhere and it keeps that spot (as a share of the picture, so on any size). Its
+  place then reads *Your spot*; choosing a corner, or *Back to the corners*, puts it back.
 - **Every widget in OBS** (#60): any overlay widget — the map, the enemies, the status, big messages — as its own
   Browser Source (`/overlay/widget?id=…`, drawn live as large as fits), and **Stream → OBS** lists each widget's
   address with a **Copy OBS link** button.

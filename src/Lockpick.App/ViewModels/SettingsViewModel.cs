@@ -45,7 +45,10 @@ public sealed partial class SettingsViewModel : PageViewModel
         MarkerButtonName = services.MarkerButton.DisplayName;
         OverlayEnabled = current.OverlayEnabled;
         OverlayWidgetRows = [.. OverlayLayout.Widgets.Select(w =>
-            new OverlayWidgetRow(w.Id, w.Name, OverlayLayout.Corner(current, w.Id), OverlayLayout.Choices, ApplyOverlayWidget, services.WidgetWindows))];
+            new OverlayWidgetRow(w.Id, w.Name, OverlayLayout.Corner(current, w.Id), OverlayLayout.Choices, ApplyOverlayWidget, services.WidgetWindows)
+            {
+                Spot = current.OverlayWidgetSpots.TryGetValue(w.Id, out var spot) ? spot : null,
+            })];
         ApiEnabled = current.ApiEnabled;
         ApiAllowNetwork = current.ApiAllowNetwork;
         ApiAllowTrainer = current.ApiAllowTrainer;
@@ -333,6 +336,36 @@ public sealed partial class SettingsViewModel : PageViewModel
         {
             Persist(s => s with { OverlayEnabled = value });
         }
+    }
+
+    /// <summary>A widget dropped in the layout editor: it keeps that spot on the picture.</summary>
+    public void PlaceOverlayWidget(string id, WidgetSpot spot)
+    {
+        if (OverlayWidgetRows.FirstOrDefault(r => r.Id == id) is not { } row)
+        {
+            return;
+        }
+
+        row.Spot = spot;
+        var spots = new Dictionary<string, WidgetSpot>(_services.Settings.Current.OverlayWidgetSpots) { [id] = spot };
+        Persist(s => s with { OverlayWidgetSpots = spots });
+        row.Corner = OverlayCorners.Custom; // saves the corner too
+    }
+
+    /// <summary>The widgets placed by hand go back to their own corners (widgets that are off stay off).</summary>
+    [RelayCommand]
+    private void ResetOverlayLayout()
+    {
+        foreach (var row in OverlayWidgetRows)
+        {
+            row.Spot = null;
+            if (row.Corner == OverlayCorners.Custom)
+            {
+                row.Corner = OverlayLayout.Widgets.First(w => w.Id == row.Id).Default;
+            }
+        }
+
+        Persist(s => s with { OverlayWidgetSpots = new Dictionary<string, WidgetSpot>() });
     }
 
     private void ApplyOverlayWidget(OverlayWidgetRow row)

@@ -90,6 +90,9 @@ public sealed record AppSettings
     /// <summary>Each overlay widget's corner, or "Off" (<see cref="OverlayLayout"/>); missing: the widget's default.</summary>
     public IReadOnlyDictionary<string, string> OverlayWidgetCorners { get; init; } = new Dictionary<string, string>();
 
+    /// <summary>Where each widget placed by hand sits (widget id → spot), for the corner <see cref="OverlayCorners.Custom"/>.</summary>
+    public IReadOnlyDictionary<string, WidgetSpot> OverlayWidgetSpots { get; init; } = new Dictionary<string, WidgetSpot>();
+
     /// <summary>How the overlay's map looks and which views its hotkey cycles through.</summary>
     public MapOverlaySettings MapOverlay { get; init; } = new();
 
@@ -189,6 +192,9 @@ public static class OverlayCorners
 
     /// <summary>Centred at the top of the picture (big messages).</summary>
     public const string TopCentre = "Top centre";
+
+    /// <summary>Placed by hand in the layout editor (Settings → Overlay), anywhere on the picture.</summary>
+    public const string Custom = "Your spot";
 
     public static IReadOnlyList<string> All { get; } = [TopRight, BottomRight, BottomLeft, TopLeft, TopCentre];
 }
@@ -317,7 +323,7 @@ public static class OverlayLayout
     ];
 
     /// <summary>A corner, or off.</summary>
-    public static IReadOnlyList<string> Choices { get; } = [.. OverlayCorners.All, Off];
+    public static IReadOnlyList<string> Choices { get; } = [.. OverlayCorners.All, OverlayCorners.Custom, Off];
 
     public static string Corner(AppSettings settings, string id) =>
         settings.OverlayWidgetCorners.TryGetValue(id, out var corner) && Choices.Contains(corner) ? corner

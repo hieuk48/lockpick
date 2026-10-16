@@ -6,7 +6,11 @@ namespace Lockpick.App.Views;
 
 public partial class SettingsView : UserControl
 {
-    public SettingsView() => InitializeComponent();
+    public SettingsView()
+    {
+        InitializeComponent();
+        LayoutEditor.Placed += (_, placed) => (DataContext as SettingsViewModel)?.PlaceOverlayWidget(placed.Id, placed.Spot);
+    }
 
     private async void OnOpenKeyPage(object? sender, RoutedEventArgs e)
     {

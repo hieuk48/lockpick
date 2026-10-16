@@ -115,6 +115,47 @@ public sealed class OverlayLayoutTests : IDisposable
     }
 
     [Fact]
+    public void Widgets_in_a_corner_stack_and_a_spot_placed_by_hand_stays_inside_the_picture()
+    {
+        OverlayPlacement.Item Item(string id, string corner, double w, double h, WidgetSpot? spot = null, bool full = false) => new(id, corner, spot, w, h, full);
+        var places = OverlayPlacement.Place(
+        [
+            Item("a", OverlayCorners.TopRight, 100, 50),
+            Item("b", OverlayCorners.TopRight, 80, 40),
+            Item("c", OverlayCorners.BottomLeft, 60, 30),
+            Item("d", OverlayCorners.Custom, 100, 100, new WidgetSpot(0.5, 1)),
+            Item("e", OverlayCorners.Custom, 100, 100, new WidgetSpot(7, -3)), // out of range: clamped to the edges
+            Item("m", OverlayCorners.BottomRight, 0, 0, full: true),
+        ], 10, 20, 640, 480, 6);
+
+        Assert.Equal((544, 26), places["a"]);         // top right, inside the margin
+        Assert.Equal((564, 82), places["b"]);         // under it
+        Assert.Equal((16, 464), places["c"]);         // bottom left
+        Assert.Equal((280, 394), places["d"]);        // centred along the width, at the bottom
+        Assert.Equal((544, 26), places["e"]);
+        Assert.Equal((16, 26), places["m"]);          // a full-screen map covers the picture
+
+        var spot = OverlayPlacement.SpotFor(280, 394, 100, 100, 10, 20, 640, 480, 6);
+        Assert.Equal(new WidgetSpot(0.5, 1), spot);   // the way back from a drop
+    }
+
+    [Fact]
+    public void Spots_survive_a_save_and_load()
+    {
+        var path = Path.Combine(_folder, "settings.json");
+        var spots = new Dictionary<string, WidgetSpot> { [OverlayLayout.Minimap] = new(0.25, 0.75) };
+        new SettingsStore(path, NullLogger.Instance).Save(new AppSettings
+        {
+            OverlayWidgetSpots = spots,
+            OverlayWidgetCorners = new Dictionary<string, string> { [OverlayLayout.Minimap] = OverlayCorners.Custom },
+        });
+
+        var loaded = new SettingsStore(path, NullLogger.Instance).Load();
+        Assert.Equal(new WidgetSpot(0.25, 0.75), loaded.OverlayWidgetSpots[OverlayLayout.Minimap]);
+        Assert.Equal(OverlayCorners.Custom, OverlayLayout.Corner(loaded, OverlayLayout.Minimap));
+    }
+
+    [Fact]
     public void Only_the_room_views_cover_the_picture()
     {
         Assert.True(MapViews.IsFull(MapViews.Room));

@@ -191,8 +191,9 @@ is decided later. Keep-running stays out of challenges (it patches the game, and
    the game's own layout. HP band, poison and enemy HP done (#42). Event feed (#43) first pass done: the change
    explainer's plain words in the event log and an overlay widget (attackers by name and zombies getting back up
    still to come). Big messages (#59, first part): challenge failed with the reason, a death, a run finished or a
-   new personal best, centred at the top. Next: the layout editor
-   (#55), a controller button for the map, never activating Lockpick's windows over exclusive fullscreen.
+   new personal best, centred at the top. **Layout editor done 2026-10-16 (#55):** drag widgets on a preview of the
+   picture to any spot (kept as a share of the picture); the overlay and the preview place widgets with the same
+   code. Lockpick no longer takes the focus over exclusive fullscreen (the ask-mode question shows without it).
    - **Leaderboard runs — done 2026-10-16:** trainer locked read-only, ask mode off, the install hashed against
      GOG's release (no mods), the rules only the player can keep as reminders, the result on each attempt's record;
    - **Widgets off the game too — done 2026-10-16** (owner: the overlays start to cover the picture): one splits

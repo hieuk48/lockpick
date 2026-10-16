@@ -224,6 +224,18 @@
                        IsVisible="{Binding Status, Converter={x:Static StringConverters.IsNotNullOrEmpty}}" />
           </StackPanel>
         </Border>
+
+        <!-- The layout editor: drag widgets onto the game's picture (#55). -->
+        <Border Classes="card">
+          <StackPanel Spacing="8">
+            <TextBlock Classes="caption" Text="LAYOUT" />
+            <TextBlock TextWrapping="Wrap" Foreground="{StaticResource LpMutedBrush}"
+                       Text="Drag a widget to put it anywhere on the game's picture: it keeps that spot at any size (its place above reads Your spot). Choosing a corner above puts it back. Widgets with nothing to show yet are boxes." />
+            <c:OverlayLayoutEditor x:Name="LayoutEditor" Rows="{Binding OverlayWidgetRows}"
+                                   AutomationProperties.Name="Overlay layout: drag widgets to place them" />
+            <Button Content="Back to the corners" Command="{Binding ResetOverlayLayoutCommand}" HorizontalAlignment="Left" />
+          </StackPanel>
+        </Border>
       </c:CardColumns>
 
       <c:CardColumns MinColumnWidth="480" MaxColumns="3" IsVisible="{Binding SelectedSection, Converter={x:Static c:SectionIs.Instance}, ConverterParameter=hotkeys}">
