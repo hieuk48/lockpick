@@ -133,6 +133,7 @@ docs/                          architecture, roadmap, research, compatibility, m
 
 ## Documentation
 
+- **[Player guide](docs/GUIDE.md)** — challenges, runs, the overlay, OBS, LiveSplit, troubleshooting
 - [Roadmap and acceptance criteria](docs/ROADMAP.md)
 - [Development guide](docs/DEVELOPMENT.md) — build, test, verify addresses, release
 - [Architecture and decisions](docs/ARCHITECTURE.md)
