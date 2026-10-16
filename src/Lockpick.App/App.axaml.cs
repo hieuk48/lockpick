@@ -42,8 +42,13 @@ public partial class App : Application
         _overlay = null;
         _main?.Dispose();
 
-        // Stop the monitor (closing the process handle) before the logger is torn down.
-        _services?.DisposeAsync().AsTask().GetAwaiter().GetResult();
+        // Stop the monitor (closing the process handle) before the logger is torn down. On the thread pool: this
+        // thread waits, and an await inside (the API's shutdown) that came back to it would hang the app on close.
+        if (_services is { } services)
+        {
+            Task.Run(() => services.DisposeAsync().AsTask()).GetAwaiter().GetResult();
+        }
+
         _services = null;
     }
 }
