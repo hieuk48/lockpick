@@ -93,6 +93,11 @@ until it is active again. Measured in windowed 1280×720 and 1920×1080. Consequ
 | `PrintWindow(PW_RENDERFULLCONTENT)` | works | works | Some calls return a black frame; take a few and keep the brightest. |
 | Screen copy (`BitBlt` from the desktop) | works when the game is on top | see overlay note | Shows whatever is in front. |
 
+**Screen copies on the 150 % monitor can't be trusted:** a desktop screen copy (GDI `BitBlt`) there showed the
+game only partly (black elsewhere) even with no overlay at all — likely a hardware overlay plane the copy doesn't
+see — while PrintWindow and OBS's window and game captures were complete. OBS's Display Capture keeps the monitor
+layout from when OBS started (it still listed the secondary as portrait after it was rotated).
+
 Our overlay window is **not** part of any window/game capture (PrintWindow, WGC, game capture) — only of a display
 capture. For OBS, the HUD should therefore be a browser source (planned), not the on-screen overlay.
 

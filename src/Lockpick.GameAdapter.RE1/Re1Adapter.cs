@@ -75,6 +75,15 @@ public sealed class Re1Adapter : IGameAdapter
             ? fileName[7] - '0'
             : null;
 
+    public string WindowClass => "RESIDENT EVIL";
+
+    /// <summary>
+    /// GOG's DirectDraw wrapper settings (<c>dxcfg.ini</c>, docs/DISPLAY.md): <c>aspect=disabled</c> stretches the
+    /// 640×480 picture over the window, <c>scaling=integer</c> uses whole multiples, otherwise it is fitted at 4:3.
+    /// </summary>
+    public Core.Display.GameDisplaySettings DisplaySettings(string installDirectory) =>
+        Re1Display.Read(Path.Combine(installDirectory, "dxcfg.ini"));
+
     public Core.Insight.IProgressTracker CreateProgressTracker(VersionProfile profile) =>
         new Re1ProgressTracker(Re1Knowledge.LoadEmbedded());
 

@@ -69,6 +69,12 @@ public sealed record AppSettings
     /// <summary>Let API clients use trainer commands (still only while Trainer Mode is on).</summary>
     public bool ApiAllowTrainer { get; init; }
 
+    /// <summary>Show the overlay over the game window (click-through; never takes focus).</summary>
+    public bool OverlayEnabled { get; init; }
+
+    /// <summary>Which corner of the game's picture the overlay sits in (<see cref="OverlayCorners"/>).</summary>
+    public string OverlayCorner { get; init; } = OverlayCorners.TopRight;
+
     /// <summary>Set only while ask mode has the game frozen; lets the next start unfreeze it after a crash.</summary>
     public PausedGame? PausedGame { get; init; }
 }
@@ -106,4 +112,15 @@ public sealed class SettingsStore(string path, ILogger logger)
         Current = settings;
         logger.LogInformation("Settings saved to {Path}", path);
     }
+}
+
+/// <summary>Where the overlay sits on the game's picture. Not top-left by default: Discord's overlay toast shows there.</summary>
+public static class OverlayCorners
+{
+    public const string TopRight = "Top right";
+    public const string BottomRight = "Bottom right";
+    public const string BottomLeft = "Bottom left";
+    public const string TopLeft = "Top left";
+
+    public static IReadOnlyList<string> All { get; } = [TopRight, BottomRight, BottomLeft, TopLeft];
 }

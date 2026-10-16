@@ -172,7 +172,11 @@ is decided later. Keep-running stays out of challenges (it patches the game, and
 1. **Responsive app — done 2026-10-15:** every page at ultrawide (full, half, third, quarter), 1080p, 720p, 1024×768,
    800×600, portrait (720×1280 at 150 %) and the 150 % 1080p monitor (full to quarter); content scrolls instead of
    clipping; the map keeps the space.
-2. **Overlay** (spec: DISPLAY.md requirements):
+2. **Overlay** (spec: DISPLAY.md requirements). **Foundation done 2026-10-15 (#54):** follows the game window
+   (100 % and 150 % monitors, moved, minimized), sits on the 4:3 picture from `dxcfg.ini`, click-through and
+   never activated (verified: a click on the panel reaches the game, the game keeps focus), hidden in exclusive
+   fullscreen; widgets: in-game time, HP bar, room, challenge state (clean / failed with the reason); corner setting.
+   Next: the layout editor and toggle (#55), more widgets (#42, #43), the frame-pacing budget, the owner check.
    - follow the game window (PID → class `RESIDENT EVIL`): client rectangle in physical pixels, monitor, DPI,
      minimized, exclusive fullscreen; move/size events;
    - a click-through, topmost, non-activating overlay window over the 4:3 picture (computed from `dxcfg.ini`'s

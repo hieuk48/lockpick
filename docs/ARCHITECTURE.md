@@ -193,6 +193,16 @@ through `TrainerService` (source `api`); switching to read-only or Challenge is 
 `HttpListener`: binding to the network with `HttpListener` needs a URL ACL (administrator), Kestrel doesn't; the
 cost is the ASP.NET Core runtime in the self-contained build.
 
+**ADR-018 — The overlay is a separate window, never a hook.** The in-game overlay is an Avalonia window of Lockpick's
+own, laid over the game's picture: layered + transparent (clicks reach the game), no-activate and a tool window (the
+game keeps focus — it pauses and goes black otherwise — and the overlay isn't in Alt+Tab), topmost. The view layer
+follows the game window ten times a second (`GameWindows` in Platform.Windows: the process's window of the adapter's
+`WindowClass`, client rectangle, monitor, DPI, minimized, mode) and places the overlay on the picture, which the
+adapter computes from the game's display settings (`DisplaySettings` → `GameDisplaySettings.Picture`: RE1 reads GOG's
+`dxcfg.ini`). Nothing is injected into the game, so it can't affect stability or a run, and challenges can use it;
+the price is that window and game captures don't include it (OBS gets browser-source pages instead) and exclusive
+fullscreen isn't covered (the overlay hides there; docs/DISPLAY.md).
+
 **ADR-009 — Responsive UI.** The window switches to an icon-rail + single-column layout below 760 px
 (window) / 780 px (dashboard content), for portrait monitors and side-by-side use with the game.
 Icons are Lucide (ISC) path data rendered with Lucide's stroke style.

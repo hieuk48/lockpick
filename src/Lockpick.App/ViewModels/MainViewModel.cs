@@ -17,7 +17,8 @@ public sealed partial class MainViewModel : ObservableObject, IDisposable
         _services = services;
         State = new LiveState(services.Source);
         Debug = new DebugViewModel(services, State);
-        _settings = new SettingsViewModel(services, RunSetup);
+        Overlay = new OverlayViewModel(services, State);
+        _settings = new SettingsViewModel(services, RunSetup, Overlay);
         Pages =
         [
             new DashboardViewModel(State, services.Adapter.RoomName), new ChallengesViewModel(services, State), new TrainerViewModel(services, State),
@@ -39,6 +40,9 @@ public sealed partial class MainViewModel : ObservableObject, IDisposable
     public LiveState State { get; }
 
     public DebugViewModel Debug { get; }
+
+    /// <summary>What the in-game overlay shows (the window itself is run by the view layer).</summary>
+    public OverlayViewModel Overlay { get; }
 
     public UpdateService Updates { get; }
 

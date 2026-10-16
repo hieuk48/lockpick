@@ -12,11 +12,12 @@ public sealed partial class SettingsViewModel : PageViewModel
     private readonly Action _runSetup;
     private bool _loading = true;
 
-    public SettingsViewModel(AppServices services, Action runSetup)
+    public SettingsViewModel(AppServices services, Action runSetup, OverlayViewModel overlay)
         : base("Settings", "Icon.Settings")
     {
         _services = services;
         _runSetup = runSetup;
+        Overlay = overlay;
         Updates = services.Updates;
         var current = services.Settings.Current;
         GameExecutablePath = current.GameExecutablePath ?? string.Empty;
@@ -25,6 +26,8 @@ public sealed partial class SettingsViewModel : PageViewModel
         MarkerHotkey = MarkerHotkeyChoices.Contains(current.MarkerHotkey) ? current.MarkerHotkey : "Off";
         MarkerHotkeyStatus = services.MarkerHotkeyName is null && MarkerHotkey != "Off" ? $"{MarkerHotkey} is used by another program." : string.Empty;
         MarkerButtonName = services.MarkerButton.DisplayName;
+        OverlayEnabled = current.OverlayEnabled;
+        OverlayCorner = OverlayCorners.All.Contains(current.OverlayCorner) ? current.OverlayCorner : OverlayCorners.TopRight;
         ApiEnabled = current.ApiEnabled;
         ApiAllowNetwork = current.ApiAllowNetwork;
         ApiAllowTrainer = current.ApiAllowTrainer;
@@ -255,6 +258,33 @@ public sealed partial class SettingsViewModel : PageViewModel
 
     [RelayCommand]
     private void RunSetup() => _runSetup();
+
+    /// <summary>The overlay's state (its status line shows whether it's up, or why not).</summary>
+    public OverlayViewModel Overlay { get; }
+
+    [ObservableProperty]
+    public partial bool OverlayEnabled { get; set; }
+
+    [ObservableProperty]
+    public partial string OverlayCorner { get; set; } = OverlayCorners.TopRight;
+
+    public IReadOnlyList<string> OverlayCornerChoices => OverlayCorners.All;
+
+    partial void OnOverlayEnabledChanged(bool value)
+    {
+        if (!_loading)
+        {
+            Persist(s => s with { OverlayEnabled = value });
+        }
+    }
+
+    partial void OnOverlayCornerChanged(string value)
+    {
+        if (!_loading && OverlayCorners.All.Contains(value))
+        {
+            Persist(s => s with { OverlayCorner = value });
+        }
+    }
 
     partial void OnCheckForUpdatesChanged(bool value)
     {

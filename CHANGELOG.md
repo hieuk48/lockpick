@@ -6,6 +6,13 @@ All notable changes to this project are documented here. The format follows
 
 ## [Unreleased]
 
+### Added
+- **Overlay** (Settings → Overlay, off until you turn it on): the in-game time, HP, the room and your challenge
+  (clean, or failed with the reason) in a small panel on top of the game's picture, in the corner you pick. Clicks
+  go through it and it never takes focus, so the game keeps running; it follows the game window across monitors and
+  scaling, sits on the 4:3 picture (from the game's own display settings) and hides while the game is minimized or
+  in exclusive fullscreen.
+
 ## [0.2.0] - 2026-10-15
 
 The core trainer: cheats you switch on deliberately (health, ammo, inventory, hotkeys), every change checked, read

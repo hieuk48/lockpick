@@ -61,6 +61,15 @@ public interface IGameAdapter
     /// <summary>The save slot a file in <see cref="SaveDirectory"/> belongs to, or null for any other file.</summary>
     int? SaveSlot(string fileName) => null;
 
+    /// <summary>The game window's class name, to tell it from the process's other windows; null to take the first visible one.</summary>
+    string? WindowClass => null;
+
+    /// <summary>
+    /// How the game scales its picture into its window, from the settings in the install at
+    /// <paramref name="installDirectory"/> (read only); null when unknown.
+    /// </summary>
+    Display.GameDisplaySettings? DisplaySettings(string installDirectory) => null;
+
     /// <summary>What challenges need to know about the game (e.g. what counts as a shot); null when unsupported.</summary>
     Challenges.IChallengeRules? CreateChallengeRules(VersionProfile profile) => null;
 
