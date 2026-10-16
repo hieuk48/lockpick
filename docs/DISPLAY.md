@@ -117,9 +117,15 @@ WS_EX_TOPMOST | WS_EX_NOACTIVATE | WS_EX_TOOLWINDOW`, shown with `SW_SHOWNOACTIV
 
 - Windowed (both monitors, straddling, every size): visible over the game; the game **kept the foreground** (no
   pause); not in window captures (above).
-- Exclusive fullscreen: the overlay showed in a screen copy, but a screen copy can differ from what an exclusive
-  fullscreen game puts on the monitor. **Owner check still needed:** look at the screen with an overlay over
-  `presentation=fullscreen`. Until then, treat overlays as supported in windowed and `desktop` borderless only.
+- Exclusive fullscreen (desktop resolution, 2026-10-15): a plain Win32 layered box created after the game went
+  fullscreen was visible to the owner for 30 s and the game stayed exclusive. Lockpick's own overlay (an Avalonia
+  window) was not: it was below the game, and every way of raising it (`HWND_TOPMOST`, `HWND_TOP`, inserting it
+  right above the game, hide + show without activation) put it above for under 50–200 ms before it was below the
+  game again (the owner saw it flash). Not yet known whether the game or Lockpick's side does that; until then the
+  overlay hides in exclusive fullscreen and players use borderless. Fullscreen at another resolution is untested.
+- The overlay sits directly above the game in the window stack, not above everything (owner report: a topmost
+  overlay floated over other apps); topmost only while the game is.
+- Owner-verified on the 150 % monitor too: the overlay panel in the picture's corner, the game fully visible.
 - **Discord's overlay** shows a "use the overlay" toast in the game's top-left corner the first time a game is
   focused, covering anything there. Keep Lockpick's widgets away from the top-left by default and let players move
   them.
@@ -135,9 +141,9 @@ WS_EX_TOPMOST | WS_EX_NOACTIVATE | WS_EX_TOOLWINDOW`, shown with `SW_SHOWNOACTIV
    the 4:3 picture rather than the pillarbox.
 3. **Overlay window:** the styles above; never activate; hide while the game is minimized; scale widgets by the
    monitor's DPI (the game itself doesn't scale); default position away from the top-left.
-4. **Exclusive fullscreen:** detect it; until the owner check passes, tell the player the overlay needs windowed or
-   borderless (`display=desktop`, `presentation=windowed`); never activate Lockpick windows while it is up (the game
-   minimizes and stops).
+4. **Exclusive fullscreen:** the game covers Lockpick's overlay within 200 ms of every raise (above), so the overlay
+   hides there and Lockpick offers borderless (the game display helper); never activate Lockpick windows while it
+   is up (the game minimizes and stops).
 5. **OBS:** HUD as a browser source; recommend Game Capture (works in every mode, no pillarbox) or Window Capture
    (WGC). Explain the black window when the game is inactive, and offer the keep-running option (Trainer Mode).
 6. **Placement helper:** move/size the game window to a chosen monitor (works, including the scaled monitor; sizes

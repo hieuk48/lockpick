@@ -10,8 +10,9 @@ namespace Lockpick.App.Views;
 
 /// <summary>
 /// Keeps the overlay window on the game's picture (docs/DISPLAY.md requirements): finds the game window, follows its
-/// position, size and monitor ten times a second, and hides the overlay while the game is minimized, hidden or in
-/// exclusive fullscreen (where an overlay isn't confirmed to show and any focus change minimizes the game).
+/// position, size and monitor ten times a second, and hides the overlay while the game is minimized or hidden, and in
+/// exclusive fullscreen: there the game puts itself back above the overlay within 50–200 ms of every raise (live
+/// 2026-10-15; docs/DISPLAY.md), so it would only flicker.
 /// </summary>
 public sealed class OverlayController : IDisposable
 {
@@ -78,7 +79,7 @@ public sealed class OverlayController : IDisposable
 
         if (game.Mode == GameWindowMode.ExclusiveFullscreen)
         {
-            Hide("The game is in exclusive fullscreen — use windowed or borderless for the overlay");
+            Hide("The game is in exclusive fullscreen, where it covers the overlay — switch it to borderless (windowed at desktop size)");
             return;
         }
 
@@ -91,6 +92,10 @@ public sealed class OverlayController : IDisposable
 
         var picture = _display?.Picture(game.Client) ?? game.Client;
         Show(picture, game.Dpi);
+        if (_window?.Handle is { } overlay and not 0)
+        {
+            GameWindows.KeepAbove(overlay, game.Handle);
+        }
     }
 
     private void Show(PixelRect picture, int dpi)

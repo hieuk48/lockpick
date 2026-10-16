@@ -201,7 +201,8 @@ follows the game window ten times a second (`GameWindows` in Platform.Windows: t
 adapter computes from the game's display settings (`DisplaySettings` → `GameDisplaySettings.Picture`: RE1 reads GOG's
 `dxcfg.ini`). Nothing is injected into the game, so it can't affect stability or a run, and challenges can use it;
 the price is that window and game captures don't include it (OBS gets browser-source pages instead) and exclusive
-fullscreen isn't covered (the overlay hides there; docs/DISPLAY.md).
+fullscreen covers it (the game ends up above it within 200 ms of every raise; docs/DISPLAY.md), so it hides there.
+It is kept directly above the game in the window stack, not topmost, so other windows cover it with the game.
 
 **ADR-009 — Responsive UI.** The window switches to an icon-rail + single-column layout below 760 px
 (window) / 780 px (dashboard content), for portrait monitors and side-by-side use with the game.

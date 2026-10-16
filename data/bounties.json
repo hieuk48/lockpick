@@ -263,7 +263,7 @@
           "verifies": "Overlay behavior in fullscreen",
           "status": "partial",
           "evidence": [
-            "2026-10-15 owner's dev display research: exclusive fullscreen (desktop, 1920×1080, 640×480) is D3D exclusive, minimizes and stops on any focus change and resumes when restored; OBS Game Capture and WGC window capture see it. Still needed: does an overlay window actually show over it on the monitor (a person has to look)"
+            "2026-10-15 owner's dev display research: exclusive fullscreen (desktop, 1920×1080, 640×480) is D3D exclusive, minimizes and stops on any focus change and resumes when restored; OBS Game Capture and WGC window capture see it. Owner-checked 2026-10-15 at desktop resolution: a plain Win32 box created after the game went fullscreen stayed visible, but Lockpick's overlay ends up below the game within 200 ms of every raise — cause not yet known"
           ]
         },
         {

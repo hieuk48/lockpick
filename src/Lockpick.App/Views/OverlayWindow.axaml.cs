@@ -3,7 +3,7 @@ using Lockpick.Platform.Windows;
 
 namespace Lockpick.App.Views;
 
-/// <summary>The overlay over the game: click-through, topmost and never activated (the game pauses when it loses focus).</summary>
+/// <summary>The overlay over the game: click-through, kept just above the game window and never activated (the game pauses when it loses focus).</summary>
 public partial class OverlayWindow : Window
 {
     public OverlayWindow()

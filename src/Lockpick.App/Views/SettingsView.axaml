@@ -45,7 +45,7 @@
             <TextBlock Classes="caption" Text="OVERLAY" />
           </StackPanel>
           <TextBlock TextWrapping="Wrap" Foreground="{StaticResource LpMutedBrush}"
-                     Text="Shows the in-game time, HP, the room and your challenge on top of the game. Clicks go through it and it never takes focus, so the game keeps running. It works with the game windowed or borderless; it isn't shown in exclusive fullscreen." />
+                     Text="Shows the in-game time, HP, the room and your challenge on top of the game. Clicks go through it and it never takes focus, so the game keeps running. It works with the game windowed or borderless; exclusive fullscreen covers it." />
           <ToggleSwitch IsChecked="{Binding OverlayEnabled}" OnContent="Overlay on" OffContent="Overlay off" AutomationProperties.Name="Show the overlay over the game" />
           <WrapPanel ItemSpacing="8" LineSpacing="8">
             <TextBlock Classes="label" Text="Corner" VerticalAlignment="Center" />

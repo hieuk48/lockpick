@@ -4,7 +4,7 @@
         x:Class="Lockpick.App.Views.OverlayWindow"
         x:DataType="vm:OverlayViewModel"
         Title="Lockpick overlay"
-        SystemDecorations="None" CanResize="False" ShowInTaskbar="False" ShowActivated="False" Topmost="True"
+        SystemDecorations="None" CanResize="False" ShowInTaskbar="False" ShowActivated="False"
         Background="Transparent" TransparencyLevelHint="Transparent" Focusable="False"
         Width="640" Height="480">
 
