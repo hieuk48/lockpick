@@ -4,6 +4,7 @@ using Avalonia.Controls;
 using Avalonia.Media;
 using Avalonia.Threading;
 using CommunityToolkit.Mvvm.ComponentModel;
+using Lockpick.App.Controls;
 using Lockpick.App.Services;
 using Lockpick.Core.Challenges;
 using Lockpick.Core.State;
@@ -28,6 +29,8 @@ public sealed partial class OverlayViewModel : ObservableObject
     private readonly AppServices _services;
     private MapOverlaySettings _mapSettings;
     private (double Width, double Height) _picture = (640, 480);
+    private readonly Dictionary<(int Slot, int Type), int> _enemyMax = [];
+    private string? _enemyRoom;
 
     public OverlayViewModel(AppServices services, LiveState state, MapViewModel map)
     {
@@ -250,6 +253,44 @@ public sealed partial class OverlayViewModel : ObservableObject
         Room = inGame && snapshot!.Location is { IsValid: true } room
             ? _services.Adapter.RoomName(room.Value.Id) ?? room.Value.Id
             : string.Empty;
+        ShowEnemies(inGame ? snapshot : null);
+    }
+
+    /// <summary>The enemies and bosses in the room, with HP (the enemies widget). Empty when there are none.</summary>
+    [ObservableProperty]
+    public partial IReadOnlyList<EnemyRow> Enemies { get; private set; } = [];
+
+    private void ShowEnemies(GameSnapshot? snapshot)
+    {
+        var room = snapshot?.Location is { IsValid: true } location ? location.Value.Id : null;
+        if (room != _enemyRoom)
+        {
+            _enemyRoom = room;
+            _enemyMax.Clear();
+        }
+
+        var rows = new List<EnemyRow>();
+        foreach (var actor in snapshot?.Actors is { IsValid: true } actors ? actors.Value : [])
+        {
+            var (_, color, _, family) = ActorStyles.For(actor);
+            // Plants, webs and the like have no HP worth showing (the mansion plant's is always 1).
+            if (actor.Kind == ActorKind.Npc || (actor.Kind == ActorKind.Enemy && family.StartsWith("Plants", StringComparison.Ordinal)) || actor.Hp <= 0)
+            {
+                continue;
+            }
+
+            // Enemies have no max HP of their own: the bar is against the most this one has had in this room.
+            var key = (actor.Slot, actor.Type);
+            var max = Math.Max(actor.Hp, _enemyMax.GetValueOrDefault(key));
+            _enemyMax[key] = max;
+            rows.Add(new EnemyRow(actor.Name, actor.Hp, Math.Clamp((double)actor.Hp / max, 0, 1), color, actor.Kind == ActorKind.Boss));
+        }
+
+        rows.Sort((a, b) => b.IsBoss.CompareTo(a.IsBoss));
+        if (!rows.SequenceEqual(Enemies))
+        {
+            Enemies = rows;
+        }
     }
 
     private void Show(ChallengeStatus status)
@@ -271,3 +312,6 @@ public sealed partial class OverlayViewModel : ObservableObject
     private static string Format(TimeSpan t) =>
         string.Create(CultureInfo.InvariantCulture, $"{(int)t.TotalHours}:{t.Minutes:D2}:{t.Seconds:D2}");
 }
+
+/// <summary>One enemy in the enemies widget: its name, HP and HP against the most it has had in this room.</summary>
+public sealed record EnemyRow(string Name, int Hp, double Fraction, Color Color, bool IsBoss);

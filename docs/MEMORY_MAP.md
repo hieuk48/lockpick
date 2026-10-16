@@ -19,6 +19,8 @@ from a third-party source, diagnostics only.
 | `0xBE9822` | u8 | camera | Current camera (cut) | runtime |
 | `0xBE636C` | i16 | hp | Player HP (player entity +0x88); goes negative at death | runtime |
 | `0xBE6459` | u8 | maxHp | Player max HP (entity +0x175); 0 until a game starts; Chris 140, Jill 96 | runtime |
+| `0xBE63C0` | u8 | playerStatus | Player status flags (entity +0xDC): `0x02` poisoned | runtime (2026-10-14 lab; static test/and/or byte refs) |
+| `0xBE64EC + 0x18C·i` | i16 | enemy0..7Hp | Enemy slot HP (+0x88): below 0 once dead (zombies −1) | runtime (static: `sub`/`cmp word [0xBE64EC]`; 2026-10-14 lab) |
 | `0xBE62E5` | u8 & 3 | character | 0 Chris, 1 Jill, 3 Rebecca (entity +0x01; bit 0x08 = alt costume) | runtime (Chris, Jill; Rebecca live 2026-10-15) |
 | `0xD22730` | u32 | gameTimer | In-game time, frames at 30/s; frozen in menus and door transitions | runtime |
 | `0xD22777` | u8 | mainMenu | 1 while the title/main menu is shown | runtime |
@@ -121,7 +123,7 @@ Bits with support: `0x00800000` Jill RDT variant (static + live), `0x01000000` p
 
 | Fields | Address | Meaning (decomp / Mod SDK layout) |
 |---|---|---|
-| `enemy0..7Flags/Type/Hp` | `0xBE6464 + 0x18C·i` (+0, +1, +0x88) | Enemy slot: active bit, type id, HP |
+| `enemy0..7Flags/Type` | `0xBE6464 + 0x18C·i` (+0, +1) | Enemy slot: active bit, type id (the HP at +0x88 is verified: `enemy0..7Hp` above) |
 | `flagScenarioB0..7` | `0xBE9854` (32 B) | Scenario flag bank 1 |
 | `flagLocks0..1` | `0xBE9874` (8 B) | Door lock flags |
 | `flagEnemies0..7` | `0xBE987C` (32 B) | Enemy flags |

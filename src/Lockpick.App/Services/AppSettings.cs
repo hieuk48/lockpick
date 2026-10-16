@@ -190,11 +190,13 @@ public static class OverlayLayout
     public const string Off = "Off";
     public const string Status = "status";
     public const string Minimap = "minimap";
+    public const string Enemies = "enemies";
 
     public static IReadOnlyList<(string Id, string Name, string Default)> Widgets { get; } =
     [
         (Status, "Time, HP, room, challenge", OverlayCorners.TopRight),
         (Minimap, "Minimap", OverlayCorners.BottomRight),
+        (Enemies, "Enemies in the room (HP)", OverlayCorners.BottomLeft),
     ];
 
     /// <summary>A corner, or off.</summary>

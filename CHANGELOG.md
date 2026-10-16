@@ -22,6 +22,8 @@ All notable changes to this project are documented here. The format follows
 - **Condition on the overlay:** Fine, Caution, Danger or Poison next to your HP, worked out the way the game's
   status screen does it (poison read from the player's status), with the HP bar in the same colour; also in the API
   (`health.condition`) and on the OBS HUD page.
+- **Enemies widget:** the enemies and bosses in the room with their HP and a bar (against the most HP each has had
+  since you came in), bosses first; hidden when the room is clear.
 - **Game display** (Settings → Game display): switch Resident Evil between windowed, borderless (fills the screen —
   best for the overlay and streaming) and fullscreen, pick a resolution your main monitor supports, how the picture
   is scaled (4:3, whole multiples, stretched), vertical sync, gamma, texture filtering and antialiasing — every

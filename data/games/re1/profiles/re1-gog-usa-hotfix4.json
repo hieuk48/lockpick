@@ -475,8 +475,8 @@
       "name": "enemy0Hp",
       "address": "0xBE64EC",
       "type": "i16",
-      "verification": "unverified",
-      "evidence": "Live session 4 (2026-10-13): drops 12 per Beretta round; -1 once dead; holds the previous room's value for about a frame after a room loads.",
+      "verification": "runtime",
+      "evidence": "Static: slot 0 (0xBE64EC) takes damage with 'sub word ptr [0xBE64EC],0x41' (0x4052F5) and is death-checked with 'cmp word ptr [0xBE64EC],0' / jge (0x405313, 0x408963); the other slots are the same struct every 0x18C bytes (word [reg+0x88]). Live lab 2026-10-14 (docs/MEMORY_MAP.md): damage per weapon and type matched the exe's table (handgun 12 on zombies), kills leave HP below 0 (zombies -1), starting HP inside each type's roll over 16 spawns per type; holds the previous room's value for about a frame after a room loads.",
       "description": "Enemy slot 0: HP.",
       "sources": ["ecruells/resident-evil-pc-decomp Entities.h", "Gemini-Loboto3/RE1-Mod-SDK (layout)"]
     },
@@ -500,7 +500,8 @@
       "name": "enemy1Hp",
       "address": "0xBE6678",
       "type": "i16",
-      "verification": "unverified",
+      "verification": "runtime",
+      "evidence": "Static: see enemy0Hp. Live lab 2026-10-14: as enemy0Hp.",
       "description": "Enemy slot 1: HP.",
       "sources": ["ecruells/resident-evil-pc-decomp Entities.h", "Gemini-Loboto3/RE1-Mod-SDK (layout)"]
     },
@@ -524,7 +525,8 @@
       "name": "enemy2Hp",
       "address": "0xBE6804",
       "type": "i16",
-      "verification": "unverified",
+      "verification": "runtime",
+      "evidence": "Static: see enemy0Hp. Live lab 2026-10-14: as enemy0Hp.",
       "description": "Enemy slot 2: HP.",
       "sources": ["ecruells/resident-evil-pc-decomp Entities.h", "Gemini-Loboto3/RE1-Mod-SDK (layout)"]
     },
@@ -548,7 +550,8 @@
       "name": "enemy3Hp",
       "address": "0xBE6990",
       "type": "i16",
-      "verification": "unverified",
+      "verification": "runtime",
+      "evidence": "Static: see enemy0Hp. Live lab 2026-10-14: as enemy0Hp.",
       "description": "Enemy slot 3: HP.",
       "sources": ["ecruells/resident-evil-pc-decomp Entities.h", "Gemini-Loboto3/RE1-Mod-SDK (layout)"]
     },
@@ -572,7 +575,8 @@
       "name": "enemy4Hp",
       "address": "0xBE6B1C",
       "type": "i16",
-      "verification": "unverified",
+      "verification": "runtime",
+      "evidence": "Static: see enemy0Hp. Live lab 2026-10-14: as enemy0Hp.",
       "description": "Enemy slot 4: HP.",
       "sources": ["ecruells/resident-evil-pc-decomp Entities.h", "Gemini-Loboto3/RE1-Mod-SDK (layout)"]
     },
@@ -596,7 +600,8 @@
       "name": "enemy5Hp",
       "address": "0xBE6CA8",
       "type": "i16",
-      "verification": "unverified",
+      "verification": "runtime",
+      "evidence": "Static: see enemy0Hp. Live lab 2026-10-14: as enemy0Hp.",
       "description": "Enemy slot 5: HP.",
       "sources": ["ecruells/resident-evil-pc-decomp Entities.h", "Gemini-Loboto3/RE1-Mod-SDK (layout)"]
     },
@@ -620,7 +625,8 @@
       "name": "enemy6Hp",
       "address": "0xBE6E34",
       "type": "i16",
-      "verification": "unverified",
+      "verification": "runtime",
+      "evidence": "Static: see enemy0Hp. Live lab 2026-10-14: as enemy0Hp.",
       "description": "Enemy slot 6: HP.",
       "sources": ["ecruells/resident-evil-pc-decomp Entities.h", "Gemini-Loboto3/RE1-Mod-SDK (layout)"]
     },
@@ -644,7 +650,8 @@
       "name": "enemy7Hp",
       "address": "0xBE6FC0",
       "type": "i16",
-      "verification": "unverified",
+      "verification": "runtime",
+      "evidence": "Static: see enemy0Hp. Live lab 2026-10-14: as enemy0Hp.",
       "description": "Enemy slot 7: HP.",
       "sources": ["ecruells/resident-evil-pc-decomp Entities.h", "Gemini-Loboto3/RE1-Mod-SDK (layout)"]
     },

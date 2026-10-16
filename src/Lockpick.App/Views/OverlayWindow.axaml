@@ -35,6 +35,13 @@
     </Border>
   </LayoutTransformControl>
 
+  <!-- Enemies in the room with their HP; rows are built in code (OverlayWindow.ShowEnemies: no templates here). -->
+  <LayoutTransformControl x:Name="EnemiesPanel">
+    <Border Background="#C80B0F0E" BorderBrush="{StaticResource LpBorderBrush}" BorderThickness="1" CornerRadius="3" Padding="7,4" MinWidth="120">
+      <StackPanel x:Name="EnemyList" Spacing="3" />
+    </Border>
+  </LayoutTransformControl>
+
   <!-- Map: north-up. The minimap (the area around the player, framed, no names) or the whole room over the picture,
        framed or see-through (the map key cycles the player's chosen views). -->
   <LayoutTransformControl x:Name="MinimapPanel">
