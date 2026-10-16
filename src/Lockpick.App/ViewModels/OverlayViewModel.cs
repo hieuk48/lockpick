@@ -1,6 +1,8 @@
 using System.ComponentModel;
 using System.Globalization;
+using Avalonia.Controls;
 using Avalonia.Layout;
+using Avalonia.Media;
 using Avalonia.Threading;
 using CommunityToolkit.Mvvm.ComponentModel;
 using Lockpick.App.Services;
@@ -43,11 +45,17 @@ public sealed partial class OverlayViewModel : ObservableObject
     [ObservableProperty]
     public partial double HealthFraction { get; private set; }
 
+    /// <summary>Width of the HP bar's fill (the bar is 70 wide).</summary>
     [ObservableProperty]
-    public partial bool HealthLow { get; private set; }
+    public partial double HealthBarWidth { get; private set; }
 
+    /// <summary>Green, amber below 3/4, red below 1/4.</summary>
     [ObservableProperty]
-    public partial bool HealthMid { get; private set; }
+    public partial IBrush HealthBrush { get; private set; } = Brush("LpGreenBrush");
+
+    /// <summary>Green while the challenge is clean, red once it failed.</summary>
+    [ObservableProperty]
+    public partial IBrush ChallengeBrush { get; private set; } = Brush("LpGreenBrush");
 
     [ObservableProperty]
     public partial string Room { get; private set; } = string.Empty;
@@ -93,8 +101,8 @@ public sealed partial class OverlayViewModel : ObservableObject
             var fraction = Math.Clamp((double)h.Value.Current / max, 0, 1);
             Health = string.Create(CultureInfo.InvariantCulture, $"{Math.Max(0, h.Value.Current)} / {max}");
             HealthFraction = fraction;
-            HealthLow = fraction < 0.25;
-            HealthMid = fraction is >= 0.25 and < 0.75;
+            HealthBarWidth = Math.Round(70 * fraction, 1);
+            HealthBrush = Brush(fraction < 0.25 ? "LpRedBrush" : fraction < 0.75 ? "LpAmberBrush" : "LpGreenBrush");
         }
         else
         {
@@ -110,6 +118,7 @@ public sealed partial class OverlayViewModel : ObservableObject
     {
         HasChallenge = status.State is ChallengeState.Running or ChallengeState.Failed;
         ChallengeFailed = status.State == ChallengeState.Failed;
+        ChallengeBrush = Brush(ChallengeFailed ? "LpRedBrush" : "LpGreenBrush");
         Challenge = status.State switch
         {
             ChallengeState.Running => $"{status.Challenge?.Name} · attempt {status.Attempt} · clean",
@@ -117,6 +126,9 @@ public sealed partial class OverlayViewModel : ObservableObject
             _ => string.Empty,
         };
     }
+
+    private static IBrush Brush(string key) =>
+        Avalonia.Application.Current?.TryFindResource(key, out var value) == true && value is IBrush brush ? brush : Brushes.White;
 
     private static string Format(TimeSpan t) =>
         string.Create(CultureInfo.InvariantCulture, $"{(int)t.TotalHours}:{t.Minutes:D2}:{t.Seconds:D2}");

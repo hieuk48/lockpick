@@ -3,35 +3,28 @@
         xmlns:vm="using:Lockpick.App.ViewModels"
         x:Class="Lockpick.App.Views.OverlayWindow"
         x:DataType="vm:OverlayViewModel"
-        Title="Lockpick overlay"
-        SystemDecorations="None" CanResize="False" ShowInTaskbar="False" ShowActivated="False"
-        Background="Transparent" TransparencyLevelHint="Transparent" Focusable="False"
-        Width="640" Height="480">
+        Title="Lockpick overlay host"
+        SystemDecorations="None" ShowInTaskbar="False" ShowActivated="False" Background="Transparent">
 
-  <Window.Styles>
-    <!-- Colours as styles, not local values, so the failed state can override them. -->
-    <Style Selector="TextBlock.challenge"><Setter Property="Foreground" Value="{StaticResource LpGreenBrush}" /></Style>
-    <Style Selector="TextBlock.challenge.failed"><Setter Property="Foreground" Value="{StaticResource LpRedBrush}" /></Style>
-  </Window.Styles>
-
-  <!-- Covers the game's picture exactly; only the panel is drawn, the rest is see-through and click-through. -->
-  <LayoutTransformControl HorizontalAlignment="{Binding Horizontal}" VerticalAlignment="{Binding Vertical}" Margin="6">
-    <LayoutTransformControl.LayoutTransform>
-      <ScaleTransform ScaleX="{Binding Scale}" ScaleY="{Binding Scale}" />
-    </LayoutTransformControl.LayoutTransform>
+  <!-- Never shown: the panel is rendered to a picture that a plain layered window shows over the game
+       (OverlayController, LayeredWindow). No templated controls or style classes here — the window never runs its
+       styling — so the bar and colours come straight from the model; the scale is set when rendering. -->
+  <LayoutTransformControl x:Name="Panel">
     <Border Background="#C80B0F0E" BorderBrush="{StaticResource LpBorderBrush}" BorderThickness="1" CornerRadius="3"
-            Padding="7,4" MinWidth="120" IsVisible="{Binding Time, Converter={x:Static StringConverters.IsNotNullOrEmpty}}">
+            Padding="7,4" MinWidth="120">
       <StackPanel Spacing="2">
         <TextBlock Text="{Binding Time}" FontFamily="{StaticResource LpMono}" FontSize="16" FontWeight="SemiBold"
                    Foreground="{StaticResource LpTextBrush}" HorizontalAlignment="Right" />
         <Grid ColumnDefinitions="Auto,*" ColumnSpacing="6" IsVisible="{Binding Health, Converter={x:Static StringConverters.IsNotNullOrEmpty}}">
           <TextBlock Text="{Binding Health}" FontFamily="{StaticResource LpMono}" FontSize="10" Foreground="{StaticResource LpMutedBrush}" />
-          <ProgressBar Grid.Column="1" Classes="health" Classes.low="{Binding HealthMid}" Classes.critical="{Binding HealthLow}"
-                       Minimum="0" Maximum="1" Value="{Binding HealthFraction}" MinHeight="4" Height="4" Width="70" MinWidth="0" VerticalAlignment="Center" HorizontalAlignment="Right" />
+          <Border Grid.Column="1" Width="70" Height="4" CornerRadius="1" Background="{StaticResource LpPanelAltBrush}"
+                  VerticalAlignment="Center" HorizontalAlignment="Right">
+            <Border Width="{Binding HealthBarWidth}" CornerRadius="1" Background="{Binding HealthBrush}" HorizontalAlignment="Left" />
+          </Border>
         </Grid>
         <TextBlock Text="{Binding Room}" FontSize="9" Foreground="{StaticResource LpMutedBrush}" HorizontalAlignment="Right"
                    IsVisible="{Binding Room, Converter={x:Static StringConverters.IsNotNullOrEmpty}}" />
-        <TextBlock Classes="challenge" Classes.failed="{Binding ChallengeFailed}" Text="{Binding Challenge}" FontSize="9"
+        <TextBlock Text="{Binding Challenge}" Foreground="{Binding ChallengeBrush}" FontSize="9"
                    FontWeight="SemiBold" TextWrapping="Wrap" MaxWidth="220" IsVisible="{Binding HasChallenge}" />
       </StackPanel>
     </Border>

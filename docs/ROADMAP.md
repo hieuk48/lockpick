@@ -175,9 +175,9 @@ is decided later. Keep-running stays out of challenges (it patches the game, and
 2. **Overlay** (spec: DISPLAY.md requirements). **Foundation done 2026-10-15 (#54):** follows the game window
    (100 % and 150 % monitors, moved, minimized), sits on the 4:3 picture from `dxcfg.ini`, click-through and
    never activated (verified: a click on the panel reaches the game, the game keeps focus), directly above the game
-   (other windows cover it), owner-verified on the 150 % monitor; hidden in exclusive fullscreen, where the game
-   covers it within 200 ms of every raise (cause open, B202); widgets: in-game time, HP bar, room, challenge state
-   (clean / failed with the reason); corner setting.
+   (other windows cover it), owner-verified on the 150 % monitor and over exclusive fullscreen (B202); drawn by a
+   plain layered window the size of the panel; widgets: in-game time, HP bar, room, challenge state (clean / failed
+   with the reason); corner setting.
    Show/hide hotkey (Settings → Hotkeys). Frame pacing measured: the game's clock ran 30.25 ticks/s with the
    overlay up and with Lockpick closed (no cost). Next: the layout editor (#55), more widgets (#42, #43), never
    activating Lockpick's windows over exclusive fullscreen.
@@ -189,7 +189,7 @@ is decided later. Keep-running stays out of challenges (it patches the game, and
    - widgets: run timer, splits, HP band and poison, challenge status (a fail banner with the reason), room name,
      enemy HP, the event feed (#43); positioned against the picture, presets for each corner (not top-left by
      default), a layout editor on a preview, toggled by a hotkey or a controller button;
-   - exclusive fullscreen: the game covers the overlay (investigation open); offer borderless instead;
+   - exclusive fullscreen: works (owner-verified 2026-10-15 at desktop resolution);
    - game display helper (#20): move the game to a monitor; switch it to borderless (`display=desktop`, windowed)
      by editing `dxcfg.ini` only on the player's click, with a backup and a restore;
    - budget: the overlay costs < 2 % of the game's frame pacing (measured from the in-game clock).

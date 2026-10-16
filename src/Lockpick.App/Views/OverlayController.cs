@@ -1,3 +1,4 @@
+using System.ComponentModel;
 using Avalonia.Threading;
 using Lockpick.App.Services;
 using Lockpick.App.ViewModels;
@@ -9,28 +10,37 @@ using Microsoft.Extensions.Logging;
 namespace Lockpick.App.Views;
 
 /// <summary>
-/// Keeps the overlay window on the game's picture (docs/DISPLAY.md requirements): finds the game window, follows its
-/// position, size and monitor ten times a second, and hides the overlay while the game is minimized or hidden, and in
-/// exclusive fullscreen: there the game puts itself back above the overlay within 50–200 ms of every raise (live
-/// 2026-10-15; docs/DISPLAY.md), so it would only flicker.
+/// Shows the overlay panel on the game's picture (docs/DISPLAY.md requirements): finds the game window, follows its
+/// position, size and monitor ten times a second, renders the panel (only when its values or the scale change) and
+/// shows it through a plain layered window in the chosen corner, kept directly above the game. Hidden while the game is
+/// minimized or hidden, or not in a game.
 /// </summary>
 public sealed class OverlayController : IDisposable
 {
+    /// <summary>Gap between the panel and the picture's edge, in the overlay's own units (scaled with the panel).</summary>
+    private const double Margin = 6;
+
     private readonly AppServices _services;
     private readonly OverlayViewModel _model;
     private readonly ILogger _log;
     private readonly DispatcherTimer _timer;
-    private OverlayWindow? _window;
+    private readonly OverlayWindow _host;
+    private LayeredWindow? _window;
     private nint _game;
     private string? _installDirectory;
     private GameDisplaySettings? _display;
     private string _corner = string.Empty;
+    private bool _dirty = true;
+    private int _renderedDpi;
+    private (int Width, int Height) _size;
 
     public OverlayController(AppServices services, OverlayViewModel model)
     {
         _services = services;
         _model = model;
         _log = services.LoggerFactory.CreateLogger("Overlay");
+        _host = new OverlayWindow { DataContext = model };
+        model.PropertyChanged += OnModelChanged;
         _timer = new DispatcherTimer(TimeSpan.FromMilliseconds(100), DispatcherPriority.Background, (_, _) => Tick());
         _timer.Start();
     }
@@ -41,8 +51,18 @@ public sealed class OverlayController : IDisposable
     public void Dispose()
     {
         _timer.Stop();
-        _window?.Close();
+        _model.PropertyChanged -= OnModelChanged;
+        _window?.Dispose();
         _window = null;
+        _host.Close();
+    }
+
+    private void OnModelChanged(object? sender, PropertyChangedEventArgs e)
+    {
+        if (e.PropertyName != nameof(OverlayViewModel.Status))
+        {
+            _dirty = true;
+        }
     }
 
     private void Tick()
@@ -77,9 +97,9 @@ public sealed class OverlayController : IDisposable
             return;
         }
 
-        if (game.Mode == GameWindowMode.ExclusiveFullscreen)
+        if (string.IsNullOrEmpty(_model.Time))
         {
-            Hide("The game is in exclusive fullscreen, where it covers the overlay — switch it to borderless (windowed at desktop size)");
+            Hide("Waiting for a game (the title screen and menus before a game show nothing)");
             return;
         }
 
@@ -91,43 +111,45 @@ public sealed class OverlayController : IDisposable
         }
 
         var picture = _display?.Picture(game.Client) ?? game.Client;
-        Show(picture, game.Dpi);
-        if (_window?.Handle is { } overlay and not 0)
-        {
-            GameWindows.KeepAbove(overlay, game.Handle);
-        }
+        Show(picture, game);
     }
 
-    private void Show(PixelRect picture, int dpi)
+    private void Show(PixelRect picture, GameWindowInfo game)
     {
-        if (_window is null)
+        var dpiScale = Math.Max(1, game.Dpi) / 96.0;
+        var before = _model.Scale;
+        _model.SetPictureHeight(picture.Height / dpiScale);
+        _window ??= new LayeredWindow("Lockpick overlay");
+        var pixels = default(byte[]);
+        if (_dirty || game.Dpi != _renderedDpi || !_window.IsVisible || _model.Scale != before)
         {
-            _window = new OverlayWindow { DataContext = _model };
-            _window.Show();
-        }
-        else if (!_window.IsVisible)
-        {
-            _window.Show();
-        }
-
-        // Compared with where the window really is: moving to a monitor with another scale makes Windows resize it for
-        // the new DPI, and the next tick puts it back on the picture.
-        if (_window.Handle != 0 && GameWindows.Bounds(_window.Handle) != picture && GameWindows.Place(_window.Handle, picture))
-        {
-            _model.SetPictureHeight(picture.Height / Math.Max(1, dpi / 96.0));
-            _log.LogDebug("Overlay on the game picture {Picture} (DPI {Dpi})", picture, dpi);
+            (pixels, var width, var height) = _host.Render(_model.Scale, game.Dpi);
+            _size = (width, height);
+            _renderedDpi = game.Dpi;
+            _dirty = false;
         }
 
-        _model.Status = _window.ClickThrough ? "Showing over the game." : "Showing over the game (click-through couldn't be set).";
+        var margin = (int)Math.Round(Margin * _model.Scale * dpiScale);
+        var left = _corner is OverlayCorners.TopLeft or OverlayCorners.BottomLeft;
+        var top = _corner is not (OverlayCorners.BottomLeft or OverlayCorners.BottomRight);
+        var x = left ? picture.X + margin : picture.Right - margin - _size.Width;
+        var y = top ? picture.Y + margin : picture.Bottom - margin - _size.Height;
+        if (pixels is not null)
+        {
+            _window.Show(x, y, _size.Width, _size.Height, pixels);
+        }
+        else if (_window.Bounds is var b && (b.X != x || b.Y != y))
+        {
+            _window.Move(x, y);
+        }
+
+        GameWindows.KeepAbove(_window.Handle, game.Handle);
+        _model.Status = "Showing over the game.";
     }
 
     private void Hide(string reason)
     {
-        if (_window is { IsVisible: true })
-        {
-            _window.Hide();
-        }
-
+        _window?.Hide();
         _model.Status = reason;
     }
 }

@@ -3,8 +3,8 @@ using Lockpick.Core.Display;
 namespace Lockpick.Platform.Windows;
 
 /// <summary>
-/// Finds the game's window and reads what an overlay needs from it, and makes Lockpick's overlay window click-through
-/// and non-activating (docs/DISPLAY.md). Rectangles are physical pixels: Lockpick runs per-monitor DPI aware.
+/// Finds the game's window and reads what an overlay needs from it, and keeps the overlay right above it
+/// (docs/DISPLAY.md). Rectangles are physical pixels: Lockpick runs per-monitor DPI aware.
 /// </summary>
 public static class GameWindows
 {
@@ -58,38 +58,31 @@ public static class GameWindows
     }
 
     /// <summary>
-    /// Makes an overlay window click-through, non-activating and absent from Alt+Tab: layered + transparent (mouse
-    /// input goes to the window below), no-activate (the game keeps focus — it pauses otherwise), tool window. It is
-    /// not made topmost: <see cref="KeepAbove"/> keeps it just above the game, so other windows cover it with the game.
-    /// </summary>
-    public static bool MakeOverlay(nint window)
-    {
-        var exStyle = (uint)NativeMethods.GetWindowLong(window, NativeMethods.GwlExStyle);
-        exStyle |= NativeMethods.WsExLayered | NativeMethods.WsExTransparent | NativeMethods.WsExNoActivate
-            | NativeMethods.WsExToolWindow;
-        _ = NativeMethods.SetWindowLong(window, NativeMethods.GwlExStyle, unchecked((int)exStyle));
-        return NativeMethods.SetLayeredWindowAttributes(window, 0, 255, NativeMethods.LwaAlpha)
-            && ((uint)NativeMethods.GetWindowLong(window, NativeMethods.GwlExStyle) & NativeMethods.WsExTransparent) != 0;
-    }
-
-    /// <summary>Moves and sizes an overlay window (physical pixels) without activating it; its place in the stack is
-    /// <see cref="KeepAbove"/>'s job.</summary>
-    public static bool Place(nint window, PixelRect rect) =>
-        NativeMethods.SetWindowPos(window, 0, rect.X, rect.Y, rect.Width, rect.Height,
-            NativeMethods.SwpNoActivate | NativeMethods.SwpShowWindow | NativeMethods.SwpNoOwnerZOrder | NativeMethods.SwpNoZOrder);
-
-    /// <summary>
     /// Keeps an overlay directly above the game in the window stack — not above everything: a window brought over the
     /// game covers the overlay too (owner report 2026-10-15: a topmost overlay floated over other apps). Topmost only
-    /// while the game is (exclusive fullscreen), where a game created after the overlay otherwise hides it (live
-    /// 2026-10-15). Does nothing when the overlay is already right above the game.
+    /// while the game is (exclusive fullscreen). The game's own windows right above it (its IME window is owned by it
+    /// and always sits there) are skipped: asking to go just below one of those puts the overlay below the whole game
+    /// (live 2026-10-15: that is why the overlay vanished under exclusive fullscreen). Does nothing when the overlay
+    /// already sits above the game with only the game's own windows in between.
     /// </summary>
     public static bool KeepAbove(nint overlay, nint game)
     {
-        var above = NativeMethods.GetWindow(game, NativeMethods.GwHwndPrev);
-        if (above == overlay)
+        NativeMethods.GetWindowThreadProcessId(game, out var gamePid);
+        var w = NativeMethods.GetWindow(game, NativeMethods.GwHwndPrev);
+        while (w != 0)
         {
-            return true;
+            if (w == overlay)
+            {
+                return true;
+            }
+
+            if (NativeMethods.GetWindow(w, NativeMethods.GwOwner) != game
+                && !(NativeMethods.GetWindowThreadProcessId(w, out var pid) != 0 && pid == gamePid))
+            {
+                break; // the first other window above the game's own
+            }
+
+            w = NativeMethods.GetWindow(w, NativeMethods.GwHwndPrev);
         }
 
         const uint flags = NativeMethods.SwpNoMove | NativeMethods.SwpNoSize | NativeMethods.SwpNoActivate | NativeMethods.SwpNoOwnerZOrder;
@@ -100,8 +93,8 @@ public static class GameWindows
             NativeMethods.SetWindowPos(overlay, gameTopmost ? NativeMethods.HwndTopmost : NativeMethods.HwndNoTopmost, 0, 0, 0, 0, flags);
         }
 
-        // Inserted after (below) the window above the game, i.e. right above the game.
-        return NativeMethods.SetWindowPos(overlay, above != 0 ? above : gameTopmost ? NativeMethods.HwndTopmost : NativeMethods.HwndTop, 0, 0, 0, 0, flags);
+        // Inserted just below that other window, i.e. right above the game and its own windows.
+        return NativeMethods.SetWindowPos(overlay, w != 0 ? w : gameTopmost ? NativeMethods.HwndTopmost : NativeMethods.HwndTop, 0, 0, 0, 0, flags);
     }
 
     /// <summary>A window's outer rectangle (physical pixels).</summary>

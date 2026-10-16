@@ -11,8 +11,8 @@ All notable changes to this project are documented here. The format follows
   (clean, or failed with the reason) in a small panel on top of the game's picture, in the corner you pick. Clicks
   go through it and it never takes focus, so the game keeps running; it follows the game window across monitors and
   scaling, sits on the 4:3 picture (from the game's own display settings) right above the game window (other
-  windows cover it with the game), works windowed and borderless, and hides while the game is minimized or in
-  exclusive fullscreen. A hotkey shows or hides it without leaving the game (Settings → Hotkeys); it costs the
+  windows cover it with the game), works windowed, borderless and in fullscreen, and hides while the game is
+  minimized. A hotkey shows or hides it without leaving the game (Settings → Hotkeys); it costs the
   game no frames (30 per second with and without it).
 - **OBS HUD page:** with the API on, `http://127.0.0.1:1996/overlay/hud?token=…` is a transparent page for an OBS
   Browser Source with the same time, HP, room and challenge state, in the corner and size you choose
