@@ -18,6 +18,13 @@ public sealed partial class SettingsViewModel : PageViewModel
         _services = services;
         _runSetup = runSetup;
         Overlay = overlay;
+        services.TrainerHotkeys.Pressed += (_, action) =>
+        {
+            if (action == TrainerHotkeys.ToggleOverlay)
+            {
+                Avalonia.Threading.Dispatcher.UIThread.Post(() => OverlayEnabled = !OverlayEnabled);
+            }
+        };
         Updates = services.Updates;
         var current = services.Settings.Current;
         GameExecutablePath = current.GameExecutablePath ?? string.Empty;

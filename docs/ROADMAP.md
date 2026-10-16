@@ -176,7 +176,9 @@ is decided later. Keep-running stays out of challenges (it patches the game, and
    (100 % and 150 % monitors, moved, minimized), sits on the 4:3 picture from `dxcfg.ini`, click-through and
    never activated (verified: a click on the panel reaches the game, the game keeps focus), hidden in exclusive
    fullscreen; widgets: in-game time, HP bar, room, challenge state (clean / failed with the reason); corner setting.
-   Next: the layout editor and toggle (#55), more widgets (#42, #43), the frame-pacing budget, the owner check.
+   Show/hide hotkey (Settings → Hotkeys). Frame pacing measured: the game's clock ran 30.25 ticks/s with the
+   overlay up and with Lockpick closed (no cost). Next: the layout editor (#55), more widgets (#42, #43), never
+   activating Lockpick's windows over exclusive fullscreen, the owner check (B202).
    - follow the game window (PID → class `RESIDENT EVIL`): client rectangle in physical pixels, monitor, DPI,
      minimized, exclusive fullscreen; move/size events;
    - a click-through, topmost, non-activating overlay window over the 4:3 picture (computed from `dxcfg.ini`'s

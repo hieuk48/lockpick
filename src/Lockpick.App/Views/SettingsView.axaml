@@ -119,10 +119,10 @@
         <StackPanel Spacing="8">
           <StackPanel Classes="cardhead">
             <c:LucideIcon Data="{StaticResource Icon.Wrench}" />
-            <TextBlock Classes="caption" Text="TRAINER HOTKEYS" />
+            <TextBlock Classes="caption" Text="HOTKEYS" />
           </StackPanel>
           <TextBlock TextWrapping="Wrap" Foreground="{StaticResource LpMutedBrush}"
-                     Text="Keys for trainer actions while you play. They work only while Trainer Mode is on and Lockpick has write access; otherwise a press does nothing." />
+                     Text="Keys that work while you play, without leaving the game. Trainer actions work only while Trainer Mode is on and Lockpick has write access; the overlay key works any time." />
           <ItemsControl ItemsSource="{Binding TrainerHotkeyRows}">
             <ItemsControl.ItemTemplate>
               <DataTemplate x:DataType="vm:TrainerHotkeyRow">

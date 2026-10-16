@@ -14,6 +14,9 @@ public sealed class TrainerHotkeys : IDisposable
     public const string ToggleHealthLock = "toggle-health-lock";
     public const string ToggleInfiniteAmmo = "toggle-infinite-ammo";
 
+    /// <summary>Shows or hides the overlay; works any time (it changes nothing in the game).</summary>
+    public const string ToggleOverlay = "toggle-overlay";
+
     private readonly Dictionary<string, GlobalHotkey> _keys = [];
     private readonly ILogger _log;
 
@@ -28,6 +31,7 @@ public sealed class TrainerHotkeys : IDisposable
         (FillHealth, "Fill HP"),
         (ToggleHealthLock, "Lock / unlock HP"),
         (ToggleInfiniteAmmo, "Infinite ammo on / off"),
+        (ToggleOverlay, "Overlay on / off"),
     ];
 
     /// <summary>The registered key per action (missing: off or refused by Windows).</summary>
