@@ -18,9 +18,11 @@
       <StackPanel Spacing="2">
         <TextBlock Text="{Binding Time}" FontFamily="{StaticResource LpMono}" FontSize="16" FontWeight="SemiBold"
                    Foreground="{StaticResource LpTextBrush}" HorizontalAlignment="Right" />
-        <Grid ColumnDefinitions="Auto,*" ColumnSpacing="6" IsVisible="{Binding Health, Converter={x:Static StringConverters.IsNotNullOrEmpty}}">
-          <TextBlock Text="{Binding Health}" FontFamily="{StaticResource LpMono}" FontSize="10" Foreground="{StaticResource LpMutedBrush}" />
-          <Border Grid.Column="1" Width="70" Height="4" CornerRadius="1" Background="{StaticResource LpPanelAltBrush}"
+        <Grid ColumnDefinitions="Auto,Auto,*" ColumnSpacing="6" IsVisible="{Binding Health, Converter={x:Static StringConverters.IsNotNullOrEmpty}}">
+          <TextBlock Text="{Binding Condition}" FontSize="10" FontWeight="SemiBold" Foreground="{Binding HealthBrush}"
+                     IsVisible="{Binding Condition, Converter={x:Static StringConverters.IsNotNullOrEmpty}}" />
+          <TextBlock Grid.Column="1" Text="{Binding Health}" FontFamily="{StaticResource LpMono}" FontSize="10" Foreground="{StaticResource LpMutedBrush}" />
+          <Border Grid.Column="2" Width="70" Height="4" CornerRadius="1" Background="{StaticResource LpPanelAltBrush}"
                   VerticalAlignment="Center" HorizontalAlignment="Right">
             <Border Width="{Binding HealthBarWidth}" CornerRadius="1" Background="{Binding HealthBrush}" HorizontalAlignment="Left" />
           </Border>

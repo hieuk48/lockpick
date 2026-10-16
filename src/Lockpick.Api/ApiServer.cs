@@ -339,7 +339,14 @@ public sealed class ApiServer : IAsyncDisposable
             capturedAt = s?.CapturedAt,
             inGame = Value(s?.InGameplay),
             character = s is { Character.HasValue: true } ? s.Character.Value.ToString() : null,
-            health = s is { Health.HasValue: true } ? new { current = s.Health.Value.Current, max = s.Health.Value.Maximum } : null,
+            health = s is { Health.HasValue: true }
+                ? new
+                {
+                    current = s.Health.Value.Current,
+                    max = s.Health.Value.Maximum,
+                    condition = s.Condition.HasValue ? s.Condition.Value.ToString().ToLowerInvariant() : null,
+                }
+                : null,
             room = s is { Location.HasValue: true }
                 ? new { id = s.Location.Value.Id, stage = s.Location.Value.Stage, name = _host.Adapter.RoomName(s.Location.Value.Id) }
                 : null,

@@ -15,6 +15,7 @@ internal sealed class Re1Session : IGameSession
         public const string Camera = "camera";
         public const string Hp = "hp";
         public const string MaxHp = "maxHp";
+        public const string PlayerStatus = "playerStatus";
         public const string Character = "character";
         public const string GameTimer = "gameTimer";
         public const string StateFlags = "stateFlags";
@@ -359,6 +360,8 @@ internal sealed class Re1Session : IGameSession
                 new Position((int)v[0], (int)v[1], (int)v[2])),
             GameTime = Derive(raw, gameplay, previous.GameTime, [Fields.GameTimer], v =>
                 TimeSpan.FromSeconds(v[0] / (double)FramesPerSecond)),
+            Condition = Derive(raw, gameplay, previous.Condition, [Fields.Hp, Fields.MaxHp, Fields.PlayerStatus], v =>
+                Condition((int)v[0], (int)v[1], (int)v[2])),
         };
     }
 
@@ -384,6 +387,31 @@ internal sealed class Re1Session : IGameSession
         }
 
         return Field<bool>.Valid(menu.Value == 0 && maxHp.Value > 0 && hp.Value > 0);
+    }
+
+    /// <summary>
+    /// The status screen's ECG band (docs/MEMORY_MAP.md, 0xAE9F2F, only written while that screen is drawn, so it is
+    /// worked out here the same way): poisoned (status bit 0x02) shows Poison; otherwise (HP − 1) / (max HP ÷ 4) is
+    /// 0 Danger, 1 Caution, 2–3 Fine (live: Jill 1–24 Danger, 25–48 Caution, 49–96 Fine).
+    /// </summary>
+    internal static HealthCondition? Condition(int hp, int maxHp, int status)
+    {
+        if (maxHp < 4)
+        {
+            return null;
+        }
+
+        if ((status & 0x02) != 0)
+        {
+            return HealthCondition.Poison;
+        }
+
+        return ((hp - 1) / (maxHp >> 2)) switch
+        {
+            <= 0 => HealthCondition.Danger,
+            1 => HealthCondition.Caution,
+            _ => HealthCondition.Fine,
+        };
     }
 
     private Field<Health> DeriveHealth(Dictionary<string, Field<long>> raw, Field<bool> gameplay, Field<Health> previous)

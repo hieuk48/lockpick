@@ -206,6 +206,23 @@ public class Re1AdapterTests
     }
 
     [Theory]
+    // The status screen's band, read live for Jill (max 96) on 2026-10-14: 1–24 Danger, 25–48 Caution, 49–96 Fine.
+    [InlineData(1, 0, HealthCondition.Danger)]
+    [InlineData(24, 0, HealthCondition.Danger)]
+    [InlineData(25, 0, HealthCondition.Caution)]
+    [InlineData(48, 0, HealthCondition.Caution)]
+    [InlineData(49, 0, HealthCondition.Fine)]
+    [InlineData(96, 0, HealthCondition.Fine)]
+    [InlineData(96, 0x02, HealthCondition.Poison)] // wasp stings set status bit 0x02
+    [InlineData(30, 0x10, HealthCondition.Caution)] // other status bits aren't poison
+    public void Condition_matches_the_status_screen(short hp, byte status, HealthCondition expected)
+    {
+        NewChrisGameInMainHall();
+        _memory.WriteI16(Addr("hp"), hp).WriteU8(Addr("maxHp"), 96).WriteU8(Addr("playerStatus"), status);
+        Assert.Equal(expected, _session.Read(1, T0).Condition.Value);
+    }
+
+    [Theory]
     [InlineData(0x00, PlayableCharacter.Chris)]
     [InlineData(0x01, PlayableCharacter.Jill)]
     [InlineData(0x03, PlayableCharacter.Rebecca)]

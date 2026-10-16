@@ -25,7 +25,7 @@ turn it on in **Settings → API for other tools**.
 |---|---|
 | `GET /api/v1` | Name, version, list of endpoints |
 | `GET /api/v1/status` | Connection (`attached`, `searching`, …), game build, trainer mode and write access, capture running, API settings |
-| `GET /api/v1/state` | The live game state: `inGame`, `character`, `health {current, max}`, `room {id, stage, name}`, `camera`, `position {x, y, z}`, `gameTimeSeconds`, `inventory [{slot, itemId, name, quantity}]`, `itemBox`, `trainer` |
+| `GET /api/v1/state` | The live game state: `inGame`, `character`, `health {current, max, condition}` (condition: `fine`, `caution`, `danger` or `poison`, as the game's status screen shows it), `room {id, stage, name}`, `camera`, `position {x, y, z}`, `gameTimeSeconds`, `inventory [{slot, itemId, name, quantity}]`, `itemBox`, `trainer` |
 | `GET /api/v1/events?after=N` | Events after sequence number `N` (`{events: [...], last}`); poll with the last number you saw |
 | `GET /api/v1/events/stream?after=N` | The same as a live [server-sent event](https://html.spec.whatwg.org/multipage/server-sent-events.html) stream: each message has `id` (sequence), `event` (type) and `data` (JSON); a comment every 15 s keeps it open |
 | `GET /api/v1/trainer` | Trainer mode, write access, whether this run was changed, locks, infinite ammo, the last 50 actions |

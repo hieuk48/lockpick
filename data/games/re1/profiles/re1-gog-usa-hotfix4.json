@@ -96,6 +96,15 @@
       "sources": ["static analysis of this executable", "ecruells/resident-evil-pc-decomp Globals.h g_PlayerMaxHealth"]
     },
     {
+      "name": "playerStatus",
+      "address": "0xBE63C0",
+      "type": "u8",
+      "verification": "runtime",
+      "description": "Player status flags (player entity +0xDC): 0x02 = poisoned.",
+      "evidence": "Live GOG lab 2026-10-14: wasp stings in room 408 set 0x02 and the status screen's band showed poison (4); a blue herb cleared it. Static: 45 byte-width references; the item-use code next to the heal clamp tests it with 'test byte [0xBE63C0],0x02' (0x401340) and clears it with 'and byte [0xBE63C0],0xFD' (0x401349); 'or byte [0xBE63C0],0x02' (0x43BE14) sets it.",
+      "sources": ["static analysis of this executable", "ecruells/resident-evil-pc-decomp player entity +0xDC (status flags)"]
+    },
+    {
       "name": "character",
       "address": "0xBE62E5",
       "type": "u8",

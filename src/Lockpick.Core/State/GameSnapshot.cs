@@ -56,6 +56,15 @@ public readonly record struct Position(int X, int Y, int Z)
 /// <summary>A verbatim copy of one capture region at the time of a snapshot.</summary>
 public sealed record RegionData(string Name, ulong Address, byte[] Data);
 
+/// <summary>The player's condition as the game's own status screen shows it (its ECG band).</summary>
+public enum HealthCondition
+{
+    Fine,
+    Caution,
+    Danger,
+    Poison,
+}
+
 /// <summary>Player health. <see cref="Maximum"/> is only set when the adapter knows it reliably.</summary>
 public readonly record struct Health(int Current, int? Maximum)
 {
@@ -87,6 +96,9 @@ public sealed record GameSnapshot
     public Field<Position> Position { get; init; } = Field<Position>.Unsupported;
 
     public Field<TimeSpan> GameTime { get; init; } = Field<TimeSpan>.Unsupported;
+
+    /// <summary>Fine / Caution / Danger / Poison, as the game's status screen would show it now.</summary>
+    public Field<HealthCondition> Condition { get; init; } = Field<HealthCondition>.Unsupported;
 
     /// <summary>
     /// Verbatim copies of the profile's capture regions, filled only while a capture asks for them

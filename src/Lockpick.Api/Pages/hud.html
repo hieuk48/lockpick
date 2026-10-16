@@ -23,7 +23,9 @@
   #hp { display: flex; gap: calc(8px * var(--scale)); align-items: center; font: calc(15px * var(--scale)) Consolas, monospace; color: var(--muted); }
   #bar { flex: 1; height: calc(6px * var(--scale)); background: #161E1C; border-radius: 2px; overflow: hidden; min-width: calc(80px * var(--scale)); }
   #fill { height: 100%; background: var(--green); width: 0; }
-  #fill.mid { background: var(--amber); } #fill.low { background: var(--red); }
+  #fill.mid { background: var(--amber); } #fill.low { background: var(--red); } #fill.poison { background: #b07be0; }
+  #cond { font-family: "Segoe UI", sans-serif; font-weight: 600; color: var(--green); }
+  #cond.mid { color: var(--amber); } #cond.low { color: var(--red); } #cond.poison { color: #b07be0; }
   #room { font-size: calc(14px * var(--scale)); color: var(--muted); text-align: right; margin-top: calc(2px * var(--scale)); }
   #challenge { font-size: calc(14px * var(--scale)); font-weight: 600; color: var(--green); text-align: right; max-width: calc(320px * var(--scale)); }
   #challenge.failed { color: var(--red); }
@@ -33,7 +35,7 @@
 <body>
 <div id="panel">
   <div id="time"></div>
-  <div id="hp"><span id="hptext"></span><div id="bar"><div id="fill"></div></div></div>
+  <div id="hp"><span id="cond"></span><span id="hptext"></span><div id="bar"><div id="fill"></div></div></div>
   <div id="room"></div>
   <div id="challenge"></div>
   <div id="offline"></div>
@@ -68,7 +70,12 @@
       const f = Math.max(0, Math.min(1, hp.current / hp.max));
       $("hptext").textContent = Math.max(0, hp.current) + " / " + hp.max;
       $("fill").style.width = (f * 100) + "%";
-      $("fill").className = f < 0.25 ? "low" : f < 0.75 ? "mid" : "";
+      // The game's own band when the API has it (fine / caution / danger / poison), else by the fraction.
+      const tone = { fine: "", caution: "mid", danger: "low", poison: "poison" }[hp.condition]
+        ?? (f < 0.25 ? "low" : f < 0.75 ? "mid" : "");
+      $("fill").className = tone;
+      $("cond").className = tone;
+      $("cond").textContent = hp.condition ? hp.condition[0].toUpperCase() + hp.condition.slice(1) : "";
     }
     $("room").textContent = inGame && state.room ? (state.room.name || state.room.id) : "";
     const c = $("challenge");

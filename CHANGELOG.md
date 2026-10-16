@@ -19,6 +19,9 @@ All notable changes to this project are documented here. The format follows
   "Map: next view") cycles through the views you tick in Settings → Overlay: the minimap, the whole room over the
   game's picture on a dark backdrop, the same see-through, or hidden. Options: how far the minimap reaches, its
   size, how strong the see-through map is, and names of doors, items and people on the full-screen map.
+- **Condition on the overlay:** Fine, Caution, Danger or Poison next to your HP, worked out the way the game's
+  status screen does it (poison read from the player's status), with the HP bar in the same colour; also in the API
+  (`health.condition`) and on the OBS HUD page.
 - **Game display** (Settings → Game display): switch Resident Evil between windowed, borderless (fills the screen —
   best for the overlay and streaming) and fullscreen, pick a resolution your main monitor supports, how the picture
   is scaled (4:3, whole multiples, stretched), vertical sync, gamma, texture filtering and antialiasing — every

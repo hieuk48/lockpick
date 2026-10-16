@@ -19,6 +19,7 @@ public sealed partial class OverlayViewModel : ObservableObject
     /// <summary>Gap between a widget and the picture's edge, in the overlay's own units.</summary>
     public const double Margin = 6;
 
+    private static readonly IBrush PoisonBrush = new SolidColorBrush(Color.Parse("#B07BE0"));
     private static readonly IBrush Backdrop = new SolidColorBrush(Color.Parse("#E0060807"));
     private static readonly IBrush Floor = new SolidColorBrush(Color.Parse("#E0202B27"));
     private static readonly IBrush DimWalls = new SolidColorBrush(Color.Parse("#5E6B66"));
@@ -109,6 +110,10 @@ public sealed partial class OverlayViewModel : ObservableObject
 
     [ObservableProperty]
     public partial string Health { get; private set; } = string.Empty;
+
+    /// <summary>Fine, Caution, Danger or Poison, as the game's status screen shows it (empty when unknown).</summary>
+    [ObservableProperty]
+    public partial string Condition { get; private set; } = string.Empty;
 
     /// <summary>HP as a fraction of max HP, for the bar.</summary>
     [ObservableProperty]
@@ -225,11 +230,21 @@ public sealed partial class OverlayViewModel : ObservableObject
             Health = string.Create(CultureInfo.InvariantCulture, $"{Math.Max(0, h.Value.Current)} / {max}");
             HealthFraction = fraction;
             HealthBarWidth = Math.Round(70 * fraction, 1);
-            HealthBrush = Brush(fraction < 0.25 ? "LpRedBrush" : fraction < 0.75 ? "LpAmberBrush" : "LpGreenBrush");
+            var condition = snapshot!.Condition is { IsValid: true } c ? c.Value : (HealthCondition?)null;
+            Condition = condition?.ToString() ?? string.Empty;
+            HealthBrush = condition switch
+            {
+                HealthCondition.Poison => PoisonBrush,
+                HealthCondition.Danger => Brush("LpRedBrush"),
+                HealthCondition.Caution => Brush("LpAmberBrush"),
+                HealthCondition.Fine => Brush("LpGreenBrush"),
+                _ => Brush(fraction < 0.25 ? "LpRedBrush" : fraction < 0.75 ? "LpAmberBrush" : "LpGreenBrush"),
+            };
         }
         else
         {
             Health = string.Empty;
+            Condition = string.Empty;
         }
 
         Room = inGame && snapshot!.Location is { IsValid: true } room
