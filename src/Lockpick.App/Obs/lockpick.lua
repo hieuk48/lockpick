@@ -148,7 +148,7 @@ end
 -- ---------------------------------------------------------------- "Add Lockpick to this scene"
 
 local function add_source(scene, id, name, settings, x, y)
-  if obs.obs_scene_find_source(scene, name) ~= nil then return end -- already there
+  if obs.obs_scene_find_source(scene, name) ~= nil then return nil end -- already there
   local source = obs.obs_source_create(id, name, settings, nil)
   local item = obs.obs_scene_add(scene, source)
   local pos = obs.vec2()
@@ -156,6 +156,18 @@ local function add_source(scene, id, name, settings, x, y)
   pos.y = y
   obs.obs_sceneitem_set_pos(item, pos)
   obs.obs_source_release(source)
+  return item
+end
+
+-- Fits an item to the whole canvas, keeping its shape and centred (the game's 4:3 picture on a wide canvas).
+local function fit_to_canvas(item, width, height)
+  if item == nil then return end
+  local bounds = obs.vec2()
+  bounds.x = width
+  bounds.y = height
+  obs.obs_sceneitem_set_bounds_type(item, obs.OBS_BOUNDS_SCALE_INNER)
+  obs.obs_sceneitem_set_bounds_alignment(item, 0) -- centre
+  obs.obs_sceneitem_set_bounds(item, bounds)
 end
 
 local function browser(scene, name, url, width, height, x, y)
@@ -188,7 +200,7 @@ local function add_to_scene(props, prop)
     obs.obs_data_set_string(settings, "capture_mode", "window")
     obs.obs_data_set_string(settings, "window", "Resident Evil:RESIDENT EVIL:ResidentEvil.exe")
     obs.obs_data_set_int(settings, "priority", 2) -- match the executable
-    add_source(scene, "game_capture", "Resident Evil (game)", settings, 0, 0)
+    fit_to_canvas(add_source(scene, "game_capture", "Resident Evil (game)", settings, 0, 0), w, h)
     obs.obs_data_release(settings)
   end
   local function widget(id, ww, wh) return root .. "widget?id=" .. id .. "&" .. token .. "&width=" .. ww .. "&height=" .. wh end
