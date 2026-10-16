@@ -92,7 +92,11 @@ Runs → LiveSplit):
   game time is set from the game's clock (Lockpick pauses LiveSplit's own game-time count and sets it every
   quarter second), so the runner keeps their LiveSplit layout and comparisons.
 
-Checked against a stand-in for LiveSplit's server (tests); a check with LiveSplit itself is capture bounty B208.
+Checked against a stand-in for LiveSplit's server (tests) and, for Follow, live with the owner's LiveSplit 1.8.36
+(2026-10-16: start, two splits, undo and reset in LiveSplit moved Lockpick's attempt the same way; the record kept
+the one split left at 0:20.9 and ended as reset). LiveSplit sends no reply at all for an empty answer (e.g. the
+game name with no splits open), so Lockpick asks it only for the timer phase and split index. Drive, and parity of
+the times with LiveSplit's own autosplitter, are still to check (B208).
 
 ## speedrun.com
 

@@ -277,6 +277,11 @@ public sealed class LiveSplitLink : IDisposable
         }
     }
 
+    /// <summary>
+    /// Asks LiveSplit something. Only for commands that always answer (the timer phase, the split index): LiveSplit
+    /// sends nothing at all for an empty answer (e.g. getgamename with no splits loaded, seen 2026-10-16), which would
+    /// look like a dead connection here.
+    /// </summary>
     private async Task<string?> AskAsync(string command)
     {
         await _io.WaitAsync().ConfigureAwait(false);
