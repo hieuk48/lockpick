@@ -181,6 +181,11 @@
       <Setter Property="Foreground" Value="{StaticResource LpRedBrush}" />
     </Style>
 
+    <!-- Streamer mode: what's private (paths, process ids, the API token) is blurred on screen. -->
+    <Style Selector=":is(Control).streamer :is(Control).private">
+      <Setter Property="Effect" Value="blur(9)" />
+    </Style>
+
     <!-- Navigation -->
     <Style Selector="ListBox.nav">
       <Setter Property="Background" Value="Transparent" />

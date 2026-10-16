@@ -111,6 +111,9 @@ public sealed record AppSettings
     /// <summary>LiveSplit's TCP server port (its default).</summary>
     public int LiveSplitPort { get; init; } = 16834;
 
+    /// <summary>Streamer mode: paths, process ids and the API token are blurred on screen.</summary>
+    public bool StreamerMode { get; init; }
+
     /// <summary>Play a sound when a challenge fails or the player dies (the sounds below).</summary>
     public bool AlertSound { get; init; }
 
