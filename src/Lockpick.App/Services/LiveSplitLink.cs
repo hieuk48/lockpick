@@ -76,7 +76,6 @@ public sealed class LiveSplitLink : IDisposable
     {
         Mode = mode;
         Port = port;
-        _runs.AutoSplit = mode != LiveSplitModes.Follow;
         Disconnect(); // the loop reconnects with the new settings
     }
 
@@ -100,11 +99,13 @@ public sealed class LiveSplitLink : IDisposable
 
     private async Task LoopAsync(CancellationToken stop)
     {
-        _runs.AutoSplit = Mode != LiveSplitModes.Follow;
         while (!stop.IsCancellationRequested)
         {
             try
             {
+                // Lockpick leaves the splitting to LiveSplit only while it follows a connected LiveSplit: with LiveSplit
+                // closed (or the mode off) it splits by itself again, so a run is never left unsplit.
+                _runs.AutoSplit = Mode != LiveSplitModes.Follow || _client is null;
                 if (Mode == LiveSplitModes.Off)
                 {
                     SetStatus("Off");
@@ -116,6 +117,7 @@ public sealed class LiveSplitLink : IDisposable
                 {
                     await ConnectAsync(stop).ConfigureAwait(false);
                     _lastIndex = -1;
+                    _runs.AutoSplit = Mode != LiveSplitModes.Follow;
                     SetStatus(Mode == LiveSplitModes.Follow ? "Connected: following LiveSplit's splits." : "Connected: Lockpick's splits drive LiveSplit.");
                 }
 
@@ -138,7 +140,8 @@ public sealed class LiveSplitLink : IDisposable
             catch (Exception ex) when (ex is IOException or SocketException or ObjectDisposedException or InvalidOperationException)
             {
                 Disconnect();
-                SetStatus($"Waiting for LiveSplit's server on port {Port} (in LiveSplit: Control → Start TCP Server).");
+                _runs.AutoSplit = true; // LiveSplit is gone: Lockpick splits by itself until it is back
+                SetStatus($"Waiting for LiveSplit's server on port {Port}; meanwhile Lockpick splits by itself.");
                 try
                 {
                     await Task.Delay(Retry, stop).ConfigureAwait(false);

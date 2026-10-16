@@ -96,6 +96,16 @@ public sealed class LiveSplitLinkTests : IDisposable
         Assert.Equal(RunResult.Reset, _runs.Status.Result);
     }
 
+    [Fact]
+    public void Following_with_no_LiveSplit_leaves_Lockpick_splitting_by_itself()
+    {
+        var port = _server.Port;
+        _server.Dispose(); // nothing listening
+        using var link = new LiveSplitLink(_runs, _source, LiveSplitModes.Follow, port, NullLogger.Instance);
+        WaitFor(() => link.Status.StartsWith("Waiting", StringComparison.Ordinal));
+        Assert.True(_runs.AutoSplit);
+    }
+
     /// <summary>Answers the get-commands LiveSplit answers and records every command.</summary>
     private sealed class FakeLiveSplit : IDisposable
     {
@@ -118,8 +128,16 @@ public sealed class LiveSplitLinkTests : IDisposable
 
         public volatile int Index = -1;
 
+        private bool _disposed;
+
         public void Dispose()
         {
+            if (_disposed)
+            {
+                return;
+            }
+
+            _disposed = true;
             _stop.Cancel();
             _listener.Stop();
             _stop.Dispose();
