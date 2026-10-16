@@ -50,6 +50,7 @@ http://127.0.0.1:1996/overlay/hud?token=<token>&corner=top-right&scale=1
 |---|---|---|
 | `/overlay/hud` | In-game time, HP, the room, the challenge (clean, or failed with the reason) | `corner` = `top-right` (default), `top-left`, `bottom-right`, `bottom-left`; `scale` 0.5–4 |
 | `/overlay/splits` | The run's splits: the category, the splits around the current one with times and differences to the personal best (gold for a best segment), the in-game clock, PB and sum of best | `corner` = `top-left` (default) or another; `scale` 0.5–4; `rows` 3–30 (default 8) |
+| `/overlay/feed` | What just happened, in plain words (pickups, kills, enemies appearing, damage, story events), the newest at the bottom, each line for a while | `corner` = `bottom-left` (default) or another; `scale`; `lines` 1–20 (default 5); `seconds` (default 20); `types` = event types to show (default `Happened`; e.g. add `SplitReached,RunEnded,ChallengeFailed`) |
 
 Lockpick's in-game overlay (Settings → Overlay) is not part of any OBS capture — it's a window of its own on top of
 the game — so use these pages for the stream. Game Capture of the game works in every display mode

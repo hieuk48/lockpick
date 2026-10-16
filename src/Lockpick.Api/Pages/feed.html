@@ -1,0 +1,88 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Lockpick feed</title>
+<!--
+  What just happened in the game, for an OBS Browser Source (docs/API.md): items picked up, used and combined, kills,
+  enemies appearing, damage and story events in plain words, the newest at the bottom; each line fades after a while.
+  URL: http://127.0.0.1:<port>/overlay/feed?token=<token>[&corner=bottom-left][&scale=1][&lines=5][&seconds=20][&types=Happened,SplitReached,RunEnded,ChallengeFailed]
+  Transparent background; it reads Lockpick's API twice a second. Nothing here can change the game.
+-->
+<style>
+  :root { --scale: 1; --text: #DFE8E3; --muted: #8FA39B; }
+  html, body { margin: 0; background: transparent; overflow: hidden; height: 100%; }
+  body { font-family: "Segoe UI", system-ui, sans-serif; color: var(--text); }
+  #panel {
+    position: absolute; margin: calc(12px * var(--scale)); padding: calc(6px * var(--scale)) calc(10px * var(--scale));
+    max-width: calc(420px * var(--scale)); background: rgba(11, 15, 14, .80); border: 1px solid #27322F;
+    border-radius: calc(4px * var(--scale)); display: none;
+  }
+  .top { top: 0; } .bottom { bottom: 0; } .left { left: 0; } .right { right: 0; }
+  .line { font-size: calc(16px * var(--scale)); color: var(--muted); line-height: 1.35; transition: opacity .6s; }
+  .line:last-child { color: var(--text); }
+  .time { font-family: Consolas, "Cascadia Mono", monospace; margin-right: calc(8px * var(--scale)); }
+</style>
+</head>
+<body>
+<div id="panel"></div>
+<script>
+  const params = new URLSearchParams(location.search);
+  const token = params.get("token") || "";
+  const corner = (params.get("corner") || "bottom-left").split("-");
+  const lines = Math.min(20, Math.max(1, parseInt(params.get("lines")) || 5));
+  const keep = Math.min(600, Math.max(3, parseFloat(params.get("seconds")) || 20)) * 1000;
+  const types = new Set((params.get("types") || "Happened").split(","));
+  const panel = document.getElementById("panel");
+  panel.classList.add(corner[0] === "top" ? "top" : "bottom", corner[1] === "right" ? "right" : "left");
+  document.documentElement.style.setProperty("--scale", Math.min(4, Math.max(0.5, parseFloat(params.get("scale")) || 1)));
+  let after = null;
+  let shown = [];
+
+  // "00:06:12.1234567" (the event's in-game time) → "6:12"
+  function clock(span) {
+    const m = /^(?:(\d+)\.)?(\d+):(\d+):(\d+)/.exec(span || "");
+    if (!m) return "";
+    const minutes = (parseInt(m[1] || "0") * 24 + parseInt(m[2])) * 60 + parseInt(m[3]);
+    return minutes + ":" + m[4];
+  }
+
+  function render() {
+    const now = Date.now();
+    shown = shown.filter(s => now - s.at < keep).slice(-lines);
+    panel.style.display = shown.length ? "block" : "none";
+    panel.replaceChildren(...shown.map(s => {
+      const div = document.createElement("div");
+      div.className = "line";
+      if (s.time) {
+        const t = document.createElement("span");
+        t.className = "time";
+        t.textContent = s.time;
+        div.append(t);
+      }
+      div.append(document.createTextNode(s.text));
+      return div;
+    }));
+  }
+
+  function poll() {
+    fetch("/api/v1/events?token=" + encodeURIComponent(token) + (after != null ? "&after=" + after : ""), { cache: "no-store" })
+      .then(r => r.ok ? r.json() : Promise.reject(r.status))
+      .then(r => {
+        // The first read only learns where the list is: old events aren't replayed onto the stream.
+        if (after != null) {
+          for (const e of r.events) {
+            if (types.has(e.type)) shown.push({ at: Date.now(), text: e.text, time: clock(e.event && e.event.gameTime) });
+          }
+        }
+        after = r.last;
+      })
+      .catch(() => {})
+      .finally(() => setTimeout(poll, 500));
+  }
+
+  poll();
+  setInterval(render, 250);
+</script>
+</body>
+</html>

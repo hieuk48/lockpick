@@ -51,7 +51,8 @@ All notable changes to this project are documented here. The format follows
 - **LiveSplit** (Runs → LiveSplit, through LiveSplit's TCP server): *Follow* moves Lockpick's run with your
   LiveSplit and its autosplitter (as leaderboard runs require) without splitting twice; *Drive* lets Lockpick start,
   split and reset LiveSplit and set its game time from the game's clock.
-- **OBS splits page and run API:** `/overlay/splits` shows the run's splits in an OBS Browser Source, and
+- **OBS splits and feed pages, run API:** `/overlay/splits` shows the run's splits and `/overlay/feed` what just
+  happened, each in an OBS Browser Source, and
   `GET /api/v1/run` (plus `POST /api/v1/run/split`, `/undo`, `/skip`, `/reset`) serves the run to other tools.
 - **OBS HUD page:** with the API on, `http://127.0.0.1:1996/overlay/hud?token=…` is a transparent page for an OBS
   Browser Source with the same time, HP, room and challenge state, in the corner and size you choose

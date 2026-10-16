@@ -20,6 +20,10 @@ namespace Lockpick.Core.Events;
 [JsonDerivedType(typeof(RunInvalidated), nameof(RunInvalidated))]
 [JsonDerivedType(typeof(ChallengeStarted), nameof(ChallengeStarted))]
 [JsonDerivedType(typeof(ChallengeFailed), nameof(ChallengeFailed))]
+[JsonDerivedType(typeof(RunStarted), nameof(RunStarted))]
+[JsonDerivedType(typeof(SplitReached), nameof(SplitReached))]
+[JsonDerivedType(typeof(RunEnded), nameof(RunEnded))]
+[JsonDerivedType(typeof(Happened), nameof(Happened))]
 public abstract record GameEvent(DateTimeOffset Timestamp)
 {
     public abstract string Describe();

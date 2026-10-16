@@ -113,6 +113,8 @@ public sealed class ApiServerTests : IAsyncLifetime
         var page = await obs.GetAsync($"overlay/splits?token={Token}");
         Assert.Equal(HttpStatusCode.OK, page.StatusCode);
         Assert.Contains("/api/v1/run", await page.Content.ReadAsStringAsync(), StringComparison.Ordinal);
+        var feed = await obs.GetAsync($"overlay/feed?token={Token}");
+        Assert.Contains("/api/v1/events", await feed.Content.ReadAsStringAsync(), StringComparison.Ordinal);
     }
 
     [Fact]
