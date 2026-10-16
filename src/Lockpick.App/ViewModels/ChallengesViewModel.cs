@@ -13,15 +13,37 @@ namespace Lockpick.App.ViewModels;
 public sealed partial class ChallengesViewModel : PageViewModel
 {
     private readonly ChallengeService _challenges;
+    private readonly AppServices _services;
+    private readonly bool _loading = true;
 
     public ChallengesViewModel(AppServices services, LiveState state)
         : base("Challenges", "Icon.Trophy")
     {
+        _services = services;
         _challenges = services.Challenges;
         _challenges.EventRaised += (_, e) => state.Add(e);
         _challenges.StatusChanged += (_, _) => Dispatcher.UIThread.Post(Sync);
+        services.Runs.Died += (_, _) => Dispatcher.UIThread.Post(Sync);
+        AlertSound = services.Settings.Current.AlertSound;
         Selected = Presets[0];
         Sync();
+        _loading = false;
+    }
+
+    /// <summary>"Deaths this session: 3" (any play since Lockpick started).</summary>
+    [ObservableProperty]
+    public partial string Deaths { get; private set; } = string.Empty;
+
+    /// <summary>Windows' alert sound on a fail or a death.</summary>
+    [ObservableProperty]
+    public partial bool AlertSound { get; set; }
+
+    partial void OnAlertSoundChanged(bool value)
+    {
+        if (!_loading)
+        {
+            _services.Settings.Save(_services.Settings.Current with { AlertSound = value });
+        }
     }
 
     public IReadOnlyList<ChallengeDefinition> Presets => ChallengeDefinition.Presets;
@@ -91,6 +113,8 @@ public sealed partial class ChallengesViewModel : PageViewModel
 
     private void Sync()
     {
+        var deaths = _services.Runs.Deaths;
+        Deaths = deaths == 0 ? "No deaths this session." : deaths == 1 ? "1 death this session." : $"{deaths} deaths this session.";
         var status = _challenges.Status;
         IsActive = status.State != ChallengeState.Off;
         IsRunning = status.State == ChallengeState.Running;

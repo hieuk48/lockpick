@@ -108,6 +108,9 @@ public sealed record AppSettings
     /// <summary>LiveSplit's TCP server port (its default).</summary>
     public int LiveSplitPort { get; init; } = 16834;
 
+    /// <summary>Play Windows' alert sound when a challenge fails or the player dies.</summary>
+    public bool AlertSound { get; init; }
+
     /// <summary>What splits are compared against (a LiveSplit comparison name: Personal Best, Best Segments, …).</summary>
     public string RunComparison { get; init; } = "Personal Best";
 

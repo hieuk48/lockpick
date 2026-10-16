@@ -33,11 +33,16 @@
           </StackPanel>
           <TextBlock Classes="headline" Text="{Binding StatusTitle}" TextWrapping="Wrap" />
           <TextBlock Text="{Binding StatusDetail}" TextWrapping="Wrap" Foreground="{StaticResource LpMutedBrush}" />
+          <TextBlock Text="{Binding Deaths}" Foreground="{StaticResource LpMutedBrush}" />
           <WrapPanel ItemSpacing="8" LineSpacing="8" IsVisible="{Binding IsActive}">
             <Button Content="Try again" Command="{Binding RetryCommand}" IsVisible="{Binding IsFailed}" Classes="accent"
-                    AutomationProperties.Name="Try the challenge again" />
+                    AutomationProperties.Name="Try the challenge again"
+                    ToolTip.Tip="Also from a key or a controller button: Settings → Hotkeys → Challenge: try again." />
             <Button Content="Stop challenge" Command="{Binding StopCommand}" AutomationProperties.Name="Stop the challenge" />
           </WrapPanel>
+          <CheckBox IsChecked="{Binding AlertSound}" AutomationProperties.Name="Play a sound on a fail or a death">
+            <TextBlock TextWrapping="Wrap" Text="Play a sound when the challenge fails or you die (Windows' alert sound)" />
+          </CheckBox>
         </StackPanel>
       </Border>
 

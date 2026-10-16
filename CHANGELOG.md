@@ -40,6 +40,9 @@ All notable changes to this project are documented here. The format follows
   LiveSplit's own engine, so no LiveSplit is needed — its layout is the overlay's one splits widget (*Run splits*,
   with the world record from speedrun.com when the leaderboard is on) and an OBS page (`/overlay/livesplit`), and
   each split set is kept as a LiveSplit file with every attempt.
+- **Challenge feedback** (#59): a death counter (deaths this session, any play; on the Challenges page and the
+  overlay's challenge line), an optional alert sound when a challenge fails or you die (Windows' own alert, off by
+  default), and **Challenge: try again** as a key or controller button (Settings → Hotkeys).
 - **Comparisons and where the time is** (Runs page): compare your splits against your personal best or any of
   LiveSplit's comparisons (best segments, average, median, latest run, balanced PB, …) on the page, the overlay and
   LiveSplit's layout; a new card lists the segments where your PB loses most against your best segments. Practice and

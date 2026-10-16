@@ -80,6 +80,26 @@ public sealed class AppServices : IAsyncDisposable
                 case TrainerHotkeys.RunReset:
                     Runs.Reset();
                     break;
+                case TrainerHotkeys.ChallengeRetry:
+                    Challenges.Retry();
+                    break;
+            }
+        };
+
+        // The optional alert (Challenges page): a challenge failing, or a death.
+        Challenges.StatusChanged += (_, status) =>
+        {
+            if (status.State == Core.Challenges.ChallengeState.Failed && status.FailedAt != _alertedFail && Settings.Current.AlertSound)
+            {
+                _alertedFail = status.FailedAt;
+                AlertSound.Play();
+            }
+        };
+        Runs.Died += (_, _) =>
+        {
+            if (Settings.Current.AlertSound && Challenges.Status.State != Core.Challenges.ChallengeState.Failed)
+            {
+                AlertSound.Play(); // a death that fails a challenge already sounded
             }
         };
         foreach (var (action, key) in settings.Current.TrainerHotkeys)
@@ -92,6 +112,8 @@ public sealed class AppServices : IAsyncDisposable
             SetActionButton(action, button);
         }
     }
+
+    private DateTimeOffset? _alertedFail;
 
     /// <summary>The challenge the player chose (Challenges page, API).</summary>
     public Core.Challenges.ChallengeService Challenges { get; }

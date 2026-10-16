@@ -23,6 +23,9 @@ public sealed class TrainerHotkeys : IDisposable
     public const string RunSkip = "run-skip";
     public const string RunReset = "run-reset";
 
+    /// <summary>Starts the challenge's attempt over (after a fail); works any time a challenge is on.</summary>
+    public const string ChallengeRetry = "challenge-retry";
+
     /// <summary>Shows the overlay map's next view (Settings: minimap, full-screen room, …); works any time.</summary>
     public const string NextMapView = "map-view";
 
@@ -53,6 +56,7 @@ public sealed class TrainerHotkeys : IDisposable
         (RunUndo, "Run: undo split"),
         (RunSkip, "Run: skip split"),
         (RunReset, "Run: reset"),
+        (ChallengeRetry, "Challenge: try again"),
     ];
 
     /// <summary>The registered key per action (missing: off or refused by Windows).</summary>

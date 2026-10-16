@@ -236,7 +236,8 @@ is decided later. Keep-running stays out of challenges (it patches the game, and
      (Jill / Chris NMG) — triggered by named story flags, item pickups and rooms (B701, B702, B706); a split editor;
      comparison against the player's best (local);
    - challenge feedback: the fail reason in the overlay and an optional sound; a death counter; retry from a
-     controller button; challenges end on a death (B205);
+     controller button; challenges end on a death (B205) — **done 2026-10-16 (#59)** except a live check of the
+     counter and the sound in a real death;
    - **LiveSplit:** leaderboard runs must use LiveSplit's own IGT script, so by default Lockpick *follows* the
      runner's LiveSplit through LiveSplit Server (split index, times — for the overlay, markers and run records)
      and never splits twice; only with no autosplitter does Lockpick drive it (start, split, reset, set game

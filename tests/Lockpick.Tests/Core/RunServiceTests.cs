@@ -159,6 +159,25 @@ public sealed class RunServiceTests : IDisposable
     }
 
     [Fact]
+    public void Deaths_are_counted_once_each_with_or_without_a_run()
+    {
+        var died = 0;
+        _runs.Died += (_, _) => died++;
+        Play("105", 5);                  // no run chosen: practice
+        _rules.Died = true;
+        Play("105", 6);
+        Play("105", 7);                  // still dead (the game over screen): the same death
+        _rules.Died = false;
+        Play("105", 8);
+        _runs.Choose(Set);
+        NewGame();
+        _rules.Died = true;
+        Play("105", 9);                  // a death in a run
+        Assert.Equal(2, _runs.Deaths);
+        Assert.Equal(2, died);
+    }
+
+    [Fact]
     public void Attempts_are_numbered_after_the_kept_ones_and_closing_keeps_the_one_running()
     {
         _runs.Choose(Set);

@@ -87,6 +87,7 @@ public sealed class RunService : IDisposable
     private readonly TimeProvider _time;
     private readonly object _gate = new();
     private GameSnapshot? _previous;
+    private bool _dead;
     private RoomLocation? _room;
     private IReadOnlyList<HeldItem>? _inventory;
     private TimeSpan? _gameTime;
@@ -136,6 +137,12 @@ public sealed class RunService : IDisposable
 
     /// <summary>The adapter's run rules for the attached game, or null.</summary>
     public IRunRules? Rules => _source.Status.Profile is { } profile ? _rulesFor(profile) : null;
+
+    /// <summary>Deaths since Lockpick started, in any play (not only timed runs).</summary>
+    public int Deaths { get; private set; }
+
+    /// <summary>The player died (any play; raised once per death, on the monitor thread).</summary>
+    public event EventHandler? Died;
 
     /// <summary>Times runs against <paramref name="set"/> from the next new game (an attempt in progress is reset).</summary>
     public void Choose(SplitSet set)
@@ -263,11 +270,23 @@ public sealed class RunService : IDisposable
     {
         List<GameEvent> raised = [];
         var changed = false;
+        var died = false;
         lock (_gate)
         {
             if (snapshot.GameTime.TryGet(out var time))
             {
                 _gameTime = time;
+            }
+
+            if (Rules is { } any)
+            {
+                var dead = any.PlayerDied(snapshot);
+                died = dead && !_dead; // once per death: HP stays below zero until the game over screen
+                _dead = dead;
+                if (died)
+                {
+                    Deaths++;
+                }
             }
 
             if (Status.State == RunState.Running && Rules is { } rules)
@@ -314,6 +333,11 @@ public sealed class RunService : IDisposable
         if (changed)
         {
             Publish(raised);
+        }
+
+        if (died)
+        {
+            Died?.Invoke(this, EventArgs.Empty);
         }
     }
 

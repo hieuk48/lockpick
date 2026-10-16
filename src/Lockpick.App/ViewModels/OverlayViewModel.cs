@@ -71,6 +71,7 @@ public sealed partial class OverlayViewModel : ObservableObject
             }
         };
         services.Challenges.StatusChanged += (_, s) => Dispatcher.UIThread.Post(() => Show(s));
+        services.Runs.Died += (_, _) => Dispatcher.UIThread.Post(() => Show(services.Challenges.Status));
         services.Runs.StatusChanged += (_, _) => Dispatcher.UIThread.Post(() => ShowRun(state.Snapshot));
         services.Runs.AttemptEnded += (_, record) => Dispatcher.UIThread.Post(() => ShowAttemptEnded(record));
         services.Feed.EventRaised += (_, e) => Dispatcher.UIThread.Post(() =>
@@ -486,10 +487,11 @@ public sealed partial class OverlayViewModel : ObservableObject
         HasChallenge = status.State is ChallengeState.Running or ChallengeState.Failed;
         ChallengeFailed = status.State == ChallengeState.Failed;
         ChallengeBrush = Brush(ChallengeFailed ? "LpRedBrush" : "LpGreenBrush");
+        var deaths = _services.Runs.Deaths switch { 0 => string.Empty, 1 => " · 1 death", var n => $" · {n} deaths" };
         Challenge = status.State switch
         {
-            ChallengeState.Running => $"{status.Challenge?.Name} · attempt {status.Attempt} · clean",
-            ChallengeState.Failed => $"{status.Challenge?.Name} · failed: {status.FailReason}",
+            ChallengeState.Running => $"{status.Challenge?.Name} · attempt {status.Attempt} · clean{deaths}",
+            ChallengeState.Failed => $"{status.Challenge?.Name} · failed: {status.FailReason}{deaths}",
             _ => string.Empty,
         };
     }
