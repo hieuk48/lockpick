@@ -163,6 +163,9 @@ public sealed class RunServiceTests : IDisposable
     {
         var died = 0;
         _runs.Died += (_, _) => died++;
+        _rules.Died = true;
+        Play("105", 4);                  // already dead when Lockpick first sees the game: not a new death
+        _rules.Died = false;
         Play("105", 5);                  // no run chosen: practice
         _rules.Died = true;
         Play("105", 6);

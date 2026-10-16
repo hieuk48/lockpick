@@ -87,7 +87,7 @@ public sealed class RunService : IDisposable
     private readonly TimeProvider _time;
     private readonly object _gate = new();
     private GameSnapshot? _previous;
-    private bool _dead;
+    private bool? _dead; // null: not known yet (just attached), so a death already on screen isn't counted
     private RoomLocation? _room;
     private IReadOnlyList<HeldItem>? _inventory;
     private TimeSpan? _gameTime;
@@ -281,7 +281,7 @@ public sealed class RunService : IDisposable
             if (Rules is { } any)
             {
                 var dead = any.PlayerDied(snapshot);
-                died = dead && !_dead; // once per death: HP stays below zero until the game over screen
+                died = dead && _dead == false; // once per death: HP stays below zero until the game over screen
                 _dead = dead;
                 if (died)
                 {
@@ -365,6 +365,11 @@ public sealed class RunService : IDisposable
         var changed = false;
         lock (_gate)
         {
+            if (gameEvent is GameStopped)
+            {
+                _dead = null; // the next game, or the same one attached again, starts unknown
+            }
+
             switch (gameEvent)
             {
                 case GameLoaded loaded when Status.State != RunState.Off && (loaded.IsNewGame || (StartOnLoad && Status.State != RunState.Running)):
