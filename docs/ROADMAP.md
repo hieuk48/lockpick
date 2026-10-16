@@ -189,7 +189,8 @@ is decided later. Keep-running stays out of challenges (it patches the game, and
    and as overlay views (whole floor, see-through; a zoom key follows the player); stage 1 checked by eye against
    the game's own layout. HP band, poison and enemy HP done (#42). Event feed (#43) first pass done: the change
    explainer's plain words in the event log and an overlay widget (attackers by name and zombies getting back up
-   still to come). Next: the layout editor
+   still to come). Big messages (#59, first part): challenge failed with the reason, a death, a run finished or a
+   new personal best, centred at the top. Next: the layout editor
    (#55), a controller button for the map, never activating Lockpick's windows over exclusive fullscreen.
    - follow the game window (PID → class `RESIDENT EVIL`): client rectangle in physical pixels, monitor, DPI,
      minimized, exclusive fullscreen; move/size events;

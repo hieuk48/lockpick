@@ -41,6 +41,7 @@ public sealed class OverlayController : IDisposable
             new Widget(OverlayLayout.Enemies, _host.EnemiesPanel, () => model.Enemies.Count > 0, () => false),
             new Widget(OverlayLayout.Splits, _host.SplitsPanel, () => model.SplitRows.Count > 0, () => false),
             new Widget(OverlayLayout.Feed, _host.FeedPanel, () => model.FeedLines.Count > 0, () => false),
+            new Widget(OverlayLayout.Banner, _host.BannerPanel, () => model.HasBanner, () => false),
         ];
         _host.ShowEnemies(model.Enemies);
         _host.ShowSplits(model);
@@ -82,6 +83,12 @@ public sealed class OverlayController : IDisposable
         {
             _host.ShowSplits(_model);
             Find(OverlayLayout.Splits).Dirty = true;
+            return;
+        }
+
+        if (e.PropertyName is nameof(OverlayViewModel.HasBanner) || e.PropertyName?.StartsWith("Banner", StringComparison.Ordinal) == true)
+        {
+            Find(OverlayLayout.Banner).Dirty = true;
             return;
         }
 
@@ -159,7 +166,8 @@ public sealed class OverlayController : IDisposable
         foreach (var corner in OverlayCorners.All)
         {
             var left = corner is OverlayCorners.TopLeft or OverlayCorners.BottomLeft;
-            var top = corner is OverlayCorners.TopLeft or OverlayCorners.TopRight;
+            var centre = corner == OverlayCorners.TopCentre;
+            var top = corner is OverlayCorners.TopLeft or OverlayCorners.TopRight or OverlayCorners.TopCentre;
             var offset = margin; // from the corner, along the picture's height
             foreach (var widget in _widgets.Where(w => OverlayLayout.Corner(settings, w.Id) == corner))
             {
@@ -179,7 +187,7 @@ public sealed class OverlayController : IDisposable
                 }
                 else
                 {
-                    x = left ? picture.X + margin : picture.Right - margin - w;
+                    x = centre ? picture.X + ((picture.Width - w) / 2) : left ? picture.X + margin : picture.Right - margin - w;
                     y = top ? picture.Y + offset : picture.Bottom - offset - h;
                     offset += h + margin;
                 }

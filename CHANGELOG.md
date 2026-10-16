@@ -19,6 +19,8 @@ All notable changes to this project are documented here. The format follows
   "Map: next view") cycles through the views you tick in Settings → Overlay: the minimap, the whole room over the
   game's picture on a dark backdrop, the same see-through, or hidden. Options: how far the minimap reaches, its
   size, how strong the see-through map is, and names of doors, items and people on the full-screen map.
+- **Big messages on the overlay:** "Challenge failed" with the reason, "You died" and "Run finished" / "New personal
+  best!" centred at the top of the picture for a few seconds (any widget can now sit top centre).
 - **What just happened** (#43): items picked up, used, received or combined, documents and maps taken, first visits,
   unlocks, kills, enemies appearing, damage and named story events in plain words — in the event log and as an
   overlay widget (the last few, for 20 seconds), from the same knowledge as captures and the Progress page.

@@ -35,6 +35,17 @@
     </Border>
   </LayoutTransformControl>
 
+  <!-- Big messages, centred at the top: a challenge failed, a death, a run finished. -->
+  <LayoutTransformControl x:Name="BannerPanel">
+    <Border Background="#E00B0F0E" BorderBrush="{Binding BannerBrush}" BorderThickness="2" CornerRadius="4" Padding="16,8" MinWidth="260">
+      <StackPanel Spacing="2">
+        <TextBlock Text="{Binding BannerTitle}" FontSize="22" FontWeight="Bold" Foreground="{Binding BannerBrush}" HorizontalAlignment="Center" />
+        <TextBlock Text="{Binding BannerDetail}" FontSize="12" Foreground="{StaticResource LpTextBrush}" HorizontalAlignment="Center"
+                   TextWrapping="Wrap" MaxWidth="420" TextAlignment="Center" />
+      </StackPanel>
+    </Border>
+  </LayoutTransformControl>
+
   <!-- What just happened; lines are built in code (OverlayWindow.ShowFeed). -->
   <LayoutTransformControl x:Name="FeedPanel">
     <Border Background="#C80B0F0E" BorderBrush="{StaticResource LpBorderBrush}" BorderThickness="1" CornerRadius="3" Padding="7,4" MaxWidth="260">

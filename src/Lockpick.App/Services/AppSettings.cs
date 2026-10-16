@@ -149,7 +149,10 @@ public static class OverlayCorners
     public const string BottomLeft = "Bottom left";
     public const string TopLeft = "Top left";
 
-    public static IReadOnlyList<string> All { get; } = [TopRight, BottomRight, BottomLeft, TopLeft];
+    /// <summary>Centred at the top of the picture (big messages).</summary>
+    public const string TopCentre = "Top centre";
+
+    public static IReadOnlyList<string> All { get; } = [TopRight, BottomRight, BottomLeft, TopLeft, TopCentre];
 }
 
 /// <summary>The overlay map's views: what the map hotkey cycles through, in this order.</summary>
@@ -225,6 +228,7 @@ public static class OverlayLayout
     public const string Enemies = "enemies";
     public const string Splits = "splits";
     public const string Feed = "feed";
+    public const string Banner = "banner";
 
     public static IReadOnlyList<(string Id, string Name, string Default)> Widgets { get; } =
     [
@@ -233,6 +237,7 @@ public static class OverlayLayout
         (Enemies, "Enemies in the room (HP)", OverlayCorners.BottomLeft),
         (Splits, "Run splits", OverlayCorners.TopRight),
         (Feed, "What just happened", OverlayCorners.BottomLeft),
+        (Banner, "Big messages (challenge failed, died, run finished)", OverlayCorners.TopCentre),
     ];
 
     /// <summary>A corner, or off.</summary>

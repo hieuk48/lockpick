@@ -31,6 +31,8 @@ public sealed partial class OverlayViewModel : ObservableObject
     private readonly AppServices _services;
     private MapOverlaySettings _mapSettings;
     private (double Width, double Height) _picture = (640, 480);
+    private static readonly TimeSpan BannerTime = TimeSpan.FromSeconds(6);
+    private int _banner;
     private const int FeedShown = 5;
     private static readonly TimeSpan FeedKeep = TimeSpan.FromSeconds(20);
     private readonly List<(DateTimeOffset At, Happened Event)> _feed = [];
@@ -70,6 +72,7 @@ public sealed partial class OverlayViewModel : ObservableObject
         };
         services.Challenges.StatusChanged += (_, s) => Dispatcher.UIThread.Post(() => Show(s));
         services.Runs.StatusChanged += (_, _) => Dispatcher.UIThread.Post(() => ShowRun(state.Snapshot));
+        services.Runs.AttemptEnded += (_, record) => Dispatcher.UIThread.Post(() => ShowAttemptEnded(record));
         services.Feed.EventRaised += (_, e) => Dispatcher.UIThread.Post(() =>
         {
             _feed.Add((DateTimeOffset.UtcNow, e));
@@ -410,8 +413,58 @@ public sealed partial class OverlayViewModel : ObservableObject
         }
     }
 
+    /// <summary>A big message is up (the banner widget).</summary>
+    [ObservableProperty]
+    public partial bool HasBanner { get; private set; }
+
+    [ObservableProperty]
+    public partial string BannerTitle { get; private set; } = string.Empty;
+
+    [ObservableProperty]
+    public partial string BannerDetail { get; private set; } = string.Empty;
+
+    [ObservableProperty]
+    public partial IBrush BannerBrush { get; private set; } = Brush("LpRedBrush");
+
+    /// <summary>Shows a big message for a few seconds (a newer one replaces it).</summary>
+    private void ShowBanner(string title, string detail, string brush)
+    {
+        BannerTitle = title;
+        BannerDetail = detail;
+        BannerBrush = Brush(brush);
+        HasBanner = true;
+        var shown = ++_banner;
+        DispatcherTimer.RunOnce(() =>
+        {
+            if (shown == _banner)
+            {
+                HasBanner = false;
+            }
+        }, BannerTime);
+    }
+
+    private void ShowAttemptEnded(Core.Runs.RunRecord record)
+    {
+        if (record.Result == Core.Runs.RunResult.Died)
+        {
+            ShowBanner("You died", $"Attempt {record.Attempt} ended at {RunRows.Clock(record.GameTime)}", "LpRedBrush");
+        }
+        else if (record.Result == Core.Runs.RunResult.Finished)
+        {
+            var best = _services.RunLibrary.Find(record.SetId) is { } set ? _services.RunLibrary.Comparison(set).PersonalBest : [];
+            var personalBest = record.IsClean && best.Count > 0 && best[^1] == record.GameTime;
+            ShowBanner(personalBest ? "New personal best!" : "Run finished", $"{record.Category} in {RunRows.Clock(record.GameTime)}",
+                personalBest ? "LpGreenBrush" : "LpTextBrush");
+        }
+    }
+
     private void Show(ChallengeStatus status)
     {
+        if (status.State == ChallengeState.Failed && !ChallengeFailed)
+        {
+            ShowBanner("Challenge failed", $"{status.Challenge?.Name}: {status.FailReason}", "LpRedBrush");
+        }
+
         HasChallenge = status.State is ChallengeState.Running or ChallengeState.Failed;
         ChallengeFailed = status.State == ChallengeState.Failed;
         ChallengeBrush = Brush(ChallengeFailed ? "LpRedBrush" : "LpGreenBrush");
