@@ -59,6 +59,7 @@ public sealed class AppServices : IAsyncDisposable
         SpeedrunCom = new SpeedrunCom(Updates.CurrentVersion);
         SpeedrunAccount = new SpeedrunAccount(SpeedrunCom, new SecretStore(AppPaths.Secrets), settings);
         LiveSplit = new LiveSplitLink(Runs, source, settings.Current.LiveSplitMode, settings.Current.LiveSplitPort, loggerFactory.CreateLogger("LiveSplit"));
+        LeaderboardGuard = new LeaderboardGuard(this, loggerFactory.CreateLogger("Leaderboard"));
         TrainerHotkeys = new TrainerHotkeys(_log);
         TrainerHotkeys.Pressed += (_, action) =>
         {
@@ -106,6 +107,9 @@ public sealed class AppServices : IAsyncDisposable
 
     /// <summary>livesplit-core following Lockpick's run (LiveSplit's timer, layout and files).</summary>
     public LiveSplitEngine LiveSplitEngine { get; }
+
+    /// <summary>Leaderboard runs: Lockpick hands-off and the rules checked.</summary>
+    public LeaderboardGuard LeaderboardGuard { get; }
 
     /// <summary>speedrun.com's API (leaderboards, the player's account).</summary>
     public SpeedrunCom SpeedrunCom { get; }

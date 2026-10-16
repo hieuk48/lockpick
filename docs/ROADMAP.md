@@ -192,6 +192,8 @@ is decided later. Keep-running stays out of challenges (it patches the game, and
    still to come). Big messages (#59, first part): challenge failed with the reason, a death, a run finished or a
    new personal best, centred at the top. Next: the layout editor
    (#55), a controller button for the map, never activating Lockpick's windows over exclusive fullscreen.
+   - **Leaderboard runs — done 2026-10-16:** trainer locked read-only, ask mode off, the install hashed against
+     GOG's release (no mods), the rules only the player can keep as reminders, the result on each attempt's record;
    - **Widgets off the game too** (owner, 2026-10-16: the overlays start to cover the picture): one splits widget,
      drawn by livesplit-core (LiveSplit's look) with the world record, instead of two; every widget also as a
      **pop-out window** (movable, resizable, on any monitor, plain or green background for OBS's window capture,

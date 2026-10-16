@@ -236,6 +236,14 @@ public sealed partial class DebugViewModel : PageViewModel, IDisposable, Lockpic
 
     partial void OnAskAboutUnknownEventsChanged(bool value)
     {
+        if (value && _services.LeaderboardGuard.Enabled)
+        {
+            // Ask mode pauses the game, which a leaderboard run can't have.
+            AskAboutUnknownEvents = false;
+            CaptureStatus = "Ask mode is off during leaderboard runs: it pauses the game (Runs → Leaderboard run).";
+            return;
+        }
+
         // Start fresh: changes from before the mode was switched on are not asked about.
         var profile = State.Status.Profile ?? _services.Adapter.Profiles.FirstOrDefault();
         _questions = value && profile is not null && _services.Adapter.CreateChangeExplainer(profile) is { } explainer

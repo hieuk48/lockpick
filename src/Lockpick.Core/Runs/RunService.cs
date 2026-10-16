@@ -57,6 +57,9 @@ public sealed record RunStatus(
 {
     public static RunStatus Off { get; } = new(RunState.Off, null, 0, 0, [], TimeSpan.Zero, null, false, 0, false, null, null, null);
 
+    /// <summary>What was checked when the attempt began (e.g. the leaderboard checks), for its record; null when nothing.</summary>
+    public string? Checks { get; init; }
+
     /// <summary>The run's in-game time at <paramref name="snapshot"/> (the game's clock less the start, for a run
     /// started from a save), or the time it ended at.</summary>
     public TimeSpan? GameTime(GameSnapshot? snapshot) =>
@@ -112,6 +115,9 @@ public sealed class RunService : IDisposable
 
     /// <summary>Start an attempt when a save is loaded too (practice from a save), not only on a new game.</summary>
     public bool StartOnLoad { get; set; }
+
+    /// <summary>What to note on each new attempt about the checks it starts under (the leaderboard guard), or null.</summary>
+    public Func<string?>? Checks { get; set; }
 
     /// <summary>
     /// Split on the triggers and the ending (the default). Off while another timer splits (LiveSplit's autosplitter,
@@ -399,6 +405,7 @@ public sealed class RunService : IDisposable
             StartedAt = now,
             FromSave = !loaded.IsNewGame,
             CheatsUsed = _trainer?.Mode == TrainerMode.Trainer,
+            Checks = Checks?.Invoke(),
         };
         raised.Add(new RunStarted(now, set.Name, Status.Attempt, !loaded.IsNewGame));
     }

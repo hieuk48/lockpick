@@ -26,6 +26,13 @@ public sealed partial class MainViewModel : ObservableObject, IDisposable
             new ProgressViewModel(services, State), map, new ItemsViewModel(services, State), Debug, _settings,
         ];
         SelectedPage = Pages[0];
+        services.LeaderboardGuard.AskModeOn = () => Debug.AskAboutUnknownEvents;
+        services.LeaderboardGuard.TurnOffAskMode = () => Avalonia.Threading.Dispatcher.UIThread.Post(() => Debug.AskAboutUnknownEvents = false);
+        if (services.LeaderboardGuard.Enabled)
+        {
+            services.LeaderboardGuard.TurnOffAskMode();
+        }
+
         services.CreateApi(Debug);
         _ = services.ApplyApiSettingsAsync();
         Updates = services.Updates;

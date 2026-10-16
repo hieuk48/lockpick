@@ -27,7 +27,8 @@ public sealed record RunRecord(
     int DamageTaken,
     bool CheatsUsed,
     string? Profile,
-    string? GameSha256 = null)
+    string? GameSha256 = null,
+    string? Checks = null)
 {
     /// <summary>Counts for a personal best: finished from a new game, every split timed, no trainer.</summary>
     [JsonIgnore]
@@ -40,7 +41,7 @@ public sealed record RunRecord(
         return new RunRecord(set.Id, set.Name, set.Category, set.Character, status.Attempt, status.StartedAt ?? DateTimeOffset.MinValue,
             status.EndedAt ?? DateTimeOffset.MinValue, status.Result ?? RunResult.Reset, status.EndGameTime ?? TimeSpan.Zero,
             (status.EndedAt ?? DateTimeOffset.MinValue) - (status.StartedAt ?? DateTimeOffset.MinValue), splits, status.FromSave,
-            status.DamageTaken, status.CheatsUsed, profile, gameSha256);
+            status.DamageTaken, status.CheatsUsed, profile, gameSha256, status.Checks);
     }
 
     /// <summary>
@@ -70,6 +71,11 @@ public sealed record RunRecord(
             $"Timed by {timedBy}" + (Profile is null ? string.Empty : $" on {Profile}") + (GameSha256 is null ? string.Empty : $", ResidentEvil.exe SHA-256 {GameSha256}")
                 + (CheatsUsed ? "; Lockpick's trainer was on or used during this attempt" : "; read-only, the trainer was off"),
         };
+        if (Checks is not null)
+        {
+            lines.Add(Checks);
+        }
+
         return string.Join(Environment.NewLine, lines);
     }
 }

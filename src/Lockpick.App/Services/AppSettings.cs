@@ -108,6 +108,9 @@ public sealed record AppSettings
     /// <summary>LiveSplit's TCP server port (its default).</summary>
     public int LiveSplitPort { get; init; } = 16834;
 
+    /// <summary>Leaderboard runs: Lockpick locked read-only and the rules checked (Runs → Leaderboard run).</summary>
+    public bool LeaderboardMode { get; init; }
+
     /// <summary>Show speedrun.com's leaderboard on the Runs page (Lockpick goes online only when this is on).</summary>
     public bool SpeedrunComLeaderboard { get; init; }
 

@@ -43,6 +43,7 @@ public sealed partial class RunsViewModel : PageViewModel
     private readonly string _appVersion;
     private readonly RunLibrary _library;
     private readonly SettingsStore _settings;
+    private readonly LeaderboardGuard _guard;
     private readonly LiveSplitLink _liveSplit;
     private readonly LiveState _state;
     private bool _syncing;
@@ -67,12 +68,47 @@ public sealed partial class RunsViewModel : PageViewModel
         LiveSplitStatus = _liveSplit.Status;
         _liveSplit.StatusChanged += (_, _) => Dispatcher.UIThread.Post(() => LiveSplitStatus = _liveSplit.Status);
         Leaderboard = new LeaderboardViewModel(services);
+        _guard = services.LeaderboardGuard;
+        LeaderboardRun = _guard.Enabled;
+        _guard.Changed += (_, _) => Dispatcher.UIThread.Post(SyncGuard);
+        SyncGuard();
         Submit = new SubmitRunViewModel(services, Leaderboard);
         _runs.AttemptEnded += (_, _) => Dispatcher.UIThread.Post(Leaderboard.Refresh);
         Reload();
     }
 
     public System.Collections.ObjectModel.ObservableCollection<SplitSetChoice> Sets { get; } = [];
+
+    /// <summary>Leaderboard runs: Lockpick locked read-only and the rules checked.</summary>
+    [ObservableProperty]
+    public partial bool LeaderboardRun { get; set; }
+
+    [ObservableProperty]
+    public partial IReadOnlyList<GuardCheck> GuardChecks { get; private set; } = [];
+
+    [ObservableProperty]
+    public partial string GuardSummary { get; private set; } = string.Empty;
+
+    public IReadOnlyList<string> GuardReminders => _guard.Reminders;
+
+    partial void OnLeaderboardRunChanged(bool value)
+    {
+        if (_guard is not null && value != _guard.Enabled)
+        {
+            _guard.SetEnabled(value);
+        }
+    }
+
+    [RelayCommand]
+    private Task CheckAgain() => _guard.RefreshAsync();
+
+    private void SyncGuard()
+    {
+        GuardChecks = _guard.Checks;
+        GuardSummary = !_guard.Enabled ? string.Empty
+            : _guard.Checks.Count == 0 ? "Checking…"
+            : _guard.Ready ? "Ready for a leaderboard run." : "Not ready: fix what's marked below before you start.";
+    }
 
     /// <summary>The speedrun.com leaderboard for the chosen splits.</summary>
     public LeaderboardViewModel Leaderboard { get; }

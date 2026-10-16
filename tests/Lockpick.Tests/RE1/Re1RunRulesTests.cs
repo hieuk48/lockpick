@@ -153,6 +153,33 @@ public sealed class Re1RunRulesTests : IDisposable
     }
 
     [Fact]
+    public void The_install_check_finds_changed_missing_and_extra_files_and_ignores_what_changes_in_use()
+    {
+        var install = Path.Combine(_folder, "install");
+        Directory.CreateDirectory(Path.Combine(install, "SAVE"));
+        File.WriteAllText(Path.Combine(install, "ResidentEvil.exe"), "not the real one");
+        File.WriteAllText(Path.Combine(install, "mod.asi"), "a plugin");
+        File.WriteAllText(Path.Combine(install, "dxcfg.ini"), "[dxcfg]");           // the player's display settings
+        File.WriteAllText(Path.Combine(install, "SAVE", "savedat1.dat"), "save");    // saves
+        File.WriteAllText(Path.Combine(install, "Mon Oct 12.BMP"), "screenshot");    // screenshots
+
+        var check = _rules.CheckInstall(install);
+        Assert.False(check.Unchanged);
+        Assert.Equal(["ResidentEvil.exe"], check.Changed);
+        Assert.Contains("ddraw.dll", check.Missing);
+        Assert.Equal(["mod.asi"], check.Extra);
+        Assert.Equal("GOG 1.0 hotfix4", check.Release);
+    }
+
+    [Fact]
+    public void The_official_files_list_has_the_executable_the_profile_knows()
+    {
+        var manifest = File.ReadAllLines(Path.Combine(AppContext.BaseDirectory, "..", "..", "..", "..", "..", "data", "games", "re1", "install", "gog-hotfix4.sha256"));
+        Assert.Contains("205BD6FED6E080A38823958E5C3306CACC86A18FF9A2758179E8D33CAEEE4A78  ResidentEvil.exe", manifest);
+        Assert.True(manifest.Length > 2900);
+    }
+
+    [Fact]
     public void The_title_menu_is_the_main_menu_flag()
     {
         Assert.True(_rules.AtTitle(Raw(0, 0, 1)));

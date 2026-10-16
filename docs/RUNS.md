@@ -98,6 +98,24 @@ the one split left at 0:20.9 and ended as reset). LiveSplit sends no reply at al
 game name with no splits open), so Lockpick asks it only for the timer phase and split index. Drive, and parity of
 the times with LiveSplit's own autosplitter, are still to check (B208).
 
+## Leaderboard runs
+
+Runs → Leaderboard run makes sure a submission can't fail because of Lockpick or the install (the RE1 PC rules on
+speedrun.com, read 2026-10-16):
+
+| Check | How |
+|---|---|
+| Lockpick's trainer off | Locked read-only for the session (the Speedrun challenge: no writes; switching it on fails the attempt) |
+| Ask mode off | Turned off and refused while on (it pauses the game) |
+| No mods | Every file GOG's 1.0 hotfix4 ships is hashed and compared with `data/games/re1/install/gog-hotfix4.sha256` (2 951 files, made by `tools/re1/install_manifest.py` from an untouched install; about 1.5 s); files beside the game that the release doesn't have (a mod loader, a plugin) are flagged. Saves, the display settings, screenshots, GOG's log and uninstaller data aren't compared |
+| LiveSplit's IGT script | Required by the rules; a warning until LiveSplit is connected (Runs → LiveSplit) |
+
+What only the player can keep is listed as reminders: start at the title; LiveSplit's IGT script and the final
+in-game time on the end screen in the video; no tabbing out; no options menu as a pause (it pauses the IGT); no
+music over the game, mods, turbo, macros or auto-aim cancel; with Classic REbirth, quickturn and tactical reload off
+and no debug menu. Each attempt's record (and its summary) says whether every check passed when it began; the
+checks run again after each attempt.
+
 ## speedrun.com
 
 RE1's leaderboard on speedrun.com (game `m1zklz10`, PC category `mke5yl9k`; `data/games/re1/speedrun-com.json`) has

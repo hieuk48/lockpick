@@ -80,4 +80,11 @@ public interface IRunRules
 
     /// <summary>The board a split set's runs belong on (filter key → choice key), as far as its name says.</summary>
     IReadOnlyDictionary<string, string> LeaderboardFor(SplitSet splits) => new Dictionary<string, string>();
+
+    /// <summary>The install at <paramref name="installDirectory"/> against the official release's files, or null when
+    /// the adapter has no list for it. Reads (hashes) every file: call it off the UI thread.</summary>
+    InstallCheck? CheckInstall(string installDirectory) => null;
+
+    /// <summary>The leaderboard's rules only the player can keep (no music over the game, …), as reminders.</summary>
+    IReadOnlyList<string> LeaderboardReminders => [];
 }

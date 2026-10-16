@@ -2,6 +2,7 @@
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:vm="using:Lockpick.App.ViewModels"
              xmlns:c="using:Lockpick.App.Controls"
+             xmlns:svc="using:Lockpick.App.Services"
              x:Class="Lockpick.App.Views.RunsView"
              x:DataType="vm:RunsViewModel">
 
@@ -23,6 +24,19 @@
     </Style>
     <Style Selector="TextBlock.delta.behind">
       <Setter Property="Foreground" Value="{StaticResource LpRedBrush}" />
+    </Style>
+    <Style Selector="TextBlock.mark">
+      <Setter Property="FontWeight" Value="Bold" />
+      <Setter Property="Width" Value="16" />
+    </Style>
+    <Style Selector="TextBlock.mark.pass">
+      <Setter Property="Foreground" Value="{StaticResource LpGreenBrush}" />
+    </Style>
+    <Style Selector="TextBlock.mark.fail">
+      <Setter Property="Foreground" Value="{StaticResource LpRedBrush}" />
+    </Style>
+    <Style Selector="TextBlock.mark.warn">
+      <Setter Property="Foreground" Value="{StaticResource LpAmberBrush}" />
     </Style>
     <Style Selector="TextBlock.you">
       <Setter Property="FontWeight" Value="Bold" />
@@ -52,6 +66,40 @@
             <Button Content="Split now" Command="{Binding SplitCommand}" AutomationProperties.Name="Split now" />
             <Button Content="Reset attempt" Command="{Binding ResetCommand}" AutomationProperties.Name="Reset the attempt" />
           </WrapPanel>
+        </StackPanel>
+      </Border>
+
+      <!-- Leaderboard runs: Lockpick hands-off and the rules checked -->
+      <Border Classes="card">
+        <StackPanel Spacing="6">
+          <TextBlock Classes="caption" Text="LEADERBOARD RUN" />
+          <ToggleSwitch IsChecked="{Binding LeaderboardRun}" OnContent="Leaderboard run on" OffContent="Leaderboard run off"
+                        AutomationProperties.Name="Leaderboard run" />
+          <TextBlock TextWrapping="Wrap" Foreground="{StaticResource LpMutedBrush}"
+                     Text="For runs you'll submit: Lockpick locks its trainer read-only, keeps ask mode off (it would pause the game), and checks your game files against the official release (no mods). Each attempt's record says whether every check passed when it began." />
+          <TextBlock Text="{Binding GuardSummary}" FontWeight="SemiBold" TextWrapping="Wrap"
+                     IsVisible="{Binding GuardSummary, Converter={x:Static StringConverters.IsNotNullOrEmpty}}" />
+          <ItemsControl ItemsSource="{Binding GuardChecks}" IsVisible="{Binding LeaderboardRun}">
+            <ItemsControl.ItemTemplate>
+              <DataTemplate x:DataType="svc:GuardCheck">
+                <Grid ColumnDefinitions="Auto,*" ColumnSpacing="6" Margin="0,1">
+                  <TextBlock Classes="mark" Classes.pass="{Binding IsPass}" Classes.fail="{Binding IsFail}" Classes.warn="{Binding IsWarn}" Text="{Binding Mark}" />
+                  <TextBlock Grid.Column="1" Text="{Binding Text}" TextWrapping="Wrap" />
+                </Grid>
+              </DataTemplate>
+            </ItemsControl.ItemTemplate>
+          </ItemsControl>
+          <StackPanel Spacing="2" IsVisible="{Binding LeaderboardRun}">
+            <TextBlock Classes="label" Text="Up to you (the rules Lockpick can't check)" Margin="0,4,0,0" />
+            <ItemsControl ItemsSource="{Binding GuardReminders}">
+              <ItemsControl.ItemTemplate>
+                <DataTemplate x:DataType="x:String">
+                  <TextBlock Text="{Binding StringFormat='• {0}'}" TextWrapping="Wrap" Foreground="{StaticResource LpMutedBrush}" />
+                </DataTemplate>
+              </ItemsControl.ItemTemplate>
+            </ItemsControl>
+            <Button Content="Check again" Command="{Binding CheckAgainCommand}" Margin="0,4,0,0" />
+          </StackPanel>
         </StackPanel>
       </Border>
 

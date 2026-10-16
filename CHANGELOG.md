@@ -33,6 +33,9 @@ All notable changes to this project are documented here. The format follows
 - **Condition on the overlay:** Fine, Caution, Danger or Poison next to your HP, worked out the way the game's
   status screen does it (poison read from the player's status), with the HP bar in the same colour; also in the API
   (`health.condition`) and on the OBS HUD page.
+- **Leaderboard run** (Runs page): for runs you'll submit, Lockpick locks its trainer read-only, keeps ask mode off,
+  checks every game file against GOG's release (no mods) and lists the rules only you can keep; each attempt's
+  record says whether every check passed.
 - **LiveSplit's engine inside Lockpick** (livesplit-core, docs/LIVESPLIT_CORE.md): Lockpick's runs are also timed by
   LiveSplit's own engine, so no LiveSplit is needed — its layout as an overlay widget (*LiveSplit timer*) and an OBS
   page (`/overlay/livesplit`), and each split set kept as a LiveSplit file with every attempt.

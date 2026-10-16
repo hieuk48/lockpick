@@ -94,6 +94,78 @@ public sealed class Re1RunRules : IRunRules
                 [.. f.GetProperty("values").EnumerateArray().Select(v => new LeaderboardChoice(S(v, "key"), S(v, "label"), S(v, "id")))]))]);
     }
 
+    /// <summary>
+    /// The install against the files GOG's 1.0 hotfix4 release ships (data/games/re1/install/gog-hotfix4.sha256, made
+    /// by tools/re1/install_manifest.py from an untouched install). Files that change in normal use are not compared:
+    /// saves, the display settings, screenshots, GOG's log and uninstaller data.
+    /// </summary>
+    public InstallCheck CheckInstall(string installDirectory)
+    {
+        var expected = Manifest.Value;
+        var changed = new List<string>();
+        var missing = new List<string>();
+        foreach (var (relative, digest) in expected)
+        {
+            var path = Path.Combine(installDirectory, relative.Replace('/', Path.DirectorySeparatorChar));
+            if (!File.Exists(path))
+            {
+                missing.Add(relative);
+                continue;
+            }
+
+            using var stream = File.OpenRead(path);
+            if (!string.Equals(Convert.ToHexString(System.Security.Cryptography.SHA256.HashData(stream)), digest, StringComparison.OrdinalIgnoreCase))
+            {
+                changed.Add(relative);
+            }
+        }
+
+        var known = expected.Keys.ToHashSet(StringComparer.OrdinalIgnoreCase);
+        var extra = Directory.EnumerateFiles(installDirectory, "*", SearchOption.AllDirectories)
+            .Select(p => Path.GetRelativePath(installDirectory, p).Replace(Path.DirectorySeparatorChar, '/'))
+            .Where(r => !known.Contains(r) && !Varies(r))
+            .Order(StringComparer.OrdinalIgnoreCase)
+            .ToList();
+        return new InstallCheck("GOG 1.0 hotfix4", changed, missing, extra);
+    }
+
+    /// <summary>The PC leaderboard's rules that only the player can keep (speedrun.com, RE1 PC rules, read 2026-10-16).</summary>
+    public IReadOnlyList<string> LeaderboardReminders { get; } =
+    [
+        "Start the run at the title screen.",
+        "Show LiveSplit's in-game time script on screen (the rules require it), and the final in-game time on the end screen in your video.",
+        "Don't tab out or click off the game during the run.",
+        "Don't open the options menu as a pause (it pauses the in-game time).",
+        "No music over the game, no mods, no turbo or macros, no auto-aim cancel.",
+        "With Classic REbirth: quickturn and tactical reload off, and don't open its debug menu.",
+    ];
+
+    private static readonly Lazy<Dictionary<string, string>> Manifest = new(() =>
+    {
+        using var stream = typeof(Re1RunRules).Assembly.GetManifestResourceStream("Lockpick.GameAdapter.RE1.Data.gog-hotfix4.sha256")
+            ?? throw new InvalidOperationException("Missing embedded RE1 data gog-hotfix4.sha256.");
+        using var reader = new StreamReader(stream);
+        var files = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
+        while (reader.ReadLine() is { } line)
+        {
+            if (line.Length > 66 && line[64] == ' ')
+            {
+                files[line[66..]] = line[..64];
+            }
+        }
+
+        return files;
+    });
+
+    /// <summary>Files that change in normal use (as tools/re1/install_manifest.py leaves them out).</summary>
+    private static bool Varies(string relative)
+    {
+        var name = Path.GetFileName(relative).ToLowerInvariant();
+        return relative.StartsWith("SAVE/", StringComparison.OrdinalIgnoreCase)
+            || name is "dxcfg.ini" or "dxcfg.ini.bak" or "goglog.ini" or "unins000.dat" or "unins000.ini" or "unins000.msg" or "webcache.zip"
+            || name.EndsWith(".bmp", StringComparison.Ordinal);
+    }
+
     private static long? Raw(GameSnapshot snapshot, string field) =>
         snapshot.RawFields.TryGetValue(field, out var value) && value.TryGet(out var v) ? v : null;
 
