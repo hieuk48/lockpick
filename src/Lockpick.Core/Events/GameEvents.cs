@@ -106,3 +106,31 @@ public sealed record ChallengeFailed(DateTimeOffset Timestamp, string Challenge,
         ? $"Challenge failed ({Challenge}): {Reason} at {(int)t.TotalHours:D2}:{t.Minutes:D2}:{t.Seconds:D2}"
         : $"Challenge failed ({Challenge}): {Reason}";
 }
+
+/// <summary>A run attempt began (a new game, or a loaded save when runs start on loads).</summary>
+public sealed record RunStarted(DateTimeOffset Timestamp, string SplitSet, int Attempt, bool FromSave) : GameEvent(Timestamp)
+{
+    public override string Describe() => $"Run: {SplitSet}, attempt {Attempt}{(FromSave ? " (from a save)" : string.Empty)}";
+}
+
+/// <summary>A run reached a split (its trigger fired, or the split key was pressed).</summary>
+public sealed record SplitReached(DateTimeOffset Timestamp, string Split, int Index, TimeSpan GameTime) : GameEvent(Timestamp)
+{
+    public override string Describe() => $"Split {Index + 1}: {Split} at {Clock(GameTime)}";
+
+    internal static string Clock(TimeSpan t) =>
+        string.Create(System.Globalization.CultureInfo.InvariantCulture, $"{(int)t.TotalHours:D2}:{t.Minutes:D2}:{t.Seconds:D2}.{t.Milliseconds / 10:D2}");
+}
+
+/// <summary>A run attempt ended: finished, or a death, the title menu, the game closing or a reset.</summary>
+public sealed record RunEnded(DateTimeOffset Timestamp, string SplitSet, Runs.RunResult Result, TimeSpan GameTime) : GameEvent(Timestamp)
+{
+    public override string Describe() => Result switch
+    {
+        Runs.RunResult.Finished => $"Run finished: {SplitSet} in {SplitReached.Clock(GameTime)}",
+        Runs.RunResult.Died => $"Run over: died at {SplitReached.Clock(GameTime)}",
+        Runs.RunResult.QuitToTitle => $"Run over: back at the title at {SplitReached.Clock(GameTime)}",
+        Runs.RunResult.GameClosed => "Run over: the game closed",
+        _ => $"Run reset at {SplitReached.Clock(GameTime)}",
+    };
+}

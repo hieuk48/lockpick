@@ -25,7 +25,7 @@ Projects:
 
 | Project | Responsibility | Depends on |
 |---|---|---|
-| `Lockpick.Core` | Game-agnostic model (`GameSnapshot`, `Field<T>`), events + detector, adapter contract, version profiles (load/validate/match/verify), memory abstractions, `GameMonitor`, recording/replay, JSON-lines logging | M.E.Logging.Abstractions |
+| `Lockpick.Core` | Game-agnostic model (`GameSnapshot`, `Field<T>`), events + detector, adapter contract, version profiles (load/validate/match/verify), memory abstractions, `GameMonitor`, recording/replay, JSON-lines logging; challenges, the trainer service, runs and splits (`Runs`: `RunService`, split sets and triggers, records, LiveSplit files — docs/RUNS.md) | M.E.Logging.Abstractions |
 | `Lockpick.Platform.Windows` | Win32 process discovery, read-only handles, `ReadProcessMemory`, high-resolution waits, GOG registry lookup | Core |
 | `Lockpick.GameAdapter.RE1` | RE1 build profiles and interpretation of raw values. **The only place that knows RE1 addresses.** | Core |
 | `Lockpick.Api` | Optional HTTP API for other tools (Kestrel; off by default, token, local unless allowed; docs/API.md) | Core |

@@ -78,6 +78,9 @@ public interface IGameAdapter
     /// <summary>What challenges need to know about the game (e.g. what counts as a shot); null when unsupported.</summary>
     Challenges.IChallengeRules? CreateChallengeRules(VersionProfile profile) => null;
 
+    /// <summary>What runs need to know about the game (split sets, deaths, the ending); null when unsupported.</summary>
+    Runs.IRunRules? CreateRunRules(VersionProfile profile) => null;
+
     /// <summary>The game's trainer features (what to write for health, ammo, …); null when the adapter has none.</summary>
     Trainer.IGameTrainer? CreateTrainer(VersionProfile profile) => null;
 

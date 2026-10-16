@@ -1,0 +1,962 @@
+{
+  "comment": [
+    "Built-in RE1 split sets (docs/RUNS.md). The segment sets carry the community's split names (the LiveSplit files on",
+    "speedrun.com) with the room transitions of the community autosplitter (RE1aio.asl, segmented splits); the key-item",
+    "routes follow the community's key-item splits files. Room ids are Lockpick's (stage digit + room in hex). Unverified",
+    "until seen in full runs (capture bounties B701, B702): every set is marked so in the app."
+  ],
+  "sets": [
+    {
+      "id": "re1-jill-bad-nmg-segments",
+      "name": "Jill - Bad Ending - NMG (community segments)",
+      "category": "Jill - Bad Ending - NMG",
+      "character": "jill",
+      "splits": [
+        {
+          "name": "King Henry",
+          "room": "203",
+          "from": "204"
+        },
+        {
+          "name": "Yawn 1",
+          "room": "20E",
+          "from": "210"
+        },
+        {
+          "name": "Mansion 1",
+          "room": "300",
+          "fromOtherStage": true
+        },
+        {
+          "name": "Courtyard 1",
+          "room": "400",
+          "fromOtherStage": true
+        },
+        {
+          "name": "Boxes",
+          "room": "40E",
+          "from": "40D"
+        },
+        {
+          "name": "Guardhouse",
+          "room": "304",
+          "fromOtherStage": true
+        },
+        {
+          "name": "Courtyard 2",
+          "room": "61B",
+          "fromOtherStage": true
+        },
+        {
+          "name": "Yawn 2",
+          "room": "71A",
+          "from": "70C"
+        },
+        {
+          "name": "Basement",
+          "room": "610",
+          "fromOtherStage": true
+        },
+        {
+          "name": "Mansion 2",
+          "room": "300",
+          "fromOtherStage": true
+        },
+        {
+          "name": "Courtyard 3",
+          "room": "307",
+          "from": "302"
+        },
+        {
+          "name": "Black Tiger",
+          "room": "30D",
+          "from": "30C"
+        },
+        {
+          "name": "Underground",
+          "room": "500",
+          "fromOtherStage": true
+        },
+        {
+          "name": "Loud Room",
+          "room": "510",
+          "from": "511"
+        },
+        {
+          "name": "Tyrant",
+          "room": "514",
+          "from": "513"
+        },
+        {
+          "name": "End",
+          "end": true
+        }
+      ]
+    },
+    {
+      "id": "re1-jill-good-nmg-segments",
+      "name": "Jill - Good Ending - NMG (community segments)",
+      "category": "Jill - Good Ending - NMG",
+      "character": "jill",
+      "splits": [
+        {
+          "name": "King Henry",
+          "room": "203",
+          "from": "204"
+        },
+        {
+          "name": "Yawn 1",
+          "room": "20E",
+          "from": "210"
+        },
+        {
+          "name": "Mansion 1",
+          "room": "300",
+          "fromOtherStage": true
+        },
+        {
+          "name": "Courtyard 1",
+          "room": "400",
+          "fromOtherStage": true
+        },
+        {
+          "name": "Boxes",
+          "room": "40E",
+          "from": "40D"
+        },
+        {
+          "name": "Guardhouse",
+          "room": "304",
+          "fromOtherStage": true
+        },
+        {
+          "name": "Courtyard 2",
+          "room": "61B",
+          "fromOtherStage": true
+        },
+        {
+          "name": "Yawn 2",
+          "room": "71A",
+          "from": "70C"
+        },
+        {
+          "name": "Basement",
+          "room": "71B",
+          "from": "71C"
+        },
+        {
+          "name": "Mansion 2",
+          "room": "300",
+          "fromOtherStage": true
+        },
+        {
+          "name": "Courtyard 3",
+          "room": "307",
+          "from": "302"
+        },
+        {
+          "name": "Black Tiger",
+          "room": "30D",
+          "from": "30C"
+        },
+        {
+          "name": "Underground",
+          "room": "500",
+          "fromOtherStage": true
+        },
+        {
+          "name": "Loud Room",
+          "room": "510",
+          "from": "511"
+        },
+        {
+          "name": "Lab Tyrant",
+          "room": "514",
+          "from": "513"
+        },
+        {
+          "name": "Orgy Room",
+          "room": "508",
+          "from": "509"
+        },
+        {
+          "name": "End",
+          "end": true
+        }
+      ]
+    },
+    {
+      "id": "re1-jill-bad-mg-segments",
+      "name": "Jill - Bad Ending - MG (community segments)",
+      "category": "Jill - Bad Ending - MG",
+      "character": "jill",
+      "splits": [
+        {
+          "name": "Chemical Skip",
+          "room": "103",
+          "from": "10C"
+        },
+        {
+          "name": "Yawn 1",
+          "room": "20E",
+          "from": "210"
+        },
+        {
+          "name": "Mansion 1",
+          "room": "300",
+          "fromOtherStage": true
+        },
+        {
+          "name": "Courtyard 1",
+          "room": "400",
+          "fromOtherStage": true
+        },
+        {
+          "name": "Boxes",
+          "room": "40E",
+          "from": "40D"
+        },
+        {
+          "name": "Guardhouse",
+          "room": "304",
+          "fromOtherStage": true
+        },
+        {
+          "name": "Courtyard 2",
+          "room": "61B",
+          "fromOtherStage": true
+        },
+        {
+          "name": "Yawn 2",
+          "room": "71A",
+          "from": "70C"
+        },
+        {
+          "name": "Basement",
+          "room": "610",
+          "fromOtherStage": true
+        },
+        {
+          "name": "Mansion 2",
+          "room": "300",
+          "fromOtherStage": true
+        },
+        {
+          "name": "Courtyard 3",
+          "room": "307",
+          "from": "302"
+        },
+        {
+          "name": "Black Tiger",
+          "room": "30D",
+          "from": "30C"
+        },
+        {
+          "name": "Underground",
+          "room": "500",
+          "fromOtherStage": true
+        },
+        {
+          "name": "Loud Room",
+          "room": "510",
+          "from": "511"
+        },
+        {
+          "name": "Tyrant",
+          "room": "514",
+          "from": "513"
+        },
+        {
+          "name": "End",
+          "end": true
+        }
+      ]
+    },
+    {
+      "id": "re1-jill-good-mg-segments",
+      "name": "Jill - Good Ending - MG (community segments)",
+      "category": "Jill - Good Ending - MG",
+      "character": "jill",
+      "splits": [
+        {
+          "name": "Chemical Skip",
+          "room": "103",
+          "from": "10C"
+        },
+        {
+          "name": "Yawn 1",
+          "room": "20E",
+          "from": "210"
+        },
+        {
+          "name": "Mansion 1",
+          "room": "300",
+          "fromOtherStage": true
+        },
+        {
+          "name": "Courtyard 1",
+          "room": "400",
+          "fromOtherStage": true
+        },
+        {
+          "name": "Boxes",
+          "room": "40E",
+          "from": "40D"
+        },
+        {
+          "name": "Guardhouse",
+          "room": "304",
+          "fromOtherStage": true
+        },
+        {
+          "name": "Courtyard 2",
+          "room": "61B",
+          "fromOtherStage": true
+        },
+        {
+          "name": "Yawn 2",
+          "room": "71A",
+          "from": "70C"
+        },
+        {
+          "name": "Basement",
+          "room": "71B",
+          "from": "71C"
+        },
+        {
+          "name": "Mansion 2",
+          "room": "300",
+          "fromOtherStage": true
+        },
+        {
+          "name": "Courtyard 3",
+          "room": "307",
+          "from": "302"
+        },
+        {
+          "name": "Black Tiger",
+          "room": "30D",
+          "from": "30C"
+        },
+        {
+          "name": "Underground",
+          "room": "500",
+          "fromOtherStage": true
+        },
+        {
+          "name": "Loud Room",
+          "room": "510",
+          "from": "511"
+        },
+        {
+          "name": "Lab Tyrant",
+          "room": "514",
+          "from": "513"
+        },
+        {
+          "name": "Orgy Room",
+          "room": "508",
+          "from": "509"
+        },
+        {
+          "name": "End",
+          "end": true
+        }
+      ]
+    },
+    {
+      "id": "re1-chris-bad-nmg-segments",
+      "name": "Chris - Bad Ending - NMG (community segments)",
+      "category": "Chris - Bad Ending - NMG",
+      "character": "chris",
+      "splits": [
+        {
+          "name": "Rebecca Piano",
+          "room": "104",
+          "from": "10F"
+        },
+        {
+          "name": "Yawn 1",
+          "room": "20E",
+          "from": "210"
+        },
+        {
+          "name": "Mansion 1",
+          "room": "300",
+          "fromOtherStage": true
+        },
+        {
+          "name": "Courtyard 1",
+          "room": "400",
+          "fromOtherStage": true
+        },
+        {
+          "name": "Boxes",
+          "room": "40E",
+          "from": "40D"
+        },
+        {
+          "name": "Guardhouse",
+          "room": "304",
+          "fromOtherStage": true
+        },
+        {
+          "name": "Courtyard 2",
+          "room": "61B",
+          "fromOtherStage": true
+        },
+        {
+          "name": "Yawn 2",
+          "room": "71A",
+          "from": "70C"
+        },
+        {
+          "name": "Basement",
+          "room": "610",
+          "fromOtherStage": true
+        },
+        {
+          "name": "Mansion 2",
+          "room": "300",
+          "fromOtherStage": true
+        },
+        {
+          "name": "Courtyard 3",
+          "room": "307",
+          "from": "302"
+        },
+        {
+          "name": "Black Tiger",
+          "room": "30D",
+          "from": "30C"
+        },
+        {
+          "name": "Underground",
+          "room": "500",
+          "fromOtherStage": true
+        },
+        {
+          "name": "Loud Room",
+          "room": "510",
+          "from": "511"
+        },
+        {
+          "name": "Tyrant",
+          "room": "514",
+          "from": "513"
+        },
+        {
+          "name": "End",
+          "end": true
+        }
+      ]
+    },
+    {
+      "id": "re1-chris-good-nmg-segments",
+      "name": "Chris - Good Ending - NMG (community segments)",
+      "category": "Chris - Good Ending - NMG",
+      "character": "chris",
+      "splits": [
+        {
+          "name": "Rebecca Piano",
+          "room": "104",
+          "from": "10F"
+        },
+        {
+          "name": "Yawn 1",
+          "room": "20E",
+          "from": "210"
+        },
+        {
+          "name": "Mansion 1",
+          "room": "300",
+          "fromOtherStage": true
+        },
+        {
+          "name": "Courtyard 1",
+          "room": "400",
+          "fromOtherStage": true
+        },
+        {
+          "name": "Boxes",
+          "room": "40E",
+          "from": "40D"
+        },
+        {
+          "name": "Guardhouse",
+          "room": "304",
+          "fromOtherStage": true
+        },
+        {
+          "name": "Courtyard 2",
+          "room": "61B",
+          "fromOtherStage": true
+        },
+        {
+          "name": "Yawn 2",
+          "room": "71A",
+          "from": "70C"
+        },
+        {
+          "name": "Basement",
+          "room": "610",
+          "fromOtherStage": true
+        },
+        {
+          "name": "Mansion 2",
+          "room": "300",
+          "fromOtherStage": true
+        },
+        {
+          "name": "Courtyard 3",
+          "room": "307",
+          "from": "302"
+        },
+        {
+          "name": "Black Tiger",
+          "room": "30D",
+          "from": "30C"
+        },
+        {
+          "name": "Underground",
+          "room": "500",
+          "fromOtherStage": true
+        },
+        {
+          "name": "Loud Room",
+          "room": "510",
+          "from": "511"
+        },
+        {
+          "name": "Lab Tyrant",
+          "room": "514",
+          "from": "513"
+        },
+        {
+          "name": "Orgy Room",
+          "room": "508",
+          "from": "509"
+        },
+        {
+          "name": "End",
+          "end": true
+        }
+      ]
+    },
+    {
+      "id": "re1-chris-bad-mg-segments",
+      "name": "Chris - Bad Ending - MG (community segments)",
+      "category": "Chris - Bad Ending - MG",
+      "character": "chris",
+      "splits": [
+        {
+          "name": "Chemical Skip",
+          "room": "103",
+          "from": "10C"
+        },
+        {
+          "name": "Yawn 1",
+          "room": "20E",
+          "from": "210"
+        },
+        {
+          "name": "Mansion 1",
+          "room": "300",
+          "fromOtherStage": true
+        },
+        {
+          "name": "Courtyard 1",
+          "room": "400",
+          "fromOtherStage": true
+        },
+        {
+          "name": "Boxes",
+          "room": "40E",
+          "from": "40D"
+        },
+        {
+          "name": "Guardhouse",
+          "room": "304",
+          "fromOtherStage": true
+        },
+        {
+          "name": "Courtyard 2",
+          "room": "61B",
+          "fromOtherStage": true
+        },
+        {
+          "name": "Yawn 2",
+          "room": "71A",
+          "from": "70C"
+        },
+        {
+          "name": "Basement",
+          "room": "610",
+          "fromOtherStage": true
+        },
+        {
+          "name": "Mansion 2",
+          "room": "300",
+          "fromOtherStage": true
+        },
+        {
+          "name": "Courtyard 3",
+          "room": "307",
+          "from": "302"
+        },
+        {
+          "name": "Black Tiger",
+          "room": "30D",
+          "from": "30C"
+        },
+        {
+          "name": "Underground",
+          "room": "500",
+          "fromOtherStage": true
+        },
+        {
+          "name": "Loud Room",
+          "room": "510",
+          "from": "511"
+        },
+        {
+          "name": "Tyrant",
+          "room": "514",
+          "from": "513"
+        },
+        {
+          "name": "End",
+          "end": true
+        }
+      ]
+    },
+    {
+      "id": "re1-chris-good-mg-segments",
+      "name": "Chris - Good Ending - MG (community segments)",
+      "category": "Chris - Good Ending - MG",
+      "character": "chris",
+      "splits": [
+        {
+          "name": "Chemical Skip",
+          "room": "103",
+          "from": "10C"
+        },
+        {
+          "name": "Yawn 1",
+          "room": "20E",
+          "from": "210"
+        },
+        {
+          "name": "Mansion 1",
+          "room": "300",
+          "fromOtherStage": true
+        },
+        {
+          "name": "Courtyard 1",
+          "room": "400",
+          "fromOtherStage": true
+        },
+        {
+          "name": "Boxes",
+          "room": "40E",
+          "from": "40D"
+        },
+        {
+          "name": "Guardhouse",
+          "room": "304",
+          "fromOtherStage": true
+        },
+        {
+          "name": "Courtyard 2",
+          "room": "61B",
+          "fromOtherStage": true
+        },
+        {
+          "name": "Yawn 2",
+          "room": "71A",
+          "from": "70C"
+        },
+        {
+          "name": "Basement",
+          "room": "610",
+          "fromOtherStage": true
+        },
+        {
+          "name": "Mansion 2",
+          "room": "300",
+          "fromOtherStage": true
+        },
+        {
+          "name": "Courtyard 3",
+          "room": "307",
+          "from": "302"
+        },
+        {
+          "name": "Black Tiger",
+          "room": "30D",
+          "from": "30C"
+        },
+        {
+          "name": "Underground",
+          "room": "500",
+          "fromOtherStage": true
+        },
+        {
+          "name": "Loud Room",
+          "room": "510",
+          "from": "511"
+        },
+        {
+          "name": "Lab Tyrant",
+          "room": "514",
+          "from": "513"
+        },
+        {
+          "name": "Orgy Room",
+          "room": "508",
+          "from": "509"
+        },
+        {
+          "name": "End",
+          "end": true
+        }
+      ]
+    },
+    {
+      "id": "re1-jill-nmg-key-items",
+      "name": "Jill Any% NMG (key items)",
+      "category": "Jill Any% NMG",
+      "character": "jill",
+      "splits": [
+        {
+          "name": "Emblem",
+          "item": 31
+        },
+        {
+          "name": "Chemical",
+          "item": 38
+        },
+        {
+          "name": "Armor Key",
+          "item": 52
+        },
+        {
+          "name": "Music Notes",
+          "item": 35
+        },
+        {
+          "name": "Gold Emblem",
+          "item": 32
+        },
+        {
+          "name": "Blue Jewel",
+          "item": 33
+        },
+        {
+          "name": "Shield Key",
+          "item": 53
+        },
+        {
+          "name": "Wind Crest",
+          "item": 41
+        },
+        {
+          "name": "Serum",
+          "item": 66
+        },
+        {
+          "name": "Moon Crest",
+          "item": 44
+        },
+        {
+          "name": "Sun Crest",
+          "item": 46
+        },
+        {
+          "name": "Star Crest",
+          "item": 45
+        },
+        {
+          "name": "Square Crank",
+          "item": 29
+        },
+        {
+          "name": "Control Room Key",
+          "item": 59
+        },
+        {
+          "name": "Blank/Red Book",
+          "item": 62
+        },
+        {
+          "name": "002-Key",
+          "item": 57
+        },
+        {
+          "name": "003-Key",
+          "item": 58
+        },
+        {
+          "name": "Helmet Key",
+          "item": 54
+        },
+        {
+          "name": "Doom Book 1 (Red)",
+          "item": 64
+        },
+        {
+          "name": "Battery (Courtyard)",
+          "item": 39,
+          "in": "719"
+        },
+        {
+          "name": "Hex Crank",
+          "item": 30
+        },
+        {
+          "name": "Doom Book 2 (Blue)",
+          "item": 63
+        },
+        {
+          "name": "Power Room Key",
+          "item": 60
+        },
+        {
+          "name": "Master Key",
+          "item": 55
+        },
+        {
+          "name": "Battery (Elevator)",
+          "item": 39,
+          "in": "501"
+        },
+        {
+          "name": "Flare",
+          "item": 42
+        },
+        {
+          "name": "End",
+          "end": true
+        }
+      ]
+    },
+    {
+      "id": "re1-chris-nmg-key-items",
+      "name": "Chris Any% NMG (key items)",
+      "category": "Chris Any% NMG",
+      "character": "chris",
+      "splits": [
+        {
+          "name": "Sword Key",
+          "item": 51
+        },
+        {
+          "name": "Music Notes",
+          "item": 35
+        },
+        {
+          "name": "Emblem",
+          "item": 31
+        },
+        {
+          "name": "Blue Jewel",
+          "item": 33
+        },
+        {
+          "name": "Chemical",
+          "item": 38
+        },
+        {
+          "name": "Wind Crest",
+          "item": 41
+        },
+        {
+          "name": "Armor Key",
+          "item": 52
+        },
+        {
+          "name": "Gold Emblem",
+          "item": 32
+        },
+        {
+          "name": "Shield Key",
+          "item": 53
+        },
+        {
+          "name": "Moon Crest",
+          "item": 44
+        },
+        {
+          "name": "Sun Crest",
+          "item": 46
+        },
+        {
+          "name": "Star Crest",
+          "item": 45
+        },
+        {
+          "name": "Square Crank",
+          "item": 29
+        },
+        {
+          "name": "Blank/Red Book",
+          "item": 62
+        },
+        {
+          "name": "Control Room Key",
+          "item": 59
+        },
+        {
+          "name": "002-Key",
+          "item": 57
+        },
+        {
+          "name": "003-Key",
+          "item": 58
+        },
+        {
+          "name": "Helmet Key",
+          "item": 54
+        },
+        {
+          "name": "Doom Book 1 (Red)",
+          "item": 64
+        },
+        {
+          "name": "Battery (Courtyard)",
+          "item": 39,
+          "in": "719"
+        },
+        {
+          "name": "Hex Crank",
+          "item": 30
+        },
+        {
+          "name": "Doom Book 2 (Blue)",
+          "item": 63
+        },
+        {
+          "name": "Power Room Key",
+          "item": 60
+        },
+        {
+          "name": "Master Key",
+          "item": 55
+        },
+        {
+          "name": "Battery (Elevator)",
+          "item": 39,
+          "in": "501"
+        },
+        {
+          "name": "Flare",
+          "item": 42
+        },
+        {
+          "name": "End",
+          "end": true
+        }
+      ]
+    }
+  ]
+}

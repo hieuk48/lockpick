@@ -203,7 +203,14 @@ is decided later. Keep-running stays out of challenges (it patches the game, and
      in Lockpick's data folder and restorable; a warning when fullscreen would change the monitor's resolution; move
      the game window to another monitor (verified live both ways);
    - budget: the overlay costs < 2 % of the game's frame pacing (measured from the in-game clock).
-3. **Runs:**
+3. **Runs:** **First pass done 2026-10-16 (#56, #57; docs/RUNS.md):** run sessions (new game → ending, death, title,
+   game closed, reset; optional start on a save load), in-game time from the game's clock and real time, split
+   triggers (room from a room or another stage, item obtained, the ending, split key), the community's 8 segment
+   sets and 2 key-item routes built in (unverified: B701/B702/B703), `.lss` import (triggers matched by name against
+   the best-fitting built-in set) and export with the player's times and history, records per attempt, PB and best
+   segments, a Runs page, run hotkeys and a splits overlay widget — live: a new Jill game started an attempt, the
+   Emblem split at 14.9 s, reset kept the record. Next: LiveSplit follow mode (#58), a split editor, the OBS splits
+   page, run records in the API.
    - run sessions: start on New Game (or a loaded save, marked as such), end on the ending's results screen
      (B703), a death / Game Over (B205), quitting to the title, or the game closing; a local record per attempt
      (category, character, in-game time, splits, deaths, damage taken, result, whether cheats were on);

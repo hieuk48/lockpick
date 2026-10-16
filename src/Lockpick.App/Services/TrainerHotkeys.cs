@@ -17,6 +17,12 @@ public sealed class TrainerHotkeys : IDisposable
     /// <summary>Shows or hides the overlay; works any time (it changes nothing in the game).</summary>
     public const string ToggleOverlay = "toggle-overlay";
 
+    /// <summary>Run keys (Runs page): split now, take back the last split, skip a split, reset the attempt. Any time.</summary>
+    public const string RunSplit = "run-split";
+    public const string RunUndo = "run-undo";
+    public const string RunSkip = "run-skip";
+    public const string RunReset = "run-reset";
+
     /// <summary>Shows the overlay map's next view (Settings: minimap, full-screen room, …); works any time.</summary>
     public const string NextMapView = "map-view";
 
@@ -36,6 +42,10 @@ public sealed class TrainerHotkeys : IDisposable
         (ToggleInfiniteAmmo, "Infinite ammo on / off"),
         (ToggleOverlay, "Overlay on / off"),
         (NextMapView, "Map: next view"),
+        (RunSplit, "Run: split"),
+        (RunUndo, "Run: undo split"),
+        (RunSkip, "Run: skip split"),
+        (RunReset, "Run: reset"),
     ];
 
     /// <summary>The registered key per action (missing: off or refused by Windows).</summary>

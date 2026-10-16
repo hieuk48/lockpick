@@ -22,7 +22,7 @@ public sealed partial class MainViewModel : ObservableObject, IDisposable
         _settings = new SettingsViewModel(services, RunSetup, Overlay);
         Pages =
         [
-            new DashboardViewModel(State, services.Adapter.RoomName), new ChallengesViewModel(services, State), new TrainerViewModel(services, State),
+            new DashboardViewModel(State, services.Adapter.RoomName), new ChallengesViewModel(services, State), new RunsViewModel(services, State), new TrainerViewModel(services, State),
             new ProgressViewModel(services, State), map, new ItemsViewModel(services, State), Debug, _settings,
         ];
         SelectedPage = Pages[0];

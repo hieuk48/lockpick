@@ -17,6 +17,8 @@ public sealed class Re1Adapter : IGameAdapter
 
     private const string ResourcePrefix = "Lockpick.GameAdapter.RE1.Profiles.";
 
+    private static readonly Re1RunRules RunRules = new();
+
     public Re1Adapter(IEnumerable<VersionProfile>? additionalProfiles = null)
     {
         var profiles = LoadEmbeddedProfiles().ToList();
@@ -64,6 +66,8 @@ public sealed class Re1Adapter : IGameAdapter
     private Re1Trainer? _trainer;
 
     public Core.Challenges.IChallengeRules CreateChallengeRules(VersionProfile profile) => (Re1Trainer)CreateTrainer(profile);
+
+    public Core.Runs.IRunRules CreateRunRules(VersionProfile profile) => RunRules;
 
     /// <summary>The GOG game saves to SAVE\savedatN.dat next to the executable (one file per slot, 1–8; B112, #37).</summary>
     public string? SaveDirectory(string executablePath) =>

@@ -52,6 +52,9 @@
     <DataTemplate DataType="vm:ItemsViewModel">
       <views:ItemsView />
     </DataTemplate>
+    <DataTemplate DataType="vm:RunsViewModel">
+      <views:RunsView />
+    </DataTemplate>
     <DataTemplate DataType="vm:ChallengesViewModel">
       <views:ChallengesView />
     </DataTemplate>

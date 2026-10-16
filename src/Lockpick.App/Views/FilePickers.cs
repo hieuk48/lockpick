@@ -11,6 +11,43 @@ internal static class FilePickers
         Patterns = ["ResidentEvil.exe", "*.exe"],
     };
 
+    private static readonly FilePickerFileType Splits = new("LiveSplit splits (*.lss)") { Patterns = ["*.lss"] };
+
+    /// <summary>Lets the user pick a LiveSplit splits file; returns its local path or null when cancelled.</summary>
+    public static async Task<string?> PickSplitsFileAsync(Visual anchor)
+    {
+        if (TopLevel.GetTopLevel(anchor)?.StorageProvider is not { CanOpen: true } storage)
+        {
+            return null;
+        }
+
+        var files = await storage.OpenFilePickerAsync(new FilePickerOpenOptions
+        {
+            Title = "Import LiveSplit splits",
+            AllowMultiple = false,
+            FileTypeFilter = [Splits],
+        });
+        return files.Count > 0 ? files[0].TryGetLocalPath() : null;
+    }
+
+    /// <summary>Asks where to save a LiveSplit splits file; returns the local path or null when cancelled.</summary>
+    public static async Task<string?> SaveSplitsFileAsync(Visual anchor, string suggestedName)
+    {
+        if (TopLevel.GetTopLevel(anchor)?.StorageProvider is not { CanSave: true } storage)
+        {
+            return null;
+        }
+
+        var file = await storage.SaveFilePickerAsync(new FilePickerSaveOptions
+        {
+            Title = "Save as LiveSplit splits",
+            SuggestedFileName = suggestedName,
+            DefaultExtension = "lss",
+            FileTypeChoices = [Splits],
+        });
+        return file?.TryGetLocalPath();
+    }
+
     /// <summary>Lets the user pick the game executable; returns its local path or null when cancelled.</summary>
     public static async Task<string?> PickGameExecutableAsync(Visual anchor)
     {

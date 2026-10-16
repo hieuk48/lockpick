@@ -39,6 +39,7 @@ public sealed class OverlayController : IDisposable
             new Widget(OverlayLayout.Status, _host.StatusPanel, () => true, () => false),
             new Widget(OverlayLayout.Minimap, _host.MinimapPanel, () => model.HasMinimap, () => model.MinimapFull),
             new Widget(OverlayLayout.Enemies, _host.EnemiesPanel, () => model.Enemies.Count > 0, () => false),
+            new Widget(OverlayLayout.Splits, _host.SplitsPanel, () => model.SplitRows.Count > 0, () => false),
         ];
         model.PropertyChanged += OnModelChanged;
         model.Map.PropertyChanged += OnMapChanged;
@@ -70,6 +71,14 @@ public sealed class OverlayController : IDisposable
     {
         if (e.PropertyName == nameof(OverlayViewModel.Status))
         {
+            return;
+        }
+
+        if (e.PropertyName is nameof(OverlayViewModel.SplitRows) or nameof(OverlayViewModel.RunClock) or nameof(OverlayViewModel.RunTitle)
+            or nameof(OverlayViewModel.RunComparison) or nameof(OverlayViewModel.RunBehind))
+        {
+            _host.ShowSplits(_model);
+            Find(OverlayLayout.Splits).Dirty = true;
             return;
         }
 

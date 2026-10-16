@@ -50,6 +50,14 @@ public sealed class GlobalHotkey : IDisposable
         ["Ctrl+Alt+H"] = (ModControl | ModAlt, 0x48),
         ["Ctrl+Alt+J"] = (ModControl | ModAlt, 0x4A),
         ["Ctrl+Alt+K"] = (ModControl | ModAlt, 0x4B),
+        ["Ctrl+Shift+4"] = (ModControl | ModShift, 0x34),
+        ["Ctrl+Shift+5"] = (ModControl | ModShift, 0x35),
+        ["Ctrl+Shift+6"] = (ModControl | ModShift, 0x36),
+        // LiveSplit's own defaults (split, reset, skip, undo) are number-pad keys with nothing held.
+        ["Num 1"] = (0, 0x61),
+        ["Num 2"] = (0, 0x62),
+        ["Num 3"] = (0, 0x63),
+        ["Num 8"] = (0, 0x68),
     };
 
     /// <summary>Registers one of <see cref="Choices"/>; null for an unknown name.</summary>

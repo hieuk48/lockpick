@@ -24,6 +24,9 @@ public static class AppPaths
 
     /// <summary>The game's display settings file as it was before Lockpick first changed it (kept outside the game folder).</summary>
     public static string DisplayBackup => Path.Combine(DataRoot, "backup", "game-display");
+
+    /// <summary>Every run attempt, a JSON-lines file per split set.</summary>
+    public static string Runs => Path.Combine(DataRoot, "runs");
 }
 
 public sealed record AppSettings
@@ -83,6 +86,15 @@ public sealed record AppSettings
 
     /// <summary>How the overlay's map looks and which views its hotkey cycles through.</summary>
     public MapOverlaySettings MapOverlay { get; init; } = new();
+
+    /// <summary>The split set runs are timed against (Runs page), or null: runs off.</summary>
+    public string? RunSetId { get; init; }
+
+    /// <summary>LiveSplit files the player imported (read again at start).</summary>
+    public IReadOnlyList<string> ImportedSplitFiles { get; init; } = [];
+
+    /// <summary>A loaded save starts an attempt too (practice from a save), not only a new game.</summary>
+    public bool RunStartOnLoad { get; init; }
 
     /// <summary>Set only while ask mode has the game frozen; lets the next start unfreeze it after a crash.</summary>
     public PausedGame? PausedGame { get; init; }
@@ -191,12 +203,14 @@ public static class OverlayLayout
     public const string Status = "status";
     public const string Minimap = "minimap";
     public const string Enemies = "enemies";
+    public const string Splits = "splits";
 
     public static IReadOnlyList<(string Id, string Name, string Default)> Widgets { get; } =
     [
         (Status, "Time, HP, room, challenge", OverlayCorners.TopRight),
         (Minimap, "Minimap", OverlayCorners.BottomRight),
         (Enemies, "Enemies in the room (HP)", OverlayCorners.BottomLeft),
+        (Splits, "Run splits", OverlayCorners.TopRight),
     ];
 
     /// <summary>A corner, or off.</summary>

@@ -1,0 +1,124 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:vm="using:Lockpick.App.ViewModels"
+             xmlns:c="using:Lockpick.App.Controls"
+             x:Class="Lockpick.App.Views.RunsView"
+             x:DataType="vm:RunsViewModel">
+
+  <UserControl.Styles>
+    <Style Selector="TextBlock.clock">
+      <Setter Property="FontFamily" Value="{StaticResource LpMono}" />
+      <Setter Property="FontSize" Value="34" />
+      <Setter Property="FontWeight" Value="SemiBold" />
+    </Style>
+    <Style Selector="Border.splitrow">
+      <Setter Property="Padding" Value="8,4" />
+      <Setter Property="CornerRadius" Value="3" />
+    </Style>
+    <Style Selector="Border.splitrow.current">
+      <Setter Property="Background" Value="{StaticResource LpGreenDimBrush}" />
+    </Style>
+    <Style Selector="TextBlock.delta.ahead">
+      <Setter Property="Foreground" Value="{StaticResource LpGreenBrush}" />
+    </Style>
+    <Style Selector="TextBlock.delta.behind">
+      <Setter Property="Foreground" Value="{StaticResource LpRedBrush}" />
+    </Style>
+    <Style Selector="TextBlock.delta.gold">
+      <Setter Property="Foreground" Value="#E8C547" />
+    </Style>
+  </UserControl.Styles>
+
+  <ScrollViewer>
+    <StackPanel Spacing="12">
+
+      <!-- Where the run stands -->
+      <Border Classes="card">
+        <StackPanel Spacing="6">
+          <StackPanel Classes="cardhead">
+            <c:LucideIcon Data="{StaticResource Icon.Timer}" />
+            <TextBlock Classes="caption" Text="RUN" />
+          </StackPanel>
+          <TextBlock Classes="headline" Text="{Binding Headline}" TextWrapping="Wrap" />
+          <TextBlock Classes="clock" Text="{Binding RunTime}" IsVisible="{Binding RunTime, Converter={x:Static StringConverters.IsNotNullOrEmpty}}" />
+          <TextBlock Text="{Binding Detail}" TextWrapping="Wrap" Foreground="{StaticResource LpMutedBrush}" />
+          <TextBlock Text="{Binding Comparison}" TextWrapping="Wrap" Foreground="{StaticResource LpMutedBrush}"
+                     IsVisible="{Binding Comparison, Converter={x:Static StringConverters.IsNotNullOrEmpty}}" />
+          <WrapPanel ItemSpacing="8" LineSpacing="8" IsVisible="{Binding IsRunning}">
+            <Button Content="Split now" Command="{Binding SplitCommand}" AutomationProperties.Name="Split now" />
+            <Button Content="Reset attempt" Command="{Binding ResetCommand}" AutomationProperties.Name="Reset the attempt" />
+          </WrapPanel>
+        </StackPanel>
+      </Border>
+
+      <c:CardColumns MinColumnWidth="380" MaxColumns="2">
+        <!-- Choosing the splits -->
+        <Border Classes="card">
+          <StackPanel Spacing="8">
+            <TextBlock Classes="caption" Text="SPLITS" />
+            <ComboBox ItemsSource="{Binding Sets}" SelectedItem="{Binding Selected}" HorizontalAlignment="Stretch"
+                      AutomationProperties.Name="Splits to run against" />
+            <TextBlock Text="{Binding SetNote}" TextWrapping="Wrap" Foreground="{StaticResource LpMutedBrush}"
+                       IsVisible="{Binding SetNote, Converter={x:Static StringConverters.IsNotNullOrEmpty}}" />
+            <WrapPanel ItemSpacing="8" LineSpacing="8">
+              <Button Content="Import LiveSplit file…" Click="OnImport" AutomationProperties.Name="Import a LiveSplit splits file" />
+              <Button Content="Save as LiveSplit file…" Click="OnExport" IsEnabled="{Binding HasSet}"
+                      AutomationProperties.Name="Save the splits with your times as a LiveSplit file" />
+              <Button Content="Remove" Command="{Binding RemoveImportedCommand}" IsVisible="{Binding IsImported}"
+                      AutomationProperties.Name="Remove the imported splits" />
+            </WrapPanel>
+            <CheckBox IsChecked="{Binding StartOnLoad}" AutomationProperties.Name="Start a run when a save is loaded">
+              <TextBlock TextWrapping="Wrap" Text="Also start when I load a save (practice from a save; the time counts from the save)" />
+            </CheckBox>
+            <TextBlock TextWrapping="Wrap" Foreground="{StaticResource LpMutedBrush}"
+                       Text="Lockpick only watches: it splits on rooms, key items and the ending, and keys for split, undo, skip and reset are in Settings → Hotkeys. With LiveSplit running too, both time the same in-game clock." />
+            <TextBlock Text="{Binding Message}" TextWrapping="Wrap"
+                       IsVisible="{Binding Message, Converter={x:Static StringConverters.IsNotNullOrEmpty}}" />
+          </StackPanel>
+        </Border>
+
+        <!-- The splits, live -->
+        <Border Classes="card" IsVisible="{Binding HasSet}">
+          <StackPanel Spacing="2">
+            <TextBlock Classes="caption" Text="THIS RUN" Margin="0,0,0,6" />
+            <ItemsControl ItemsSource="{Binding Rows}">
+              <ItemsControl.ItemTemplate>
+                <DataTemplate x:DataType="vm:SplitRowData">
+                  <Border Classes="splitrow" Classes.current="{Binding IsCurrent}" ToolTip.Tip="{Binding Trigger}">
+                    <Grid ColumnDefinitions="*,Auto,Auto" ColumnSpacing="12">
+                      <TextBlock Text="{Binding Name}" TextTrimming="CharacterEllipsis" />
+                      <TextBlock Grid.Column="1" Classes="delta" Classes.ahead="{Binding IsAhead}" Classes.behind="{Binding IsBehind}"
+                                 Classes.gold="{Binding IsGold}" Text="{Binding Delta}" FontFamily="{StaticResource LpMono}" />
+                      <TextBlock Grid.Column="2" Text="{Binding Time}" FontFamily="{StaticResource LpMono}" MinWidth="74" TextAlignment="Right" />
+                    </Grid>
+                  </Border>
+                </DataTemplate>
+              </ItemsControl.ItemTemplate>
+            </ItemsControl>
+          </StackPanel>
+        </Border>
+
+        <!-- Attempts -->
+        <Border Classes="card" IsVisible="{Binding HasSet}">
+          <StackPanel Spacing="4">
+            <TextBlock Classes="caption" Text="ATTEMPTS" Margin="0,0,0,4" />
+            <TextBlock Text="None yet." Foreground="{StaticResource LpMutedBrush}"
+                       IsVisible="{Binding !History.Count}" />
+            <ItemsControl ItemsSource="{Binding History}">
+              <ItemsControl.ItemTemplate>
+                <DataTemplate x:DataType="vm:RunHistoryRow">
+                  <Grid ColumnDefinitions="Auto,*,Auto,Auto" ColumnSpacing="10" Margin="0,2">
+                    <TextBlock Text="{Binding Attempt}" FontFamily="{StaticResource LpMono}" Foreground="{StaticResource LpMutedBrush}" />
+                    <TextBlock Grid.Column="1" Text="{Binding Result}" TextTrimming="CharacterEllipsis" />
+                    <TextBlock Grid.Column="2" Text="{Binding Time}" FontFamily="{StaticResource LpMono}" />
+                    <TextBlock Grid.Column="3" Text="{Binding When}" Foreground="{StaticResource LpMutedBrush}" />
+                  </Grid>
+                </DataTemplate>
+              </ItemsControl.ItemTemplate>
+            </ItemsControl>
+          </StackPanel>
+        </Border>
+      </c:CardColumns>
+    </StackPanel>
+  </ScrollViewer>
+</UserControl>

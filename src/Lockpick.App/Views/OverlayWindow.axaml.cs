@@ -55,6 +55,57 @@ public partial class OverlayWindow : Window
         }
     }
 
+    /// <summary>Fills the splits widget: the category, a row per split shown, the run's clock and the comparison.</summary>
+    public void ShowSplits(ViewModels.OverlayViewModel model)
+    {
+        SplitList.Children.Clear();
+        var muted = Brush("LpMutedBrush");
+        var text = Brush("LpTextBrush");
+        var mono = Font("LpMono");
+        SplitList.Children.Add(new TextBlock { Text = model.RunTitle, FontSize = 9, Foreground = muted, TextTrimming = TextTrimming.CharacterEllipsis, Margin = new Thickness(0, 0, 0, 2) });
+        foreach (var row in model.SplitRows)
+        {
+            var grid = new Grid { ColumnDefinitions = new ColumnDefinitions("*,Auto,Auto"), ColumnSpacing = 6 };
+            grid.Children.Add(new TextBlock { Text = row.Name, FontSize = 10, Foreground = row.IsDone || row.IsCurrent ? text : muted, TextTrimming = TextTrimming.CharacterEllipsis });
+            var delta = new TextBlock { Text = row.Delta, FontSize = 10, FontFamily = mono, Foreground = DeltaBrush(row.Mark) };
+            Grid.SetColumn(delta, 1);
+            grid.Children.Add(delta);
+            var time = new TextBlock { Text = row.Time, FontSize = 10, FontFamily = mono, Foreground = row.IsDone ? text : muted, MinWidth = 44, TextAlignment = TextAlignment.Right };
+            Grid.SetColumn(time, 2);
+            grid.Children.Add(time);
+            SplitList.Children.Add(new Border
+            {
+                Child = grid,
+                Padding = new Thickness(3, 1),
+                CornerRadius = new CornerRadius(2),
+                Background = row.IsCurrent ? Brush("LpGreenDimBrush") : Brushes.Transparent,
+            });
+        }
+
+        SplitList.Children.Add(new TextBlock
+        {
+            Text = model.RunClock,
+            FontSize = 18,
+            FontWeight = FontWeight.SemiBold,
+            FontFamily = mono,
+            Foreground = model.RunBehind ? Brush("LpRedBrush") : Brush("LpGreenBrush"),
+            HorizontalAlignment = Avalonia.Layout.HorizontalAlignment.Right,
+            Margin = new Thickness(0, 2, 0, 0),
+        });
+        if (model.RunComparison.Length > 0)
+        {
+            SplitList.Children.Add(new TextBlock { Text = model.RunComparison, FontSize = 9, Foreground = muted, HorizontalAlignment = Avalonia.Layout.HorizontalAlignment.Right });
+        }
+    }
+
+    private static IBrush DeltaBrush(ViewModels.SplitMark mark) => mark switch
+    {
+        ViewModels.SplitMark.Ahead => Brush("LpGreenBrush"),
+        ViewModels.SplitMark.Behind => Brush("LpRedBrush"),
+        ViewModels.SplitMark.Gold => new SolidColorBrush(Color.Parse("#E8C547")),
+        _ => Brush("LpMutedBrush"),
+    };
+
     private static IBrush Brush(string key) =>
         Application.Current?.TryFindResource(key, out var value) == true && value is IBrush brush ? brush : Brushes.White;
 

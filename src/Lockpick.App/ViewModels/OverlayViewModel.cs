@@ -7,6 +7,7 @@ using CommunityToolkit.Mvvm.ComponentModel;
 using Lockpick.App.Controls;
 using Lockpick.App.Services;
 using Lockpick.Core.Challenges;
+using Lockpick.Core.Runs;
 using Lockpick.Core.State;
 
 namespace Lockpick.App.ViewModels;
@@ -60,6 +61,8 @@ public sealed partial class OverlayViewModel : ObservableObject
             }
         };
         services.Challenges.StatusChanged += (_, s) => Dispatcher.UIThread.Post(() => Show(s));
+        services.Runs.StatusChanged += (_, _) => Dispatcher.UIThread.Post(() => ShowRun(state.Snapshot));
+        services.RunLibrary.Changed += (_, _) => Dispatcher.UIThread.Post(() => ShowRun(state.Snapshot));
         Show(state.Snapshot);
         Show(services.Challenges.Status);
     }
@@ -254,6 +257,63 @@ public sealed partial class OverlayViewModel : ObservableObject
             ? _services.Adapter.RoomName(room.Value.Id) ?? room.Value.Id
             : string.Empty;
         ShowEnemies(inGame ? snapshot : null);
+        ShowRun(snapshot);
+    }
+
+    /// <summary>The splits widget's rows: a window around the current split, with the last split always shown.</summary>
+    [ObservableProperty]
+    public partial IReadOnlyList<SplitRowData> SplitRows { get; private set; } = [];
+
+    /// <summary>The run's in-game time ("12:34.5").</summary>
+    [ObservableProperty]
+    public partial string RunClock { get; private set; } = string.Empty;
+
+    /// <summary>The splits' category.</summary>
+    [ObservableProperty]
+    public partial string RunTitle { get; private set; } = string.Empty;
+
+    /// <summary>Personal best and best possible time.</summary>
+    [ObservableProperty]
+    public partial string RunComparison { get; private set; } = string.Empty;
+
+    /// <summary>The clock is ahead of (or level with) the personal best at the current split; false when behind.</summary>
+    [ObservableProperty]
+    public partial bool RunBehind { get; private set; }
+
+    private const int SplitsBefore = 2;
+    private const int SplitsAfter = 3;
+
+    private void ShowRun(GameSnapshot? snapshot)
+    {
+        var status = _services.Runs.Status;
+        if (status.Set is not { } set || status.State == RunState.Off)
+        {
+            SplitRows = [];
+            RunClock = RunTitle = RunComparison = string.Empty;
+            return;
+        }
+
+        var comparison = _services.RunLibrary.Comparison(set);
+        var now = status.GameTime(snapshot);
+        var rows = RunRows.Build(status, comparison, now);
+        var current = status.State == RunState.Running ? status.Current : status.State == RunState.Ready ? 0 : rows.Count - 1;
+        var first = Math.Clamp(current - SplitsBefore, 0, Math.Max(0, rows.Count - 1 - SplitsBefore - SplitsAfter));
+        var shown = rows.Skip(first).Take(SplitsBefore + SplitsAfter + 1).ToList();
+        if (rows.Count > 0 && shown[^1] != rows[^1])
+        {
+            shown.Add(rows[^1]);
+        }
+
+        if (!shown.SequenceEqual(SplitRows))
+        {
+            SplitRows = shown;
+        }
+
+        RunTitle = set.Category;
+        RunClock = now is { } t ? RunRows.Clock(t) : "0:00.0";
+        RunBehind = rows.ElementAtOrDefault(current) is { IsCurrent: true, IsBehind: true };
+        var pb = comparison.PersonalBest.Count > 0 ? comparison.PersonalBest[^1] : null;
+        RunComparison = pb is { } p ? $"PB {RunRows.Clock(p)}" + (comparison.SumOfBest is { } sob ? $" · SoB {RunRows.Clock(sob)}" : string.Empty) : string.Empty;
     }
 
     /// <summary>The enemies and bosses in the room, with HP (the enemies widget). Empty when there are none.</summary>

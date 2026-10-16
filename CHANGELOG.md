@@ -22,6 +22,14 @@ All notable changes to this project are documented here. The format follows
 - **Condition on the overlay:** Fine, Caution, Danger or Poison next to your HP, worked out the way the game's
   status screen does it (poison read from the player's status), with the HP bar in the same colour; also in the API
   (`health.condition`) and on the OBS HUD page.
+- **Runs and splits** (new Runs page; [docs/RUNS.md](docs/RUNS.md)): pick the community's splits (Jill or Chris,
+  either ending, NMG or MG), a key-item route, or import a LiveSplit file (the community's from speedrun.com or your
+  own), and every new game is timed on the game's own clock — the in-game time the leaderboard uses — splitting by
+  itself on rooms, key items and the ending. Each split shows against your best (green ahead, red behind, gold for a
+  best segment); a death, the title menu or the game closing ends the attempt, and every attempt is kept. Save the
+  splits with your times as a LiveSplit file (e.g. for a submission). Keys for split, undo, skip and reset (Settings
+  → Hotkeys, including LiveSplit's number-pad keys), and a **Run splits** overlay widget. The built-in split points
+  come from the community autosplitter and are marked as not yet checked in a full run.
 - **Enemies widget:** the enemies and bosses in the room with their HP and a bar (against the most HP each has had
   since you came in), bosses first; hidden when the room is clear.
 - **Game display** (Settings → Game display): switch Resident Evil between windowed, borderless (fills the screen —

@@ -52,7 +52,27 @@ public sealed class AppServices : IAsyncDisposable
         }
 
         Challenges = new Core.Challenges.ChallengeService(source, Trainer, adapter.CreateChallengeRules);
+        Runs = new Core.Runs.RunService(source, Trainer, adapter.CreateRunRules, new Core.Runs.RunHistoryStore(AppPaths.Runs));
+        RunLibrary = new RunLibrary(Runs, adapter, Runs.History!, settings, loggerFactory.CreateLogger("Runs"));
         TrainerHotkeys = new TrainerHotkeys(_log);
+        TrainerHotkeys.Pressed += (_, action) =>
+        {
+            switch (action)
+            {
+                case TrainerHotkeys.RunSplit:
+                    Runs.Split();
+                    break;
+                case TrainerHotkeys.RunUndo:
+                    Runs.Undo();
+                    break;
+                case TrainerHotkeys.RunSkip:
+                    Runs.Skip();
+                    break;
+                case TrainerHotkeys.RunReset:
+                    Runs.Reset();
+                    break;
+            }
+        };
         foreach (var (action, key) in settings.Current.TrainerHotkeys)
         {
             TrainerHotkeys.Set(action, key, MarkerHotkeyName);
@@ -61,6 +81,12 @@ public sealed class AppServices : IAsyncDisposable
 
     /// <summary>The challenge the player chose (Challenges page, API).</summary>
     public Core.Challenges.ChallengeService Challenges { get; }
+
+    /// <summary>Run timing and splits (Runs page, overlay, API).</summary>
+    public Core.Runs.RunService Runs { get; }
+
+    /// <summary>The split sets, attempt records and comparisons.</summary>
+    public RunLibrary RunLibrary { get; }
 
     /// <summary>System-wide keys for trainer actions (Settings); presses are acted on by the Trainer page.</summary>
     public TrainerHotkeys TrainerHotkeys { get; }
@@ -281,6 +307,7 @@ public sealed class AppServices : IAsyncDisposable
         }
 
         Challenges.Dispose();
+        Runs.Dispose();
         Trainer?.Dispose();
         await Source.DisposeAsync().ConfigureAwait(false);
         Updates.Dispose();

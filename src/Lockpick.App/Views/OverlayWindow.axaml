@@ -35,6 +35,13 @@
     </Border>
   </LayoutTransformControl>
 
+  <!-- Run splits; rows are built in code (OverlayWindow.ShowSplits). -->
+  <LayoutTransformControl x:Name="SplitsPanel">
+    <Border Background="#C80B0F0E" BorderBrush="{StaticResource LpBorderBrush}" BorderThickness="1" CornerRadius="3" Padding="7,4" Width="190">
+      <StackPanel x:Name="SplitList" Spacing="1" />
+    </Border>
+  </LayoutTransformControl>
+
   <!-- Enemies in the room with their HP; rows are built in code (OverlayWindow.ShowEnemies: no templates here). -->
   <LayoutTransformControl x:Name="EnemiesPanel">
     <Border Background="#C80B0F0E" BorderBrush="{StaticResource LpBorderBrush}" BorderThickness="1" CornerRadius="3" Padding="7,4" MinWidth="120">
