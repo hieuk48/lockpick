@@ -31,7 +31,9 @@ public partial class App : Application
             desktop.ShutdownMode = ShutdownMode.OnMainWindowClose;
             _widgets = new WidgetRenderer(_services, _main.Overlay);
             WidgetRenderer.Current = _widgets;
+            _services.DrawWidget = _widgets.ForBrowser;
             _overlay = new OverlayController(_services, _main.Overlay, _widgets);
+            FocusGuard.GameHoldsTheScreen = () => _overlay?.Game is { Mode: Core.Display.GameWindowMode.ExclusiveFullscreen, Foreground: true };
             _popOuts = new PopOutManager(_services, _widgets);
             _popOuts.RestoreOpen();
             _services.Source.Start();

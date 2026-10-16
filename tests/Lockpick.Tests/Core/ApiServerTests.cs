@@ -118,6 +118,31 @@ public sealed class ApiServerTests : IAsyncLifetime
     }
 
     [Fact]
+    public async Task Widgets_are_served_as_pictures_for_obs()
+    {
+        Assert.Equal(HttpStatusCode.NotFound, (await _client.GetAsync("widget/minimap.png")).StatusCode); // none in this host
+
+        string? asked = null;
+        await using var server = new ApiServer(new ApiHost(_source, _adapter, _trainer, _capture, "9.9.9",
+            Widget: (id, width, height) =>
+            {
+                asked = $"{id} {width}x{height}";
+                return Task.FromResult(id == "minimap" ? new WidgetPicture(new byte[2 * 2 * 4], 2, 2) : null);
+            }), NullLogger.Instance);
+        Assert.Null(await server.StartAsync(new ApiOptions { Port = 0, Token = Token }));
+        using var client = new HttpClient { BaseAddress = new Uri(server.Address!, ApiServer.Prefix + "/") };
+        client.DefaultRequestHeaders.Authorization = new("Bearer", Token);
+
+        var map = await client.GetAsync("widget/minimap.png?width=50&height=9000");
+        Assert.Equal("image/png", map.Content.Headers.ContentType?.MediaType);
+        Assert.Equal("minimap 64x2000", asked); // sizes kept in bounds
+        Assert.Equal(HttpStatusCode.NoContent, (await client.GetAsync("widget/enemies.png")).StatusCode); // nothing to show
+        using var obs = new HttpClient { BaseAddress = server.Address };
+        var page = await obs.GetAsync($"overlay/widget?id=minimap&token={Token}");
+        Assert.Contains("/api/v1/widget/", await page.Content.ReadAsStringAsync(), StringComparison.Ordinal);
+    }
+
+    [Fact]
     public async Task It_listens_on_this_PC_only_unless_allowed()
     {
         Assert.True(IPAddress.IsLoopback(IPAddress.Parse(_server.Address!.Host)));

@@ -66,6 +66,9 @@ public sealed partial class StreamTile : ObservableObject
     private void PopOut() => _page.Windows.Toggle(Id);
 }
 
+/// <summary>An OBS Browser Source for a widget: its address (with the API token) and the size to give the source.</summary>
+public sealed record ObsLinkRow(string Name, string Url, string Size);
+
 /// <summary>
 /// Stream page (roadmap: widgets off the game too): the overlay's widgets inside Lockpick, as large as the player
 /// likes, so the game's picture can stay clean — the tiles they choose, in their order and sizes (remembered). Any
@@ -81,6 +84,7 @@ public sealed partial class StreamViewModel : PageViewModel
     public StreamViewModel(AppServices services)
         : base("Stream", "Icon.PanelsTopLeft")
     {
+        SetSections(new PageSection("widgets", "Widgets"), new PageSection("obs", "OBS"));
         _services = services;
         Windows = services.WidgetWindows;
         Load(services.Settings.Current.StreamWidgets ?? Defaults);
@@ -95,6 +99,51 @@ public sealed partial class StreamViewModel : PageViewModel
     }
 
     public WidgetWindows Windows { get; }
+
+    /// <summary>Browser-source addresses for OBS, one per widget (empty while the API is off).</summary>
+    [ObservableProperty]
+    public partial IReadOnlyList<ObsLinkRow> ObsLinks { get; private set; } = [];
+
+    [ObservableProperty]
+    public partial string ObsNote { get; private set; } = string.Empty;
+
+    public override void OnVisibilityChanged(bool visible)
+    {
+        base.OnVisibilityChanged(visible);
+        if (visible)
+        {
+            RefreshObsLinks();
+        }
+    }
+
+    /// <summary>The OBS addresses from the API's port and token (shown again whenever the page opens).</summary>
+    private void RefreshObsLinks()
+    {
+        var settings = _services.Settings.Current;
+        if (!settings.ApiEnabled || string.IsNullOrEmpty(settings.ApiToken))
+        {
+            ObsLinks = [];
+            ObsNote = "Turn on the API in Settings → API and profiles: OBS reads the widgets through it (on this PC only).";
+            return;
+        }
+
+        var root = $"http://127.0.0.1:{settings.ApiPort}/overlay/";
+        var token = Uri.EscapeDataString(settings.ApiToken);
+        string Widget(string id, int width, int height) => $"{root}widget?id={id}&token={token}&width={width}&height={height}";
+        ObsLinks =
+        [
+            new("Time, HP, room, challenge", Widget(OverlayLayout.Status, 420, 160), "420 × 160"),
+            new("Minimap", Widget(OverlayLayout.Minimap, 400, 400), "400 × 400"),
+            new("Enemies in the room", Widget(OverlayLayout.Enemies, 320, 240), "320 × 240"),
+            _services.LiveSplitEngine.Available
+                ? new("Run splits (LiveSplit's look)", $"{root}livesplit?token={token}&width=300&height=500", "300 × 500")
+                : new("Run splits", $"{root}splits?token={token}", "like the game capture"),
+            new("What just happened", $"{root}feed?token={token}", "like the game capture"),
+            new("Big messages", Widget(OverlayLayout.Banner, 900, 160), "900 × 160"),
+            new("Everything in one (HUD)", $"{root}hud?token={token}", "like the game capture"),
+        ];
+        ObsNote = "In OBS: Sources → + → Browser, paste the address, and set the width and height to the size shown. The address holds your API token: keep it to yourself.";
+    }
 
     public ObservableCollection<StreamTile> Tiles { get; } = [];
 

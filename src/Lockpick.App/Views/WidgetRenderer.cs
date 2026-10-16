@@ -23,6 +23,7 @@ public sealed class WidgetRenderer : IDisposable
     private readonly OverlayWindow _host;
     private readonly Dictionary<string, Entry> _entries;
     private readonly Dictionary<string, int> _watchers = [];
+    private readonly Dictionary<string, long> _requested = [];
 
     public WidgetRenderer(AppServices services, OverlayViewModel model)
     {
@@ -79,7 +80,21 @@ public sealed class WidgetRenderer : IDisposable
         _watchers[id] = Math.Max(0, _watchers.GetValueOrDefault(id) + (watching ? 1 : -1));
     }
 
-    public bool Watched(string id) => _watchers.GetValueOrDefault(id) > 0;
+    /// <summary>Shown somewhere other than the overlay: a pop-out, a Stream page tile, or a browser source asking
+    /// for it in the last few seconds.</summary>
+    public bool Watched(string id) => _watchers.GetValueOrDefault(id) > 0 || Environment.TickCount64 - _requested.GetValueOrDefault(id, long.MinValue / 2) < 3000;
+
+    /// <summary>The widget for a browser source (the API): as large as fits, or null while it has nothing to show.</summary>
+    public Lockpick.Api.WidgetPicture? ForBrowser(string id, int width, int height)
+    {
+        if (!_entries.ContainsKey(id))
+        {
+            return null;
+        }
+
+        _requested[id] = Environment.TickCount64; // keeps its data updating (e.g. the map) while OBS shows it
+        return HasContent(id) && RenderToFit(id, width, height, 96) is var (pixels, w, h) ? new Lockpick.Api.WidgetPicture(pixels, w, h) : null;
+    }
 
     /// <summary>The widget at the overlay's <paramref name="scale"/> for a monitor at <paramref name="dpi"/> (premultiplied BGRA).</summary>
     public (byte[] Pixels, int Width, int Height)? Render(string id, double scale, int dpi)

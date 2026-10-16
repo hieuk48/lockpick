@@ -52,4 +52,8 @@ public sealed record ApiHost(
     Lockpick.Core.Runs.RunService? Runs = null,
     Func<Lockpick.Core.Runs.SplitSet, Lockpick.Core.Runs.RunComparison>? Comparison = null,
     Lockpick.Core.Insight.EventFeed? Feed = null,
-    Func<int, int, byte[]?>? LiveSplitPicture = null);
+    Func<int, int, byte[]?>? LiveSplitPicture = null,
+    Func<string, int, int, Task<WidgetPicture?>>? Widget = null);
+
+/// <summary>An overlay widget drawn for a browser source: premultiplied BGRA, as large as fitted the box asked.</summary>
+public sealed record WidgetPicture(byte[] Pixels, int Width, int Height);

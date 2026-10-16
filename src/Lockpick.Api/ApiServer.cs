@@ -217,6 +217,21 @@ public sealed class ApiServer : IAsyncDisposable
                 ? Results.Bytes(Png.FromPremultipliedBgra(pixels, w, h), "image/png")
                 : Error(404, "no LiveSplit timer: choose splits on the Runs page");
         });
+        app.MapGet(Prefix + "/widget/{id}.png", async (string id, int? width, int? height) =>
+        {
+            // An overlay widget, drawn as large as fits (the OBS page /overlay/widget shows it); 204 while it has
+            // nothing to show (e.g. no enemies in the room).
+            if (_host.Widget is not { } widget)
+            {
+                return Error(404, "widgets aren't available");
+            }
+
+            var w = Math.Clamp(width ?? 400, 64, 2000);
+            var h = Math.Clamp(height ?? 400, 64, 2000);
+            return await widget(id, w, h).ConfigureAwait(false) is { } picture
+                ? Results.Bytes(Png.FromPremultipliedBgra(picture.Pixels, picture.Width, picture.Height), "image/png")
+                : Results.NoContent();
+        });
         app.MapPost(Prefix + "/run/split", () => RunCommand(r => r.Split()));
         app.MapPost(Prefix + "/run/undo", () => RunCommand(r => r.Undo()));
         app.MapPost(Prefix + "/run/skip", () => RunCommand(r => r.Skip()));

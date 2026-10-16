@@ -5,8 +5,9 @@
              x:Class="Lockpick.App.Views.StreamView"
              x:DataType="vm:StreamViewModel">
 
-  <ScrollViewer>
-    <StackPanel Spacing="12">
+  <ScrollViewer c:SectionScroll.Section="{Binding SelectedSection}">
+    <Panel>
+    <StackPanel Spacing="12" IsVisible="{Binding SelectedSection, Converter={x:Static c:SectionIs.Instance}, ConverterParameter=widgets}">
 
       <Border Classes="card">
         <StackPanel Spacing="6">
@@ -62,5 +63,30 @@
       </ItemsControl>
 
     </StackPanel>
+
+    <!-- OBS: each widget as a Browser Source -->
+    <Border Classes="card" VerticalAlignment="Top"
+            IsVisible="{Binding SelectedSection, Converter={x:Static c:SectionIs.Instance}, ConverterParameter=obs}">
+      <StackPanel Spacing="8">
+        <TextBlock Classes="caption" Text="OBS BROWSER SOURCES" />
+        <TextBlock TextWrapping="Wrap" Foreground="{StaticResource LpMutedBrush}"
+                   Text="Each widget as its own OBS source, transparent and live — the same as on the overlay, so you can place them anywhere on your stream. (A pop-out window with Window Capture works too.)" />
+        <TextBlock Text="{Binding ObsNote}" TextWrapping="Wrap" />
+        <ItemsControl ItemsSource="{Binding ObsLinks}">
+          <ItemsControl.ItemTemplate>
+            <DataTemplate x:DataType="vm:ObsLinkRow">
+              <Grid ColumnDefinitions="220,*,Auto,Auto" ColumnSpacing="10" Margin="0,3">
+                <TextBlock Text="{Binding Name}" VerticalAlignment="Center" TextTrimming="CharacterEllipsis" />
+                <TextBlock Grid.Column="1" Text="{Binding Size}" Foreground="{StaticResource LpMutedBrush}" VerticalAlignment="Center" />
+                <Button Grid.Column="2" Content="Copy OBS link" Click="OnCopyObsLink" Tag="{Binding Url}"
+                        AutomationProperties.Name="{Binding Name, StringFormat='Copy the OBS link for {0}'}" />
+              </Grid>
+            </DataTemplate>
+          </ItemsControl.ItemTemplate>
+        </ItemsControl>
+        <TextBlock x:Name="Copied" Foreground="{StaticResource LpGreenBrush}" IsVisible="False" Text="Copied. Paste it into an OBS Browser Source." />
+      </StackPanel>
+    </Border>
+    </Panel>
   </ScrollViewer>
 </UserControl>

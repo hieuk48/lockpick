@@ -31,6 +31,8 @@ turn it on in **Settings → API for other tools**.
 | `GET /api/v1/trainer` | Trainer mode, write access, whether this run was changed, locks, infinite ammo, the last 50 actions |
 | `GET /api/v1/challenges` | The ready-made challenges (`id`, `name`, `summary`, `rules`) and the rule names |
 | `GET /api/v1/challenge` | The current challenge: `state` (`off`, `waiting`, `running`, `failed`), `attempt`, `failReason`, `failedAtGameTime` |
+| `GET /api/v1/widget/<id>.png` | An overlay widget (`status`, `minimap`, `enemies`, `splits`, `feed`, `banner`) drawn as large as fits `width` × `height` (64–2000, default 400), the same picture as on the overlay; `204` while it has nothing to show |
+| `GET /api/v1/livesplit.png` | LiveSplit's layout of the run, drawn by livesplit-core, at `width` × `height` |
 | `GET /api/v1/run` | The run (docs/RUNS.md): `state` (`off`, `ready`, `running`, `finished`, `ended`), `set {id, name, category, verified}`, `attempt`, `current`, `gameTimeSeconds`, `realTimeSeconds`, `result`, `personalBestSeconds`, `sumOfBestSeconds`, `splits [{name, trigger, timeSeconds, personalBestSeconds, deltaSeconds, gold}]` |
 
 Event types: `GameStarted`, `GameStopped`, `GameLoaded`, `GameSaved`, `RoomChanged`, `CameraChanged`,
@@ -50,7 +52,12 @@ http://127.0.0.1:1996/overlay/hud?token=<token>&corner=top-right&scale=1
 |---|---|---|
 | `/overlay/hud` | In-game time, HP, the room, the challenge (clean, or failed with the reason) | `corner` = `top-right` (default), `top-left`, `bottom-right`, `bottom-left`; `scale` 0.5–4 |
 | `/overlay/splits` | The run's splits: the category, the splits around the current one with times and differences to the personal best (gold for a best segment), the in-game clock, PB and sum of best | `corner` = `top-left` (default) or another; `scale` 0.5–4; `rows` 3–30 (default 8) |
+| `/overlay/widget` | Any overlay widget, live (`id` = `status`, `minimap`, `enemies`, `splits`, `feed` or `banner`), as large as fits, top left | `width` and `height` (size the source to them); `fps` 1–30 (default 10) |
+| `/overlay/livesplit` | The run with LiveSplit's look (livesplit-core) | `width`, `height`, `fps` |
 | `/overlay/feed` | What just happened, in plain words (pickups, kills, enemies appearing, damage, story events), the newest at the bottom, each line for a while | `corner` = `bottom-left` (default) or another; `scale`; `lines` 1–20 (default 5); `seconds` (default 20); `types` = event types to show (default `Happened`; e.g. add `SplitReached,RunEnded,ChallengeFailed`) |
+
+The app lists every widget's address with its size and a **Copy OBS link** button (Stream → OBS). A popped-out widget
+window (Settings → Overlay → Pop out) can be captured with Window Capture too.
 
 Lockpick's in-game overlay (Settings → Overlay) is not part of any OBS capture — it's a window of its own on top of
 the game — so use these pages for the stream. Game Capture of the game works in every display mode

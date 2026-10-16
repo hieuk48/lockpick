@@ -48,6 +48,13 @@ All notable changes to this project are documented here. The format follows
   overlay's challenge line), optional sounds when a challenge fails or you die — each its own, from Windows' sounds
   or a .wav file of yours (Challenges → Feedback, with a Play button) — and **Challenge: try again** as a key or
   controller button (Settings → Hotkeys). Closing the game ends a challenge's attempt.
+- **Every widget in OBS** (#60): any overlay widget — the map, the enemies, the status, big messages — as its own
+  Browser Source (`/overlay/widget?id=…`, drawn live as large as fits), and **Stream → OBS** lists each widget's
+  address with a **Copy OBS link** button.
+- **Captures mark the run by themselves** (#58): a running capture gets a marker at each run start, split, run end and
+  challenge fail.
+- **No focus taken over exclusive fullscreen** (#54): the ask-mode question shows without taking the focus while the
+  game is exclusive fullscreen and in front (the game would minimize).
 - **The map's own window:** the popped-out map is drawn live at the window's size with its own view (right-click):
   around you (close, medium or far), the whole room, or the whole floor you're on (whole, closer or closest,
   following you), names on or off — remembered with the window, whatever the overlay's map shows.

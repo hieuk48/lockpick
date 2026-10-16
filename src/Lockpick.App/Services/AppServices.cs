@@ -159,6 +159,12 @@ public sealed class AppServices : IAsyncDisposable
     /// <summary>Why the API isn't listening although it is on (e.g. the port is taken), or null.</summary>
     public string? ApiError { get; private set; }
 
+    /// <summary>Draws an overlay widget as large as fits a box (set by the app once its widgets exist; UI thread).</summary>
+    public Func<string, int, int, Lockpick.Api.WidgetPicture?>? DrawWidget { get; set; }
+
+    private async Task<Lockpick.Api.WidgetPicture?> WidgetAsync(string id, int width, int height) =>
+        DrawWidget is { } draw ? await Avalonia.Threading.Dispatcher.UIThread.InvokeAsync(() => draw(id, width, height)) : null;
+
     /// <summary>What a split set's splits are judged against: the comparison the player chose (Runs page; LiveSplit's
     /// history), or Lockpick's own personal best and best segments.</summary>
     public Core.Runs.RunComparison ComparisonFor(Core.Runs.SplitSet set) => LiveSplitEngine.Against(set, RunLibrary.Comparison(set));
@@ -166,7 +172,7 @@ public sealed class AppServices : IAsyncDisposable
     public void CreateApi(ICaptureControl capture)
     {
         Api ??= new ApiServer(new ApiHost(Source, Adapter, Trainer, capture, AppVersion, Challenges, Runs, ComparisonFor, Feed,
-                LiveSplitEngine.Available ? LiveSplitEngine.Render : null),
+                LiveSplitEngine.Available ? LiveSplitEngine.Render : null, WidgetAsync),
             LoggerFactory.CreateLogger("Api"));
     }
 

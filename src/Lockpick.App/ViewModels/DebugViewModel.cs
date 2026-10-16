@@ -69,6 +69,9 @@ public sealed partial class DebugViewModel : PageViewModel, IDisposable, Lockpic
 
         services.LogProvider.EntryLogged += entry => Dispatcher.UIThread.Post(() => AddLog(entry), DispatcherPriority.Background);
         services.MarkerHotkeyPressed += (_, _) => Dispatcher.UIThread.Post(OnMarkerHotkey);
+        // A capture marks the run's moments by itself: the start, each split, the end, and a challenge failing.
+        services.Runs.EventRaised += (_, e) => Dispatcher.UIThread.Post(() => MarkEvent(e));
+        services.Challenges.EventRaised += (_, e) => Dispatcher.UIThread.Post(() => MarkEvent(e));
         RefreshHotkeyInfo();
         state.PropertyChanged += OnStateChanged;
 
@@ -328,6 +331,24 @@ public sealed partial class DebugViewModel : PageViewModel, IDisposable, Lockpic
         HotkeyInfo = _services.MarkerHotkeyName is { } key
             ? $"Press {key} while playing to mark a moment, then describe it here (e.g. \"pushed the statue\"). Change the key in Settings."
             : "No marker hotkey (choose one in Settings); markers can be added here.";
+
+    private void MarkEvent(Core.Events.GameEvent e)
+    {
+        if (_capture is not { } capture || e is not (Core.Events.RunStarted or Core.Events.SplitReached or Core.Events.RunEnded or Core.Events.ChallengeFailed))
+        {
+            return;
+        }
+
+        try
+        {
+            var marker = capture.AddMarker(e.Describe());
+            Markers.Insert(0, new MarkerRow(marker, capture.SetMarkerNote));
+        }
+        catch (ObjectDisposedException)
+        {
+            // The capture stopped between the event and now.
+        }
+    }
 
     private void OnMarkerHotkey()
     {
