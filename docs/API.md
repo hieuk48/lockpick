@@ -29,13 +29,29 @@ turn it on in **Settings → API for other tools**.
 | `GET /api/v1/events?after=N` | Events after sequence number `N` (`{events: [...], last}`); poll with the last number you saw |
 | `GET /api/v1/events/stream?after=N` | The same as a live [server-sent event](https://html.spec.whatwg.org/multipage/server-sent-events.html) stream: each message has `id` (sequence), `event` (type) and `data` (JSON); a comment every 15 s keeps it open |
 | `GET /api/v1/trainer` | Trainer mode, write access, whether this run was changed, locks, infinite ammo, the last 50 actions |
-
 | `GET /api/v1/challenges` | The ready-made challenges (`id`, `name`, `summary`, `rules`) and the rule names |
 | `GET /api/v1/challenge` | The current challenge: `state` (`off`, `waiting`, `running`, `failed`), `attempt`, `failReason`, `failedAtGameTime` |
 
 Event types: `GameStarted`, `GameStopped`, `GameLoaded`, `GameSaved`, `RoomChanged`, `CameraChanged`,
 `PlayerHealthChanged`, `PlayerDamaged`, `TrainerActionExecuted`, `RunInvalidated`, `ChallengeStarted`, `ChallengeFailed`
 (the one an overlay shows when a challenge ends).
+
+## OBS browser sources
+
+Lockpick serves pages made for OBS's **Browser Source** (transparent background, updated four times a second). Add
+a Browser Source, set its size to your canvas (e.g. 1920×1080) and use:
+
+```text
+http://127.0.0.1:1996/overlay/hud?token=<token>&corner=top-right&scale=1
+```
+
+| Page | Shows | Options |
+|---|---|---|
+| `/overlay/hud` | In-game time, HP, the room, the challenge (clean, or failed with the reason) | `corner` = `top-right` (default), `top-left`, `bottom-right`, `bottom-left`; `scale` 0.5–4 |
+
+Lockpick's in-game overlay (Settings → Overlay) is not part of any OBS capture — it's a window of its own on top of
+the game — so use these pages for the stream. Game Capture of the game works in every display mode
+([DISPLAY.md](DISPLAY.md)).
 
 ## Commands (POST)
 

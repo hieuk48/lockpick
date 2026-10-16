@@ -77,6 +77,19 @@ public sealed class ApiServerTests : IAsyncLifetime
     }
 
     [Fact]
+    public async Task The_OBS_hud_page_is_served_with_the_token()
+    {
+        using var obs = new HttpClient { BaseAddress = _server.Address };
+        Assert.Equal(HttpStatusCode.Unauthorized, (await obs.GetAsync("overlay/hud")).StatusCode);
+        var page = await obs.GetAsync($"overlay/hud?token={Token}&corner=bottom-left");
+        Assert.Equal(HttpStatusCode.OK, page.StatusCode);
+        Assert.Equal("text/html", page.Content.Headers.ContentType?.MediaType);
+        Assert.Contains("/api/v1/state", await page.Content.ReadAsStringAsync(), StringComparison.Ordinal);
+        Assert.Equal(HttpStatusCode.NotFound, (await obs.GetAsync($"overlay/nope?token={Token}")).StatusCode);
+        Assert.Equal(HttpStatusCode.NotFound, (await obs.GetAsync($"overlay/..%2Fsecret?token={Token}")).StatusCode);
+    }
+
+    [Fact]
     public async Task It_listens_on_this_PC_only_unless_allowed()
     {
         Assert.True(IPAddress.IsLoopback(IPAddress.Parse(_server.Address!.Host)));

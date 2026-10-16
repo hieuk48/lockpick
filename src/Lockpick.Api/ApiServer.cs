@@ -154,6 +154,9 @@ public sealed class ApiServer : IAsyncDisposable
         }));
 
         app.MapGet(Prefix + "/status", () => Ok(Status()));
+        app.MapGet("/overlay/{name}", (string name) => Page(name) is { } page
+            ? Results.Content(page, "text/html; charset=utf-8")
+            : Error(404, $"no overlay page '{name}' (try /overlay/hud)"));
         app.MapGet(Prefix + "/state", () => Ok(State()));
         app.MapGet(Prefix + "/events", (long? after) =>
         {
@@ -439,6 +442,24 @@ public sealed class ApiServer : IAsyncDisposable
         where T : struct => field is { HasValue: true } f ? f.Value : null;
 
     private static IResult Ok(object value) => Results.Json(value, Json);
+
+    /// <summary>An embedded page for OBS browser sources (src/Lockpick.Api/Pages/<name>.html), or null.</summary>
+    internal static string? Page(string name)
+    {
+        if (name.Length == 0 || !name.All(c => char.IsAsciiLetterOrDigit(c) || c == '-'))
+        {
+            return null;
+        }
+
+        using var stream = typeof(ApiServer).Assembly.GetManifestResourceStream($"Lockpick.Api.Pages.{name}.html");
+        if (stream is null)
+        {
+            return null;
+        }
+
+        using var reader = new StreamReader(stream);
+        return reader.ReadToEnd();
+    }
 
     private static IResult Error(int status, string message) => Results.Json(new { error = message }, Json, statusCode: status);
 

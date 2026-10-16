@@ -1,0 +1,103 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Lockpick HUD</title>
+<!--
+  Lockpick's HUD for an OBS Browser Source (docs/API.md): in-game time, HP, room and the challenge's state.
+  URL: http://127.0.0.1:<port>/overlay/hud?token=<token>[&corner=top-right|top-left|bottom-right|bottom-left][&scale=1]
+  The background is transparent; size the browser source like the game capture (e.g. 1920×1080) and the panel sits
+  in the chosen corner. It reads Lockpick's API four times a second; nothing here can change the game.
+-->
+<style>
+  :root { --scale: 1; --text: #DFE8E3; --muted: #8FA39B; --green: #4EC36D; --amber: #D6A23E; --red: #E0533F; }
+  html, body { margin: 0; background: transparent; overflow: hidden; height: 100%; }
+  body { font-family: "Segoe UI", system-ui, sans-serif; color: var(--text); }
+  #panel {
+    position: absolute; margin: calc(12px * var(--scale)); padding: calc(8px * var(--scale)) calc(12px * var(--scale));
+    min-width: calc(190px * var(--scale)); background: rgba(11, 15, 14, .80); border: 1px solid #27322F;
+    border-radius: calc(4px * var(--scale)); display: none;
+  }
+  .top { top: 0; } .bottom { bottom: 0; } .left { left: 0; } .right { right: 0; }
+  #time { font: 600 calc(30px * var(--scale)) Consolas, "Cascadia Mono", monospace; text-align: right; }
+  #hp { display: flex; gap: calc(8px * var(--scale)); align-items: center; font: calc(15px * var(--scale)) Consolas, monospace; color: var(--muted); }
+  #bar { flex: 1; height: calc(6px * var(--scale)); background: #161E1C; border-radius: 2px; overflow: hidden; min-width: calc(80px * var(--scale)); }
+  #fill { height: 100%; background: var(--green); width: 0; }
+  #fill.mid { background: var(--amber); } #fill.low { background: var(--red); }
+  #room { font-size: calc(14px * var(--scale)); color: var(--muted); text-align: right; margin-top: calc(2px * var(--scale)); }
+  #challenge { font-size: calc(14px * var(--scale)); font-weight: 600; color: var(--green); text-align: right; max-width: calc(320px * var(--scale)); }
+  #challenge.failed { color: var(--red); }
+  #offline { font-size: calc(13px * var(--scale)); color: var(--muted); }
+</style>
+</head>
+<body>
+<div id="panel">
+  <div id="time"></div>
+  <div id="hp"><span id="hptext"></span><div id="bar"><div id="fill"></div></div></div>
+  <div id="room"></div>
+  <div id="challenge"></div>
+  <div id="offline"></div>
+</div>
+<script>
+  const params = new URLSearchParams(location.search);
+  const token = params.get("token") || "";
+  const corner = (params.get("corner") || "top-right").split("-");
+  const panel = document.getElementById("panel");
+  panel.classList.add(corner[0] === "bottom" ? "bottom" : "top", corner[1] === "left" ? "left" : "right");
+  document.documentElement.style.setProperty("--scale", Math.min(4, Math.max(0.5, parseFloat(params.get("scale")) || 1)));
+  const $ = id => document.getElementById(id);
+
+  function get(path) {
+    return fetch(path + (path.includes("?") ? "&" : "?") + "token=" + encodeURIComponent(token), { cache: "no-store" })
+      .then(r => r.ok ? r.json() : Promise.reject(r.status));
+  }
+
+  function clock(seconds) {
+    const s = Math.floor(seconds), h = Math.floor(s / 3600), m = Math.floor(s / 60) % 60;
+    return h + ":" + String(m).padStart(2, "0") + ":" + String(s % 60).padStart(2, "0");
+  }
+
+  function render(state, challenge) {
+    const inGame = state && state.inGame === true;
+    panel.style.display = inGame || (challenge && challenge.state !== "off") ? "block" : "none";
+    $("offline").textContent = "";
+    $("time").textContent = inGame && state.gameTimeSeconds != null ? clock(state.gameTimeSeconds) : "";
+    const hp = inGame ? state.health : null;
+    $("hp").style.display = hp && hp.max ? "flex" : "none";
+    if (hp && hp.max) {
+      const f = Math.max(0, Math.min(1, hp.current / hp.max));
+      $("hptext").textContent = Math.max(0, hp.current) + " / " + hp.max;
+      $("fill").style.width = (f * 100) + "%";
+      $("fill").className = f < 0.25 ? "low" : f < 0.75 ? "mid" : "";
+    }
+    $("room").textContent = inGame && state.room ? (state.room.name || state.room.id) : "";
+    const c = $("challenge");
+    if (challenge && (challenge.state === "running" || challenge.state === "failed")) {
+      const name = challenge.challenge ? challenge.challenge.name : "Challenge";
+      c.textContent = challenge.state === "running"
+        ? name + " · attempt " + challenge.attempt + " · clean"
+        : name + " · failed: " + challenge.failReason;
+      c.className = challenge.state === "failed" ? "failed" : "";
+    } else {
+      c.textContent = "";
+    }
+  }
+
+  async function poll() {
+    try {
+      const [state, challenge] = await Promise.all([get("/api/v1/state"), get("/api/v1/challenge").catch(() => null)]);
+      render(state, challenge);
+    } catch (status) {
+      panel.style.display = "block";
+      $("time").textContent = "";
+      $("hp").style.display = "none";
+      $("room").textContent = "";
+      $("challenge").textContent = "";
+      $("offline").textContent = status === 401 ? "Lockpick: wrong token in the URL" : "Lockpick isn't running (or its API is off)";
+    }
+    setTimeout(poll, 250);
+  }
+  poll();
+</script>
+</body>
+</html>

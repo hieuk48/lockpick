@@ -13,6 +13,9 @@ All notable changes to this project are documented here. The format follows
   scaling, sits on the 4:3 picture (from the game's own display settings) and hides while the game is minimized or
   in exclusive fullscreen. A hotkey shows or hides it without leaving the game (Settings → Hotkeys); it costs the
   game no frames (30 per second with and without it).
+- **OBS HUD page:** with the API on, `http://127.0.0.1:1996/overlay/hud?token=…` is a transparent page for an OBS
+  Browser Source with the same time, HP, room and challenge state, in the corner and size you choose
+  ([docs/API.md](docs/API.md)).
 
 ## [0.2.0] - 2026-10-15
 

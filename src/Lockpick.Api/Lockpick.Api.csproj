@@ -10,6 +10,10 @@
     <ProjectReference Include="..\Lockpick.Core\Lockpick.Core.csproj" />
   </ItemGroup>
   <ItemGroup>
+    <!-- Pages for OBS browser sources (served at /overlay/<name>). -->
+    <EmbeddedResource Include="Pages\*.html" LogicalName="Lockpick.Api.Pages.%(Filename)%(Extension)" />
+  </ItemGroup>
+  <ItemGroup>
     <InternalsVisibleTo Include="Lockpick.Tests" />
   </ItemGroup>
 </Project>
