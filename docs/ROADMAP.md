@@ -267,7 +267,9 @@ is decided later. Keep-running stays out of challenges (it patches the game, and
         browser or OBS timer with LiveSplit's look.
      6. *Training*: practice from saves (segment practice with per-segment bests), where time was lost per segment,
         the floor map and feed, captures; splits uploaded to splits.io with a submission.
-4. **OBS (stream- and record-friendly challenges):**
+4. **OBS (stream- and record-friendly challenges):** **Done 2026-10-16 except a check in OBS itself (#60, #66):**
+   every widget as a browser source with Copy OBS link buttons (Stream → OBS), pop-out windows for Window Capture,
+   and `lockpick.lua` (below).
    - the API serves browser-source pages — timer, splits, HP, challenge status, event feed, room map —
      transparent, live through the event stream, options in the URL; "Copy OBS link" buttons; a pop-out HUD
      window for window capture; our in-game overlay is not part of any capture, so these pages are the stream's
@@ -286,7 +288,9 @@ is decided later. Keep-running stays out of challenges (it patches the game, and
    personal); submitted like play captures; checked by `tools/rl/dataset.py` and a small behaviour-cloning model
    (dev). Optional pairing with an OBS recording (its start time and chapters) for models that learn from video.
    Needs every input setup recorded (B207).
-6. **Ready for other players:** a player guide (install, challenges, cheats, overlay, OBS, LiveSplit, captures);
+6. **Ready for other players:** **Done 2026-10-16 (#62, #63):** the player guide (docs/GUIDE.md), streamer mode, the
+   support bundle and error reports, the window remembered per monitor setup. **Still open:** code signing (owner's
+   decision) and the frame-pacing check with OBS (B209). The plan: a player guide (install, challenges, cheats, overlay, OBS, LiveSplit, captures);
    streamer mode (hides profile paths, process ids and the API token on screen); a one-click support bundle;
    unexpected errors logged with an offer to send the bundle; the Lockpick window remembers its size per monitor;
    code signing so Windows stops warning about the installer (owner decision: certificate or Azure Trusted Signing);
