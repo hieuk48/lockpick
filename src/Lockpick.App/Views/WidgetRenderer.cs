@@ -32,7 +32,8 @@ public sealed class WidgetRenderer : IDisposable
         _host = new OverlayWindow { DataContext = model };
         Entry[] entries =
         [
-            new(OverlayLayout.Status, _host.StatusPanel, () => true, () => false),
+            // The time and HP only in a game, as on the overlay (not the last game's at the title).
+            new(OverlayLayout.Status, _host.StatusPanel, () => !string.IsNullOrEmpty(model.Time), () => false),
             new(OverlayLayout.Minimap, _host.MinimapPanel, () => model.HasMinimap, () => model.MinimapFull),
             new(OverlayLayout.Enemies, _host.EnemiesPanel, () => model.Enemies.Count > 0, () => false),
             // One splits widget: LiveSplit's layout drawn by livesplit-core, or Lockpick's own panel without it.

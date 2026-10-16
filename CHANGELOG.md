@@ -73,6 +73,8 @@ All notable changes to this project are documented here. The format follows
   whether it's in front or minimized.
 - **No focus taken over exclusive fullscreen** (#54): the ask-mode question shows without taking the focus while the
   game is exclusive fullscreen and in front (the game would minimize).
+- **Widgets only in a game:** the map (on the overlay, in OBS and in its own window) and the time/HP widget in OBS and
+  pop-outs hide after a death and at the title, instead of showing the last game's room and values.
 - **The map's own window:** the popped-out map is drawn live at the window's size with its own view (right-click):
   around you (close, medium or far), the whole room, or the whole floor you're on (whole, closer or closest,
   following you), names on or off — remembered with the window, whatever the overlay's map shows.

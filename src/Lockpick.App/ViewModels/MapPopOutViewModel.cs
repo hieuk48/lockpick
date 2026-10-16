@@ -29,7 +29,7 @@ public sealed partial class MapPopOutViewModel : ObservableObject
         Names = options.MapNames;
         map.PropertyChanged += (_, e) =>
         {
-            if (e.PropertyName is nameof(MapViewModel.Map) or nameof(MapViewModel.Floor) or nameof(MapViewModel.HasPlayer))
+            if (e.PropertyName is nameof(MapViewModel.Map) or nameof(MapViewModel.Floor) or nameof(MapViewModel.HasPlayer) or nameof(MapViewModel.InGame))
             {
                 OnPropertyChanged(nameof(HasMap));
             }
@@ -68,5 +68,6 @@ public sealed partial class MapPopOutViewModel : ObservableObject
 
     public bool Follow => FloorZoom > 1;
 
-    public bool HasMap => IsFloor ? Map.Floor is not null : Map.Map is not null && Map.HasPlayer;
+    /// <summary>Something to draw: in a game (not after a death or at the title) with a room or floor known.</summary>
+    public bool HasMap => Map.InGame && (IsFloor ? Map.Floor is not null : Map.Map is not null && Map.HasPlayer);
 }

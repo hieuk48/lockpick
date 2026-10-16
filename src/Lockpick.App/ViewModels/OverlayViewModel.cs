@@ -47,7 +47,7 @@ public sealed partial class OverlayViewModel : ObservableObject
         MapView = Views(_mapSettings)[0];
         map.PropertyChanged += (_, e) =>
         {
-            if (e.PropertyName is nameof(MapViewModel.Map) or nameof(MapViewModel.HasPlayer) or nameof(MapViewModel.Floor))
+            if (e.PropertyName is nameof(MapViewModel.Map) or nameof(MapViewModel.HasPlayer) or nameof(MapViewModel.Floor) or nameof(MapViewModel.InGame))
             {
                 UpdateMinimap();
             }
@@ -232,7 +232,8 @@ public sealed partial class OverlayViewModel : ObservableObject
     private void UpdateMinimap()
     {
         MinimapIsFloor = MapViews.IsFloor(MapView);
-        HasMinimap = MapView != MapViews.Hidden && (MinimapIsFloor ? Map.Floor is not null : Map.Map is not null && Map.HasPlayer);
+        // Out of a game (after a death, at the title) the map hides: it would show the last room.
+        HasMinimap = MapView != MapViews.Hidden && Map.InGame && (MinimapIsFloor ? Map.Floor is not null : Map.Map is not null && Map.HasPlayer);
         MinimapFull = MapViews.IsFull(MapView);
         MinimapFloorZoom = FloorZooms[Math.Clamp(MinimapZoomLevel, 0, FloorZooms.Length - 1)];
         MinimapFollow = MinimapFloorZoom > 1;

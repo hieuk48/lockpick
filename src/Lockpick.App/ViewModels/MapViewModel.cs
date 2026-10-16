@@ -54,6 +54,11 @@ public sealed partial class MapViewModel : PageViewModel
     [ObservableProperty]
     public partial bool HasPlayer { get; private set; }
 
+    /// <summary>The player is in a game (not dead, not at the title or the menus): the overlay, OBS and the map's
+    /// window show the map only then; the Map page keeps the last room.</summary>
+    [ObservableProperty]
+    public partial bool InGame { get; private set; }
+
     /// <summary>Item boxes and typewriters the game has active now (null when the game doesn't report them).</summary>
     [ObservableProperty]
     public partial IReadOnlyList<PlacedFixture>? LiveFixtures { get; private set; }
@@ -204,6 +209,7 @@ public sealed partial class MapViewModel : PageViewModel
         }
 
         _lastUpdate = now;
+        InGame = State.Snapshot?.InGameplay is { HasValue: true, Value: true };
         if (State.Snapshot is not { } s || !s.Location.TryGet(out var room))
         {
             HasPlayer = false;
