@@ -142,6 +142,9 @@ public sealed class AppServices : IAsyncDisposable
     /// <summary>Leaderboard runs: Lockpick hands-off and the rules checked.</summary>
     public LeaderboardGuard LeaderboardGuard { get; }
 
+    /// <summary>The game's window as last seen (set by the app from the overlay's tracking; null when there is none).</summary>
+    public Func<Core.Display.GameWindowInfo?> GameWindow { get; set; } = () => null;
+
     /// <summary>The files Lockpick's OBS script reads (the API's address, the run's moments).</summary>
     public ObsEvents ObsEvents { get; }
 

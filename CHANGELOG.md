@@ -59,7 +59,8 @@ All notable changes to this project are documented here. The format follows
   Browser Source (`/overlay/widget?id=…`, drawn live as large as fits), and **Stream → OBS** lists each widget's
   address with a **Copy OBS link** button.
 - **Captures mark the run by themselves** (#58): a running capture gets a marker at each run start, split, run end and
-  challenge fail.
+  challenge fail. Captures also record the game window as it changes (#18): place, size, monitor, DPI, mode, and
+  whether it's in front or minimized.
 - **No focus taken over exclusive fullscreen** (#54): the ask-mode question shows without taking the focus while the
   game is exclusive fullscreen and in front (the game would minimize).
 - **The map's own window:** the popped-out map is drawn live at the window's size with its own view (right-click):

@@ -36,6 +36,9 @@ public sealed record CaptureInfo(string LockpickVersion, string Os, DateTimeOffs
 
     public int Markers { get; set; }
 
+    /// <summary>Changes of the game window recorded (window-N.jsonl).</summary>
+    public int WindowChanges { get; set; }
+
     public DateTimeOffset? EndedAt { get; set; }
 }
 
@@ -43,7 +46,8 @@ public sealed record CaptureInfo(string LockpickVersion, string Os, DateTimeOffs
 /// Records a play session for research: every raw profile-field change (trace-N.txt, the same format as
 /// <c>lockpick-probe trace</c>), the normalized recording (recording-N.jsonl), events (events-N.txt) and the build
 /// fingerprints seen (capture-info.json), one set of files per game attachment, plus the player's markers
-/// (markers.jsonl). <see cref="Stop"/> zips the session.
+/// (markers.jsonl) and the game window's place, size, mode and focus as they change (window-N.jsonl, #18).
+/// <see cref="Stop"/> zips the session.
 /// Records no machine names, user names or paths.
 /// </summary>
 public sealed class CaptureSession : IDisposable
@@ -77,6 +81,8 @@ public sealed class CaptureSession : IDisposable
 
     private StreamWriter? _trace;
     private StreamWriter? _events;
+    private StreamWriter? _window;
+    private Display.GameWindowInfo? _lastWindow;
     private SessionRecorder? _recorder;
     private RegionLogWriter? _regionLog;
     private DateTimeOffset _lastRegionAt;
@@ -430,6 +436,48 @@ public sealed class CaptureSession : IDisposable
         _lastRecorded = compact;
     }
 
+    /// <summary>
+    /// Records the game window when it changed since the last call (place, size, monitor, DPI, mode, focus, minimized):
+    /// a line in window-N.jsonl and one in the events, for the overlay's research (B201, B202). No titles or paths.
+    /// </summary>
+    public void RecordWindow(Display.GameWindowInfo? window)
+    {
+        lock (_gate)
+        {
+            if (_events is null || window is null || Same(window, _lastWindow))
+            {
+                return;
+            }
+
+            _lastWindow = window;
+            _window ??= new StreamWriter(Path.Combine(Directory, $"window-{_info.Attachments}.jsonl"));
+            var now = _time.GetUtcNow();
+            _window.WriteLine(JsonSerializer.Serialize(new
+            {
+                t = now,
+                x = window.Client.X,
+                y = window.Client.Y,
+                width = window.Client.Width,
+                height = window.Client.Height,
+                monitor = new { x = window.Monitor.X, y = window.Monitor.Y, width = window.Monitor.Width, height = window.Monitor.Height },
+                dpi = window.Dpi,
+                mode = window.Mode.ToString(),
+                foreground = window.Foreground,
+                minimized = window.Minimized,
+                visible = window.Visible,
+            }, MarkerJson));
+            _window.Flush();
+            _events.WriteLine($"[{now.ToLocalTime().ToString("HH:mm:ss.fff", CultureInfo.InvariantCulture)}] Game window: {window.Client}, {window.Mode}, {window.Dpi} dpi"
+                + (window.Minimized ? ", minimized" : window.Foreground ? ", in front" : ", behind another window"));
+            _events.Flush();
+            _info.WindowChanges++;
+        }
+    }
+
+    private static bool Same(Display.GameWindowInfo a, Display.GameWindowInfo? b) =>
+        b is not null && a.Client == b.Client && a.Monitor == b.Monitor && a.Dpi == b.Dpi && a.Mode == b.Mode
+        && a.Foreground == b.Foreground && a.Minimized == b.Minimized && a.Visible == b.Visible;
+
     private void OnEvent(object? sender, GameEvent gameEvent)
     {
         lock (_gate)
@@ -472,6 +520,9 @@ public sealed class CaptureSession : IDisposable
     {
         _trace?.Dispose();
         _events?.Dispose();
+        _window?.Dispose();
+        _window = null;
+        _lastWindow = null;
         _recorder?.Dispose();
         _regionLog?.Dispose();
         _regionLog = null;

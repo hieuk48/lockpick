@@ -47,6 +47,9 @@ don't put personal information in them.
   the whole block is kept, captures can be re-checked later for things Lockpick doesn't understand yet.
 - A readable trace of the values Lockpick already knows, 30 times per second (changes only).
 - The game executable's fingerprint (file name, size, SHA-256, PE header fields), so unsupported builds can be added.
+- The game window as it changes: where and how big it is, its monitor and DPI, windowed / borderless / exclusive
+  fullscreen, and whether it's in front or minimized (`window-N.jsonl`, and a line in the events) — no window titles.
+- Markers by themselves at each run start, split, run end and challenge fail (when runs or a challenge are on).
 - Lockpick version and OS version.
 
 A 20-minute capture is about 1–2 MB zipped (about 7 MB for two hours), well within GitHub's attachment limit.

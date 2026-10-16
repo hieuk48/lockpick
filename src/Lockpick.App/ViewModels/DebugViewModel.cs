@@ -47,6 +47,7 @@ public sealed partial class DebugViewModel : PageViewModel, IDisposable, Lockpic
     private readonly DispatcherTimer _timer;
     private readonly ILogger _logger;
     private CaptureSession? _capture;
+    private readonly DispatcherTimer _windowTimer;
     private QuestionScheduler? _questions;
     private volatile bool _asking;
 
@@ -74,6 +75,20 @@ public sealed partial class DebugViewModel : PageViewModel, IDisposable, Lockpic
         services.Challenges.EventRaised += (_, e) => Dispatcher.UIThread.Post(() => MarkEvent(e));
         RefreshHotkeyInfo();
         state.PropertyChanged += OnStateChanged;
+
+        // A capture records the game window's changes (#18), ten times a second while it runs.
+        _windowTimer = new DispatcherTimer(TimeSpan.FromMilliseconds(100), DispatcherPriority.Background, (_, _) =>
+        {
+            try
+            {
+                _capture?.RecordWindow(services.GameWindow());
+            }
+            catch (ObjectDisposedException)
+            {
+                // The capture stopped in between.
+            }
+        });
+        _windowTimer.Start();
 
         // Capture status ticks even while the page is hidden so the nav badge stays current.
         _timer = new DispatcherTimer(TimeSpan.FromMilliseconds(500), DispatcherPriority.Background, (_, _) => Tick());
@@ -379,6 +394,7 @@ public sealed partial class DebugViewModel : PageViewModel, IDisposable, Lockpic
     public void Dispose()
     {
         _timer.Stop();
+        _windowTimer.Stop();
         var capture = Interlocked.Exchange(ref _capture, null);
         if (capture is not null)
         {

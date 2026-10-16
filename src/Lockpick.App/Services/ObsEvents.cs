@@ -1,6 +1,5 @@
 using System.Globalization;
 using System.Text.Json;
-using Lockpick.Core.Display;
 using Lockpick.Core.Events;
 using Lockpick.Core.Runs;
 using Microsoft.Extensions.Logging;
@@ -40,9 +39,6 @@ public sealed class ObsEvents : IDisposable
 
     /// <summary>Where the files are (the script finds them in %LOCALAPPDATA%\Lockpick\obs).</summary>
     public string Directory { get; }
-
-    /// <summary>The game's window as last seen (set by the app; null when there is none).</summary>
-    public Func<GameWindowInfo?>? Game { get; set; }
 
     /// <summary>Writes connection.json again (the API was switched on or off, or its port or token changed).</summary>
     public void WriteConnection()
@@ -118,7 +114,7 @@ public sealed class ObsEvents : IDisposable
     /// <summary>The game in front and showing, or not (minimized, or another window in front): for the "paused" scene.</summary>
     private void CheckGame()
     {
-        if (Game?.Invoke() is not { } game)
+        if (_services.GameWindow() is not { } game)
         {
             _gameActive = null;
             return;

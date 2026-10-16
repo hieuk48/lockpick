@@ -133,6 +133,36 @@ public sealed class CaptureSessionTests : IDisposable
     }
 
     [Fact]
+    public void The_game_window_is_recorded_when_it_changes()
+    {
+        var profile = _adapter.Profiles[0];
+        _fingerprints.ByPath[ExePath] = FakeFingerprintProvider.For(profile, ExePath);
+        _host.Launch(7, ExePath, new FakeMemory().WithVerifiedImage(profile), new ModuleImage(0x400000, 0x49B2000, ExePath));
+        var monitor = new GameMonitor(_adapter, _host, _fingerprints, time: _time);
+        _time.Advance(TimeSpan.FromSeconds(2));
+        monitor.Tick();
+
+        using var capture = new CaptureSession(monitor, _root, "re1", "9.9.9");
+        var monitorRect = new Lockpick.Core.Display.PixelRect(0, 0, 1920, 1080);
+        var window = new Lockpick.Core.Display.GameWindowInfo(1, new(0, 0, 1920, 1080), monitorRect, 96, false, true, true,
+            Lockpick.Core.Display.GameWindowMode.Borderless);
+        capture.RecordWindow(null);                          // no window: nothing
+        capture.RecordWindow(window);
+        capture.RecordWindow(window);                        // unchanged: nothing
+        capture.RecordWindow(window with { Foreground = false });
+        var zip = capture.Stop();
+
+        using var archive = ZipFile.OpenRead(zip);
+        using var reader = new StreamReader(archive.GetEntry("window-1.jsonl")!.Open());
+        var lines = reader.ReadToEnd().Split('\n', StringSplitOptions.RemoveEmptyEntries);
+        Assert.Equal(2, lines.Length);
+        Assert.Contains("\"mode\":\"Borderless\"", lines[0], StringComparison.Ordinal);
+        Assert.Contains("\"foreground\":false", lines[1], StringComparison.Ordinal);
+        using var events = new StreamReader(archive.GetEntry("events-1.txt")!.Open());
+        Assert.Contains("Game window: 1920×1080 at 0,0, Borderless, 96 dpi, behind another window", events.ReadToEnd(), StringComparison.Ordinal);
+    }
+
+    [Fact]
     public void Recordings_stay_compact_timer_only_changes_are_throttled_and_raw_values_omitted()
     {
         var profile = _adapter.Profiles[0];
