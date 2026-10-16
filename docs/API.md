@@ -31,6 +31,7 @@ turn it on in **Settings → API for other tools**.
 | `GET /api/v1/trainer` | Trainer mode, write access, whether this run was changed, locks, infinite ammo, the last 50 actions |
 | `GET /api/v1/challenges` | The ready-made challenges (`id`, `name`, `summary`, `rules`) and the rule names |
 | `GET /api/v1/challenge` | The current challenge: `state` (`off`, `waiting`, `running`, `failed`), `attempt`, `failReason`, `failedAtGameTime` |
+| `GET /api/v1/run` | The run (docs/RUNS.md): `state` (`off`, `ready`, `running`, `finished`, `ended`), `set {id, name, category, verified}`, `attempt`, `current`, `gameTimeSeconds`, `realTimeSeconds`, `result`, `personalBestSeconds`, `sumOfBestSeconds`, `splits [{name, trigger, timeSeconds, personalBestSeconds, deltaSeconds, gold}]` |
 
 Event types: `GameStarted`, `GameStopped`, `GameLoaded`, `GameSaved`, `RoomChanged`, `CameraChanged`,
 `PlayerHealthChanged`, `PlayerDamaged`, `TrainerActionExecuted`, `RunInvalidated`, `ChallengeStarted`, `ChallengeFailed`
@@ -48,6 +49,7 @@ http://127.0.0.1:1996/overlay/hud?token=<token>&corner=top-right&scale=1
 | Page | Shows | Options |
 |---|---|---|
 | `/overlay/hud` | In-game time, HP, the room, the challenge (clean, or failed with the reason) | `corner` = `top-right` (default), `top-left`, `bottom-right`, `bottom-left`; `scale` 0.5–4 |
+| `/overlay/splits` | The run's splits: the category, the splits around the current one with times and differences to the personal best (gold for a best segment), the in-game clock, PB and sum of best | `corner` = `top-left` (default) or another; `scale` 0.5–4; `rows` 3–30 (default 8) |
 
 Lockpick's in-game overlay (Settings → Overlay) is not part of any OBS capture — it's a window of its own on top of
 the game — so use these pages for the stream. Game Capture of the game works in every display mode
@@ -60,6 +62,7 @@ the game — so use these pages for the stream. Game Capture of the game works i
 | `/api/v1/challenge/start` | `{"id": "no-damage"}`, optional `"rules": ["noDamage", "knifeOnly"]` | Starts a challenge (Lockpick goes into Challenge Mode: no changes to the game) |
 | `/api/v1/challenge/retry` | — | A new attempt |
 | `/api/v1/challenge/stop` | — | Ends the challenge |
+| `/api/v1/run/split` · `/undo` · `/skip` · `/reset` | — | The run keys (they change Lockpick's timing only, never the game); each answers with the run |
 | `/api/v1/capture/start` | — | Starts a capture (as Debug → Start capture) |
 | `/api/v1/capture/marker` | `{"note": "split 1"}` (optional) | Marks the moment in the running capture; returns the marker number |
 | `/api/v1/capture/stop` | — | Stops and saves the capture; returns the file |

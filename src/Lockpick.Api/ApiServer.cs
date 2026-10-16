@@ -41,7 +41,8 @@ public sealed class ApiServer : IAsyncDisposable
         "GET /trainer", "POST /trainer/mode {mode}", "POST /trainer/health {value|full, lock}",
         "POST /trainer/health/unlock", "POST /trainer/ammo {enabled}", "GET /trainer/items",
         "POST /trainer/inventory/quantity {slot, quantity}", "POST /trainer/itembox {itemId, quantity}",
-        "GET /challenges", "GET /challenge", "POST /challenge/start {id, rules}", "POST /challenge/retry", "POST /challenge/stop"
+        "GET /challenges", "GET /challenge", "POST /challenge/start {id, rules}", "POST /challenge/retry", "POST /challenge/stop",
+        "GET /run", "POST /run/split", "POST /run/undo", "POST /run/skip", "POST /run/reset"
     ];
 
     private readonly ApiHost _host;
@@ -62,6 +63,16 @@ public sealed class ApiServer : IAsyncDisposable
         if (host.Challenges is not null)
         {
             host.Challenges.EventRaised += (_, e) => Events.Add(e);
+        }
+
+        if (host.Runs is not null)
+        {
+            host.Runs.EventRaised += (_, e) => Events.Add(e);
+        }
+
+        if (host.Feed is not null)
+        {
+            host.Feed.EventRaised += (_, e) => Events.Add(e);
         }
     }
 
@@ -196,6 +207,11 @@ public sealed class ApiServer : IAsyncDisposable
             challenges.Start(preset, request.Rules);
             return Ok(challenges.Status);
         });
+        app.MapGet(Prefix + "/run", () => _host.Runs is { } runs ? Ok(Run(runs)) : Error(404, "runs aren't available"));
+        app.MapPost(Prefix + "/run/split", () => RunCommand(r => r.Split()));
+        app.MapPost(Prefix + "/run/undo", () => RunCommand(r => r.Undo()));
+        app.MapPost(Prefix + "/run/skip", () => RunCommand(r => r.Skip()));
+        app.MapPost(Prefix + "/run/reset", () => RunCommand(r => r.Reset()));
         app.MapPost(Prefix + "/challenge/retry", () =>
         {
             if (_host.Challenges is not { } challenges)
@@ -466,6 +482,59 @@ public sealed class ApiServer : IAsyncDisposable
 
         using var reader = new StreamReader(stream);
         return reader.ReadToEnd();
+    }
+
+    /// <summary>Run keys from other tools (a Stream Deck, a chat bot): they change only Lockpick's timing, never the game.</summary>
+    private IResult RunCommand(Action<Lockpick.Core.Runs.RunService> command)
+    {
+        if (_host.Runs is not { } runs)
+        {
+            return Error(404, "runs aren't available");
+        }
+
+        command(runs);
+        return Ok(Run(runs));
+    }
+
+    /// <summary>The run as numbers (seconds): every split with its time, the personal best's and the difference.</summary>
+    private object Run(Lockpick.Core.Runs.RunService runs)
+    {
+        var status = runs.Status;
+        var set = status.Set;
+        var comparison = set is null ? null : _host.Comparison?.Invoke(set)
+            ?? Lockpick.Core.Runs.RunComparison.From(runs.History?.Load(set.Id) ?? [], set.Splits.Count);
+        var timed = status.State is Lockpick.Core.Runs.RunState.Running or Lockpick.Core.Runs.RunState.Finished or Lockpick.Core.Runs.RunState.Ended;
+        static double? Seconds(TimeSpan? t) => t is { } v ? Math.Round(v.TotalSeconds, 2) : null;
+        return new
+        {
+            state = status.State,
+            set = set is null ? null : new { id = set.Id, name = set.Name, category = set.Category, verified = set.Verified, importedFrom = set.ImportedFrom is null ? null : Path.GetFileName(set.ImportedFrom) },
+            attempt = status.Attempt,
+            current = status.Current,
+            gameTimeSeconds = Seconds(status.GameTime(_host.Source.Latest)),
+            realTimeSeconds = Seconds(status.RealTime(DateTimeOffset.UtcNow)),
+            fromSave = status.FromSave,
+            cheatsUsed = status.CheatsUsed,
+            result = status.Result,
+            personalBestSeconds = Seconds(comparison is { PersonalBest.Count: > 0 } c ? c.PersonalBest[^1] : null),
+            sumOfBestSeconds = Seconds(comparison?.SumOfBest),
+            splits = set?.Splits.Select((split, i) =>
+            {
+                var time = timed ? status.Times.ElementAtOrDefault(i) : null;
+                var best = comparison?.PersonalBest.ElementAtOrDefault(i);
+                var previous = i == 0 ? TimeSpan.Zero : (timed ? status.Times.ElementAtOrDefault(i - 1)?.GameTime : null);
+                var gold = time is not null && previous is { } p && comparison?.BestSegments.ElementAtOrDefault(i) is { } segment && time.GameTime - p < segment;
+                return new
+                {
+                    name = split.Name,
+                    trigger = split.Trigger.Describe(),
+                    timeSeconds = Seconds(time?.GameTime),
+                    personalBestSeconds = Seconds(best),
+                    deltaSeconds = time is not null && best is { } b ? Seconds(time.GameTime - b) : null,
+                    gold,
+                };
+            }).ToList(),
+        };
     }
 
     private static IResult Error(int status, string message) => Results.Json(new { error = message }, Json, statusCode: status);

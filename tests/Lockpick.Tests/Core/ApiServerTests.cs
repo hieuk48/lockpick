@@ -23,6 +23,7 @@ public sealed class ApiServerTests : IAsyncLifetime
     private readonly MockGameAdapter _adapter = new() { Trainer = new StubTrainer() };
     private readonly FakeCapture _capture = new();
     private readonly TrainerService _trainer;
+    private readonly Lockpick.Core.Runs.RunService _runs;
     private readonly ApiServer _server;
     private HttpClient _client = new();
 
@@ -30,7 +31,8 @@ public sealed class ApiServerTests : IAsyncLifetime
     {
         _writeHost.Memory.WriteI16((ulong)Hp, 50).WriteU8(MaxHp, 96);
         _trainer = new TrainerService(_source, _writeHost, new TrainerActionLog(null), NullLogger.Instance);
-        _server = new ApiServer(new ApiHost(_source, _adapter, _trainer, _capture, "9.9.9"), NullLogger.Instance);
+        _runs = new Lockpick.Core.Runs.RunService(_source, _trainer, _ => null);
+        _server = new ApiServer(new ApiHost(_source, _adapter, _trainer, _capture, "9.9.9", Runs: _runs), NullLogger.Instance);
         _source.Attach(1234, TrainerServiceTests.Profile);
         _source.Poll(new GameSnapshot
         {
@@ -48,6 +50,7 @@ public sealed class ApiServerTests : IAsyncLifetime
     {
         _client.Dispose();
         await _server.DisposeAsync();
+        _runs.Dispose();
         _trainer.Dispose();
         await _source.DisposeAsync();
     }
@@ -87,6 +90,29 @@ public sealed class ApiServerTests : IAsyncLifetime
         Assert.Contains("/api/v1/state", await page.Content.ReadAsStringAsync(), StringComparison.Ordinal);
         Assert.Equal(HttpStatusCode.NotFound, (await obs.GetAsync($"overlay/nope?token={Token}")).StatusCode);
         Assert.Equal(HttpStatusCode.NotFound, (await obs.GetAsync($"overlay/..%2Fsecret?token={Token}")).StatusCode);
+    }
+
+    [Fact]
+    public async Task The_run_is_served_and_the_split_key_works_from_other_tools()
+    {
+        var set = new Lockpick.Core.Runs.SplitSet("t", "Test", "Jill - Test", PlayableCharacter.Jill,
+            [new("First", new Lockpick.Core.Runs.ManualSplit()), new("End", new Lockpick.Core.Runs.RunFinished())], false, "test");
+        _runs.Choose(set);
+        _source.Raise(new GameLoaded(DateTimeOffset.UtcNow, TimeSpan.Zero, IsNewGame: true));
+
+        var run = await Json(await _client.GetAsync("run"));
+        Assert.Equal("running", run.GetProperty("state").GetString());
+        Assert.Equal("Jill - Test", run.GetProperty("set").GetProperty("category").GetString());
+        Assert.Equal(2, run.GetProperty("splits").GetArrayLength());
+
+        var after = await Json(await _client.PostAsync("run/split", null));
+        Assert.Equal(1, after.GetProperty("current").GetInt32());
+        Assert.Equal(JsonValueKind.Number, after.GetProperty("splits")[0].GetProperty("timeSeconds").ValueKind);
+
+        using var obs = new HttpClient { BaseAddress = _server.Address };
+        var page = await obs.GetAsync($"overlay/splits?token={Token}");
+        Assert.Equal(HttpStatusCode.OK, page.StatusCode);
+        Assert.Contains("/api/v1/run", await page.Content.ReadAsStringAsync(), StringComparison.Ordinal);
     }
 
     [Fact]

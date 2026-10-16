@@ -48,4 +48,7 @@ public sealed record ApiHost(
     TrainerService? Trainer,
     ICaptureControl? Capture,
     string AppVersion,
-    Lockpick.Core.Challenges.ChallengeService? Challenges = null);
+    Lockpick.Core.Challenges.ChallengeService? Challenges = null,
+    Lockpick.Core.Runs.RunService? Runs = null,
+    Func<Lockpick.Core.Runs.SplitSet, Lockpick.Core.Runs.RunComparison>? Comparison = null,
+    Lockpick.Core.Insight.EventFeed? Feed = null);

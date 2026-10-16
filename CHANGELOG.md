@@ -46,6 +46,8 @@ All notable changes to this project are documented here. The format follows
   original (Restore my original puts it back), warns when fullscreen would change your monitor's resolution, and
   offers Restart Resident Evil right there (two clicks: anything since your last save is lost). It can also move
   the game window to another monitor, which the game itself doesn't allow.
+- **OBS splits page and run API:** `/overlay/splits` shows the run's splits in an OBS Browser Source, and
+  `GET /api/v1/run` (plus `POST /api/v1/run/split`, `/undo`, `/skip`, `/reset`) serves the run to other tools.
 - **OBS HUD page:** with the API on, `http://127.0.0.1:1996/overlay/hud?token=…` is a transparent page for an OBS
   Browser Source with the same time, HP, room and challenge state, in the corner and size you choose
   ([docs/API.md](docs/API.md)).

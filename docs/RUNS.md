@@ -77,3 +77,6 @@ Reading is defensive (no DTDs or external entities, size and split limits): thes
   last, each with its time and its difference to the personal best (green ahead, red behind, gold for a best
   segment), the run's clock and the personal best.
 - Starts, splits and ends are in the event log (and in captures).
+- With the API on, `GET /api/v1/run` serves the run and `/overlay/splits` is an OBS browser source with the same
+  splits for the stream (docs/API.md); `POST /api/v1/run/split` (and undo, skip, reset) let a Stream Deck or a bot
+  press the run keys.

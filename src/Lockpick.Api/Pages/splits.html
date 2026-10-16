@@ -1,0 +1,131 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Lockpick splits</title>
+<!--
+  Lockpick's run splits for an OBS Browser Source (docs/API.md, docs/RUNS.md): the category, the splits around the
+  current one with their times and differences to the personal best, the run's in-game time and the personal best.
+  URL: http://127.0.0.1:<port>/overlay/splits?token=<token>[&corner=top-left|top-right|bottom-left|bottom-right][&scale=1][&rows=8]
+  Transparent background; it reads Lockpick's API four times a second. Nothing here can change the game.
+-->
+<style>
+  :root { --scale: 1; --text: #DFE8E3; --muted: #8FA39B; --green: #4EC36D; --red: #E0533F; --gold: #E8C547; }
+  html, body { margin: 0; background: transparent; overflow: hidden; height: 100%; }
+  body { font-family: "Segoe UI", system-ui, sans-serif; color: var(--text); }
+  #panel {
+    position: absolute; margin: calc(12px * var(--scale)); padding: calc(8px * var(--scale)) calc(10px * var(--scale));
+    width: calc(280px * var(--scale)); background: rgba(11, 15, 14, .80); border: 1px solid #27322F;
+    border-radius: calc(4px * var(--scale)); display: none;
+  }
+  .top { top: 0; } .bottom { bottom: 0; } .left { left: 0; } .right { right: 0; }
+  #title { font-size: calc(13px * var(--scale)); color: var(--muted); margin-bottom: calc(4px * var(--scale));
+    white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .row { display: flex; gap: calc(8px * var(--scale)); padding: calc(2px * var(--scale)) calc(4px * var(--scale));
+    border-radius: calc(2px * var(--scale)); font-size: calc(15px * var(--scale)); }
+  .row.current { background: #15321F; }
+  .row.later .name, .row.later .time { color: var(--muted); }
+  .name { flex: 1; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .delta, .time { font-family: Consolas, "Cascadia Mono", monospace; }
+  .time { min-width: calc(70px * var(--scale)); text-align: right; }
+  .ahead { color: var(--green); } .behind { color: var(--red); } .gold { color: var(--gold); }
+  #clock { font: 600 calc(30px * var(--scale)) Consolas, "Cascadia Mono", monospace; text-align: right; color: var(--green);
+    margin-top: calc(4px * var(--scale)); }
+  #clock.behind { color: var(--red); }
+  #pb { font-size: calc(13px * var(--scale)); color: var(--muted); text-align: right; }
+</style>
+</head>
+<body>
+<div id="panel">
+  <div id="title"></div>
+  <div id="rows"></div>
+  <div id="clock"></div>
+  <div id="pb"></div>
+</div>
+<script>
+  const params = new URLSearchParams(location.search);
+  const token = params.get("token") || "";
+  const corner = (params.get("corner") || "top-left").split("-");
+  const shown = Math.min(30, Math.max(3, parseInt(params.get("rows")) || 8));
+  const panel = document.getElementById("panel");
+  panel.classList.add(corner[0] === "bottom" ? "bottom" : "top", corner[1] === "right" ? "right" : "left");
+  document.documentElement.style.setProperty("--scale", Math.min(4, Math.max(0.5, parseFloat(params.get("scale")) || 1)));
+  const $ = id => document.getElementById(id);
+  let run = null, fetchedAt = 0;
+
+  function clock(seconds) {
+    const tenths = Math.floor(seconds * 10) % 10, s = Math.floor(seconds), h = Math.floor(s / 3600), m = Math.floor(s / 60) % 60;
+    return (h > 0 ? h + ":" + String(m).padStart(2, "0") : m) + ":" + String(s % 60).padStart(2, "0") + "." + tenths;
+  }
+
+  function delta(seconds) {
+    const sign = seconds < 0 ? "−" : "+", a = Math.abs(seconds), m = Math.floor(a / 60), s = Math.floor(a % 60), t = Math.floor(a * 10) % 10;
+    return sign + (m > 0 ? m + ":" + String(s).padStart(2, "0") : s) + "." + t;
+  }
+
+  function cell(cls, text) {
+    const e = document.createElement("span");
+    e.className = cls;
+    e.textContent = text;
+    return e;
+  }
+
+  // Between reads the clock runs on by itself (at most a second, so a paused game doesn't drift).
+  function now() {
+    if (!run || run.gameTimeSeconds == null) return null;
+    return run.state === "running" ? run.gameTimeSeconds + Math.min(1, (performance.now() - fetchedAt) / 1000) : run.gameTimeSeconds;
+  }
+
+  function render() {
+    if (!run || !run.set || run.state === "off") { panel.style.display = "none"; return; }
+    panel.style.display = "block";
+    $("title").textContent = run.set.category;
+    const splits = run.splits || [];
+    const current = run.state === "running" ? run.current : run.state === "ready" ? 0 : splits.length - 1;
+    const first = Math.max(0, Math.min(current - 2, splits.length - shown));
+    const indexes = [];
+    for (let i = first; i < Math.min(splits.length, first + shown - 1); i++) indexes.push(i);
+    if (splits.length && indexes[indexes.length - 1] !== splits.length - 1) indexes.push(splits.length - 1);
+    const t = now();
+    const rows = $("rows");
+    rows.replaceChildren();
+    let behind = false;
+    for (const i of indexes) {
+      const s = splits[i];
+      const row = document.createElement("div");
+      const isCurrent = run.state === "running" && i === current;
+      row.className = "row" + (isCurrent ? " current" : s.timeSeconds == null ? " later" : "");
+      let d = "", cls = "delta";
+      if (s.deltaSeconds != null) {
+        d = delta(s.deltaSeconds);
+        cls += s.gold ? " gold" : s.deltaSeconds <= 0 ? " ahead" : " behind";
+      } else if (isCurrent && t != null && s.personalBestSeconds != null && t > s.personalBestSeconds) {
+        d = delta(t - s.personalBestSeconds);
+        cls += " behind";
+        behind = true;
+      }
+      row.append(cell("name", s.name), cell(cls, d),
+        cell("time", s.timeSeconds != null ? clock(s.timeSeconds) : s.personalBestSeconds != null ? clock(s.personalBestSeconds) : "—"));
+      rows.append(row);
+    }
+    $("clock").textContent = t != null ? clock(t) : "0:00.0";
+    $("clock").className = behind ? "behind" : "";
+    const pb = [];
+    if (run.personalBestSeconds != null) pb.push("PB " + clock(run.personalBestSeconds));
+    if (run.sumOfBestSeconds != null) pb.push("SoB " + clock(run.sumOfBestSeconds));
+    $("pb").textContent = pb.join(" · ");
+  }
+
+  function poll() {
+    fetch("/api/v1/run?token=" + encodeURIComponent(token), { cache: "no-store" })
+      .then(r => r.ok ? r.json() : Promise.reject(r.status))
+      .then(r => { run = r; fetchedAt = performance.now(); })
+      .catch(() => { run = null; })
+      .finally(() => setTimeout(poll, 250));
+  }
+
+  poll();
+  setInterval(render, 100);
+</script>
+</body>
+</html>

@@ -103,7 +103,8 @@ public sealed class AppServices : IAsyncDisposable
 
     public void CreateApi(ICaptureControl capture)
     {
-        Api ??= new ApiServer(new ApiHost(Source, Adapter, Trainer, capture, AppVersion, Challenges), LoggerFactory.CreateLogger("Api"));
+        Api ??= new ApiServer(new ApiHost(Source, Adapter, Trainer, capture, AppVersion, Challenges, Runs, RunLibrary.Comparison, Feed),
+            LoggerFactory.CreateLogger("Api"));
     }
 
     /// <summary>Starts, restarts or stops the API to match the settings (making a token the first time).</summary>
