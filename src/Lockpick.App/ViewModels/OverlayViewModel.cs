@@ -1,7 +1,6 @@
 using System.ComponentModel;
 using System.Globalization;
 using Avalonia.Controls;
-using Avalonia.Layout;
 using Avalonia.Media;
 using Avalonia.Threading;
 using CommunityToolkit.Mvvm.ComponentModel;
@@ -17,11 +16,38 @@ namespace Lockpick.App.ViewModels;
 /// </summary>
 public sealed partial class OverlayViewModel : ObservableObject
 {
-    private readonly AppServices _services;
+    /// <summary>Gap between a widget and the picture's edge, in the overlay's own units.</summary>
+    public const double Margin = 6;
 
-    public OverlayViewModel(AppServices services, LiveState state)
+    private static readonly IBrush Backdrop = new SolidColorBrush(Color.Parse("#E0060807"));
+    private static readonly IBrush Floor = new SolidColorBrush(Color.Parse("#E0202B27"));
+    private static readonly IBrush DimWalls = new SolidColorBrush(Color.Parse("#5E6B66"));
+    private static readonly IBrush BrightWalls = new SolidColorBrush(Color.Parse("#C8D2CD"));
+
+    private readonly AppServices _services;
+    private MapOverlaySettings _mapSettings;
+    private (double Width, double Height) _picture = (640, 480);
+
+    public OverlayViewModel(AppServices services, LiveState state, MapViewModel map)
     {
         _services = services;
+        _mapSettings = services.Settings.Current.MapOverlay;
+        Map = map;
+        MapView = Views(_mapSettings)[0];
+        map.PropertyChanged += (_, e) =>
+        {
+            if (e.PropertyName is nameof(MapViewModel.Map) or nameof(MapViewModel.HasPlayer))
+            {
+                UpdateMinimap();
+            }
+        };
+        services.TrainerHotkeys.Pressed += (_, action) =>
+        {
+            if (action == TrainerHotkeys.NextMapView)
+            {
+                Dispatcher.UIThread.Post(NextMapView);
+            }
+        };
         state.PropertyChanged += (_, e) =>
         {
             if (e.PropertyName is nameof(LiveState.Snapshot))
@@ -32,11 +58,54 @@ public sealed partial class OverlayViewModel : ObservableObject
         services.Challenges.StatusChanged += (_, s) => Dispatcher.UIThread.Post(() => Show(s));
         Show(state.Snapshot);
         Show(services.Challenges.Status);
-        SetCorner(services.Settings.Current.OverlayCorner);
     }
+
+    /// <summary>The room map the minimap draws (the Map page's, kept up to date while the minimap is on).</summary>
+    public MapViewModel Map { get; }
 
     [ObservableProperty]
     public partial string Time { get; private set; } = string.Empty;
+
+    /// <summary>The map's current view (<see cref="MapViews"/>); the map hotkey moves to the next chosen one.</summary>
+    [ObservableProperty]
+    public partial string MapView { get; private set; }
+
+    /// <summary>The map has something to show: a room map, the player on it, and a view that isn't hidden.</summary>
+    [ObservableProperty]
+    public partial bool HasMinimap { get; private set; }
+
+    /// <summary>The map covers the game's picture instead of sitting in its corner.</summary>
+    [ObservableProperty]
+    public partial bool MinimapFull { get; private set; }
+
+    /// <summary>0 for the whole room, else world units from the player to the minimap's nearer edge.</summary>
+    [ObservableProperty]
+    public partial double MinimapViewRadius { get; private set; }
+
+    [ObservableProperty]
+    public partial double MinimapWidth { get; private set; } = 130;
+
+    [ObservableProperty]
+    public partial double MinimapHeight { get; private set; } = 130;
+
+    [ObservableProperty]
+    public partial bool MinimapNames { get; private set; }
+
+    [ObservableProperty]
+    public partial double MinimapOpacity { get; private set; } = 1;
+
+    /// <summary>Behind the map: dark, or nothing when see-through.</summary>
+    [ObservableProperty]
+    public partial IBrush MinimapBackdrop { get; private set; } = Backdrop;
+
+    [ObservableProperty]
+    public partial IBrush? MinimapFloor { get; private set; } = Floor;
+
+    [ObservableProperty]
+    public partial IBrush MinimapWalls { get; private set; } = DimWalls;
+
+    [ObservableProperty]
+    public partial IBrush MinimapBorder { get; private set; } = Brush("LpBorderBrush");
 
     [ObservableProperty]
     public partial string Health { get; private set; } = string.Empty;
@@ -69,12 +138,6 @@ public sealed partial class OverlayViewModel : ObservableObject
     [ObservableProperty]
     public partial string Challenge { get; private set; } = string.Empty;
 
-    [ObservableProperty]
-    public partial HorizontalAlignment Horizontal { get; private set; } = HorizontalAlignment.Right;
-
-    [ObservableProperty]
-    public partial VerticalAlignment Vertical { get; private set; } = VerticalAlignment.Top;
-
     /// <summary>Whether the overlay is showing, or why not (Settings).</summary>
     [ObservableProperty]
     public partial string Status { get; set; } = "Off";
@@ -83,14 +146,74 @@ public sealed partial class OverlayViewModel : ObservableObject
     [ObservableProperty]
     public partial double Scale { get; private set; } = 1;
 
-    public void SetCorner(string corner)
+    /// <summary>Takes the map options from Settings (cheap when unchanged; called by the overlay each tick).</summary>
+    public void UseMapSettings(MapOverlaySettings settings)
     {
-        Horizontal = corner is OverlayCorners.TopLeft or OverlayCorners.BottomLeft ? HorizontalAlignment.Left : HorizontalAlignment.Right;
-        Vertical = corner is OverlayCorners.BottomLeft or OverlayCorners.BottomRight ? VerticalAlignment.Bottom : VerticalAlignment.Top;
+        if (ReferenceEquals(settings, _mapSettings))
+        {
+            return;
+        }
+
+        _mapSettings = settings;
+        if (!Views(settings).Contains(MapView))
+        {
+            MapView = Views(settings)[0];
+        }
+
+        UpdateMinimap();
     }
 
-    /// <param name="pictureHeightDips">The game picture's height in the overlay's own units (pixels ÷ DPI scale).</param>
-    public void SetPictureHeight(double pictureHeightDips) => Scale = Math.Clamp(pictureHeightDips / 480.0, 0.75, 3.0);
+    /// <summary>The map hotkey: the next of the chosen views.</summary>
+    public void NextMapView()
+    {
+        var views = Views(_mapSettings);
+        MapView = views[(views.IndexOf(MapView) + 1) % views.Count];
+    }
+
+    /// <summary>The chosen views, or just the minimap when none are.</summary>
+    private static List<string> Views(MapOverlaySettings settings)
+    {
+        var views = settings.Views.Where(v => MapViews.All.Any(a => a.Id == v)).Distinct().ToList();
+        return views.Count > 0 ? views : [MapViews.Around];
+    }
+
+    partial void OnMapViewChanged(string value) => UpdateMinimap();
+
+    private void UpdateMinimap()
+    {
+        HasMinimap = Map.Map is not null && Map.HasPlayer && MapView != MapViews.Hidden;
+        MinimapFull = MapViews.IsFull(MapView);
+        var seeThrough = MapView == MapViews.RoomSeeThrough;
+        MinimapViewRadius = MinimapFull ? 0 : Math.Clamp(_mapSettings.Reach, 1000, 30000);
+        MinimapNames = MinimapFull && _mapSettings.Names;
+        MinimapOpacity = seeThrough ? Math.Clamp(_mapSettings.SeeThroughOpacity, 10, 100) / 100.0 : 1;
+        MinimapBackdrop = seeThrough ? Brushes.Transparent : Backdrop;
+        MinimapBorder = seeThrough ? Brushes.Transparent : Brush("LpBorderBrush");
+        MinimapFloor = seeThrough ? null : Floor;
+        MinimapWalls = seeThrough ? BrightWalls : DimWalls;
+        if (MinimapFull)
+        {
+            // The whole picture, less the margin and the frame (border and padding: 3 each side).
+            MinimapWidth = Math.Max(100, Math.Floor((_picture.Width / Scale) - (2 * Margin) - 6));
+            MinimapHeight = Math.Max(100, Math.Floor((_picture.Height / Scale) - (2 * Margin) - 6));
+        }
+        else
+        {
+            MinimapWidth = MinimapHeight = Math.Clamp(_mapSettings.Size, 60, 400);
+        }
+    }
+
+    /// <summary>The game picture's size in the overlay's own units (pixels ÷ DPI scale): sets the scale and the size
+    /// of the full-screen map.</summary>
+    public void SetPicture(double widthDips, double heightDips)
+    {
+        Scale = Math.Clamp(heightDips / 480.0, 0.75, 3.0);
+        if (_picture != (widthDips, heightDips))
+        {
+            _picture = (widthDips, heightDips);
+            UpdateMinimap();
+        }
+    }
 
     private void Show(GameSnapshot? snapshot)
     {

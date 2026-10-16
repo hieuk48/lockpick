@@ -273,15 +273,16 @@ public sealed class AppServices : IAsyncDisposable
 
     public async ValueTask DisposeAsync()
     {
+        // Never back on the UI thread: App.Shutdown waits for this on it (resuming there hung the app on close).
         Pause.Dispose();
         if (Api is not null)
         {
-            await Api.DisposeAsync();
+            await Api.DisposeAsync().ConfigureAwait(false);
         }
 
         Challenges.Dispose();
         Trainer?.Dispose();
-        await Source.DisposeAsync();
+        await Source.DisposeAsync().ConfigureAwait(false);
         Updates.Dispose();
         _markerHotkey?.Dispose();
         _gamepad?.Dispose();

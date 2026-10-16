@@ -73,7 +73,13 @@
   </Application.DataTemplates>
 
   <Application.Styles>
-    <FluentTheme />
+    <!-- The brand green as the accent, so checkboxes, sliders and the like match the switches. -->
+    <FluentTheme>
+      <FluentTheme.Palettes>
+        <ColorPaletteResources x:Key="Dark" Accent="#4EC36D" />
+        <ColorPaletteResources x:Key="Light" Accent="#4EC36D" />
+      </FluentTheme.Palettes>
+    </FluentTheme>
 
     <Style Selector="Window">
       <Setter Property="Background" Value="{StaticResource LpBgBrush}" />

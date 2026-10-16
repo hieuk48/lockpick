@@ -179,7 +179,13 @@ is decided later. Keep-running stays out of challenges (it patches the game, and
    plain layered window the size of the panel; widgets: in-game time, HP bar, room, challenge state (clean / failed
    with the reason); corner setting.
    Show/hide hotkey (Settings → Hotkeys). Frame pacing measured: the game's clock ran 30.25 ticks/s with the
-   overlay up and with Lockpick closed (no cost). Next: the layout editor (#55), more widgets (#42, #43), never
+   overlay up and with Lockpick closed (no cost). **Widgets and the map done 2026-10-15:** each widget is its own
+   layered window with its own corner (or off); widgets sharing a corner stack. The map widget is a framed,
+   north-up minimap around the player; its hotkey cycles through the views the player ticks (minimap, the whole room
+   over the picture on a dark backdrop, the same see-through, hidden), with the minimap's reach and size, the
+   see-through strength and names on the full-screen map as options; the time panel stays above a full-screen map
+   (verified live in 105). Next: the floor map (rooms stitched by their doors, pan and zoom on the Map page and as
+   an overlay view), HP band and poison, enemy HP (#42), the event feed (#43), the layout editor (#55), never
    activating Lockpick's windows over exclusive fullscreen.
    - follow the game window (PID → class `RESIDENT EVIL`): client rectangle in physical pixels, monitor, DPI,
      minimized, exclusive fullscreen; move/size events;

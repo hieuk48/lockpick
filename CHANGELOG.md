@@ -14,6 +14,11 @@ All notable changes to this project are documented here. The format follows
   windows cover it with the game), works windowed, borderless and in fullscreen, and hides while the game is
   minimized. A hotkey shows or hides it without leaving the game (Settings → Hotkeys); it costs the
   game no frames (30 per second with and without it).
+- **Overlay widgets and the map:** each overlay widget has its own corner (or is off), and widgets in the same
+  corner stack. The new map widget is a minimap around you (north-up, framed). Its hotkey (Settings → Hotkeys,
+  "Map: next view") cycles through the views you tick in Settings → Overlay: the minimap, the whole room over the
+  game's picture on a dark backdrop, the same see-through, or hidden. Options: how far the minimap reaches, its
+  size, how strong the see-through map is, and names of doors, items and people on the full-screen map.
 - **Game display** (Settings → Game display): switch Resident Evil between windowed, borderless (fills the screen —
   best for the overlay and streaming) and fullscreen, pick a resolution your main monitor supports, how the picture
   is scaled (4:3, whole multiples, stretched), vertical sync, gamma, texture filtering and antialiasing — every
@@ -24,6 +29,9 @@ All notable changes to this project are documented here. The format follows
 - **OBS HUD page:** with the API on, `http://127.0.0.1:1996/overlay/hud?token=…` is a transparent page for an OBS
   Browser Source with the same time, HP, room and challenge state, in the corner and size you choose
   ([docs/API.md](docs/API.md)).
+
+### Fixed
+- Closing Lockpick could leave it running in the background (its shutdown waited on itself).
 
 ## [0.2.0] - 2026-10-15
 

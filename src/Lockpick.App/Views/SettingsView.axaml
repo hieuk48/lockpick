@@ -45,12 +45,48 @@
             <TextBlock Classes="caption" Text="OVERLAY" />
           </StackPanel>
           <TextBlock TextWrapping="Wrap" Foreground="{StaticResource LpMutedBrush}"
-                     Text="Shows the in-game time, HP, the room and your challenge on top of the game. Clicks go through it and it never takes focus, so the game keeps running. It works with the game windowed, borderless or fullscreen." />
+                     Text="Shows the in-game time, HP, the room, your challenge and a minimap on top of the game. Clicks go through it and it never takes focus, so the game keeps running. It works with the game windowed, borderless or fullscreen. Widgets in the same corner stack." />
           <ToggleSwitch IsChecked="{Binding OverlayEnabled}" OnContent="Overlay on" OffContent="Overlay off" AutomationProperties.Name="Show the overlay over the game" />
-          <WrapPanel ItemSpacing="8" LineSpacing="8">
-            <TextBlock Classes="label" Text="Corner" VerticalAlignment="Center" />
-            <ComboBox ItemsSource="{Binding OverlayCornerChoices}" SelectedItem="{Binding OverlayCorner}" MinWidth="160" AutomationProperties.Name="Overlay corner" />
-          </WrapPanel>
+          <ItemsControl ItemsSource="{Binding OverlayWidgetRows}">
+            <ItemsControl.ItemTemplate>
+              <DataTemplate x:DataType="vm:OverlayWidgetRow">
+                <WrapPanel ItemSpacing="8" LineSpacing="4" Margin="0,2">
+                  <TextBlock Classes="label" Text="{Binding Name}" VerticalAlignment="Center" MinWidth="180" />
+                  <ComboBox ItemsSource="{Binding Choices}" SelectedItem="{Binding Corner}" MinWidth="160"
+                            AutomationProperties.Name="{Binding Name}" />
+                </WrapPanel>
+              </DataTemplate>
+            </ItemsControl.ItemTemplate>
+          </ItemsControl>
+
+          <!-- The map: which views its key cycles through, and how they look. -->
+          <StackPanel Spacing="6" Margin="0,4,0,0" DataContext="{Binding MapOptions}" x:DataType="vm:MapOverlayOptionsViewModel">
+            <TextBlock Classes="label" Text="Map views" />
+            <TextBlock TextWrapping="Wrap" Foreground="{StaticResource LpMutedBrush}"
+                       Text="The map key (Hotkeys) moves to the next view you tick, in this order; the first is where it starts. The full-screen views cover the game's picture; the time and HP stay on top." />
+            <ItemsControl ItemsSource="{Binding Views}">
+              <ItemsControl.ItemTemplate>
+                <DataTemplate x:DataType="vm:MapViewChoice">
+                  <CheckBox IsChecked="{Binding Chosen}" Content="{Binding Name}" />
+                </DataTemplate>
+              </ItemsControl.ItemTemplate>
+            </ItemsControl>
+            <WrapPanel ItemSpacing="8" LineSpacing="6">
+              <TextBlock Classes="label" Text="Minimap reach" VerticalAlignment="Center" MinWidth="110" />
+              <ComboBox ItemsSource="{Binding ReachChoices}" SelectedItem="{Binding Reach}" MinWidth="120" AutomationProperties.Name="Minimap reach" />
+              <TextBlock Classes="label" Text="Minimap size" VerticalAlignment="Center" MinWidth="110" />
+              <ComboBox ItemsSource="{Binding SizeChoices}" SelectedItem="{Binding Size}" MinWidth="120" AutomationProperties.Name="Minimap size" />
+            </WrapPanel>
+            <WrapPanel ItemSpacing="8" LineSpacing="6">
+              <TextBlock Classes="label" Text="See-through strength" VerticalAlignment="Center" MinWidth="110" />
+              <Slider Minimum="20" Maximum="100" TickFrequency="10" IsSnapToTickEnabled="True" Value="{Binding SeeThroughOpacity}" Width="180"
+                      AutomationProperties.Name="See-through map strength" />
+              <TextBlock Text="{Binding SeeThroughOpacity, StringFormat={}{0}%}" VerticalAlignment="Center" />
+            </WrapPanel>
+            <CheckBox IsChecked="{Binding Names}" Content="Names of doors, items and people on the full-screen map" />
+            <TextBlock Text="{Binding Status}" Classes="warning" TextWrapping="Wrap"
+                       IsVisible="{Binding Status, Converter={x:Static StringConverters.IsNotNullOrEmpty}}" />
+          </StackPanel>
           <TextBlock Text="{Binding Overlay.Status}" TextWrapping="Wrap" Foreground="{StaticResource LpMutedBrush}" />
         </StackPanel>
       </Border>
@@ -182,7 +218,7 @@
             <TextBlock Classes="caption" Text="HOTKEYS" />
           </StackPanel>
           <TextBlock TextWrapping="Wrap" Foreground="{StaticResource LpMutedBrush}"
-                     Text="Keys that work while you play, without leaving the game. Trainer actions work only while Trainer Mode is on and Lockpick has write access; the overlay key works any time." />
+                     Text="Keys that work while you play, without leaving the game. Trainer actions work only while Trainer Mode is on and Lockpick has write access; the overlay keys work any time." />
           <ItemsControl ItemsSource="{Binding TrainerHotkeyRows}">
             <ItemsControl.ItemTemplate>
               <DataTemplate x:DataType="vm:TrainerHotkeyRow">

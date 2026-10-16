@@ -24,6 +24,7 @@ public sealed partial class MapViewModel : PageViewModel
     private IRoomMapSource? _maps;
     private bool _mapsTried;
     private bool _visible;
+    private bool _keepUpdating;
     private DateTimeOffset _lastUpdate;
 
     public MapViewModel(AppServices services, LiveState state)
@@ -106,6 +107,22 @@ public sealed partial class MapViewModel : PageViewModel
     [ObservableProperty]
     public partial string Details { get; private set; } = string.Empty;
 
+    /// <summary>Keep the map up to date while the page is hidden too (the overlay's minimap shows it).</summary>
+    public bool KeepUpdating
+    {
+        get => _keepUpdating;
+        set
+        {
+            if (value && !_keepUpdating && !_visible)
+            {
+                _keepUpdating = true;
+                Refresh(force: true);
+            }
+
+            _keepUpdating = value;
+        }
+    }
+
     public override void OnVisibilityChanged(bool visible)
     {
         _visible = visible;
@@ -117,7 +134,7 @@ public sealed partial class MapViewModel : PageViewModel
 
     private void OnStateChanged(object? sender, PropertyChangedEventArgs e)
     {
-        if (_visible && e.PropertyName == nameof(LiveState.Snapshot))
+        if ((_visible || KeepUpdating) && e.PropertyName == nameof(LiveState.Snapshot))
         {
             Refresh(force: false);
         }

@@ -41,14 +41,30 @@ public sealed class RoomMapControl : Control
     public static readonly StyledProperty<IBrush?> FaintTextBrushProperty = AvaloniaProperty.Register<RoomMapControl, IBrush?>(nameof(FaintTextBrush));
     public static readonly StyledProperty<IBrush?> LabelPlateBrushProperty = AvaloniaProperty.Register<RoomMapControl, IBrush?>(nameof(LabelPlateBrush));
 
+    /// <summary>When above 0 (and the player is known): a view centred on the player showing this many world units around
+    /// them (the minimap's local view) instead of the whole room fitted in.</summary>
+    public static readonly StyledProperty<double> ViewRadiusProperty = AvaloniaProperty.Register<RoomMapControl, double>(nameof(ViewRadius));
+
+    /// <summary>When set, the room's extent is filled first, so floor and the space outside the room differ.</summary>
+    public static readonly StyledProperty<IBrush?> FloorBrushProperty = AvaloniaProperty.Register<RoomMapControl, IBrush?>(nameof(FloorBrush));
+
+    /// <summary>Draw names (doors, items, people); off for the small overlay minimap.</summary>
+    public static readonly StyledProperty<bool> ShowLabelsProperty = AvaloniaProperty.Register<RoomMapControl, bool>(nameof(ShowLabels), true);
+
     private const double Inset = 12;
 
     static RoomMapControl()
     {
         AffectsRender<RoomMapControl>(MapProperty, PlacedItemsProperty, TakenItemsProperty, FilledSocketsProperty, DoorNamesProperty, ActorsProperty, LiveFixturesProperty, ShowAbsentItemsProperty, PlayerXProperty, PlayerZProperty, PlayerAngleProperty, HasPlayerProperty,
             WallBrushProperty, SoftBrushProperty, DoorBrushProperty, ItemBrushProperty, PlayerBrushProperty,
-            FaintTextBrushProperty, LabelPlateBrushProperty);
+            FaintTextBrushProperty, LabelPlateBrushProperty, ViewRadiusProperty, ShowLabelsProperty, FloorBrushProperty);
     }
+
+    public double ViewRadius { get => GetValue(ViewRadiusProperty); set => SetValue(ViewRadiusProperty, value); }
+
+    public bool ShowLabels { get => GetValue(ShowLabelsProperty); set => SetValue(ShowLabelsProperty, value); }
+
+    public IBrush? FloorBrush { get => GetValue(FloorBrushProperty); set => SetValue(FloorBrushProperty, value); }
 
     public RoomMap? Map { get => GetValue(MapProperty); set => SetValue(MapProperty, value); }
 
@@ -113,11 +129,28 @@ public sealed class RoomMapControl : Control
         }
 
         var (x0, z0, x1, z1) = map.Bounds;
-        var scale = Math.Min((Bounds.Width - 2 * Inset) / Math.Max(1, x1 - x0), (Bounds.Height - 2 * Inset) / Math.Max(1, z1 - z0));
-        var offsetX = (Bounds.Width - (x1 - x0) * scale) / 2;
-        var offsetY = (Bounds.Height - (z1 - z0) * scale) / 2;
+        double scale, offsetX, offsetY;
+        if (ViewRadius > 0 && HasPlayer)
+        {
+            // Local view: the player in the middle, ViewRadius world units to the nearer edge.
+            scale = Math.Min(Bounds.Width, Bounds.Height) / (2 * ViewRadius);
+            offsetX = (Bounds.Width / 2) - ((PlayerX - x0) * scale);
+            offsetY = (Bounds.Height / 2) - ((z1 - PlayerZ) * scale);
+        }
+        else
+        {
+            scale = Math.Min((Bounds.Width - 2 * Inset) / Math.Max(1, x1 - x0), (Bounds.Height - 2 * Inset) / Math.Max(1, z1 - z0));
+            offsetX = (Bounds.Width - (x1 - x0) * scale) / 2;
+            offsetY = (Bounds.Height - (z1 - z0) * scale) / 2;
+        }
+
         Point P(double x, double z) => new(offsetX + (x - x0) * scale, offsetY + (z1 - z) * scale);
         Rect R(double ax, double az, double bx, double bz) => new(P(ax, bz), P(bx, az));
+
+        if (FloorBrush is not null)
+        {
+            context.DrawRectangle(FloorBrush, null, R(x0, z0, x1, z1));
+        }
 
         foreach (var s in map.Shapes)
         {
@@ -287,7 +320,7 @@ public sealed class RoomMapControl : Control
 
     private void DrawLabel(DrawingContext context, string text, Point center, IBrush? brush, double size)
     {
-        if (brush is null || string.IsNullOrEmpty(text))
+        if (!ShowLabels || brush is null || string.IsNullOrEmpty(text))
         {
             return;
         }

@@ -1,15 +1,18 @@
 <Window xmlns="https://github.com/avaloniaui"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:vm="using:Lockpick.App.ViewModels"
+        xmlns:c="using:Lockpick.App.Controls"
         x:Class="Lockpick.App.Views.OverlayWindow"
         x:DataType="vm:OverlayViewModel"
         Title="Lockpick overlay host"
         SystemDecorations="None" ShowInTaskbar="False" ShowActivated="False" Background="Transparent">
 
-  <!-- Never shown: the panel is rendered to a picture that a plain layered window shows over the game
+  <!-- Never shown: each widget is rendered to a picture that its own plain layered window shows over the game
        (OverlayController, LayeredWindow). No templated controls or style classes here — the window never runs its
-       styling — so the bar and colours come straight from the model; the scale is set when rendering. -->
-  <LayoutTransformControl x:Name="Panel">
+       styling — so the bar and colours come straight from the model; the scale is set when rendering. The widgets
+       overlap here; each is measured and rendered on its own. -->
+  <Panel>
+  <LayoutTransformControl x:Name="StatusPanel">
     <Border Background="#C80B0F0E" BorderBrush="{StaticResource LpBorderBrush}" BorderThickness="1" CornerRadius="3"
             Padding="7,4" MinWidth="120">
       <StackPanel Spacing="2">
@@ -29,4 +32,22 @@
       </StackPanel>
     </Border>
   </LayoutTransformControl>
+
+  <!-- Map: north-up. The minimap (the area around the player, framed, no names) or the whole room over the picture,
+       framed or see-through (the map key cycles the player's chosen views). -->
+  <LayoutTransformControl x:Name="MinimapPanel">
+    <Border Background="{Binding MinimapBackdrop}" BorderBrush="{Binding MinimapBorder}" BorderThickness="1" CornerRadius="3" Padding="2">
+      <c:RoomMapControl FloorBrush="{Binding MinimapFloor}" Width="{Binding MinimapWidth}" Height="{Binding MinimapHeight}" ClipToBounds="True"
+                        ShowLabels="{Binding MinimapNames}" Opacity="{Binding MinimapOpacity}"
+                        ViewRadius="{Binding MinimapViewRadius}"
+                        Map="{Binding Map.Map}" PlacedItems="{Binding Map.PlacedItems}" TakenItems="{Binding Map.TakenItems}"
+                        FilledSockets="{Binding Map.FilledSockets}" DoorNames="{Binding Map.DoorNames}" Actors="{Binding Map.Actors}" LiveFixtures="{Binding Map.LiveFixtures}"
+                        PlayerX="{Binding Map.PlayerX}" PlayerZ="{Binding Map.PlayerZ}" PlayerAngle="{Binding Map.PlayerAngle}" HasPlayer="{Binding Map.HasPlayer}"
+                        WallBrush="{Binding MinimapWalls}" SoftBrush="#33423C"
+                        DoorBrush="{StaticResource LpGreenBrush}" ItemBrush="{StaticResource LpAmberBrush}"
+                        PlayerBrush="{StaticResource LpRedBrush}" FaintTextBrush="{StaticResource LpMutedBrush}"
+                        LabelPlateBrush="{StaticResource LpBgBrush}" />
+    </Border>
+  </LayoutTransformControl>
+  </Panel>
 </Window>

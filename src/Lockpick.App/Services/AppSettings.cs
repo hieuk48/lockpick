@@ -75,8 +75,14 @@ public sealed record AppSettings
     /// <summary>Show the overlay over the game window (click-through; never takes focus).</summary>
     public bool OverlayEnabled { get; init; }
 
-    /// <summary>Which corner of the game's picture the overlay sits in (<see cref="OverlayCorners"/>).</summary>
+    /// <summary>Where the time / HP panel sat before the overlay had several widgets (read as that widget's corner).</summary>
     public string OverlayCorner { get; init; } = OverlayCorners.TopRight;
+
+    /// <summary>Each overlay widget's corner, or "Off" (<see cref="OverlayLayout"/>); missing: the widget's default.</summary>
+    public IReadOnlyDictionary<string, string> OverlayWidgetCorners { get; init; } = new Dictionary<string, string>();
+
+    /// <summary>How the overlay's map looks and which views its hotkey cycles through.</summary>
+    public MapOverlaySettings MapOverlay { get; init; } = new();
 
     /// <summary>Set only while ask mode has the game frozen; lets the next start unfreeze it after a crash.</summary>
     public PausedGame? PausedGame { get; init; }
@@ -126,4 +132,76 @@ public static class OverlayCorners
     public const string TopLeft = "Top left";
 
     public static IReadOnlyList<string> All { get; } = [TopRight, BottomRight, BottomLeft, TopLeft];
+}
+
+/// <summary>The overlay map's views: what the map hotkey cycles through, in this order.</summary>
+public static class MapViews
+{
+    /// <summary>The minimap in its corner: the area around the player.</summary>
+    public const string Around = "around";
+
+    /// <summary>The whole room over the game's picture, on a dark backdrop.</summary>
+    public const string Room = "room";
+
+    /// <summary>The whole room over the game's picture, see-through.</summary>
+    public const string RoomSeeThrough = "room-see-through";
+
+    /// <summary>No map until the key is pressed again.</summary>
+    public const string Hidden = "hidden";
+
+    public static IReadOnlyList<(string Id, string Name)> All { get; } =
+    [
+        (Around, "Minimap (around you)"),
+        (Room, "Whole room, full screen"),
+        (RoomSeeThrough, "Whole room, full screen, see-through"),
+        (Hidden, "Hidden"),
+    ];
+
+    /// <summary>Covers the game's picture instead of sitting in a corner.</summary>
+    public static bool IsFull(string view) => view is Room or RoomSeeThrough;
+}
+
+/// <summary>The overlay map's options (Settings).</summary>
+public sealed record MapOverlaySettings
+{
+    /// <summary>The views the map hotkey cycles through (<see cref="MapViews"/>); the first is shown at start.</summary>
+    public IReadOnlyList<string> Views { get; init; } = [MapViews.Around, MapViews.Room, MapViews.RoomSeeThrough];
+
+    /// <summary>World units from the player to the minimap's nearer edge.</summary>
+    public int Reach { get; init; } = 6000;
+
+    /// <summary>The minimap's side, in the overlay's own units (designed for a 480-pixel-high picture).</summary>
+    public int Size { get; init; } = 130;
+
+    /// <summary>How strongly the see-through map is drawn over the game, in percent.</summary>
+    public int SeeThroughOpacity { get; init; } = 70;
+
+    /// <summary>Names of doors, items and people on the full-screen map.</summary>
+    public bool Names { get; init; } = true;
+
+    public static IReadOnlyList<(int Value, string Name)> ReachChoices { get; } = [(4000, "Close"), (6000, "Medium"), (9000, "Far")];
+
+    public static IReadOnlyList<(int Value, string Name)> SizeChoices { get; } = [(100, "Small"), (130, "Medium"), (170, "Large")];
+}
+
+/// <summary>The overlay's widgets and where each sits. Widgets sharing a corner stack in this order from the corner.</summary>
+public static class OverlayLayout
+{
+    public const string Off = "Off";
+    public const string Status = "status";
+    public const string Minimap = "minimap";
+
+    public static IReadOnlyList<(string Id, string Name, string Default)> Widgets { get; } =
+    [
+        (Status, "Time, HP, room, challenge", OverlayCorners.TopRight),
+        (Minimap, "Minimap", OverlayCorners.BottomRight),
+    ];
+
+    /// <summary>A corner, or off.</summary>
+    public static IReadOnlyList<string> Choices { get; } = [.. OverlayCorners.All, Off];
+
+    public static string Corner(AppSettings settings, string id) =>
+        settings.OverlayWidgetCorners.TryGetValue(id, out var corner) && Choices.Contains(corner) ? corner
+        : id == Status && OverlayCorners.All.Contains(settings.OverlayCorner) ? settings.OverlayCorner
+        : Widgets.FirstOrDefault(w => w.Id == id).Default ?? Off;
 }

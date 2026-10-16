@@ -17,6 +17,9 @@ public sealed class TrainerHotkeys : IDisposable
     /// <summary>Shows or hides the overlay; works any time (it changes nothing in the game).</summary>
     public const string ToggleOverlay = "toggle-overlay";
 
+    /// <summary>Shows the overlay map's next view (Settings: minimap, full-screen room, …); works any time.</summary>
+    public const string NextMapView = "map-view";
+
     private readonly Dictionary<string, GlobalHotkey> _keys = [];
     private readonly ILogger _log;
 
@@ -32,6 +35,7 @@ public sealed class TrainerHotkeys : IDisposable
         (ToggleHealthLock, "Lock / unlock HP"),
         (ToggleInfiniteAmmo, "Infinite ammo on / off"),
         (ToggleOverlay, "Overlay on / off"),
+        (NextMapView, "Map: next view"),
     ];
 
     /// <summary>The registered key per action (missing: off or refused by Windows).</summary>

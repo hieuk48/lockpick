@@ -19,6 +19,7 @@ public sealed partial class SettingsViewModel : PageViewModel
         _runSetup = runSetup;
         Overlay = overlay;
         GameDisplay = new GameDisplayViewModel(services);
+        MapOptions = new MapOverlayOptionsViewModel(services);
         services.TrainerHotkeys.Pressed += (_, action) =>
         {
             if (action == TrainerHotkeys.ToggleOverlay)
@@ -35,7 +36,8 @@ public sealed partial class SettingsViewModel : PageViewModel
         MarkerHotkeyStatus = services.MarkerHotkeyName is null && MarkerHotkey != "Off" ? $"{MarkerHotkey} is used by another program." : string.Empty;
         MarkerButtonName = services.MarkerButton.DisplayName;
         OverlayEnabled = current.OverlayEnabled;
-        OverlayCorner = OverlayCorners.All.Contains(current.OverlayCorner) ? current.OverlayCorner : OverlayCorners.TopRight;
+        OverlayWidgetRows = [.. OverlayLayout.Widgets.Select(w =>
+            new OverlayWidgetRow(w.Id, w.Name, OverlayLayout.Corner(current, w.Id), OverlayLayout.Choices, ApplyOverlayWidget))];
         ApiEnabled = current.ApiEnabled;
         ApiAllowNetwork = current.ApiAllowNetwork;
         ApiAllowTrainer = current.ApiAllowTrainer;
@@ -285,10 +287,11 @@ public sealed partial class SettingsViewModel : PageViewModel
     [ObservableProperty]
     public partial bool OverlayEnabled { get; set; }
 
-    [ObservableProperty]
-    public partial string OverlayCorner { get; set; } = OverlayCorners.TopRight;
+    /// <summary>Each overlay widget and its corner (or off).</summary>
+    public IReadOnlyList<OverlayWidgetRow> OverlayWidgetRows { get; }
 
-    public IReadOnlyList<string> OverlayCornerChoices => OverlayCorners.All;
+    /// <summary>The overlay map's views and look.</summary>
+    public MapOverlayOptionsViewModel MapOptions { get; }
 
     partial void OnOverlayEnabledChanged(bool value)
     {
@@ -298,12 +301,10 @@ public sealed partial class SettingsViewModel : PageViewModel
         }
     }
 
-    partial void OnOverlayCornerChanged(string value)
+    private void ApplyOverlayWidget(OverlayWidgetRow row)
     {
-        if (!_loading && OverlayCorners.All.Contains(value))
-        {
-            Persist(s => s with { OverlayCorner = value });
-        }
+        var corners = new Dictionary<string, string>(_services.Settings.Current.OverlayWidgetCorners) { [row.Id] = row.Corner };
+        Persist(s => s with { OverlayWidgetCorners = corners });
     }
 
     partial void OnCheckForUpdatesChanged(bool value)

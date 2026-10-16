@@ -63,9 +63,10 @@ public static class GameWindows
     /// while the game is (exclusive fullscreen). The game's own windows right above it (its IME window is owned by it
     /// and always sits there) are skipped: asking to go just below one of those puts the overlay below the whole game
     /// (live 2026-10-15: that is why the overlay vanished under exclusive fullscreen). Does nothing when the overlay
-    /// already sits above the game with only the game's own windows in between.
+    /// already sits above the game with only the game's own windows in between. <paramref name="siblings"/> are the
+    /// other overlay windows over the same game: they count as part of the stack, so two overlays don't keep swapping.
     /// </summary>
-    public static bool KeepAbove(nint overlay, nint game)
+    public static bool KeepAbove(nint overlay, nint game, IReadOnlyCollection<nint>? siblings = null)
     {
         NativeMethods.GetWindowThreadProcessId(game, out var gamePid);
         var w = NativeMethods.GetWindow(game, NativeMethods.GwHwndPrev);
@@ -76,7 +77,8 @@ public static class GameWindows
                 return true;
             }
 
-            if (NativeMethods.GetWindow(w, NativeMethods.GwOwner) != game
+            if (siblings?.Contains(w) != true
+                && NativeMethods.GetWindow(w, NativeMethods.GwOwner) != game
                 && !(NativeMethods.GetWindowThreadProcessId(w, out var pid) != 0 && pid == gamePid))
             {
                 break; // the first other window above the game's own
@@ -95,6 +97,19 @@ public static class GameWindows
 
         // Inserted just below that other window, i.e. right above the game and its own windows.
         return NativeMethods.SetWindowPos(overlay, w != 0 ? w : gameTopmost ? NativeMethods.HwndTopmost : NativeMethods.HwndTop, 0, 0, 0, 0, flags);
+    }
+
+    /// <summary>
+    /// Puts <paramref name="window"/> directly below <paramref name="above"/> in the window stack (e.g. the full-screen
+    /// map under the time panel), without activating it. Does nothing when it already is.
+    /// </summary>
+    public static void PlaceBelow(nint window, nint above)
+    {
+        if (NativeMethods.GetWindow(above, NativeMethods.GwHwndNext) != window)
+        {
+            NativeMethods.SetWindowPos(window, above, 0, 0, 0, 0,
+                NativeMethods.SwpNoMove | NativeMethods.SwpNoSize | NativeMethods.SwpNoActivate | NativeMethods.SwpNoOwnerZOrder);
+        }
     }
 
     /// <summary>A window's outer rectangle (physical pixels).</summary>
