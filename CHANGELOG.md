@@ -52,6 +52,8 @@ All notable changes to this project are documented here. The format follows
   logs, the settings without the API token and the versions (the Windows user folder replaced by `%USERPROFILE%`; no
   game files, saves or captures) to attach to an issue. An unexpected error is logged and shown above the page with
   the same offer; after a crash, the next start offers it.
+- **The window comes back where you left it** (#63): Lockpick's window reopens at its place and size (or maximized),
+  remembered for each monitor setup; a place that's no longer on a screen falls back to centred.
 - **Streamer mode** (#63, Settings → General): file paths, process ids and the API token are blurred wherever Lockpick
   shows them, so its window can be on stream (copy buttons still work).
 - **Lockpick's OBS script** (#66, `obs/lockpick.lua` next to Lockpick.exe; Stream → OBS shows where): one button

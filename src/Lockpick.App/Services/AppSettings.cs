@@ -111,6 +111,9 @@ public sealed record AppSettings
     /// <summary>LiveSplit's TCP server port (its default).</summary>
     public int LiveSplitPort { get; init; } = 16834;
 
+    /// <summary>Lockpick's window per monitor setup (the screens' layout → where the window was), #63.</summary>
+    public IReadOnlyDictionary<string, WindowPlacement> WindowPlacements { get; init; } = new Dictionary<string, WindowPlacement>();
+
     /// <summary>Streamer mode: paths, process ids and the API token are blurred on screen.</summary>
     public bool StreamerMode { get; init; }
 
@@ -265,6 +268,9 @@ public sealed record MapOverlaySettings
 
     public static IReadOnlyList<(int Value, string Name)> SizeChoices { get; } = [(100, "Small"), (130, "Medium"), (170, "Large")];
 }
+
+/// <summary>Where Lockpick's window was, in physical pixels, and whether it was maximized.</summary>
+public sealed record WindowPlacement(int X, int Y, double Width, double Height, bool Maximized);
 
 /// <summary>A pop-out widget window: open, where, how big, and its background and stacking.</summary>
 public sealed record PopOutOptions

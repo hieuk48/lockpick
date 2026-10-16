@@ -95,6 +95,23 @@ public sealed partial class MainViewModel : ObservableObject, IDisposable
 
     public bool HasError => ErrorNotice is not null;
 
+    /// <summary>Where the window was on this monitor setup, or null the first time.</summary>
+    public WindowPlacement? PlacementFor(string screens) => _services.Settings.Current.WindowPlacements.GetValueOrDefault(screens);
+
+    /// <summary>Remembers where the window is on this monitor setup.</summary>
+    public void SavePlacement(string screens, WindowPlacement placement)
+    {
+        var placements = new Dictionary<string, WindowPlacement>(_services.Settings.Current.WindowPlacements) { [screens] = placement };
+        try
+        {
+            _services.Settings.Save(_services.Settings.Current with { WindowPlacements = placements });
+        }
+        catch (IOException)
+        {
+            // A convenience; a locked settings file must not stop Lockpick from closing.
+        }
+    }
+
     /// <summary>Reports an unexpected error to the player (it's in the log already).</summary>
     public void ReportError(string message) =>
         ErrorNotice = $"Something went wrong: {message} It's in Lockpick's log; a support bundle helps us fix it.";
