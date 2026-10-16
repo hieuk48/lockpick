@@ -108,8 +108,14 @@ public sealed record AppSettings
     /// <summary>LiveSplit's TCP server port (its default).</summary>
     public int LiveSplitPort { get; init; } = 16834;
 
-    /// <summary>Play Windows' alert sound when a challenge fails or the player dies.</summary>
+    /// <summary>Play a sound when a challenge fails or the player dies (the sounds below).</summary>
     public bool AlertSound { get; init; }
+
+    /// <summary>The sound for a failed challenge: a Windows sound's id, "none", or a .wav file's path.</summary>
+    public string FailSound { get; init; } = "critical";
+
+    /// <summary>The sound for a death: as <see cref="FailSound"/>.</summary>
+    public string DeathSound { get; init; } = "exclamation";
 
     /// <summary>What splits are compared against (a LiveSplit comparison name: Personal Best, Best Segments, …).</summary>
     public string RunComparison { get; init; } = "Personal Best";
@@ -268,6 +274,25 @@ public sealed record PopOutOptions
     public bool Green { get; init; }
 
     public bool Topmost { get; init; }
+
+    /// <summary>The map window's view (<see cref="PopOutMapViews"/>).</summary>
+    public string MapView { get; init; } = PopOutMapViews.Around;
+
+    /// <summary>The map window's reach around the player, in world units.</summary>
+    public int MapReach { get; init; } = 6000;
+
+    /// <summary>The map window's floor zoom (0 = the whole floor).</summary>
+    public int MapZoom { get; init; }
+
+    public bool MapNames { get; init; } = true;
+}
+
+/// <summary>What the map's own window shows.</summary>
+public static class PopOutMapViews
+{
+    public const string Around = "around";
+    public const string Room = "room";
+    public const string Floor = "floor";
 }
 
 /// <summary>The overlay's widgets and where each sits. Widgets sharing a corner stack in this order from the corner.</summary>

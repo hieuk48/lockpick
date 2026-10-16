@@ -1,0 +1,29 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:vm="using:Lockpick.App.ViewModels"
+             xmlns:c="using:Lockpick.App.Controls"
+             x:Class="Lockpick.App.Views.MapPopOutView"
+             x:DataType="vm:MapPopOutViewModel">
+  <!-- The map in its own window: drawn live at the window's size, north-up; right-click for the view, zoom and names. -->
+  <Panel Margin="6">
+    <c:FloorMapControl IsVisible="{Binding IsFloor}" ClipToBounds="True" ShowLabels="{Binding Names}"
+                       Zoom="{Binding FloorZoom}" FollowPlayer="{Binding Follow}"
+                       Floor="{Binding Map.Floor}" CurrentRoom="{Binding Map.CurrentRoom}" TakenItems="{Binding Map.FloorTaken}"
+                       PlayerX="{Binding Map.PlayerX}" PlayerZ="{Binding Map.PlayerZ}" PlayerAngle="{Binding Map.PlayerAngle}" HasPlayer="{Binding Map.HasPlayer}"
+                       FloorBrush="#E0202B27" WallBrush="#5C6B65" SoftBrush="#33423C"
+                       DoorBrush="{StaticResource LpGreenBrush}" ItemBrush="{StaticResource LpAmberBrush}" PlayerBrush="{StaticResource LpRedBrush}"
+                       LabelBrush="{StaticResource LpTextBrush}" HighlightBrush="{StaticResource LpRedBrush}" />
+    <c:RoomMapControl IsVisible="{Binding !IsFloor}" FloorBrush="#E0202B27" ClipToBounds="True"
+                      ShowLabels="{Binding RoomNames}" ViewRadius="{Binding ViewRadius}"
+                      Map="{Binding Map.Map}" PlacedItems="{Binding Map.PlacedItems}" TakenItems="{Binding Map.TakenItems}"
+                      FilledSockets="{Binding Map.FilledSockets}" DoorNames="{Binding Map.DoorNames}" Actors="{Binding Map.Actors}" LiveFixtures="{Binding Map.LiveFixtures}"
+                      PlayerX="{Binding Map.PlayerX}" PlayerZ="{Binding Map.PlayerZ}" PlayerAngle="{Binding Map.PlayerAngle}" HasPlayer="{Binding Map.HasPlayer}"
+                      WallBrush="#5C6B65" SoftBrush="#33423C"
+                      DoorBrush="{StaticResource LpGreenBrush}" ItemBrush="{StaticResource LpAmberBrush}"
+                      PlayerBrush="{StaticResource LpRedBrush}" FaintTextBrush="{StaticResource LpMutedBrush}"
+                      LabelPlateBrush="{StaticResource LpBgBrush}" />
+    <TextBlock IsVisible="{Binding !HasMap}" Text="The map appears once you're in a game. Right-click for the view."
+               Foreground="{StaticResource LpMutedBrush}" TextWrapping="Wrap" TextAlignment="Center"
+               HorizontalAlignment="Center" VerticalAlignment="Center" Margin="12" />
+  </Panel>
+</UserControl>

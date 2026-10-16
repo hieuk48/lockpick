@@ -103,8 +103,24 @@
               <TextBlock TextWrapping="Wrap" Foreground="{StaticResource LpMutedBrush}"
                          Text="How Lockpick tells you a challenge failed: the reason here and on the overlay (a big message at the top), and a sound if you want one. Deaths are counted for the whole session, challenge or not." />
               <CheckBox IsChecked="{Binding AlertSound}" AutomationProperties.Name="Play a sound on a fail or a death">
-                <TextBlock TextWrapping="Wrap" Text="Play a sound when the challenge fails or you die (Windows' alert sound)" />
+                <TextBlock TextWrapping="Wrap" Text="Play a sound when the challenge fails or you die" />
               </CheckBox>
+              <Grid ColumnDefinitions="Auto,*" RowDefinitions="Auto,Auto" ColumnSpacing="10" RowSpacing="6" IsEnabled="{Binding AlertSound}">
+                <TextBlock Classes="label" Text="Challenge failed" VerticalAlignment="Center" />
+                <WrapPanel Grid.Column="1" ItemSpacing="6" LineSpacing="6">
+                  <ComboBox ItemsSource="{Binding Sounds}" SelectedItem="{Binding FailSound}" MinWidth="220" AutomationProperties.Name="Sound when a challenge fails" />
+                  <Button Content="Play" Command="{Binding PlayFailCommand}" />
+                  <Button Content="Your own (.wav)…" Click="OnFailFile" ToolTip.Tip="Use a .wav file of your own" />
+                </WrapPanel>
+                <TextBlock Grid.Row="1" Classes="label" Text="You died" VerticalAlignment="Center" />
+                <WrapPanel Grid.Row="1" Grid.Column="1" ItemSpacing="6" LineSpacing="6">
+                  <ComboBox ItemsSource="{Binding Sounds}" SelectedItem="{Binding DeathSound}" MinWidth="220" AutomationProperties.Name="Sound when you die" />
+                  <Button Content="Play" Command="{Binding PlayDeathCommand}" />
+                  <Button Content="Your own (.wav)…" Click="OnDeathFile" ToolTip.Tip="Use a .wav file of your own" />
+                </WrapPanel>
+              </Grid>
+              <TextBlock Text="{Binding SoundMessage}" Classes="warning" TextWrapping="Wrap"
+                         IsVisible="{Binding SoundMessage, Converter={x:Static StringConverters.IsNotNullOrEmpty}}" />
               <TextBlock TextWrapping="Wrap" Foreground="{StaticResource LpMutedBrush}"
                          Text="Try again from a key or a controller button: Settings → Hotkeys → Challenge: try again." />
             </StackPanel>

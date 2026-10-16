@@ -58,6 +58,9 @@ public sealed class WidgetRenderer : IDisposable
 
     public IEnumerable<string> Ids => _entries.Keys;
 
+    /// <summary>The live map (the map's own window draws it itself, at its own view).</summary>
+    public MapViewModel Map => _model.Map;
+
     /// <summary>The widget has something to show now.</summary>
     public bool HasContent(string id) => _entries.TryGetValue(id, out var e) && e.HasContent();
 

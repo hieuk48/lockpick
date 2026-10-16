@@ -45,8 +45,12 @@ All notable changes to this project are documented here. The format follows
   Training, Leaderboard, LiveSplit; …), so each shows only what that part needs; in a narrow window the sections are a
   row above the page. The overlay's map options are a card of their own.
 - **Challenge feedback** (#59): a death counter (deaths this session, any play; on the Challenges page and the
-  overlay's challenge line), an optional alert sound when a challenge fails or you die (Windows' own alert, off by
-  default), and **Challenge: try again** as a key or controller button (Settings → Hotkeys).
+  overlay's challenge line), optional sounds when a challenge fails or you die — each its own, from Windows' sounds
+  or a .wav file of yours (Challenges → Feedback, with a Play button) — and **Challenge: try again** as a key or
+  controller button (Settings → Hotkeys). Closing the game ends a challenge's attempt.
+- **The map's own window:** the popped-out map is drawn live at the window's size with its own view (right-click):
+  around you (close, medium or far), the whole room, or the whole floor you're on (whole, closer or closest,
+  following you), names on or off — remembered with the window, whatever the overlay's map shows.
 - **Comparisons and where the time is** (Runs page): compare your splits against your personal best or any of
   LiveSplit's comparisons (best segments, average, median, latest run, balanced PB, …) on the page, the overlay and
   LiveSplit's layout; a new card lists the segments where your PB loses most against your best segments. Practice and

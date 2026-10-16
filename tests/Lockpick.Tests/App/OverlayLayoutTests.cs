@@ -72,13 +72,27 @@ public sealed class OverlayLayoutTests : IDisposable
         var popOuts = new Dictionary<string, PopOutOptions>
         {
             [OverlayLayout.Splits] = new() { Open = true, X = -1900, Y = 40, Width = 300, Height = 560, Green = true, Topmost = true },
+            [OverlayLayout.Minimap] = new() { MapView = PopOutMapViews.Floor, MapZoom = 2, MapReach = 9000, MapNames = false },
         };
         new SettingsStore(path, NullLogger.Instance).Save(new AppSettings { PopOuts = popOuts, StreamWidgets = ["minimap:Large", "splits:Small"] });
 
         var loaded = new SettingsStore(path, NullLogger.Instance).Load();
         Assert.Equal(popOuts[OverlayLayout.Splits], loaded.PopOuts[OverlayLayout.Splits]);
+        Assert.Equal(popOuts[OverlayLayout.Minimap], loaded.PopOuts[OverlayLayout.Minimap]);
         Assert.Equal(["minimap:Large", "splits:Small"], loaded.StreamWidgets);
         Assert.Null(new AppSettings().StreamWidgets); // none saved: the page's default layout
+    }
+
+    [Fact]
+    public void Alert_sounds_are_windows_own_or_a_wave_file()
+    {
+        var settings = new AppSettings();
+        Assert.Equal("critical", settings.FailSound);
+        Assert.Contains(Lockpick.Platform.Windows.AlertSound.BuiltIn, b => b.Id == settings.DeathSound);
+        Assert.True(Lockpick.Platform.Windows.AlertSound.IsWave(@"C:\sounds\Fail.WAV"));
+        Assert.False(Lockpick.Platform.Windows.AlertSound.IsWave(@"C:\sounds\fail.mp3"));
+        Assert.False(Lockpick.Platform.Windows.AlertSound.Play(@"C:\no such folder\fail.wav")); // a missing file plays nothing
+        Assert.False(Lockpick.Platform.Windows.AlertSound.Play(Lockpick.Platform.Windows.AlertSound.None));
     }
 
     [Fact]

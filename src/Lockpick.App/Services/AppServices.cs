@@ -92,10 +92,10 @@ public sealed class AppServices : IAsyncDisposable
             if (status.State == Core.Challenges.ChallengeState.Failed && status.FailedAt != _alertedFail)
             {
                 _alertedFail = status.FailedAt;
-                Alert();
+                Alert(Settings.Current.FailSound);
             }
         };
-        Runs.Died += (_, _) => Alert();
+        Runs.Died += (_, _) => Alert(Settings.Current.DeathSound);
         foreach (var (action, key) in settings.Current.TrainerHotkeys)
         {
             TrainerHotkeys.Set(action, key, MarkerHotkeyName);
@@ -110,13 +110,13 @@ public sealed class AppServices : IAsyncDisposable
     private DateTimeOffset? _alertedFail;
     private long _lastAlert;
 
-    /// <summary>The alert sound when it's on — once for a death that also fails the challenge (both report it).</summary>
-    private void Alert()
+    /// <summary>An alert sound when they're on — one for a death that also fails the challenge (both report it).</summary>
+    private void Alert(string sound)
     {
         var now = Environment.TickCount64;
         if (Settings.Current.AlertSound && now - Interlocked.Exchange(ref _lastAlert, now) > 2000)
         {
-            AlertSound.Play();
+            AlertSound.Play(sound);
         }
     }
 
