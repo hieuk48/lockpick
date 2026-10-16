@@ -59,8 +59,11 @@ speedrun/challenge suite.
 - Installer with automatic updates (Velopack), first-time setup, and layouts for every window size — ultrawide, 1080p,
   side by side and portrait.
 
-Next: **0.3.0** — one app for playing and streaming (run timer and splits, LiveSplit, an in-game overlay and OBS
-sources); see the [roadmap](docs/ROADMAP.md).
+Next: **0.3.0** — one app for playing and streaming; see the [roadmap](docs/ROADMAP.md). Already on `main`, not yet
+released: an in-game overlay (time and HP with the game's own Fine / Caution / Danger / Poison, a minimap that
+opens to the whole room or the whole floor, enemies' HP, what just happened, run splits, big messages), a whole-floor
+map put together from the rooms' doors, runs timed on the game's clock with the community's splits, LiveSplit files
+and LiveSplit itself ([docs/RUNS.md](docs/RUNS.md)), and OBS pages for the HUD, splits and feed.
 
 ## Supported builds
 
@@ -135,6 +138,7 @@ docs/                          architecture, roadmap, research, compatibility, m
 - [Architecture and decisions](docs/ARCHITECTURE.md)
 - [Memory map](docs/MEMORY_MAP.md) · [Research](docs/RESEARCH.md) · [Compatibility](docs/COMPATIBILITY.md) · [Performance](docs/PERFORMANCE.md)
 - [Display modes, capture and overlays](docs/DISPLAY.md) — how the game's window behaves in every mode (for overlays and OBS)
+- [Runs and splits](docs/RUNS.md) — the run timer, split sets and triggers, LiveSplit files and LiveSplit itself
 
 ## Safety and integrity
 
