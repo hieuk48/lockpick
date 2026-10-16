@@ -56,7 +56,18 @@ http://127.0.0.1:1996/overlay/hud?token=<token>&corner=top-right&scale=1
 | `/overlay/livesplit` | The run with LiveSplit's look (livesplit-core) | `width`, `height`, `fps` |
 | `/overlay/feed` | What just happened, in plain words (pickups, kills, enemies appearing, damage, story events), the newest at the bottom, each line for a while | `corner` = `bottom-left` (default) or another; `scale`; `lines` 1–20 (default 5); `seconds` (default 20); `types` = event types to show (default `Happened`; e.g. add `SplitReached,RunEnded,ChallengeFailed`) |
 
-The app lists every widget's address with its size and a **Copy OBS link** button (Stream → OBS). A popped-out widget
+The app lists every widget's address with its size and a **Copy OBS link** button (Stream → OBS).
+
+### Lockpick's OBS script
+
+`obs/lockpick.lua` ships next to Lockpick.exe (OBS → Tools → Scripts → +). OBS's Lua has no network, so Lockpick
+writes two files for it in `%LOCALAPPDATA%\Lockpick\obs`: `connection.json` (the API's port and token, rewritten when
+they change) and `events.txt` (emptied at each start; one line per moment: `time-ms<TAB>kind<TAB>detail`, kinds
+`run-start`, `split`, `run-end`, `finished`, `new-best`, `death`, `challenge-fail`, `game-active`, `game-inactive`).
+The script's settings, each optional: **Add Lockpick to this scene** (the browser sources above and a Game Capture of
+the game), record each run (stop a few seconds after it ends), chapter markers at splits, deaths and fails (Hybrid
+MP4, OBS 30.2+), save the replay buffer on a death, a fail or a new best, and switch to a "paused" scene while the
+game isn't in front. A popped-out widget
 window (Settings → Overlay → Pop out) can be captured with Window Capture too.
 
 Lockpick's in-game overlay (Settings → Overlay) is not part of any OBS capture — it's a window of its own on top of

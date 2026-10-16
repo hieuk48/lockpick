@@ -8,6 +8,14 @@ public partial class StreamView : UserControl
 {
     public StreamView() => InitializeComponent();
 
+    private void OnShowScript(object? sender, RoutedEventArgs e)
+    {
+        if (DataContext is ViewModels.StreamViewModel { ObsScript: { } path } && File.Exists(path))
+        {
+            System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo("explorer.exe", $"/select,\"{path}\"") { UseShellExecute = true });
+        }
+    }
+
     private async void OnCopyObsLink(object? sender, RoutedEventArgs e)
     {
         if (sender is Button { Tag: string url } && TopLevel.GetTopLevel(this)?.Clipboard is { } clipboard)

@@ -107,6 +107,9 @@ public sealed partial class StreamViewModel : PageViewModel
     [ObservableProperty]
     public partial string ObsNote { get; private set; } = string.Empty;
 
+    /// <summary>Lockpick's OBS script, next to Lockpick.exe.</summary>
+    public string ObsScript { get; } = Path.Combine(AppContext.BaseDirectory, "obs", "lockpick.lua");
+
     public override void OnVisibilityChanged(bool visible)
     {
         base.OnVisibilityChanged(visible);

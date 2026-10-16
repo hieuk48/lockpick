@@ -48,6 +48,10 @@ All notable changes to this project are documented here. The format follows
   overlay's challenge line), optional sounds when a challenge fails or you die — each its own, from Windows' sounds
   or a .wav file of yours (Challenges → Feedback, with a Play button) — and **Challenge: try again** as a key or
   controller button (Settings → Hotkeys). Closing the game ends a challenge's attempt.
+- **Lockpick's OBS script** (#66, `obs/lockpick.lua` next to Lockpick.exe; Stream → OBS shows where): one button
+  adds Lockpick's sources and a Game Capture of the game to the scene, and, each optional, records each run, puts
+  chapter markers at splits, deaths and fails, saves the replay buffer on a death, a fail or a new best, and switches to
+  a "paused" scene while the game isn't in front. It reads files Lockpick writes (no WebSocket password).
 - **Overlay layout editor** (#55, Settings → Overlay → Layout): the game's picture in small with every widget that's
   on, drawn as it looks; drag one anywhere and it keeps that spot (as a share of the picture, so on any size). Its
   place then reads *Your spot*; choosing a corner, or *Back to the corners*, puts it back.

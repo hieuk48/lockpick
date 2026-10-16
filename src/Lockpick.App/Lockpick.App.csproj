@@ -38,6 +38,10 @@
     <EmbeddedResource Include="..\..\CONTRIBUTORS.md" LogicalName="Lockpick.App.CONTRIBUTORS.md" />
   </ItemGroup>
   <ItemGroup>
+    <!-- Lockpick's OBS script (#66), next to Lockpick.exe: OBS -> Tools -> Scripts -> + -> obs\lockpick.lua. -->
+    <None Update="Obs\lockpick.lua" Link="obs\lockpick.lua" CopyToOutputDirectory="PreserveNewest" />
+  </ItemGroup>
+  <ItemGroup>
     <InternalsVisibleTo Include="Lockpick.Tests" />
   </ItemGroup>
 </Project>

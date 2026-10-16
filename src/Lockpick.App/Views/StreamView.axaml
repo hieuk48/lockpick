@@ -64,9 +64,9 @@
 
     </StackPanel>
 
-    <!-- OBS: each widget as a Browser Source -->
-    <Border Classes="card" VerticalAlignment="Top"
-            IsVisible="{Binding SelectedSection, Converter={x:Static c:SectionIs.Instance}, ConverterParameter=obs}">
+    <!-- OBS: each widget as a Browser Source, and Lockpick's OBS script -->
+    <StackPanel Spacing="12" IsVisible="{Binding SelectedSection, Converter={x:Static c:SectionIs.Instance}, ConverterParameter=obs}">
+    <Border Classes="card">
       <StackPanel Spacing="8">
         <TextBlock Classes="caption" Text="OBS BROWSER SOURCES" />
         <TextBlock TextWrapping="Wrap" Foreground="{StaticResource LpMutedBrush}"
@@ -87,6 +87,22 @@
         <TextBlock x:Name="Copied" Foreground="{StaticResource LpGreenBrush}" IsVisible="False" Text="Copied. Paste it into an OBS Browser Source." />
       </StackPanel>
     </Border>
+
+    <!-- Lockpick's OBS script -->
+    <Border Classes="card">
+      <StackPanel Spacing="8">
+        <TextBlock Classes="caption" Text="OBS SCRIPT" />
+        <TextBlock TextWrapping="Wrap" Foreground="{StaticResource LpMutedBrush}"
+                   Text="Lockpick's script for OBS adds these sources (and a Game Capture of the game) with one button, and can record each run, put chapter markers at splits, deaths and fails, save the replay buffer on a death, a fail or a new best, and switch to a &quot;paused&quot; scene while the game isn't in front. Every part is optional." />
+        <TextBlock TextWrapping="Wrap" Text="In OBS: Tools → Scripts → + → choose this file:" />
+        <SelectableTextBlock Classes="mono" Text="{Binding ObsScript}" TextWrapping="Wrap" />
+        <WrapPanel ItemSpacing="8" LineSpacing="6">
+          <Button Content="Show the script" Click="OnShowScript" />
+          <Button Content="Copy its path" Click="OnCopyObsLink" Tag="{Binding ObsScript}" />
+        </WrapPanel>
+      </StackPanel>
+    </Border>
+    </StackPanel>
     </Panel>
   </ScrollViewer>
 </UserControl>

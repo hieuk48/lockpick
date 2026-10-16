@@ -60,6 +60,7 @@ public sealed class AppServices : IAsyncDisposable
         SpeedrunAccount = new SpeedrunAccount(SpeedrunCom, new SecretStore(AppPaths.Secrets), settings);
         LiveSplit = new LiveSplitLink(Runs, source, settings.Current.LiveSplitMode, settings.Current.LiveSplitPort, loggerFactory.CreateLogger("LiveSplit"));
         LeaderboardGuard = new LeaderboardGuard(this, loggerFactory.CreateLogger("Leaderboard"));
+        ObsEvents = new ObsEvents(this, loggerFactory.CreateLogger("Obs"));
         SpeedrunCom.ShownChanged += (_, _) => LiveSplitEngine.SetRecord(SpeedrunCom.Shown?.Record is { } wr
             ? string.Create(System.Globalization.CultureInfo.InvariantCulture, $"{(int)wr.Time.TotalMinutes}:{wr.Time.Seconds:D2}.{wr.Time.Milliseconds / 100} {wr.Runner}")
             : null);
@@ -141,6 +142,9 @@ public sealed class AppServices : IAsyncDisposable
     /// <summary>Leaderboard runs: Lockpick hands-off and the rules checked.</summary>
     public LeaderboardGuard LeaderboardGuard { get; }
 
+    /// <summary>The files Lockpick's OBS script reads (the API's address, the run's moments).</summary>
+    public ObsEvents ObsEvents { get; }
+
     /// <summary>Overlay widgets open in their own windows (pop-outs).</summary>
     public WidgetWindows WidgetWindows { get; } = new();
 
@@ -188,6 +192,7 @@ public sealed class AppServices : IAsyncDisposable
         if (!current.ApiEnabled)
         {
             ApiError = null;
+            ObsEvents.WriteConnection();
             await Api.StopAsync().ConfigureAwait(false);
             return;
         }
@@ -197,6 +202,8 @@ public sealed class AppServices : IAsyncDisposable
             current = current with { ApiToken = ApiOptions.NewToken() };
             Settings.Save(current);
         }
+
+        ObsEvents.WriteConnection();
 
         ApiError = await Api.StartAsync(new ApiOptions
         {
@@ -410,6 +417,7 @@ public sealed class AppServices : IAsyncDisposable
             await Api.DisposeAsync().ConfigureAwait(false);
         }
 
+        ObsEvents.Dispose();
         Challenges.Dispose();
         LiveSplit.Dispose();
         LiveSplitEngine.Dispose();

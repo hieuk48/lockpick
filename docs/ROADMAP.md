@@ -272,7 +272,8 @@ is decided later. Keep-running stays out of challenges (it patches the game, and
      transparent, live through the event stream, options in the URL; "Copy OBS link" buttons; a pop-out HUD
      window for window capture; our in-game overlay is not part of any capture, so these pages are the stream's
      HUD;
-   - **`lockpick.lua`, an OBS script shipped with Lockpick** (Tools → Scripts; Lua needs nothing installed): finds
+   - **`lockpick.lua`, an OBS script shipped with Lockpick — written 2026-10-16 (#66; checked against a stand-in for
+     OBS's Lua API, not yet in OBS itself)** (Tools → Scripts; Lua needs nothing installed): finds
      Lockpick's API address and token itself, adds the Lockpick sources (and a Game Capture of the game) to a
      scene, and automates runs through OBS's own frontend API — start/stop recording with a run, chapter markers
      at splits, fails and deaths, save the replay buffer on a death, a fail or a new best, switch to a "paused"
