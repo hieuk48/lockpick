@@ -16,8 +16,48 @@ public sealed class Re1RunRules : IRunRules
     private const int EndingStage = 2;
 
     private static readonly Lazy<IReadOnlyList<SplitSet>> Sets = new(LoadEmbedded);
+    private static readonly Lazy<LeaderboardDefinition> Board = new(LoadBoard);
 
     public IReadOnlyList<SplitSet> SplitSets => Sets.Value;
+
+    /// <summary>RE1 PC on speedrun.com (data/games/re1/speedrun-com.json).</summary>
+    public LeaderboardDefinition Leaderboard => Board.Value;
+
+    /// <summary>
+    /// The board from the split set's category and name: Jill or Chris, the ending (an any% key-item route ends badly:
+    /// the fastest ending), glitches, knife only. What a name doesn't say is left for the player to pick.
+    /// </summary>
+    public IReadOnlyDictionary<string, string> LeaderboardFor(SplitSet splits)
+    {
+        var text = $"{splits.Category} {splits.Name}";
+        bool Has(string word) => text.Contains(word, StringComparison.OrdinalIgnoreCase);
+        var board = new Dictionary<string, string>();
+        if (splits.Character is PlayableCharacter.Jill or PlayableCharacter.Chris)
+        {
+            board["character"] = splits.Character == PlayableCharacter.Jill ? "jill" : "chris";
+        }
+
+        if (Has("Good Ending") || Has("Best Ending"))
+        {
+            board["ending"] = "best";
+        }
+        else if (Has("Bad Ending") || Has("Any%"))
+        {
+            board["ending"] = "bad";
+        }
+
+        if (Has("NMG") || Has("No Major"))
+        {
+            board["glitches"] = "nmg";
+        }
+        else if (Has("MG") || Has("Major Glitches"))
+        {
+            board["glitches"] = "mg";
+        }
+
+        board["restriction"] = Has("Knife") ? "knife" : "none";
+        return board;
+    }
 
     /// <summary>
     /// HP below 0 in a game (docs/MEMORY_MAP.md: every kill leaves HP below 0; poison and wasps clamp at 1). The state
@@ -41,6 +81,18 @@ public sealed class Re1RunRules : IRunRules
         && Raw(previous, Re1Session.Fields.StateFlags) is not (null or 0)
         && Raw(current, Re1Session.Fields.Stage) == EndingStage
         && Raw(current, Re1Session.Fields.MainMenu) == 0;
+
+    private static LeaderboardDefinition LoadBoard()
+    {
+        using var stream = typeof(Re1RunRules).Assembly.GetManifestResourceStream("Lockpick.GameAdapter.RE1.Data.speedrun-com.json")
+            ?? throw new InvalidOperationException("Missing embedded RE1 data speedrun-com.json.");
+        using var document = JsonDocument.Parse(stream);
+        var root = document.RootElement;
+        string S(JsonElement e, string name) => e.GetProperty(name).GetString()!;
+        return new LeaderboardDefinition(S(root, "game"), S(root, "category"), S(root, "platform"), S(root, "timeField"), S(root, "weblink"),
+            [.. root.GetProperty("filters").EnumerateArray().Select(f => new LeaderboardFilter(S(f, "key"), S(f, "label"), S(f, "variable"),
+                [.. f.GetProperty("values").EnumerateArray().Select(v => new LeaderboardChoice(S(v, "key"), S(v, "label"), S(v, "id")))]))]);
+    }
 
     private static long? Raw(GameSnapshot snapshot, string field) =>
         snapshot.RawFields.TryGetValue(field, out var value) && value.TryGet(out var v) ? v : null;

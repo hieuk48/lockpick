@@ -27,6 +27,9 @@ public static class AppPaths
 
     /// <summary>Every run attempt, a JSON-lines file per split set.</summary>
     public static string Runs => Path.Combine(DataRoot, "runs");
+
+    /// <summary>Secrets (the speedrun.com API key), each encrypted for the Windows user (DPAPI); never in settings.</summary>
+    public static string Secrets => Path.Combine(DataRoot, "secrets");
 }
 
 public sealed record AppSettings
@@ -104,6 +107,17 @@ public sealed record AppSettings
 
     /// <summary>LiveSplit's TCP server port (its default).</summary>
     public int LiveSplitPort { get; init; } = 16834;
+
+    /// <summary>Show speedrun.com's leaderboard on the Runs page (Lockpick goes online only when this is on).</summary>
+    public bool SpeedrunComLeaderboard { get; init; }
+
+    /// <summary>The player's speedrun.com name and id (from their API key or their name); never the key itself.</summary>
+    public string? SpeedrunComUser { get; init; }
+
+    public string? SpeedrunComUserId { get; init; }
+
+    /// <summary>The leaderboard chosen per split set (set id → "filter=choice;…"), when not the one its name suggests.</summary>
+    public IReadOnlyDictionary<string, string> SpeedrunComBoards { get; init; } = new Dictionary<string, string>();
 
     /// <summary>Set only while ask mode has the game frozen; lets the next start unfreeze it after a crash.</summary>
     public PausedGame? PausedGame { get; init; }

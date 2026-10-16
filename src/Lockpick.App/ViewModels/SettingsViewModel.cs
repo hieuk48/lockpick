@@ -19,6 +19,7 @@ public sealed partial class SettingsViewModel : PageViewModel
         _runSetup = runSetup;
         Overlay = overlay;
         GameDisplay = new GameDisplayViewModel(services);
+        Speedrun = new SpeedrunAccountViewModel(services.SpeedrunAccount);
         MapOptions = new MapOverlayOptionsViewModel(services);
         services.TrainerHotkeys.Pressed += (_, action) =>
         {
@@ -294,6 +295,9 @@ public sealed partial class SettingsViewModel : PageViewModel
 
     /// <summary>The game's own display settings (windowed / fullscreen, resolution, scaling) and moving its window.</summary>
     public GameDisplayViewModel GameDisplay { get; }
+
+    /// <summary>The player's speedrun.com account (name, API key).</summary>
+    public SpeedrunAccountViewModel Speedrun { get; }
 
     public override void OnVisibilityChanged(bool visible)
     {

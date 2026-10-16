@@ -235,6 +235,23 @@ is decided later. Keep-running stays out of challenges (it patches the game, and
      (B208);
    - nothing during a run needs a click: retry, marker and overlay toggle from hotkeys or the controller; Lockpick
      shows no dialogs and never takes focus while a run is on (update prompts wait).
+   - **Speedrun suite — Lockpick as the one stop from practice to submission** (owner's direction 2026-10-16):
+     1. *speedrun.com* — **leaderboard and account done 2026-10-16** (board per split set, WR / top / your place,
+        the API key kept with DPAPI and only sent to speedrun.com); next: submit a finished run (category and
+        subcategories, in-game time, date, video link, the run summary as the comment) after the player checks it.
+     2. *livesplit-core* (MIT/Apache, the engine of LiveSplit One) embedded through its C API (a native DLL built
+        from a pinned submodule with Rust): LiveSplit's own timing and comparisons, `.lss` read and written without
+        loss, LiveSplit layouts drawn for the overlay and OBS. Start with a spike on a branch (size, the community
+        files, CI with Rust).
+     3. *An RE1 autosplitter in livesplit-core's WebAssembly format* from Lockpick's verified addresses, run by
+        Lockpick and offered to the community (LiveSplit loads it too) — alongside the community `.asl`.
+     4. *Managed LiveSplit* for leaderboard runs (the rules require LiveSplit's `.asl` IGT script): Lockpick finds
+        or (on request) downloads LiveSplit, starts its server, follows it, and matches its splits by
+        `getcategoryname` / `getsplitname`.
+     5. *LiveSplit One* driven by Lockpick through its server protocol (a WebSocket on Lockpick's API) for a
+        browser or OBS timer with LiveSplit's look.
+     6. *Training*: practice from saves (segment practice with per-segment bests), where time was lost per segment,
+        the floor map and feed, captures; splits uploaded to splits.io with a submission.
 4. **OBS (stream- and record-friendly challenges):**
    - the API serves browser-source pages — timer, splits, HP, challenge status, event feed, room map —
      transparent, live through the event stream, options in the URL; "Copy OBS link" buttons; a pop-out HUD

@@ -55,6 +55,8 @@ public sealed class AppServices : IAsyncDisposable
         Feed = new Core.Insight.EventFeed(source, adapter.CreateChangeExplainer, adapter.RoomName);
         Runs = new Core.Runs.RunService(source, Trainer, adapter.CreateRunRules, new Core.Runs.RunHistoryStore(AppPaths.Runs));
         RunLibrary = new RunLibrary(Runs, adapter, Runs.History!, settings, loggerFactory.CreateLogger("Runs"));
+        SpeedrunCom = new SpeedrunCom(Updates.CurrentVersion);
+        SpeedrunAccount = new SpeedrunAccount(SpeedrunCom, new SecretStore(AppPaths.Secrets), settings);
         LiveSplit = new LiveSplitLink(Runs, source, settings.Current.LiveSplitMode, settings.Current.LiveSplitPort, loggerFactory.CreateLogger("LiveSplit"));
         TrainerHotkeys = new TrainerHotkeys(_log);
         TrainerHotkeys.Pressed += (_, action) =>
@@ -100,6 +102,12 @@ public sealed class AppServices : IAsyncDisposable
 
     /// <summary>The link to the runner's LiveSplit (Runs page).</summary>
     public LiveSplitLink LiveSplit { get; }
+
+    /// <summary>speedrun.com's API (leaderboards, the player's account).</summary>
+    public SpeedrunCom SpeedrunCom { get; }
+
+    /// <summary>The player's speedrun.com account and API key (kept encrypted).</summary>
+    public SpeedrunAccount SpeedrunAccount { get; }
 
     /// <summary>System-wide keys for trainer actions (Settings); presses are acted on by the Trainer page.</summary>
     public TrainerHotkeys TrainerHotkeys { get; }
@@ -352,6 +360,7 @@ public sealed class AppServices : IAsyncDisposable
 
         Challenges.Dispose();
         LiveSplit.Dispose();
+        SpeedrunCom.Dispose();
         Runs.Dispose();
         Feed.Dispose();
         Trainer?.Dispose();

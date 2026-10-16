@@ -50,6 +50,11 @@ All notable changes to this project are documented here. The format follows
   original (Restore my original puts it back), warns when fullscreen would change your monitor's resolution, and
   offers Restart Resident Evil right there (two clicks: anything since your last save is lost). It can also move
   the game window to another monitor, which the game itself doesn't allow.
+- **speedrun.com leaderboard** (Runs → Leaderboard, off until you turn it on): the board for your splits, the world
+  record, the top runs, where your best would place and your own run; the overlay shows the world record too.
+- **speedrun.com account** (Settings → speedrun.com): your name for the boards, and an optional API key for
+  submitting runs later — checked with speedrun.com, kept encrypted for your Windows account (never in settings or
+  logs), sent only to speedrun.com, never shown again, removable any time.
 - **Run summary and record for submissions:** Runs → Attempts → *Copy run summary* (category, result and in-game
   time, every split, the game build and its executable's SHA-256, trainer off) and *Save run record…* (the same as
   JSON). Attempts are numbered across sessions, and closing Lockpick keeps the attempt that was running.

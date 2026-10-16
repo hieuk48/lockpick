@@ -59,7 +59,8 @@ public sealed class LiveSplitLinkTests : IDisposable
 
         NewGame();
         WaitFor(() => _server.Received.Contains("starttimer"));
-        Assert.Contains("pausegametime", _server.Received); // LiveSplit's game time is set by Lockpick, not counted by it
+        Assert.Contains("alwayspausegametime", _server.Received); // LiveSplit's game time is set by Lockpick, not counted by it
+        Assert.DoesNotContain("initgametime", _server.Received);   // not a command of LiveSplit's own server
 
         _runs.Split();
         WaitFor(() => _server.Received.Contains("split"));

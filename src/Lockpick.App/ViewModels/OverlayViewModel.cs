@@ -79,6 +79,7 @@ public sealed partial class OverlayViewModel : ObservableObject
             ShowFeed();
         });
         services.RunLibrary.Changed += (_, _) => Dispatcher.UIThread.Post(() => ShowRun(state.Snapshot));
+        services.SpeedrunCom.ShownChanged += (_, _) => Dispatcher.UIThread.Post(() => ShowRun(state.Snapshot));
         Show(state.Snapshot);
         Show(services.Challenges.Status);
     }
@@ -373,7 +374,23 @@ public sealed partial class OverlayViewModel : ObservableObject
         RunClock = now is { } t ? RunRows.Clock(t) : "0:00.0";
         RunBehind = rows.ElementAtOrDefault(current) is { IsCurrent: true, IsBehind: true };
         var pb = comparison.PersonalBest.Count > 0 ? comparison.PersonalBest[^1] : null;
-        RunComparison = pb is { } p ? $"PB {RunRows.Clock(p)}" + (comparison.SumOfBest is { } sob ? $" · SoB {RunRows.Clock(sob)}" : string.Empty) : string.Empty;
+        var parts = new List<string>();
+        if (pb is { } p)
+        {
+            parts.Add($"PB {RunRows.Clock(p)}");
+        }
+
+        if (comparison.SumOfBest is { } sob)
+        {
+            parts.Add($"SoB {RunRows.Clock(sob)}");
+        }
+
+        if (_services.SpeedrunCom.Shown?.Record is { } wr)
+        {
+            parts.Add($"WR {RunRows.Clock(wr.Time)}");
+        }
+
+        RunComparison = string.Join(" · ", parts);
     }
 
     /// <summary>The enemies and bosses in the room, with HP (the enemies widget). Empty when there are none.</summary>

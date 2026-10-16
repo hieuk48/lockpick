@@ -1,0 +1,23 @@
+{
+  "comment": [
+    "Resident Evil on speedrun.com (https://www.speedrun.com/residentevil), read 2026-10-16 from the public API",
+    "(GET /api/v1/games/m1zklz10?embed=categories.variables,platforms). The PC category's four subcategories match",
+    "Lockpick's split sets. The board keeps one time, in its 'realtime' field, although PC runs are timed by in-game",
+    "time (its rules: 'Game is timed via In-Game Time'), so Lockpick's IGT compares with it directly."
+  ],
+  "game": "m1zklz10",
+  "category": "mke5yl9k",
+  "platform": "8gej2n93",
+  "timeField": "realtime",
+  "weblink": "https://www.speedrun.com/residentevil",
+  "filters": [
+    { "key": "character", "label": "Character", "variable": "p85077ng",
+      "values": [ { "key": "jill", "label": "Jill", "id": "21gny96l" }, { "key": "chris", "label": "Chris", "id": "jqznkg2q" } ] },
+    { "key": "ending", "label": "Ending", "variable": "yn2koen5",
+      "values": [ { "key": "bad", "label": "Bad Ending", "id": "5le2d2ml" }, { "key": "best", "label": "Best Ending", "id": "0q5vkv7l" } ] },
+    { "key": "glitches", "label": "Glitches", "variable": "9l7rp9n1",
+      "values": [ { "key": "nmg", "label": "No Major Glitches", "id": "810kojqv" }, { "key": "mg", "label": "Major Glitches", "id": "9qjk6014" } ] },
+    { "key": "restriction", "label": "Restriction", "variable": "ql6m0x89",
+      "values": [ { "key": "none", "label": "No Restriction", "id": "81py8yv1" }, { "key": "knife", "label": "Knife Only", "id": "xqke7edq" } ] }
+  ]
+}

@@ -94,6 +94,28 @@ Runs → LiveSplit):
 
 Checked against a stand-in for LiveSplit's server (tests); a check with LiveSplit itself is capture bounty B208.
 
+## speedrun.com
+
+RE1's leaderboard on speedrun.com (game `m1zklz10`, PC category `mke5yl9k`; `data/games/re1/speedrun-com.json`) has
+four subcategories — character, ending, glitches, restriction — the same cut as Lockpick's split sets. Its runs are
+timed by in-game time but the board keeps that time in its `realtime` field, so Lockpick's IGT compares directly.
+
+- **Leaderboard** (Runs → Leaderboard, off until turned on): the board for the chosen splits (picked from their
+  name, changeable and remembered per split set), the world record, the top five, where your best here would place
+  and your own run on the board. Read from speedrun.com's public API (no account), once an hour per board or on
+  Refresh; the overlay's splits widget adds the world record. Data is CC BY-NC 4.0 and credited on the page.
+- **Account** (Settings → speedrun.com): your name marks your runs on the boards (no key needed). Your **API key**
+  is optional and only needed to submit runs from Lockpick. Because a key lets an app act as you, Lockpick:
+  refuses anything that isn't shaped like a key before going online; checks the key with speedrun.com (`GET
+  /profile`) before keeping it; keeps it only in `%LOCALAPPDATA%\Lockpick\secrets`, encrypted with Windows DPAPI
+  for your Windows account (another user or another PC can't read it) — never in settings.json, logs, captures or
+  Lockpick's own API; sends it only to `https://www.speedrun.com` and follows no redirects (so it can't be carried
+  elsewhere); clears the box the moment you press Save and never shows it again. *Remove key* deletes it from the
+  PC; making a new key on speedrun.com stops the old one working anywhere.
+- The autosplitter LiveSplit's registry lists for RE1 (LiveSplit.AutoSplitters → deserteagle417's `RE1aio.asl`,
+  last changed 2024-07-01 for the GOG English build) is byte for byte the one Lockpick's built-in split points come
+  from (checked 2026-10-16).
+
 ## On the overlay and elsewhere
 
 - The **Run splits** widget (Settings → Overlay) shows the category, a few splits around the current one and the

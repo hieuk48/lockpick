@@ -25,7 +25,8 @@ public sealed class RunLibrary
         _settings = settings;
         _log = log;
         History = history;
-        BuiltIn = adapter.Profiles.Select(adapter.CreateRunRules).FirstOrDefault(r => r is not null)?.SplitSets ?? [];
+        Rules = adapter.Profiles.Select(adapter.CreateRunRules).FirstOrDefault(r => r is not null);
+        BuiltIn = Rules?.SplitSets ?? [];
         foreach (var path in settings.Current.ImportedSplitFiles)
         {
             try
@@ -55,6 +56,9 @@ public sealed class RunLibrary
     }
 
     public RunHistoryStore History { get; }
+
+    /// <summary>The game's run rules (split sets, its leaderboard), whether or not the game is running.</summary>
+    public IRunRules? Rules { get; }
 
     public IReadOnlyList<SplitSet> BuiltIn { get; }
 

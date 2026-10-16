@@ -91,6 +91,37 @@
         </StackPanel>
       </Border>
 
+      <!-- speedrun.com account: the name for the leaderboards, and the API key, kept encrypted -->
+      <Border Classes="card" DataContext="{Binding Speedrun}">
+        <StackPanel Spacing="8" x:DataType="vm:SpeedrunAccountViewModel">
+          <StackPanel Classes="cardhead">
+            <c:LucideIcon Data="{StaticResource Icon.Trophy}" />
+            <TextBlock Classes="caption" Text="SPEEDRUN.COM" />
+          </StackPanel>
+          <TextBlock TextWrapping="Wrap" Foreground="{StaticResource LpMutedBrush}"
+                     Text="Your speedrun.com name marks your runs on the leaderboards (Runs page). No password or key is needed for that." />
+          <WrapPanel ItemSpacing="8" LineSpacing="6">
+            <TextBox Text="{Binding UserName}" Watermark="Your speedrun.com name" MinWidth="220" AutomationProperties.Name="speedrun.com name" />
+            <Button Content="Use this name" Command="{Binding UseNameCommand}" />
+          </WrapPanel>
+          <TextBlock Text="{Binding NameStatus}" TextWrapping="Wrap"
+                     IsVisible="{Binding NameStatus, Converter={x:Static StringConverters.IsNotNullOrEmpty}}" />
+
+          <TextBlock Classes="label" Text="API key (optional)" Margin="0,6,0,0" />
+          <TextBlock TextWrapping="Wrap" Foreground="{StaticResource LpMutedBrush}"
+                     Text="Only needed to submit runs from Lockpick. Your key lets an app act as you on speedrun.com, so Lockpick: checks it with speedrun.com before keeping it; keeps it encrypted for your Windows account on this PC (not in its settings, logs, captures or its own API); sends it only to speedrun.com; and never shows it again. You can remove it here, and make a new one on speedrun.com at any time to stop the old one working. Never paste it anywhere else." />
+          <WrapPanel ItemSpacing="8" LineSpacing="6">
+            <Button Content="Get my key on speedrun.com" Click="OnOpenKeyPage" AutomationProperties.Name="Open speedrun.com to get your API key" />
+            <TextBox Text="{Binding KeyInput}" PasswordChar="•" Watermark="Paste your API key" MinWidth="260"
+                     AutomationProperties.Name="speedrun.com API key" />
+            <Button Content="Save key" Command="{Binding SaveKeyCommand}" Classes="accent" />
+            <Button Content="Remove key" Command="{Binding RemoveKeyCommand}" IsVisible="{Binding HasKey}" />
+          </WrapPanel>
+          <TextBlock Text="{Binding KeyStatus}" TextWrapping="Wrap"
+                     IsVisible="{Binding KeyStatus, Converter={x:Static StringConverters.IsNotNullOrEmpty}}" />
+        </StackPanel>
+      </Border>
+
       <!-- Game display -->
       <Border Classes="card" DataContext="{Binding GameDisplay}">
         <StackPanel Spacing="8" x:DataType="vm:GameDisplayViewModel">

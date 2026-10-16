@@ -74,4 +74,10 @@ public interface IRunRules
 
     /// <summary>The game is at its title menu (the player quit, or reset the game).</summary>
     bool AtTitle(GameSnapshot snapshot);
+
+    /// <summary>The game's speedrun.com leaderboard, or null when it has none Lockpick knows.</summary>
+    LeaderboardDefinition? Leaderboard => null;
+
+    /// <summary>The board a split set's runs belong on (filter key → choice key), as far as its name says.</summary>
+    IReadOnlyDictionary<string, string> LeaderboardFor(SplitSet splits) => new Dictionary<string, string>();
 }

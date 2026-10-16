@@ -223,7 +223,9 @@ public sealed class LiveSplitLink : IDisposable
 
         _ = e switch
         {
-            RunStarted => SendAsync("reset", "starttimer", "initgametime", "pausegametime", "setgametime 0"),
+            // As LiveSplit's own server reads them (src/LiveSplit.Core/Server/CommandServer.cs): its game time stays
+            // paused, so only Lockpick's setgametime moves it.
+            RunStarted => SendAsync("reset", "starttimer", "alwayspausegametime", $"setgametime {Clock(TimeSpan.Zero)}"),
             SplitReached split => SendAsync($"setgametime {Clock(split.GameTime)}", "split"),
             RunEnded { Result: not RunResult.Finished } => SendAsync("reset"),
             _ => Task.CompletedTask,

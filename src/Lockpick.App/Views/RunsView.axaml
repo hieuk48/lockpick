@@ -24,6 +24,10 @@
     <Style Selector="TextBlock.delta.behind">
       <Setter Property="Foreground" Value="{StaticResource LpRedBrush}" />
     </Style>
+    <Style Selector="TextBlock.you">
+      <Setter Property="FontWeight" Value="Bold" />
+      <Setter Property="Foreground" Value="{StaticResource LpGreenBrush}" />
+    </Style>
     <Style Selector="TextBlock.delta.gold">
       <Setter Property="Foreground" Value="#E8C547" />
     </Style>
@@ -101,6 +105,52 @@
                 </DataTemplate>
               </ItemsControl.ItemTemplate>
             </ItemsControl>
+          </StackPanel>
+        </Border>
+
+        <!-- speedrun.com leaderboard for these splits -->
+        <Border Classes="card" IsVisible="{Binding HasSet}">
+          <StackPanel Spacing="6" DataContext="{Binding Leaderboard}" x:DataType="vm:LeaderboardViewModel">
+            <TextBlock Classes="caption" Text="LEADERBOARD" />
+            <ToggleSwitch IsChecked="{Binding Enabled}" OnContent="speedrun.com leaderboard on" OffContent="speedrun.com leaderboard off"
+                          AutomationProperties.Name="Show the speedrun.com leaderboard" IsEnabled="{Binding Available}" />
+            <TextBlock TextWrapping="Wrap" Foreground="{StaticResource LpMutedBrush}" IsVisible="{Binding !Enabled}"
+                       Text="Shows the world record, the top runs and where your best would place. Lockpick goes online for this only while it's on (once an hour per board, or when you press Refresh)." />
+            <StackPanel Spacing="6" IsVisible="{Binding Enabled}">
+              <ItemsControl ItemsSource="{Binding Filters}">
+                <ItemsControl.ItemsPanel>
+                  <ItemsPanelTemplate><WrapPanel ItemSpacing="8" LineSpacing="6" /></ItemsPanelTemplate>
+                </ItemsControl.ItemsPanel>
+                <ItemsControl.ItemTemplate>
+                  <DataTemplate x:DataType="vm:LeaderboardFilterRow">
+                    <ComboBox ItemsSource="{Binding Choices}" SelectedItem="{Binding Selected}" MinWidth="150"
+                              AutomationProperties.Name="{Binding Label}" ToolTip.Tip="{Binding Label}" />
+                  </DataTemplate>
+                </ItemsControl.ItemTemplate>
+              </ItemsControl>
+              <TextBlock Text="{Binding Record}" FontWeight="SemiBold" TextWrapping="Wrap"
+                         IsVisible="{Binding Record, Converter={x:Static StringConverters.IsNotNullOrEmpty}}" />
+              <ItemsControl ItemsSource="{Binding Top}">
+                <ItemsControl.ItemTemplate>
+                  <DataTemplate x:DataType="vm:LeaderboardRow">
+                    <Grid ColumnDefinitions="40,*,Auto,90" ColumnSpacing="8" Margin="0,1">
+                      <TextBlock Text="{Binding Place}" FontFamily="{StaticResource LpMono}" Foreground="{StaticResource LpMutedBrush}" />
+                      <TextBlock Grid.Column="1" Text="{Binding Runner}" TextTrimming="CharacterEllipsis" Classes.you="{Binding IsYou}" />
+                      <TextBlock Grid.Column="2" Text="{Binding Time}" FontFamily="{StaticResource LpMono}" />
+                      <TextBlock Grid.Column="3" Text="{Binding Date}" Foreground="{StaticResource LpMutedBrush}" TextAlignment="Right" />
+                    </Grid>
+                  </DataTemplate>
+                </ItemsControl.ItemTemplate>
+              </ItemsControl>
+              <TextBlock Text="{Binding YourPlace}" TextWrapping="Wrap"
+                         IsVisible="{Binding YourPlace, Converter={x:Static StringConverters.IsNotNullOrEmpty}}" />
+              <WrapPanel ItemSpacing="8" LineSpacing="6">
+                <Button Content="Refresh" Command="{Binding ReloadCommand}" />
+                <Button Content="Open on speedrun.com" Click="OnOpenBoard" />
+              </WrapPanel>
+              <TextBlock Text="{Binding Status}" TextWrapping="Wrap" Foreground="{StaticResource LpMutedBrush}" />
+              <TextBlock Text="{Binding Credit}" TextWrapping="Wrap" FontSize="11" Foreground="{StaticResource LpMutedBrush}" />
+            </StackPanel>
           </StackPanel>
         </Border>
 

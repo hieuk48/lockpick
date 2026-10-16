@@ -8,6 +8,14 @@ public partial class SettingsView : UserControl
 {
     public SettingsView() => InitializeComponent();
 
+    private async void OnOpenKeyPage(object? sender, RoutedEventArgs e)
+    {
+        if (TopLevel.GetTopLevel(this)?.Launcher is { } launcher)
+        {
+            await launcher.LaunchUriAsync(new Uri(Services.SpeedrunCom.KeyPage));
+        }
+    }
+
     private async void OnBrowse(object? sender, RoutedEventArgs e)
     {
         if (DataContext is SettingsViewModel vm && await FilePickers.PickGameExecutableAsync(this) is { } path)

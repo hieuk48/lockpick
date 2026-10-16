@@ -66,10 +66,15 @@ public sealed partial class RunsViewModel : PageViewModel
         LiveSplitMode = LiveSplitChoices.FirstOrDefault(c => c.Id == services.Settings.Current.LiveSplitMode) ?? LiveSplitChoices[0];
         LiveSplitStatus = _liveSplit.Status;
         _liveSplit.StatusChanged += (_, _) => Dispatcher.UIThread.Post(() => LiveSplitStatus = _liveSplit.Status);
+        Leaderboard = new LeaderboardViewModel(services);
+        _runs.AttemptEnded += (_, _) => Dispatcher.UIThread.Post(Leaderboard.Refresh);
         Reload();
     }
 
     public System.Collections.ObjectModel.ObservableCollection<SplitSetChoice> Sets { get; } = [];
+
+    /// <summary>The speedrun.com leaderboard for the chosen splits.</summary>
+    public LeaderboardViewModel Leaderboard { get; }
 
     [ObservableProperty]
     public partial SplitSetChoice? Selected { get; set; }
@@ -284,6 +289,7 @@ public sealed partial class RunsViewModel : PageViewModel
         _syncing = false;
 
         var set = status.Set;
+        Leaderboard?.Show(set);
         HasSet = set is not null;
         IsImported = set?.ImportedFrom is not null;
         IsRunning = status.State == RunState.Running;
