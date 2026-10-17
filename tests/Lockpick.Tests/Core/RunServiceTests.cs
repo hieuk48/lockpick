@@ -87,6 +87,29 @@ public sealed class RunServiceTests : IDisposable
     }
 
     [Fact]
+    public void A_run_from_a_save_starts_at_the_chosen_split_and_leaves_the_ones_before_it_empty()
+    {
+        _runs.StartOnLoad = true;
+        _runs.SaveStartSplit = _ => 2; // the save is past "Hall" and "Upstairs"
+        _runs.Choose(Set);
+        _source.Poll(At("200", 600));
+        _source.Raise(new GameLoaded(_clock.GetUtcNow(), TimeSpan.FromSeconds(600), IsNewGame: false));
+        Assert.Equal(2, _runs.Status.Current);
+        Assert.All(_runs.Status.Times, t => Assert.Null(t)); // nothing back-filled
+
+        Play("200", 610, 31); // the Emblem: split 3
+        Assert.Null(_runs.Status.Times[0]);
+        Assert.Equal(TimeSpan.FromSeconds(610), _runs.Status.Times[2]!.GameTime);
+
+        _runs.SaveStartSplit = _ => 99; // out of range: the last split at most
+        _runs.Reset();
+        _source.Raise(new GameLoaded(_clock.GetUtcNow(), TimeSpan.FromSeconds(600), IsNewGame: false));
+        Assert.Equal(Set.Splits.Count - 1, _runs.Status.Current);
+        NewGame(); // a new game always starts at the first
+        Assert.Equal(0, _runs.Status.Current);
+    }
+
+    [Fact]
     public void Splits_for_the_other_character_are_flagged_at_the_start()
     {
         _runs.Choose(Set); // Jill's splits

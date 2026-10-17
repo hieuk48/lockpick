@@ -169,6 +169,25 @@ public sealed class LiveSplitCoreTests : IDisposable
     }
 
     [Fact]
+    public void An_attempt_from_a_save_starts_livesplit_at_the_same_split()
+    {
+        var source = new FakeStateSource();
+        source.Attach(1, TrainerServiceTests.Profile);
+        using var runs = new RunService(source, null, _ => null) { StartOnLoad = true, SaveStartSplit = _ => 2 };
+        var set = new SplitSet("t", "Test", "Jill - Test", PlayableCharacter.Jill, [.. Names.Select(n => new SplitDefinition(n, new ManualSplit()))], false, "test");
+        using var engine = new LiveSplitEngine(runs, source, _folder, NullLogger.Instance);
+        runs.Choose(set);
+        source.Poll(new GameSnapshot { InGameplay = Field<bool>.Valid(true), GameTime = Field<TimeSpan>.Valid(TimeSpan.FromMinutes(10)) });
+        source.Raise(new GameLoaded(DateTimeOffset.UtcNow, TimeSpan.FromMinutes(10), IsNewGame: false));
+        Assert.True(engine.Running);
+        Assert.Equal(2, runs.Status.Current);
+        runs.Split();
+        Assert.Equal(3, runs.Status.Current);
+        runs.Reset();
+        Assert.Contains("<AttemptHistory/>", engine.SaveLss(), StringComparison.Ordinal); // from a save: not in LiveSplit's history
+    }
+
+    [Fact]
     public void The_time_to_gain_is_the_personal_best_against_the_best_segments()
     {
         var set = new SplitSet("t", "Test", "Jill - Test", PlayableCharacter.Jill, [.. Names.Select(n => new SplitDefinition(n, new ManualSplit()))], false, "test");

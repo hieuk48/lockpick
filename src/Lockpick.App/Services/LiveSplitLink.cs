@@ -224,6 +224,11 @@ public sealed class LiveSplitLink : IDisposable
             return;
         }
 
+        if (e is RunStarted)
+        {
+            Interlocked.Exchange(ref _lastCurrent, 0); // a new attempt starts LiveSplit at its first split
+        }
+
         _ = e switch
         {
             // As LiveSplit's own server reads them (src/LiveSplit.Core/Server/CommandServer.cs): its game time stays
@@ -247,11 +252,16 @@ public sealed class LiveSplitLink : IDisposable
 
         if (current < previous)
         {
-            _ = SendAsync("unsplit");
+            _ = SendAsync([.. Enumerable.Repeat("unsplit", previous - current)]);
         }
-        else if (current > previous && status.Times.ElementAtOrDefault(current - 1) is null)
+        else if (current > previous)
         {
-            _ = SendAsync("skipsplit");
+            // Skips (several when an attempt from a save starts further on); a split's own step was sent with it.
+            var skips = Enumerable.Range(previous, current - previous).Count(i => status.Times.ElementAtOrDefault(i) is null);
+            if (skips > 0)
+            {
+                _ = SendAsync([.. Enumerable.Repeat("skipsplit", skips)]);
+            }
         }
     }
 

@@ -92,6 +92,12 @@
                         AutomationProperties.Name="Time runs from a save on the game's clock">
                 <TextBlock TextWrapping="Wrap" Text="Time it on the game's clock, the save's time included (off: from zero at the load)" />
               </CheckBox>
+              <WrapPanel ItemSpacing="8" LineSpacing="6" Margin="24,0,0,0" IsEnabled="{Binding StartOnLoad}">
+                <TextBlock Text="Start at" VerticalAlignment="Center" />
+                <ComboBox ItemsSource="{Binding StartSplitChoices}" SelectedItem="{Binding StartSplit}" MinWidth="180"
+                          AutomationProperties.Name="The split a run from a save starts at"
+                          ToolTip.Tip="Where your save is in the route. The splits before it stay empty: Lockpick never fills in a split it didn't see." />
+              </WrapPanel>
               <TextBlock TextWrapping="Wrap" Foreground="{StaticResource LpMutedBrush}"
                          Text="Lockpick only watches: it splits on rooms, key items and the ending, and keys for split, undo, skip and reset are in Settings → Hotkeys." />
               <TextBlock Text="{Binding Message}" TextWrapping="Wrap"

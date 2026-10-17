@@ -222,9 +222,16 @@ public sealed class LiveSplitEngine : IDisposable
                         timer.Undo();
                     }
                 }
-                else if (status.Current > _current && status.Times.ElementAtOrDefault(status.Current - 1) is null)
+                else
                 {
-                    timer.Skip();
+                    // Skips (one, or several when an attempt from a save starts further on) leave no time.
+                    for (var i = _current; i < status.Current; i++)
+                    {
+                        if (status.Times.ElementAtOrDefault(i) is null)
+                        {
+                            timer.Skip();
+                        }
+                    }
                 }
 
                 _current = status.Current;

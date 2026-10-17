@@ -41,6 +41,7 @@ public sealed class RunLibrary
 
         runs.StartOnLoad = settings.Current.RunStartOnLoad;
         runs.SaveRunsOnGameClock = settings.Current.RunSaveOnGameClock;
+        runs.SaveStartSplit = set => _settings.Current.RunSaveStartSplits.GetValueOrDefault(set.Id);
         runs.AttemptEnded += (_, record) =>
         {
             lock (_gate)
@@ -124,6 +125,15 @@ public sealed class RunLibrary
         {
             _settings.Save(_settings.Current with { RunSetId = set?.Id });
         }
+    }
+
+    /// <summary>The split an attempt from a save starts at, for these splits.</summary>
+    public int SaveStartSplit(SplitSet set) => _settings.Current.RunSaveStartSplits.GetValueOrDefault(set.Id);
+
+    public void SetSaveStartSplit(SplitSet set, int index)
+    {
+        var splits = new Dictionary<string, int>(_settings.Current.RunSaveStartSplits) { [set.Id] = index };
+        _settings.Save(_settings.Current with { RunSaveStartSplits = splits });
     }
 
     public void SetSaveOnGameClock(bool value)

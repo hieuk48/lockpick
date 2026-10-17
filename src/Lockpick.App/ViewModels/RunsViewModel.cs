@@ -236,6 +236,22 @@ public sealed partial class RunsViewModel : PageViewModel
     [ObservableProperty]
     public partial bool SaveOnGameClock { get; set; }
 
+    /// <summary>The splits of the chosen set, for "start at" (an attempt from a save).</summary>
+    [ObservableProperty]
+    public partial IReadOnlyList<string> StartSplitChoices { get; private set; } = [];
+
+    /// <summary>The split an attempt from a save starts at (the ones before it stay empty).</summary>
+    [ObservableProperty]
+    public partial string? StartSplit { get; set; }
+
+    partial void OnStartSplitChanged(string? value)
+    {
+        if (!_syncing && Selected?.Set is { } set && value is not null && StartSplitChoices.ToList().IndexOf(value) is >= 0 and var index)
+        {
+            _library.SetSaveStartSplit(set, index);
+        }
+    }
+
     partial void OnSaveOnGameClockChanged(bool value)
     {
         if (!_syncing && _library is not null)
@@ -398,6 +414,14 @@ public sealed partial class RunsViewModel : PageViewModel
             return;
         }
 
+        _syncing = true;
+        if (!set.Splits.Select(x => x.Name).SequenceEqual(StartSplitChoices))
+        {
+            StartSplitChoices = [.. set.Splits.Select(x => x.Name)];
+        }
+
+        StartSplit = StartSplitChoices.Count > 0 ? StartSplitChoices[Math.Clamp(_library.SaveStartSplit(set), 0, StartSplitChoices.Count - 1)] : null;
+        _syncing = false;
         var own = _library.Comparison(set);
         var comparison = _services.ComparisonFor(set);
         var now = status.GameTime(_state.Snapshot);

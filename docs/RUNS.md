@@ -9,7 +9,8 @@ Lockpick (LiveSplit can still run next to it). This page says how it works and w
   speedrun.com uses for RE1 PC. A run started by a new game uses the clock as it is (it starts at 0); a run started
   from a save (Runs → "Also start when I load a save") is timed on the game's clock too, the save's time included, so
   it matches the game (or from zero at the load, if you untick "Time it on the game's clock"). It never counts as a
-  personal best, a gold or a submission, and no split it didn't see is filled in.
+  personal best, a gold or a submission, and no split it didn't see is filled in. *Start at* sets the split such an
+  attempt starts at (where your save is in the route); the ones before it stay empty.
 - **Wrong splits:** when a run starts with splits for the other character (Jill's splits in Chris's game), Lockpick
   says so at once on the Runs page and as a big message.
 - **Real time** runs alongside, from the start of the attempt.

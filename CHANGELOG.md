@@ -75,6 +75,8 @@ All notable changes to this project are documented here. The format follows
   game is exclusive fullscreen and in front (the game would minimize).
 - **Wrong-splits warning:** a run started with splits for the other character (e.g. Jill's in Chris's game) says so
   at once — a big message and a note on the Runs page.
+- **Runs from a save start at your split:** Runs → Splits → *Start at* picks where your save is in the route; the
+  splits before it stay empty (nothing is filled in), and LiveSplit — built in or driven — starts there too.
 - **Runs from a save on the game's clock:** practice from a save is now timed on the game's own clock, so the splits
   match the game (an option times it from zero at the load instead). Splits it didn't see are never filled in.
 - **Story events in the right character's words:** a story-flag label is shown only in the games it was confirmed in

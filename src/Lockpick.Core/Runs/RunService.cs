@@ -127,6 +127,12 @@ public sealed class RunService : IDisposable
     /// </summary>
     public bool SaveRunsOnGameClock { get; set; } = true;
 
+    /// <summary>
+    /// The split an attempt from a save starts at (the player's choice per split set; 0: the first). The splits before
+    /// it stay empty — Lockpick never fills in a split it didn't see.
+    /// </summary>
+    public Func<SplitSet, int>? SaveStartSplit { get; set; }
+
     /// <summary>What to note on each new attempt about the checks it starts under (the leaderboard guard), or null.</summary>
     public Func<string?>? Checks { get; set; }
 
@@ -438,6 +444,7 @@ public sealed class RunService : IDisposable
             Set = set,
             // Numbered across sessions: after the attempts already kept for these splits.
             Attempt = Math.Max(Status.Attempt, SavedAttempts(set)) + 1,
+            Current = loaded.IsNewGame ? 0 : Math.Clamp(SaveStartSplit?.Invoke(set) ?? 0, 0, set.Splits.Count - 1),
             Times = new SplitTime?[set.Splits.Count],
             // A new game's clock is the run's (as on the leaderboard); from a save, the game's clock too, unless the
             // player times from the load.

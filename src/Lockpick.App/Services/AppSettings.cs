@@ -108,6 +108,9 @@ public sealed record AppSettings
     /// <summary>An attempt from a save is timed on the game's own clock (the save's time included); false: from zero.</summary>
     public bool RunSaveOnGameClock { get; init; } = true;
 
+    /// <summary>Per split set, the split an attempt from a save starts at (set id → index; missing: the first).</summary>
+    public IReadOnlyDictionary<string, int> RunSaveStartSplits { get; init; } = new Dictionary<string, int>();
+
     /// <summary>How Lockpick works with LiveSplit (<see cref="LiveSplitModes"/>): off, follow or drive.</summary>
     public string LiveSplitMode { get; init; } = LiveSplitModes.Off;
 
