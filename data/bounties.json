@@ -310,7 +310,7 @@
           "verifies": "The input words training captures record, for every pad and control type",
           "status": "partial",
           "evidence": [
-            "2026-10-17 owner with a PS5 pad (GOG English, control type 0; held word 0xBF0A04 and the game's key_on 0xBE9840 read every 20 ms): the game receives PlayStation button bits: directions (d-pad and left stick) Up 0x1000, Right 0x2000, Down 0x4000, Left 0x8000; Cross 0x0040 (key_on 0x8200), Square 0x0080 (0x40C0), R1 0x0008 (0x0500), Options 0x0800 (Start), and 0x0900 (Start + Select together; probably Create or the touchpad). Circle, Triangle, L1, L2 and R2 never appeared: not confirmed whether they were pressed. An Xbox pad connected mid-game isn't seen (the game picks up pads at launch). Still to do: the Xbox pad (restart with it connected), the keyboard, and the other control types."
+            "2026-10-17 owner with a PS5 pad (GOG English, control type 0; held word 0xBF0A04 and the game's key_on 0xBE9840 read every 20 ms): the game receives PlayStation button bits: directions (d-pad and left stick) Up 0x1000, Right 0x2000, Down 0x4000, Left 0x8000; Cross 0x0040 (key_on 0x8200), Square 0x0080 (0x40C0), R1 0x0008 (0x0500), Options 0x0800 (Start), and 0x0900 (Start + Select together; probably Create or the touchpad). Circle, Triangle, L1, L2 and R2 never appeared: not confirmed whether they were pressed. The owner also pressed buttons on an Xbox pad during the same recording; the two pads' presses can't be told apart there, so the Xbox pad is still to do on its own (the game picks up pads at launch), with the keyboard and the other control types."
           ]
         },
         {
