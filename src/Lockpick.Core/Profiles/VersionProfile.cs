@@ -41,6 +41,12 @@ public sealed record VersionProfile
     public IReadOnlyList<FieldSpec> Fields { get; init; } = [];
 
     /// <summary>
+    /// Addresses the adapter reads as a whole (tables, pointers, arrays) rather than as one field. Like fields, each has
+    /// its own verification; the adapter uses only trusted ones (<see cref="TrustedAddress"/>).
+    /// </summary>
+    public IReadOnlyList<NamedAddress> Addresses { get; init; } = [];
+
+    /// <summary>
     /// Memory blocks recorded verbatim by captures (e.g. the whole game-state block), so captures keep everything
     /// needed for later analysis — including values no field describes yet.
     /// </summary>
@@ -50,6 +56,16 @@ public sealed record VersionProfile
 
     public FieldSpec? FindField(string name) =>
         Fields.FirstOrDefault(f => string.Equals(f.Name, name, StringComparison.OrdinalIgnoreCase));
+
+    /// <summary>The named address when it is confirmed (static or runtime); null when missing or only a lead.</summary>
+    public ulong? TrustedAddress(string name) =>
+        Addresses.FirstOrDefault(a => string.Equals(a.Name, name, StringComparison.OrdinalIgnoreCase)) is { IsTrusted: true } a ? a.Address : null;
+
+    /// <summary>
+    /// The build has been checked in a live game (some field is runtime-verified). A profile ported from another build's
+    /// code only (tools/re1/port_profile.py) has none until a live trace: its state is shown, its writes stay off.
+    /// </summary>
+    public bool IsLiveVerified => Fields.Any(f => f.Verification == Verification.Runtime);
 
     /// <summary>The executable image range in memory, derived from the expected image base and size.</summary>
     public AddressRange ImageRange => new(Executable.ImageBase, Executable.SizeOfImage);
@@ -90,6 +106,27 @@ public sealed record CodeAnchor
     public required byte[] Bytes { get; init; }
 
     public string? Evidence { get; init; }
+}
+
+/// <summary>A named address (a table, pointer or array start) and the bytes the adapter reads there.</summary>
+public sealed record NamedAddress
+{
+    public required string Name { get; init; }
+
+    [JsonConverter(typeof(HexUInt64Converter))]
+    public ulong Address { get; init; }
+
+    /// <summary>Bytes read from <see cref="Address"/> (all must lie in the image).</summary>
+    [JsonConverter(typeof(HexUInt32Converter))]
+    public uint Length { get; init; } = 1;
+
+    public Verification Verification { get; init; }
+
+    public string? Description { get; init; }
+
+    public string? Evidence { get; init; }
+
+    public bool IsTrusted => Verification >= Verification.Static;
 }
 
 public sealed record MemoryRegionSpec

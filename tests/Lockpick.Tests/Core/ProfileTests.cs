@@ -8,7 +8,7 @@ namespace Lockpick.Tests.Core;
 
 public class ProfileTests
 {
-    private static VersionProfile Re1 => Re1Adapter.LoadEmbeddedProfiles().Single();
+    private static VersionProfile Re1 => Re1Adapter.LoadEmbeddedProfiles().Single(p => p.Id == "re1-gog-usa-hotfix4");
 
     private const string MinimalProfile = """
         {
@@ -54,6 +54,20 @@ public class ProfileTests
         Assert.Throws<ProfileValidationException>(() => ProfileLoader.Parse(dup));
         var badHash = MinimalProfile.Replace("FIELDS", string.Empty, StringComparison.Ordinal).Replace(new string('0', 64), "xyz", StringComparison.Ordinal);
         Assert.Throws<ProfileValidationException>(() => ProfileLoader.Parse(badHash));
+    }
+
+    [Fact]
+    public void Named_addresses_must_lie_in_the_image_and_trusted_ones_need_evidence()
+    {
+        static string With(string address) => MinimalProfile.Replace("\"fields\": [ FIELDS ]", $"\"fields\": [], \"addresses\": [ {address} ]", StringComparison.Ordinal);
+        var outside = With("""{ "name": "table", "address": "0x400F00", "length": "0x200", "verification": "unverified" }""");
+        Assert.Contains("outside the image", Assert.Throws<ProfileValidationException>(() => ProfileLoader.Parse(outside)).Message, StringComparison.Ordinal);
+        Assert.Throws<ProfileValidationException>(() => ProfileLoader.Parse(With("""{ "name": "table", "address": "0x400010", "verification": "static" }""")));
+
+        var lead = ProfileLoader.Parse(With("""{ "name": "table", "address": "0x400010", "length": "0x10", "verification": "unverified" }"""));
+        Assert.Null(lead.TrustedAddress("table")); // a lead is never used
+        var known = ProfileLoader.Parse(With("""{ "name": "table", "address": "0x400010", "verification": "static", "evidence": "code" }"""));
+        Assert.Equal(0x400010ul, known.TrustedAddress("TABLE"));
     }
 
     [Fact]

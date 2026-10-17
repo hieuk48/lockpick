@@ -16,7 +16,8 @@ Status legend: ✅ done and verified · 🟡 done, partially verified · ⬜ not
 | 0.1.5 | Research tooling: capture markers, ask mode, room index, capture timeline, subtitles pack | ✅ released 2026-10-13 |
 | 0.1.6 | Progress tracker (read-only), Items and Map pages, controller capture markers | ✅ released 2026-10-15 |
 | 0.2.0 | Core trainer (Trainer Mode, HP/ammo/inventory, hotkeys), Challenges tab, API for other tools, branding | ✅ released 2026-10-15 |
-| 0.3.0 | Play and stream with one app: overlay, runs (timer, splits, LiveSplit), OBS sources, training captures | ⬜ next — responsive UI and display research done |
+| 0.3.0 | Play and stream with one app: overlay, runs (timer, splits, LiveSplit), OBS sources, training captures | 🟡 released 2026-10-16 (live checks pending) |
+| 0.3.2 | Every speedrun.com RE1 run: the Japanese PC game with Classic REbirth, then GOG/Steam Japanese, then emulators | ⬜ next — 1.01 profile static, needs a live trace |
 | 0.4.0 | Room, camera, item and enemy database | ⬜ |
 | 0.5.0 | Object highlighting and ESP | ⬜ |
 | 0.6.0 | Advanced trainer and gameplay manipulation | ⬜ |
@@ -320,6 +321,27 @@ Known HUD data (already understood, read-only) for sprint 2 and #42:
 - current room and area by name (areas from the game's room table; names as they are confirmed);
 - room map — in the app since 2026-10-14 (`Re1RoomMaps`, `RoomMapControl`); next: script-placed objects (the
   dining-room clock) and the whole-floor view (tools/rdt/floor_map.py), then an overlay / browser-source version.
+
+### 0.3.2 — Every speedrun.com RE1 run
+
+Owner's direction (2026-10-17): "one tool for all speedrun.com RE1 runs". The PC board recommends the Japanese
+MediaKite game with Classic REbirth; GOG and Steam are allowed (docs/COMPATIBILITY.md has every board). Order:
+
+1. 🟡 **Japanese PC 1.01 (`Biohazard.exe`), with or without REbirth** — profile `re1-jpn-101` ported from the GOG one by
+   static cross-mapping (`tools/re1/xmap.py`, `tools/re1/port_profile.py`; every address and anchor found in the
+   1.01 exe's own code, MEMORY_MAP "Japanese PC 1.01"). Profiles now name their tables and pointers (`addresses`), so
+   the session has no build's addresses in code. REbirth installs: saves in its save folder, room files in `JPN\`,
+   display settings left to REbirth's setup. **Needs:** the Japanese data (GOG's Japanese installer, owner's
+   account) to run it, then a probe trace to raise the fields to runtime and the trainer's writes back on; check that
+   REbirth's in-memory patches leave the anchors alone.
+2. 🟡 **Leaderboard checks for REbirth** — the exe and every REbirth release (1.0.0–1.1.4) by hash, its banned options
+   (quickturn, tactical reload, debug) and cutscene skip from `config.ini`, `mod_*` folders. **Needs:** a list of the
+   Japanese data files (from the Japanese install, `tools/re1/install_manifest.py`).
+3. ⬜ **GOG Japanese unpatched and Steam** — port profiles from their executables (GOG Japanese: the installer;
+   Steam app 4249100: owner's copy, if any).
+4. ⬜ **EMU board** — read the PS1 game inside DuckStation (and BizHawk / PSXjin): find the console RAM in the
+   emulator, identify the disc, a profile per PS1 version (Director's Cut first, the board's fast version). Needs a PS1
+   disc image the owner owns for the research; console boards (PS, PSN, Saturn) stay out of reach.
 
 ## Developer tooling (never shipped)
 

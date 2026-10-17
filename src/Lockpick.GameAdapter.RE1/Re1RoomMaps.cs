@@ -46,6 +46,7 @@ public sealed class Re1RoomMaps : IRoomMapSource
         IReadOnlyDictionary<(string Room, int Item), (string Bank, uint Mask)>? fills = null)
     {
         _fills = fills ?? new Dictionary<(string, int), (string, uint)>();
+        // The data folder itself (Re1Install.DataDirectory: USA or JPN), or an install folder holding USA.
         var usa = Path.Combine(installDirectory, "USA");
         _stageRoot = Directory.Exists(usa) ? usa : installDirectory;
         _itemName = itemName;

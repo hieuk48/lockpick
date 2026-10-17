@@ -22,7 +22,7 @@ public static class BuildCheck
             var match = adapter.Identify(fp);
             var details = string.Create(CultureInfo.InvariantCulture, $"{fp.Path}\n{fp.FileSize:N0} bytes · SHA-256 {fp.Sha256}\n{match.Reason}");
             return match.IsSupported
-                ? new BuildCheckResult(true, true, $"Supported — {match.Profile!.DisplayName}", details)
+                ? new BuildCheckResult(true, true, $"Supported — {match.Profile!.DisplayName}{Preview(match.Profile)}", details)
                 : new BuildCheckResult(true, false, "This build is not supported yet", details);
         }
         catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or ArgumentException or NotSupportedException)
@@ -30,4 +30,8 @@ public static class BuildCheck
             return new BuildCheckResult(false, false, "Can't read that file", $"{path}: {ex.Message}");
         }
     }
+
+    /// <summary>A build whose addresses come from its code only (not yet checked in a live game): state, no cheats.</summary>
+    public static string Preview(Core.Profiles.VersionProfile profile) =>
+        profile.IsLiveVerified ? string.Empty : " (preview: read from the game's code, not yet checked in play; cheats stay off)";
 }

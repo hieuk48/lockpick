@@ -41,7 +41,9 @@ public sealed class Re1Adapter : IGameAdapter
 
     public string DisplayName => "Resident Evil";
 
-    public IReadOnlyCollection<string> ExecutableNames { get; } = ["ResidentEvil.exe"];
+    /// <summary>GOG's English release runs as ResidentEvil.exe; the Japanese PC game (MediaKite, GOG/Steam Japanese, with
+    /// or without Classic REbirth) as Biohazard.exe. Which build it is comes from the hash (profiles).</summary>
+    public IReadOnlyCollection<string> ExecutableNames { get; } = ["ResidentEvil.exe", "Biohazard.exe"];
 
     public IReadOnlyList<VersionProfile> Profiles { get; }
 
@@ -69,9 +71,12 @@ public sealed class Re1Adapter : IGameAdapter
 
     public Core.Runs.IRunRules CreateRunRules(VersionProfile profile) => RunRules;
 
-    /// <summary>The GOG game saves to SAVE\savedatN.dat next to the executable (one file per slot, 1–8; B112, #37).</summary>
+    /// <summary>
+    /// The GOG game saves to SAVE\savedatN.dat next to the executable (one file per slot, 1–8; B112, #37); with Classic
+    /// REbirth the same files go to its save folder (savedata\ unless config.ini says otherwise).
+    /// </summary>
     public string? SaveDirectory(string executablePath) =>
-        Path.GetDirectoryName(executablePath) is { } folder ? Path.Combine(folder, "SAVE") : null;
+        Path.GetDirectoryName(executablePath) is { } folder ? Re1Install.Inspect(folder).SaveDirectory : null;
 
     public int? SaveSlot(string fileName) =>
         fileName.Length == 12 && fileName.StartsWith("savedat", StringComparison.OrdinalIgnoreCase)
@@ -84,12 +89,14 @@ public sealed class Re1Adapter : IGameAdapter
     /// <summary>
     /// GOG's DirectDraw wrapper settings (<c>dxcfg.ini</c>, docs/DISPLAY.md): <c>aspect=disabled</c> stretches the
     /// 640×480 picture over the window, <c>scaling=integer</c> uses whole multiples, otherwise it is fitted at 4:3.
+    /// With Classic REbirth (its own DirectDraw replacement) the wrapper's file doesn't apply: the picture is taken as fitted.
     /// </summary>
     public Core.Display.GameDisplaySettings DisplaySettings(string installDirectory) =>
-        Re1Display.Read(Path.Combine(installDirectory, "dxcfg.ini"));
+        Re1Install.Inspect(installDirectory).GogDisplaySettings is { } ini ? Re1Display.Read(ini) : Re1Display.Default;
 
-    public Core.Display.IGameDisplayConfig DisplayConfig(string installDirectory, string backupDirectory) =>
-        new Re1DisplayConfig(Path.Combine(installDirectory, "dxcfg.ini"), backupDirectory);
+    /// <summary>GOG's wrapper settings to change from Lockpick; none with Classic REbirth (it has its own setup).</summary>
+    public Core.Display.IGameDisplayConfig? DisplayConfig(string installDirectory, string backupDirectory) =>
+        Re1Install.Inspect(installDirectory).GogDisplaySettings is { } ini ? new Re1DisplayConfig(ini, backupDirectory) : null;
 
     public Core.Insight.IProgressTracker CreateProgressTracker(VersionProfile profile) =>
         new Re1ProgressTracker(Re1Knowledge.LoadEmbedded());
@@ -109,7 +116,7 @@ public sealed class Re1Adapter : IGameAdapter
     public Core.Maps.IRoomMapSource CreateRoomMaps(string installDirectory)
     {
         var knowledge = Re1Knowledge.LoadEmbedded();
-        return new Re1RoomMaps(installDirectory, knowledge.Item, knowledge.Fills);
+        return new Re1RoomMaps(Re1Install.Inspect(installDirectory).DataDirectory, knowledge.Item, knowledge.Fills);
     }
 
     public static IEnumerable<VersionProfile> LoadEmbeddedProfiles()

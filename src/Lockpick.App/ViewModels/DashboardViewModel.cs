@@ -137,7 +137,7 @@ public sealed partial class DashboardViewModel : PageViewModel
         };
         ConnectionMessage = status.Message;
         ProcessText = status.Process is { } p ? $"PID {p.ProcessId} — {p.ExecutablePath ?? p.ProcessName}" : "—";
-        ProfileText = status.Profile is { } profile ? $"{profile.DisplayName} [{profile.Id}]" : status.State == ConnectionState.Unsupported ? "No matching profile" : "—";
+        ProfileText = status.Profile is { } profile ? $"{profile.DisplayName} [{profile.Id}]{Services.BuildCheck.Preview(profile)}" : status.State == ConnectionState.Unsupported ? "No matching profile" : "—";
         FileText = status.Fingerprint is { } fp ? $"{fp.FileName} — {fp.FileSize.ToString("N0", Inv)} bytes" : "—";
         HashText = status.Fingerprint?.Sha256 ?? "—";
         PeText = status.Fingerprint?.Pe is { } pe

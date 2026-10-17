@@ -27,6 +27,32 @@
     { "name": "game start sets state flag 0x2000000", "address": "0x480B53", "bytes": "81 0D C0 41 BE 00 00 00 00 02", "evidence": "or dword [0xBE41C0],0x2000000" },
     { "name": "player X read", "address": "0x40582E", "bytes": "A1 18 63 BE 00", "evidence": "mov eax,[0xBE6318]" }
   ],
+  "addresses": [
+    { "name": "inventoryPointer", "address": "0xD22768", "length": "0x4", "verification": "runtime",
+      "description": "Pointer to the inventory the game is using: 0xBE9944 (Chris/Jill) or 0xBE9950 (Rebecca).",
+      "evidence": "Live 2026-10-14 (Jill) and 2026-10-15 (Rebecca swap); the inventory code dereferences it at every item use (docs/MEMORY_MAP.md)." },
+    { "name": "inventory", "address": "0xBE9944", "length": "0x10", "verification": "runtime",
+      "description": "Chris's and Jill's inventory: 8 u16 slots, low byte item id, high byte quantity.",
+      "evidence": "Live 2026-10-13/14: slots follow pickups, use and combining; the value the inventory pointer holds for Chris and Jill." },
+    { "name": "inventoryRebecca", "address": "0xBE9950", "length": "0x10", "verification": "runtime",
+      "description": "Rebecca's inventory (6 slots used), the pointer's value while she is played.",
+      "evidence": "Live 2026-10-15 (B007): the pointer switches to 0xBE9950 after the swap and her items are there." },
+    { "name": "heldCount", "address": "0xBE9827", "length": "0x1", "verification": "runtime",
+      "description": "Inventory size in use; slots at or past it are empty.",
+      "evidence": "Live 2026-10-14: the game treats inventory slots at or past this count as empty (docs/MEMORY_MAP.md, inventory)." },
+    { "name": "itemBox", "address": "0xBE98E4", "length": "0x60", "verification": "runtime",
+      "description": "Item box: 48 u16 entries, low byte id, high byte quantity.",
+      "evidence": "Live 2026-10-13: each entry's low byte is the stored item's id and the high byte its quantity (docs/MEMORY_MAP.md box0..box3)." },
+    { "name": "actionTable", "address": "0xD91AA0", "length": "0x120", "verification": "runtime",
+      "description": "The room action table: 24 entries of 12 bytes; [0] handler (4 pickup, 8 item box, 16 typewriter), +8 the record.",
+      "evidence": "Decomp g_RoomActionTable; live 2026-10-14: the pickups it lists match the room files and the pickups made; handler 8/16 zones opened the box and the save prompt." },
+    { "name": "actionTail", "address": "0xD91BC0", "length": "0x4", "verification": "runtime",
+      "description": "Pointer to the last entry of the action table in use.",
+      "evidence": "Live 2026-10-14, with the action table: it points at the table's last armed entry, so the entries in use end there." },
+    { "name": "actorSlots", "address": "0xBE6464", "length": "0x2E68", "verification": "runtime",
+      "description": "Enemy/NPC slots: 30 x 0x18C; +0x00 bit 0 active, +0x01 type, +0x34/+0x3C X/Z, +0x74 facing, +0x88 HP.",
+      "evidence": "Live 2026-10-14/15 (dev combat tests in the weapon lab): HP falls with hits and goes below 0 at death; static cmp/sub word [0xBE64EC]." }
+  ],
   "captureRegions": [
     {
       "name": "gameState",

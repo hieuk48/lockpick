@@ -20,12 +20,14 @@ public class Re1AdapterTests
 
     public Re1AdapterTests()
     {
-        _profile = _adapter.Profiles.Single();
+        _profile = _adapter.Profiles.Single(p => p.Id == "re1-gog-usa-hotfix4");
         _memory = new FakeMemory().WithVerifiedImage(_profile);
         _session = _adapter.Attach(new FakeAttachedProcess(1, _memory, new ModuleImage(0x400000, 0x49B2000, null)), _profile);
     }
 
     private ulong Addr(string field) => _profile.FindField(field)!.Address;
+
+    private ulong Address(string name) => _profile.TrustedAddress(name)!.Value;
 
     /// <summary>Values observed live in a new Chris game in the main hall (2026-10-12 trace).</summary>
     private void NewChrisGameInMainHall()
@@ -46,7 +48,8 @@ public class Re1AdapterTests
     /// <summary>The live room action table: a door, an item pickup and an event-placed item (zero-size zone).</summary>
     private void ActionTable(ushort pickupItemX)
     {
-        const ulong table = 0xD91AA0, record = 0xC4EE00;
+        const ulong record = 0xC4EE00;
+        var table = Address(Re1Session.Addresses.ActionTable);
         var bytes = new byte[288]; // the whole table is read; entries past the tail are ignored
         bytes[0] = 1;   // door
         bytes[12] = 4;  // pickup → record
@@ -55,7 +58,7 @@ public class Re1AdapterTests
         BitConverter.GetBytes((uint)(record + 0x20)).CopyTo(bytes, 32);
         bytes[36] = 16; // typewriter → record + 0x40
         BitConverter.GetBytes((uint)(record + 0x40)).CopyTo(bytes, 44);
-        _memory.Write(table, bytes).Write(0xD91BC0, BitConverter.GetBytes((uint)(table + 36)));
+        _memory.Write(table, bytes).Write(Address(Re1Session.Addresses.ActionTail), BitConverter.GetBytes((uint)(table + 36)));
         var typewriter = new byte[12];
         BitConverter.GetBytes((short)2300).CopyTo(typewriter, 0);
         BitConverter.GetBytes((short)8750).CopyTo(typewriter, 2);
@@ -87,13 +90,13 @@ public class Re1AdapterTests
     public void Inventory_follows_the_pointer_and_held_count_and_the_box_lists_filled_entries()
     {
         NewChrisGameInMainHall();
-        _memory.Write(Re1Session.InventoryPointer, BitConverter.GetBytes(0xBE9944u));
-        _memory.WriteU8(Re1Session.HeldCount, 2);
+        _memory.Write(Address(Re1Session.Addresses.InventoryPointer), BitConverter.GetBytes(0xBE9944u));
+        _memory.WriteU8(Address(Re1Session.Addresses.HeldCount), 2);
         _memory.Write(0xBE9944, [0x01, 0x00, 0x02, 0x0F, 0x35, 0x01]); // knife, Beretta 15, a Shield key past the count
         var box = new byte[96];
         box[0] = 0x0B; box[1] = 15;   // clip ×15
         box[10] = 0x44; box[11] = 1;  // green herb (entry 5)
-        _memory.Write(Re1Session.ItemBoxSlots, box);
+        _memory.Write(Address(Re1Session.Addresses.ItemBox), box);
 
         var s = _session.Read(1, T0);
 
@@ -119,7 +122,7 @@ public class Re1AdapterTests
         NewChrisGameInMainHall();
         void Slot(int i, byte flags, byte type, int x, int z, short hp)
         {
-            var at = Re1Session.ActorSlots + (ulong)(i * Re1Session.ActorSize);
+            var at = Address(Re1Session.Addresses.ActorSlots) + (ulong)(i * Re1Session.ActorSize);
             var bytes = new byte[Re1Session.ActorSize];
             bytes[0] = flags;
             bytes[1] = type;
@@ -129,7 +132,7 @@ public class Re1AdapterTests
             _memory.Write(at, bytes);
         }
 
-        _memory.Write(Re1Session.ActorSlots, new byte[Re1Session.ActorSize * Re1Session.ActorCount]);
+        _memory.Write(Address(Re1Session.Addresses.ActorSlots), new byte[Re1Session.ActorSize * Re1Session.ActorCount]);
         Slot(0, 1, 0, 5300, 5800, 63);    // a zombie
         Slot(1, 1, 13, 100, 200, 3050);   // Yawn (boss)
         Slot(2, 1, 0, 0, 0, -1);          // a dead zombie
@@ -408,6 +411,7 @@ public class Re1AdapterTests
         var custom = _profile with { DisplayName = "Custom" };
         var other = _profile with { Id = "other-game", GameId = "re2" };
         var adapter = new Re1Adapter([custom, other]);
-        Assert.Equal("Custom", Assert.Single(adapter.Profiles).DisplayName);
+        Assert.Equal("Custom", Assert.Single(adapter.Profiles, p => p.Id == _profile.Id).DisplayName);
+        Assert.DoesNotContain(adapter.Profiles, p => p.Id == "other-game");
     }
 }

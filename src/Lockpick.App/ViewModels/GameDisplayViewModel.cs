@@ -241,6 +241,12 @@ public sealed partial class GameDisplayViewModel : ObservableObject
             var directory = exe is null ? null : Path.GetDirectoryName(exe);
             _config = directory is null ? null : _services.Adapter.DisplayConfig(directory, AppPaths.DisplayBackup);
             Available = _config is not null && File.Exists(_config.Path);
+            if (directory is not null && _config is null)
+            {
+                Status = "This install uses Classic REbirth, which has its own display setup (it runs before the game): change the window and resolution there.";
+                return;
+            }
+
             if (_config is null || !Available)
             {
                 Status = "The game's display settings weren't found — set the game's location above.";

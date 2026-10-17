@@ -95,12 +95,21 @@ public sealed class Re1RunRules : IRunRules
     }
 
     /// <summary>
-    /// The install against the files GOG's 1.0 hotfix4 release ships (data/games/re1/install/gog-hotfix4.sha256, made
-    /// by tools/re1/install_manifest.py from an untouched install). Files that change in normal use are not compared:
-    /// saves, the display settings, screenshots, GOG's log and uninstaller data.
+    /// The install against what the PC leaderboard allows. GOG's English release (ResidentEvil.exe): every file against
+    /// the ones GOG's 1.0 hotfix4 ships (data/games/re1/install/gog-hotfix4.sha256, made by tools/re1/install_manifest.py
+    /// from an untouched install); files that change in normal use are not compared (saves, the display settings,
+    /// screenshots, GOG's log and uninstaller data). The Japanese game (Biohazard.exe; MediaKite, or GOG/Steam's Japanese
+    /// version with Classic REbirth, as the rules recommend): the executable and REbirth by hash
+    /// (data/games/re1/install/rebirth.json) and REbirth's banned options; its data files aren't listed yet.
     /// </summary>
     public InstallCheck CheckInstall(string installDirectory)
     {
+        var install = Re1Install.Inspect(installDirectory);
+        if (File.Exists(Path.Combine(installDirectory, "Biohazard.exe")) && !File.Exists(Path.Combine(installDirectory, "ResidentEvil.exe")))
+        {
+            return CheckJapanese(install);
+        }
+
         var expected = Manifest.Value;
         var changed = new List<string>();
         var missing = new List<string>();
@@ -126,8 +135,78 @@ public sealed class Re1RunRules : IRunRules
             .Where(r => !known.Contains(r) && !Varies(r))
             .Order(StringComparer.OrdinalIgnoreCase)
             .ToList();
-        return new InstallCheck("GOG 1.0 hotfix4", changed, missing, extra);
+        List<InstallFinding> findings = install.Rebirth is null
+            ? []
+            : [new(InstallFindingLevel.Warn, "Classic REbirth's files are here, but REbirth runs only on the Japanese game (Biohazard.exe), not GOG's English one.")];
+        return new InstallCheck("GOG 1.0 hotfix4", changed, missing, extra, findings);
     }
+
+    private static InstallCheck CheckJapanese(Re1Install install)
+    {
+        var findings = new List<InstallFinding>();
+        var known = Re1Install.Known;
+        var exeHash = Re1Install.Hash(Path.Combine(install.Directory, "Biohazard.exe"));
+        findings.Add(exeHash is not null && known.Executables.TryGetValue(exeHash, out var exeRelease)
+            ? new InstallFinding(InstallFindingLevel.Pass, $"Biohazard.exe is {exeRelease}.")
+            : new InstallFinding(InstallFindingLevel.Warn,
+                $"Biohazard.exe ({(exeHash is null ? "unreadable" : exeHash[..12] + "…")}) isn't one Lockpick knows, so it can't confirm it's an official release (REbirth installs the Japanese 1.01 executable)."));
+
+        string release;
+        if (install.Rebirth is not { } rebirth)
+        {
+            release = "the Japanese PC game";
+            findings.Add(new InstallFinding(InstallFindingLevel.Warn,
+                "Classic REbirth isn't installed: the rules recommend it (or the 1.7/1.8 patch) for the Japanese PC version."));
+        }
+        else
+        {
+            release = $"the Japanese PC game with Classic REbirth{(rebirth.Version is { } v ? " " + v : string.Empty)}";
+            findings.Add(rebirth.Version is { } version
+                ? new InstallFinding(InstallFindingLevel.Pass, $"Classic REbirth {version} (allowed by the rules).")
+                : new InstallFinding(InstallFindingLevel.Warn, "ddraw.dll is a Classic REbirth build Lockpick doesn't know (a newer one?): check its version."));
+            if (rebirth.Settings.Count == 0)
+            {
+                findings.Add(new InstallFinding(InstallFindingLevel.Warn,
+                    "REbirth hasn't saved its settings yet (config.ini): start the game once, then check again (quickturn, tactical reload and the debug menu must be off)."));
+            }
+            else
+            {
+                foreach (var (key, name, where) in BannedRebirthOptions)
+                {
+                    if (rebirth.On(key))
+                    {
+                        findings.Add(new InstallFinding(InstallFindingLevel.Fail, $"REbirth's {name} is on: the rules ban it (turn it off {where})."));
+                    }
+                }
+
+                if (!BannedRebirthOptions.Any(o => rebirth.On(o.Key)))
+                {
+                    findings.Add(new InstallFinding(InstallFindingLevel.Pass, "REbirth's quickturn, tactical reload and debug menu are off."));
+                }
+
+                if (rebirth.On("CutSkip"))
+                {
+                    findings.Add(new InstallFinding(InstallFindingLevel.Warn, "REbirth's cutscene skip is on: check the leaderboard allows it before submitting."));
+                }
+            }
+
+            if (rebirth.ModFolders.Count > 0)
+            {
+                findings.Add(new InstallFinding(InstallFindingLevel.Warn,
+                    $"REbirth mod folders are here ({string.Join(", ", rebirth.ModFolders.Take(5))}): the rules allow no mods, so make sure none is enabled."));
+            }
+        }
+
+        return new InstallCheck(release, [], [], [], findings, FilesCompared: false);
+    }
+
+    /// <summary>The REbirth options the PC rules ban (config.ini [DLL]), with where to turn them off.</summary>
+    private static readonly (string Key, string Name, string Where)[] BannedRebirthOptions =
+    [
+        ("QuickTurn", "quickturn", "in REbirth's setup: Enable Quickturn"),
+        ("TactReload", "tactical reload", "in REbirth's setup: Enable Tactical Reload"),
+        ("EnableDebug", "debug mode", "in REbirth's setup, or config.ini EnableDebug = 0"),
+    ];
 
     /// <summary>The PC leaderboard's rules that only the player can keep (speedrun.com, RE1 PC rules, read 2026-10-16).</summary>
     public IReadOnlyList<string> LeaderboardReminders { get; } =

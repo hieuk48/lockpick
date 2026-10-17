@@ -78,6 +78,25 @@ crest 174, the two dogs in 108 (0, 1), the door 206→207 (lock 21), the documen
   gets `ERROR_ACCESS_DENIED` for `PROCESS_VM_READ`. Lockpick reports this explicitly.
 - **Confirmed:** The game is single-instance; a second launch exits immediately.
 
+## 1a. Versions runners use, and Classic REbirth (2026-10-17)
+
+- **Confirmed (speedrun.com API, game `residentevil`):** the PC board recommends the Japanese MediaKite version (or a
+  reprint) with Classic REbirth (or the 1.7/1.8 patch); GOG and Steam are allowed and may use REbirth. LiveSplit's IGT
+  script must be shown. Banned: REbirth's debug menu, quickturn and tactical reload; mods; tabbing out. Separate boards:
+  EMU (DuckStation with fixed settings, or PSXjin / BizHawk; Director's Cut non-DualShock is the fast version), PlayStation,
+  PSN, Saturn (real hardware), plus `re1ce` (extensions) and `re123`.
+- **Confirmed (LiveSplit.AutoSplitters.xml):** the only RE1 autosplitter is deserteagle417's `RE1aio.asl`; PC only
+  (JapaneseREbirth 10027008, JapaneseGOG 77144064, EnglishGOG 77279232 by ModuleMemorySize). GOG hotfix4's SizeOfImage
+  is 77275136 (`0x49B2000`), so the script's English GOG check doesn't match this build.
+- **Confirmed (classicrebirth.com, files downloaded 2026-10-17):** REbirth's install is the official 1.01 `Biohazard.exe`
+  (962,560 bytes) plus its `ddraw.dll` (1.1.4 also `SDL3.dll`, `gamecontrollerdb.txt`, and a Steam launcher,
+  `4249100_Launcher.exe`, with the game in `japanese\`). Its DLL holds the size `0xEB000` and SizeOfImage `0x990000` of the
+  1.01 exe and none of the GOG English exe's values. Version table in 1.1.4: European 1.00c, Japanese 1.01, Asia 1.00,
+  UK/USA 1.00 (+alt), German, French, PowerVR UK/US and Japanese 1.00, PC Gamer demo.
+- **Confirmed (strings in REbirth's DLL):** `config.ini` beside the game, `[RE1]` (… `Save_folder = %s`, default
+  `savedata`) and `[DLL]` (`QuickTurn`, `TactReload`, `CutSkip`, `FocusIgnore`, `EnableDebug`, `BootConfig`, `Steam`, …),
+  `[Mods]` / `[Mod_Preset_n]`; mods are `mod_*` folders. Saves: `<save folder>\savedatN.dat`.
+
 ## 2. Accessing memory
 
 - **Confirmed:** All relevant state is in static globals of the main image (no pointer chains needed for

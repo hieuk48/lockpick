@@ -40,12 +40,28 @@ internal sealed class Re1Session : IGameSession
     private Field<IReadOnlyList<HeldItem>> _inventory = Field<IReadOnlyList<HeldItem>>.Unavailable;
     private Field<IReadOnlyList<HeldItem>> _box = Field<IReadOnlyList<HeldItem>>.Unavailable;
 
-    // Inventory (docs/MEMORY_MAP.md): the game reaches the held items through the pointer at 0xD22768 — 0xBE9944
-    // (Chris/Jill) or 0xBE9950 (Rebecca) — and treats slots at or past the held count 0xBE9827 as empty (live
-    // 2026-10-14). Item box: 48 entries at 0xBE98E4, each low byte id, high byte quantity (live 2026-10-13).
-    internal const ulong InventoryPointer = 0xD22768;
-    internal const ulong HeldCount = 0xBE9827;
-    internal const ulong ItemBoxSlots = 0xBE98E4;
+    // The tables, pointers and arrays below come from the profile's named addresses (each build has its own), and a
+    // feature whose addresses a build lacks is simply unavailable. Names as in data/games/re1/profiles/*.json.
+    internal static class Addresses
+    {
+        public const string InventoryPointer = "inventoryPointer";
+        public const string Inventory = "inventory";
+        public const string InventoryRebecca = "inventoryRebecca";
+        public const string HeldCount = "heldCount";
+        public const string ItemBox = "itemBox";
+        public const string ActionTable = "actionTable";
+        public const string ActionTail = "actionTail";
+        public const string ActorSlots = "actorSlots";
+    }
+
+    // Inventory (docs/MEMORY_MAP.md): the game reaches the held items through the inventory pointer — Chris's/Jill's
+    // inventory or Rebecca's — and treats slots at or past the held count as empty (live 2026-10-14). Item box: 48
+    // entries, each low byte id, high byte quantity (live 2026-10-13).
+    private readonly ulong? _inventoryPointer;
+    private readonly ulong? _inventoryChrisJill;
+    private readonly ulong? _inventoryRebecca;
+    private readonly ulong? _heldCount;
+    private readonly ulong? _itemBox;
     private const int ItemBoxCount = 48;
     private RoomLocation? _placedRoom;
     private DateTimeOffset _placedAt;
@@ -53,8 +69,8 @@ internal sealed class Re1Session : IGameSession
     // The room action table (static: decomp g_RoomActionTable; live 2026-10-14: the pickups it lists match the
     // room files and the pickups made). 24 entries of 12 bytes; [0] handler (4 = item pickup), +8 the record
     // (zone x/z/width/depth as i16/i16/u16/u16, item id at +8). The tail pointer marks the last entry in use.
-    internal const ulong ActionTable = 0xD91AA0;
-    internal const ulong ActionTail = 0xD91BC0;
+    private readonly ulong? _actionTable;
+    private readonly ulong? _actionTail;
     private const int ActionEntries = 24;
     private const int PickupHandler = 4;
 
@@ -67,7 +83,7 @@ internal sealed class Re1Session : IGameSession
 
     // Enemy/NPC slots (live 2026-10-14, the dev combat tests: +0x00 bit 0 active, +0x01 type, +0x34/+0x3C X/Z as i32,
     // +0x74 facing, +0x88 HP as i16; a dead enemy's HP goes to −1 or below).
-    internal const ulong ActorSlots = 0xBE6464;
+    private readonly ulong? _actorSlots;
     internal const int ActorSize = 0x18C;
     internal const int ActorCount = 30;
     private const int FirstNpcType = 0x20;
@@ -82,6 +98,14 @@ internal sealed class Re1Session : IGameSession
         _fields = profile.Fields;
         _trusted = new HashSet<string>(profile.Fields.Where(f => f.IsTrusted).Select(f => f.Name), StringComparer.OrdinalIgnoreCase);
         _clusters = Cluster.Build(profile.Fields);
+        _inventoryPointer = profile.TrustedAddress(Addresses.InventoryPointer);
+        _inventoryChrisJill = profile.TrustedAddress(Addresses.Inventory);
+        _inventoryRebecca = profile.TrustedAddress(Addresses.InventoryRebecca);
+        _heldCount = profile.TrustedAddress(Addresses.HeldCount);
+        _itemBox = profile.TrustedAddress(Addresses.ItemBox);
+        _actionTable = profile.TrustedAddress(Addresses.ActionTable);
+        _actionTail = profile.TrustedAddress(Addresses.ActionTail);
+        _actorSlots = profile.TrustedAddress(Addresses.ActorSlots);
     }
 
     public VersionProfile Profile { get; }
@@ -167,8 +191,9 @@ internal sealed class Re1Session : IGameSession
         calls += 3;
         Span<byte> slots = stackalloc byte[16];
         Span<byte> count = stackalloc byte[1];
-        if (_memory.TryReadU32(InventoryPointer, out var pointer) && pointer is 0xBE9944 or 0xBE9950
-            && _memory.TryRead(HeldCount, count) && _memory.TryRead(pointer, slots))
+        if (_inventoryPointer is { } inventoryPointer && _heldCount is { } heldCount
+            && _memory.TryReadU32(inventoryPointer, out var pointer) && (pointer == _inventoryChrisJill || pointer == _inventoryRebecca)
+            && _memory.TryRead(heldCount, count) && _memory.TryRead(pointer, slots))
         {
             var held = new List<HeldItem>();
             for (var i = 0; i < Math.Min((int)count[0], 8); i++)
@@ -185,7 +210,7 @@ internal sealed class Re1Session : IGameSession
         var box = Field<IReadOnlyList<HeldItem>>.Unavailable;
         calls++;
         Span<byte> entries = stackalloc byte[ItemBoxCount * 2];
-        if (_memory.TryRead(ItemBoxSlots, entries))
+        if (_itemBox is { } itemBox && _memory.TryRead(itemBox, entries))
         {
             var stored = new List<HeldItem>();
             for (var i = 0; i < ItemBoxCount; i++)
@@ -204,7 +229,7 @@ internal sealed class Re1Session : IGameSession
 
     private Field<IReadOnlyList<LiveActor>> ReadActors()
     {
-        if (!_memory.TryRead(ActorSlots, _actorBuffer))
+        if (_actorSlots is not { } actorSlots || !_memory.TryRead(actorSlots, _actorBuffer))
         {
             return Field<IReadOnlyList<LiveActor>>.Unavailable;
         }
@@ -234,13 +259,14 @@ internal sealed class Re1Session : IGameSession
     {
         Span<byte> table = stackalloc byte[ActionEntries * 12];
         calls++;
-        if (!_memory.TryRead(ActionTable, table) || !_memory.TryReadU32(ActionTail, out var tailAddress))
+        if (_actionTable is not { } actionTable || _actionTail is not { } actionTail
+            || !_memory.TryRead(actionTable, table) || !_memory.TryReadU32(actionTail, out var tailAddress))
         {
             return Field<IReadOnlyList<PlacedItem>>.Unavailable;
         }
 
-        var used = tailAddress >= ActionTable && tailAddress < ActionTable + (ulong)table.Length
-            ? (int)((tailAddress - ActionTable) / 12) + 1
+        var used = tailAddress >= actionTable && tailAddress < actionTable + (ulong)table.Length
+            ? (int)((tailAddress - actionTable) / 12) + 1
             : 0;
         var items = new List<PlacedItem>();
         var fixtures = new List<PlacedFixture>();

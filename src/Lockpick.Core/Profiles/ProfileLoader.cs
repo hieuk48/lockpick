@@ -152,6 +152,25 @@ public static class ProfileLoader
             }
         }
 
+        var addressNames = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+        foreach (var named in profile.Addresses)
+        {
+            if (!addressNames.Add(named.Name))
+            {
+                errors.Add($"duplicate address '{named.Name}'");
+            }
+
+            if (named.Length == 0 || named.Length > MaxRegionLength || !image.Contains(named.Address, (int)named.Length))
+            {
+                errors.Add($"address '{named.Name}' at 0x{named.Address:X} (+0x{named.Length:X}) is empty, too large or outside the image {image}");
+            }
+
+            if (named.IsTrusted && string.IsNullOrWhiteSpace(named.Evidence))
+            {
+                errors.Add($"address '{named.Name}' is marked {named.Verification} but has no evidence");
+            }
+        }
+
         var regionNames = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
         foreach (var region in profile.CaptureRegions)
         {

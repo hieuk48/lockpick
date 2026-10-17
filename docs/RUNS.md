@@ -120,7 +120,8 @@ speedrun.com, read 2026-10-16):
 |---|---|
 | Lockpick's trainer off | Locked read-only for the session (the Speedrun challenge: no writes; switching it on fails the attempt) |
 | Ask mode off | Turned off and refused while on (it pauses the game) |
-| No mods | Every file GOG's 1.0 hotfix4 ships is hashed and compared with `data/games/re1/install/gog-hotfix4.sha256` (2 951 files, made by `tools/re1/install_manifest.py` from an untouched install; about 1.5 s); files beside the game that the release doesn't have (a mod loader, a plugin) are flagged. Saves, the display settings, screenshots, GOG's log and uninstaller data aren't compared |
+| No mods (GOG English) | Every file GOG's 1.0 hotfix4 ships is hashed and compared with `data/games/re1/install/gog-hotfix4.sha256` (2 951 files, made by `tools/re1/install_manifest.py` from an untouched install; about 1.5 s); files beside the game that the release doesn't have (a mod loader, a plugin) are flagged. Saves, the display settings, screenshots, GOG's log and uninstaller data aren't compared |
+| Japanese game + Classic REbirth (`Biohazard.exe`) | The exe is the official 1.01 one and `ddraw.dll` a published REbirth release (1.0.0–1.1.4), by SHA-256 (`data/games/re1/install/rebirth.json`); REbirth's `config.ini`: quickturn, tactical reload or debug mode on fails the check, cutscene skip on and `mod_*` folders warn. Its data files aren't listed yet, so the check says so instead of "unchanged" |
 | LiveSplit's IGT script | Required by the rules; a warning until LiveSplit is connected (Runs → LiveSplit) |
 
 What only the player can keep is listed as reminders: start at the title; LiveSplit's IGT script and the final

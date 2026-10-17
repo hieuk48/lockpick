@@ -173,6 +173,11 @@ public sealed class LeaderboardGuard
             {
                 checks.Add(new GuardCheck(GuardState.Warn, "Checking the game files…"));
             }
+            else if (!_install.FilesCompared)
+            {
+                checks.Add(new GuardCheck(GuardState.Warn,
+                    $"Lockpick has no list of {_install.Release}'s files yet, so its data files aren't compared (the checks below still apply)."));
+            }
             else if (_install.Unchanged)
             {
                 checks.Add(new GuardCheck(GuardState.Pass, $"The game files are {_install.Release}'s, unchanged (no mods)."));
@@ -182,6 +187,16 @@ public sealed class LeaderboardGuard
                 var changed = _install.Changed.Concat(_install.Missing.Select(m => m + " (missing)")).ToList();
                 checks.Add(new GuardCheck(GuardState.Fail,
                     $"{changed.Count} game file(s) differ from {_install.Release}'s (a mod?): {string.Join(", ", changed.Take(5))}{(changed.Count > 5 ? ", …" : string.Empty)}."));
+            }
+
+            foreach (var note in _install?.Notes ?? [])
+            {
+                checks.Add(new GuardCheck(note.Level switch
+                {
+                    InstallFindingLevel.Fail => GuardState.Fail,
+                    InstallFindingLevel.Warn => GuardState.Warn,
+                    _ => GuardState.Pass,
+                }, note.Text));
             }
 
             if (_install is { Extra.Count: > 0 } withExtra)
@@ -213,8 +228,15 @@ public sealed class LeaderboardGuard
         }
 
         _log.LogInformation("Leaderboard attempt begins with {Failed} failed check(s)", failed.Count);
+        InstallCheck? install;
+        lock (_gate)
+        {
+            install = _install;
+        }
+
         return failed.Count == 0
-            ? "Leaderboard checks passed when the attempt began: Lockpick read-only (trainer locked, ask mode off), game files unchanged."
+            ? "Leaderboard checks passed when the attempt began: Lockpick read-only (trainer locked, ask mode off), "
+                + (install is { FilesCompared: false } ? $"{install.Release} as checked (data files not compared)." : "game files unchanged.")
             : $"Leaderboard checks NOT passed when the attempt began: {string.Join(" ", failed)}";
     }
 }

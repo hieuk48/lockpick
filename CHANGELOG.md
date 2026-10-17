@@ -6,6 +6,20 @@ All notable changes to this project are documented here. The format follows
 
 ## [Unreleased]
 
+### Added
+- **The Japanese PC game (`Biohazard.exe` 1.01), the version the speedrun.com PC board recommends, with or without
+  Classic REbirth (preview):** every address Lockpick reads was found in that exe's own code; state, runs and splits
+  work, cheats stay off until it is checked in play. REbirth's save folder, `JPN` room files and its own display setup
+  are handled.
+- **Leaderboard run on the Japanese game:** the exe and Classic REbirth (every release, 1.0.0–1.1.4) are checked by
+  hash, and REbirth's banned quickturn, tactical reload and debug mode fail the check; cutscene skip and mod folders
+  are flagged.
+- `tools/re1/xmap.py` and `tools/re1/port_profile.py`: port the verified profile to another build by finding the same
+  code in it (developer tools).
+
+### Changed
+- Profiles name the tables and pointers the adapter reads (`addresses`), so no build's addresses live in code.
+
 ## [0.3.0] - 2026-10-16
 
 ### Added

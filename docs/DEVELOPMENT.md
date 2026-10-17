@@ -255,9 +255,17 @@ Never guess an offset. If a value cannot be verified, leave it unsupported.
 ## Adding a game build
 
 1. `lockpick-probe identify <exe>` → SHA-256, size, PE timestamp, image size.
-2. Copy an existing profile in `data/games/re1/profiles/`, change the `executable` block and `id`.
-3. Re-verify every anchor and field for the new build (addresses differ between builds).
+2. Port the verified GOG profile to it by static cross-mapping (needs `pip install capstone pefile`, e.g. in the
+   research venv; `PIP_CONFIG_FILE=nul` on the dev machine):
+   `python tools/re1/port_profile.py data/games/re1/profiles/re1-gog-usa-hotfix4.json <GOG ResidentEvil.exe> <new exe>
+   --id <id> --name "<name>" --out data/games/re1/profiles/<id>.json`. It finds the code that uses each address
+   in the new exe and keeps only what the code sites agree on (static); anchors must all be found. Check the
+   "not carried over" list it prints. `python tools/re1/xmap.py A.exe B.exe targets.txt` shows the votes for any
+   address list.
+3. Run the build and `lockpick-probe trace` against it; raise each field to `runtime` only after it behaves as
+   described in play, with the date in its evidence (and only then restore `write` bounds for the trainer).
 4. Profiles are embedded at build time; users can also drop profiles in `%LOCALAPPDATA%\Lockpick\profiles\`.
+   Tables, pointers and arrays the adapter reads as a whole are the profile's `addresses` (by name), not code.
 
 ## Recording fixtures
 

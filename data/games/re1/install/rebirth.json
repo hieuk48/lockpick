@@ -1,0 +1,23 @@
+{
+  "comment": "Classic REbirth for RE1 (Gemini, classicrebirth.com) and the official Japanese 1.01 executable it runs on, by SHA-256 of the files as published (downloaded 2026-10-17; the version is the site's label for each archive). The leaderboard allows REbirth with its quickturn, tactical reload and debug menu off.",
+  "executables": [
+    { "file": "Biohazard.exe", "sha256": "25BE34D4F4586E9EC84E39412915AE1DE38AF1FC5924C02824D38E15C8406458", "release": "the official Japanese 1.01 executable (MediaKite patch 1.01, as REbirth installs it)" }
+  ],
+  "rebirth": [
+    { "version": "1.1.4", "date": "2026-09-27", "file": "ddraw.dll", "sha256": "144764BF113D0F19767A9F2E35927B30CCFBB978790A427189583544B6C52889" },
+    { "version": "1.1.3", "date": "2020-12-06", "file": "ddraw.dll", "sha256": "6C17EC863C17B2834CFD1F802C4DAC5FDC4E146F516671559AD5B9E0F4948019" },
+    { "version": "1.1.2", "date": "2019-09-06", "file": "ddraw.dll", "sha256": "5BA361B4FDADE78559C44177AB2612773B73E06220AB78922983C70D2EC3772F" },
+    { "version": "1.1.1", "date": "2019-09-02", "file": "ddraw.dll", "sha256": "49083C8F958B87472FD045C25B056DEE6457ECB452CBDAEAE50E5AFEC4926869" },
+    { "version": "1.1.0", "date": "2019-07-16", "file": "ddraw.dll", "sha256": "90C0AED29015B09B83B8160B96C2F38F7C58B6C1AAECFD538D5AB46B631C75B0" },
+    { "version": "1.0.6", "date": "2018-07-21", "file": "ddraw.dll", "sha256": "9A3C835668A7BE537680768A5606436BBD91D901D4BCFA2825AF711BDE856DB2" },
+    { "version": "1.0.5", "date": "2018-07-20", "file": "ddraw.dll", "sha256": "73C3D7C2633356AA61677D9B73FD0C290F7BE6C1ACDDF06C8A57D0B16C751375" },
+    { "version": "1.0.4", "date": "2018-07-15", "file": "ddraw.dll", "sha256": "973CD854AC12BFE208068E466AA910193A6BA2F0CAA194C83D26E07426B3234C" },
+    { "version": "1.0.3", "date": "2018-07-14", "file": "ddraw.dll", "sha256": "2F5B068B6F3AB743C90952F2486EAF2E438D2093AF68799998BDD9E473A757E7" },
+    { "version": "1.0.2", "date": "2018-07-10", "file": "ddraw.dll", "sha256": "46D3D33FF4F3DF1D65DCF78C5683DEF143DED5BCE7D391D40E28D3D82C2DF38B" },
+    { "version": "1.0.1", "date": "2018-07-08", "file": "ddraw.dll", "sha256": "A1C880D2A6C4DF4C345E91D31CB08ACBD9E2DD93988CB760061965EB242706DC" },
+    { "version": "1.0.0", "date": "2018-07-04", "file": "ddraw.dll", "sha256": "37DCF7DAEA6F27AD4CF69DB31BDC15259DB18BD8BA8B8E0737D2846B994E6CBF" }
+  ],
+  "rebirthFiles": [
+    { "file": "SDL3.dll", "sha256": "B24EA20FCF5257329CB1FEE7DA2441F950680A8734D354CD6C464A6E388CCF98", "with": "1.1.4" }
+  ]
+}

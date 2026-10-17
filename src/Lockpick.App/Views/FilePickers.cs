@@ -6,9 +6,9 @@ namespace Lockpick.App.Views;
 
 internal static class FilePickers
 {
-    private static readonly FilePickerFileType GameExecutable = new("Resident Evil (ResidentEvil.exe)")
+    private static readonly FilePickerFileType GameExecutable = new("Resident Evil (ResidentEvil.exe, or Biohazard.exe for the Japanese game)")
     {
-        Patterns = ["ResidentEvil.exe", "*.exe"],
+        Patterns = ["ResidentEvil.exe", "Biohazard.exe", "*.exe"],
     };
 
     private static readonly FilePickerFileType Splits = new("LiveSplit splits (*.lss)") { Patterns = ["*.lss"] };
@@ -127,7 +127,7 @@ internal static class FilePickers
 
         var files = await storage.OpenFilePickerAsync(new FilePickerOpenOptions
         {
-            Title = "Find ResidentEvil.exe",
+            Title = "Find ResidentEvil.exe (or Biohazard.exe)",
             AllowMultiple = false,
             FileTypeFilter = [GameExecutable],
         });
