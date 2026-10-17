@@ -288,9 +288,10 @@
           "id": "B205",
           "task": "Die and reach the **Game Over** screen: once choose to continue, once quit to the title",
           "verifies": "Death and Game Over detection, and how a run attempt ends (continue vs. quit)",
-          "status": "partial",
+          "status": "done",
           "evidence": [
-            "2026-10-16/17 owner's play (run records): three deaths (two on GOG English, one on the Japanese 1.01 under REbirth) ended the attempts as 'died', five quits to the title as 'quitToTitle'. The REbirth probe trace (2026-10-17): HP fell to -10, the clock froze at the death and stayed frozen until the title menu came back about a minute later (no room reload). Still open: whether the game ever offers Continue after a death."
+            "2026-10-16/17 owner's play (run records): three deaths (two on GOG English, one on the Japanese 1.01 under REbirth) ended the attempts as 'died', five quits to the title as 'quitToTitle'. The REbirth probe trace (2026-10-17): HP fell to -10, the clock froze at the death and stayed frozen until the title menu came back about a minute later (no room reload).",
+            "2026-10-17 owner + memory watch (GOG English): the game has no Continue; a death goes back to the title. HP -10 with the dead flag 0x01000000 in the state flags (0x4100000C), the clock frozen at 6 891 frames, the title menu (main-menu flag 1) 5.5 s later. So an attempt ends 'died' at the death and the next run starts from the title."
           ]
         },
         {
