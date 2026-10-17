@@ -186,12 +186,19 @@ public sealed partial class DebugViewModel : PageViewModel, IDisposable, Lockpic
         return marker.Number;
     }).GetTask();
 
+    /// <summary>
+    /// A training capture (#61, opt-in each time): the game's memory every tick with the buttons the game read, for
+    /// research on AI that learns to play from people. Off every time Lockpick starts.
+    /// </summary>
+    [ObservableProperty]
+    public partial bool TrainingCapture { get; set; }
+
     [RelayCommand(CanExecute = nameof(CanStartCapture))]
     private void StartCapture()
     {
         try
         {
-            _capture = new CaptureSession(_services.Source, AppPaths.Captures, _services.Adapter.GameId, _services.AppVersion);
+            _capture = new CaptureSession(_services.Source, AppPaths.Captures, _services.Adapter.GameId, _services.AppVersion, training: TrainingCapture);
             IsCapturing = true;
             LastCaptureZip = null;
             Markers.Clear();

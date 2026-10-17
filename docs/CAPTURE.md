@@ -59,6 +59,16 @@ Not recorded: screenshots, audio, input, anything outside the game's memory, fil
 Capturing is read-only — it never writes to the game's memory or files, the same way a LiveSplit autosplitter works.
 If you submit runs to a leaderboard, check that leaderboard's rules for external tools.
 
+## Training captures
+
+Tick **Training capture** on Debug → Capture before starting (off every time Lockpick starts) to help research on AI
+that learns to play from people (#61). It records the same game data as a normal capture, but every frame (each tick of
+the game's 30-a-second clock, polled twice as fast so none is missed) instead of ten times a second, and with the
+buttons as the game read them: the raw button words (`0xBF0A04` held, `0xBF0A08` newly pressed), the game's own input
+words (`0xBE9840`/`0xBE9842`, in the main state block) and the control type (`0xBE9A5C`). Nothing else: no screen,
+sound, keystrokes outside the game, files or anything about you. It's about three times the size of a normal capture;
+`capture-info.json` says `"Training": true`. `tools/rl/dataset.py` reads it like any capture.
+
 ## What to play
 
 The **[bounty list](CAPTURE_BOUNTIES.md)** has everything still needed, by release — pick anything marked ⬜ and

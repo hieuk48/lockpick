@@ -108,6 +108,9 @@ public interface IGameStateSource : IAsyncDisposable
     /// <summary>Ask the source to include raw capture regions in polled snapshots (costs extra reads; capture only).</summary>
     bool RecordRegions { get; set; }
 
+    /// <summary>Poll twice as often (training captures: every game tick, the clock running at 30 a second).</summary>
+    bool FastPoll { get; set; }
+
     GameSnapshot? Latest { get; }
 
     MonitorStatistics Statistics { get; }

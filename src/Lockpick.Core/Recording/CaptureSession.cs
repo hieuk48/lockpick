@@ -36,6 +36,9 @@ public sealed record CaptureInfo(string LockpickVersion, string Os, DateTimeOffs
 
     public int Markers { get; set; }
 
+    /// <summary>A training capture (#61): the game's memory every tick, the inputs with it (the player opted in).</summary>
+    public bool Training { get; set; }
+
     /// <summary>Changes of the game window recorded (window-N.jsonl).</summary>
     public int WindowChanges { get; set; }
 
@@ -81,6 +84,8 @@ public sealed class CaptureSession : IDisposable
 
     private StreamWriter? _trace;
     private StreamWriter? _events;
+    private readonly bool _training;
+    private long? _lastRegionTick;
     private StreamWriter? _window;
     private Display.GameWindowInfo? _lastWindow;
     private SessionRecorder? _recorder;
@@ -91,7 +96,7 @@ public sealed class CaptureSession : IDisposable
     private DateTimeOffset _lastFlush;
     private bool _stopped;
 
-    public CaptureSession(IGameStateSource source, string rootDirectory, string gameId, string appVersion, TimeProvider? time = null)
+    public CaptureSession(IGameStateSource source, string rootDirectory, string gameId, string appVersion, TimeProvider? time = null, bool training = false)
     {
         _source = source;
         _gameId = gameId;
@@ -106,6 +111,9 @@ public sealed class CaptureSession : IDisposable
 
         // Ask the source for raw memory regions while capturing (see RegionLogWriter).
         _source.RecordRegions = true;
+        _training = training;
+        _info.Training = training;
+        _source.FastPoll = training;
         _source.StatusChanged += OnStatus;
         _source.Polled += OnPolled;
         _source.SnapshotChanged += OnSnapshot;
@@ -320,6 +328,7 @@ public sealed class CaptureSession : IDisposable
     private void Unsubscribe()
     {
         _source.RecordRegions = false;
+        _source.FastPoll = false;
         _source.StatusChanged -= OnStatus;
         _source.Polled -= OnPolled;
         _source.SnapshotChanged -= OnSnapshot;
@@ -382,10 +391,15 @@ public sealed class CaptureSession : IDisposable
 
             _lastRaw = raw;
             _info.Samples++;
-            if (_regionLog is not null && snapshot.Regions.Count > 0 && snapshot.CapturedAt - _lastRegionAt >= RegionInterval)
+            // Training captures: every game tick (the clock moved), with its inputs; otherwise ten times a second.
+            // The game's tick counter (raw, so menus and the title count too).
+            var tick = snapshot.RawFields.TryGetValue("gameTimer", out var timer) && timer.HasValue ? timer.Value : (long?)null;
+            var due = _training && tick is not null ? tick != _lastRegionTick : snapshot.CapturedAt - _lastRegionAt >= RegionInterval;
+            if (_regionLog is not null && snapshot.Regions.Count > 0 && due)
             {
                 _regionLog.Append(snapshot.CapturedAt, snapshot.Regions);
                 _lastRegionAt = snapshot.CapturedAt;
+                _lastRegionTick = tick;
                 _info.MemoryRecords = _regionLog.Records;
             }
 

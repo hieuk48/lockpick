@@ -235,6 +235,52 @@ public sealed class CaptureSessionTests : IDisposable
     }
 
     [Fact]
+    public void A_training_capture_records_every_game_tick_with_the_inputs()
+    {
+        var profile = _adapter.Profiles[0];
+        _fingerprints.ByPath[ExePath] = FakeFingerprintProvider.For(profile, ExePath);
+        var memory = new FakeMemory().WithVerifiedImage(profile);
+        foreach (var region in profile.CaptureRegions)
+        {
+            memory.Write(region.Address, new byte[region.Length]);
+        }
+
+        var timer = profile.FindField("gameTimer")!.Address;
+        var input = profile.CaptureRegions.Single(r => r.Name == "input");
+        _host.Launch(8, ExePath, memory, new ModuleImage(0x400000, 0x49B2000, ExePath));
+        var monitor = new GameMonitor(_adapter, _host, _fingerprints, time: _time);
+        using var capture = new CaptureSession(monitor, _root, "re1", "9.9.9", training: true);
+        Assert.True(monitor.FastPoll); // twice the poll rate, so no tick is missed
+        _time.Advance(TimeSpan.FromSeconds(2));
+        monitor.Tick();
+
+        // Three game ticks, each seen twice (the monitor polls faster than the game's clock), the pad pressed in tick 2.
+        for (uint tick = 1; tick <= 3; tick++)
+        {
+            memory.WriteU32(timer, 1000 + tick);
+            memory.WriteU32(input.Address + 4, tick == 2 ? 0x1000u : 0);
+            for (var poll = 0; poll < 2; poll++)
+            {
+                _time.Advance(TimeSpan.FromMilliseconds(17));
+                monitor.Tick();
+            }
+        }
+
+        var zip = capture.Stop();
+        Assert.False(monitor.FastPoll);
+        using var archive = ZipFile.OpenRead(zip);
+        using var log = new MemoryStream();
+        archive.GetEntry("memory-1.bin")!.Open().CopyTo(log);
+        log.Position = 0;
+        var (regions, records) = RegionLogReader.Open(log);
+        var states = records.ToList();
+        Assert.Equal(4, states.Count); // the first state, then one per tick — not one per poll
+        var inputIndex = regions.ToList().FindIndex(r => r.Name == "input");
+        Assert.Equal(0x10, BitConverter.ToUInt16(states[2].State[inputIndex], 4) >> 8); // tick 2: up (0x1000) held
+        Assert.Contains("\"Training\": true", new StreamReader(archive.GetEntry("capture-info.json")!.Open()).ReadToEnd(), StringComparison.Ordinal);
+    }
+
+    [Fact]
     public void Markers_record_the_moment_room_and_game_time_and_notes_can_be_added_later()
     {
         var profile = _adapter.Profiles[0];

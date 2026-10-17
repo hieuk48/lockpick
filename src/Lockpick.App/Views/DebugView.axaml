@@ -24,6 +24,11 @@
         </StackPanel>
         <TextBlock TextWrapping="Wrap" Foreground="{StaticResource LpMutedBrush}"
                    Text="Records what the game is doing while you play (read-only, like an autosplitter) so Lockpick can learn new rooms, items and builds. Start it, play normally — resets and game restarts are fine — then stop and send the zip. No personal information is recorded." />
+        <CheckBox IsChecked="{Binding TrainingCapture}" IsEnabled="{Binding !IsCapturing}" AutomationProperties.Name="Training capture">
+          <TextBlock TextWrapping="Wrap" Text="Training capture: every frame, with the buttons you press (for research on AI that learns to play from people)" />
+        </CheckBox>
+        <TextBlock TextWrapping="Wrap" Foreground="{StaticResource LpMutedBrush}" IsVisible="{Binding TrainingCapture}"
+                   Text="What it records: the game's memory every frame (30 a second) and the buttons as the game reads them — the same game data as a normal capture, more often, plus your inputs. Nothing else: no screen, sound, keystrokes outside the game, files or anything about you. About three times the size of a normal capture. Off every time Lockpick starts; you choose to send it." />
         <WrapPanel Orientation="Horizontal" ItemSpacing="8" LineSpacing="8">
           <Button Command="{Binding StartCaptureCommand}" AutomationProperties.Name="Start capture" Classes="accent">
             <StackPanel Orientation="Horizontal" Spacing="6">

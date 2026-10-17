@@ -45,6 +45,18 @@
       "address": "0xD91A00",
       "length": "0x400",
       "description": "Research (unverified): 0xD226A4 holds the pointer 0xD91AF4 from the first message shown onwards - probably the on-screen text buffer. Recorded so captures can show which message (item found, examine, document) was on screen."
+    },
+    {
+      "name": "input",
+      "address": "0xBF0A00",
+      "length": "0x10",
+      "description": "Research, for training captures (#61): the raw PSX button words per tick, held 0xBF0A04 and newly pressed 0xBF0A08 (docs/MEMORY_MAP.md 'Focus and input': written by 0x44E000 every tick; 0xBF0A04 live 2026-10-14 with the virtual pad). Recorded verbatim; nothing reads it as a field."
+    },
+    {
+      "name": "controls",
+      "address": "0xBE9A5C",
+      "length": "0x4",
+      "description": "Research, for training captures (#61): the control type ([0xBE9A5C] & 3) the game remaps key_on/key_trg (0xBE9840/0xBE9842, in gameState) with (docs/MEMORY_MAP.md 'Focus and input', static). Recorded verbatim; nothing reads it as a field."
     }
   ],
   "fields": [

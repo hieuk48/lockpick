@@ -22,6 +22,8 @@ public sealed class FakeStateSource : IGameStateSource
 
     public bool RecordRegions { get; set; }
 
+    public bool FastPoll { get; set; }
+
     public GameSnapshot? Latest { get; private set; }
 
     public MonitorStatistics Statistics => new(0, 0, 0, 0, 0, 0);

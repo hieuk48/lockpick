@@ -72,6 +72,8 @@ public sealed class GameMonitor : IGameStateSource
 
     public bool RecordRegions { get; set; }
 
+    public bool FastPoll { get; set; }
+
     public GameSnapshot? Latest { get; private set; }
 
     public bool IsAttached => _session is not null;
@@ -167,7 +169,7 @@ public sealed class GameMonitor : IGameStateSource
                 Detach($"Internal error: {ex.Message}");
             }
 
-            var interval = _session is null ? _options.ScanInterval : _options.PollInterval;
+            var interval = _session is null ? _options.ScanInterval : FastPoll ? _options.PollInterval / 2 : _options.PollInterval;
             _options.WaitStrategy.Wait(interval - Stopwatch.GetElapsedTime(started), token);
         }
     }
