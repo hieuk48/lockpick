@@ -86,7 +86,11 @@
                         AutomationProperties.Name="Remove the imported splits" />
               </WrapPanel>
               <CheckBox IsChecked="{Binding StartOnLoad}" AutomationProperties.Name="Start a run when a save is loaded">
-                <TextBlock TextWrapping="Wrap" Text="Also start when I load a save (practice from a save; the time counts from the save)" />
+                <TextBlock TextWrapping="Wrap" Text="Also start when I load a save (practice from a save; it never counts as a personal best)" />
+              </CheckBox>
+              <CheckBox IsChecked="{Binding SaveOnGameClock}" IsEnabled="{Binding StartOnLoad}" Margin="24,0,0,0"
+                        AutomationProperties.Name="Time runs from a save on the game's clock">
+                <TextBlock TextWrapping="Wrap" Text="Time it on the game's clock, the save's time included (off: from zero at the load)" />
               </CheckBox>
               <TextBlock TextWrapping="Wrap" Foreground="{StaticResource LpMutedBrush}"
                          Text="Lockpick only watches: it splits on rooms, key items and the ending, and keys for split, undo, skip and reset are in Settings → Hotkeys." />

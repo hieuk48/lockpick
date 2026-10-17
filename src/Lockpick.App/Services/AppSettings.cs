@@ -105,6 +105,9 @@ public sealed record AppSettings
     /// <summary>A loaded save starts an attempt too (practice from a save), not only a new game.</summary>
     public bool RunStartOnLoad { get; init; }
 
+    /// <summary>An attempt from a save is timed on the game's own clock (the save's time included); false: from zero.</summary>
+    public bool RunSaveOnGameClock { get; init; } = true;
+
     /// <summary>How Lockpick works with LiveSplit (<see cref="LiveSplitModes"/>): off, follow or drive.</summary>
     public string LiveSplitMode { get; init; } = LiveSplitModes.Off;
 

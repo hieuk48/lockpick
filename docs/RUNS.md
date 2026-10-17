@@ -7,7 +7,11 @@ Lockpick (LiveSplit can still run next to it). This page says how it works and w
 
 - **In-game time** is the game's own clock (`0xD22730`, 30 ticks a second; docs/MEMORY_MAP.md), the time
   speedrun.com uses for RE1 PC. A run started by a new game uses the clock as it is (it starts at 0); a run started
-  from a save (Runs → "Also start when I load a save") counts from the save's time.
+  from a save (Runs → "Also start when I load a save") is timed on the game's clock too, the save's time included, so
+  it matches the game (or from zero at the load, if you untick "Time it on the game's clock"). It never counts as a
+  personal best, a gold or a submission, and no split it didn't see is filled in.
+- **Wrong splits:** when a run starts with splits for the other character (Jill's splits in Chris's game), Lockpick
+  says so at once on the Runs page and as a big message.
 - **Real time** runs alongside, from the start of the attempt.
 - When the clock stops (menus, doors, cutscenes) is still to be measured (capture bounty B206); Lockpick shows the
   clock as the game keeps it either way.

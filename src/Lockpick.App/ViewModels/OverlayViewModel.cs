@@ -350,6 +350,12 @@ public sealed partial class OverlayViewModel : ObservableObject
     private void ShowRun(GameSnapshot? snapshot)
     {
         var status = _services.Runs.Status;
+        if (status.Warning is { } warning && status.State == RunState.Running && _warnedAttempt != status.Attempt)
+        {
+            _warnedAttempt = status.Attempt;
+            ShowBanner("Wrong splits?", warning.Replace("Wrong splits? ", string.Empty, StringComparison.Ordinal), "LpAmberBrush");
+        }
+
         if (status.Set is not { } set || status.State == RunState.Off)
         {
             SplitRows = [];
@@ -462,6 +468,8 @@ public sealed partial class OverlayViewModel : ObservableObject
             }
         }, BannerTime);
     }
+
+    private int _warnedAttempt;
 
     private void ShowAttemptEnded(Core.Runs.RunRecord record)
     {

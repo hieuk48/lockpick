@@ -60,6 +60,9 @@ public sealed record RunStatus(
     /// <summary>What was checked when the attempt began (e.g. the leaderboard checks), for its record; null when nothing.</summary>
     public string? Checks { get; init; }
 
+    /// <summary>Something the player should know about this attempt (e.g. splits for the other character), or null.</summary>
+    public string? Warning { get; init; }
+
     /// <summary>The run's in-game time at <paramref name="snapshot"/> (the game's clock less the start, for a run
     /// started from a save), or the time it ended at.</summary>
     public TimeSpan? GameTime(GameSnapshot? snapshot) =>
@@ -87,6 +90,7 @@ public sealed class RunService : IDisposable
     private readonly TimeProvider _time;
     private readonly object _gate = new();
     private GameSnapshot? _previous;
+    private bool _characterChecked;
     private bool? _dead; // null: not known yet (just attached), so a death already on screen isn't counted
     private RoomLocation? _room;
     private IReadOnlyList<HeldItem>? _inventory;
@@ -116,6 +120,12 @@ public sealed class RunService : IDisposable
 
     /// <summary>Start an attempt when a save is loaded too (practice from a save), not only on a new game.</summary>
     public bool StartOnLoad { get; set; }
+
+    /// <summary>
+    /// An attempt from a save is timed on the game's own clock (the save's time included, so the splits match the game
+    /// and the leaderboard's timing); false: from zero at the load.
+    /// </summary>
+    public bool SaveRunsOnGameClock { get; set; } = true;
 
     /// <summary>What to note on each new attempt about the checks it starts under (the leaderboard guard), or null.</summary>
     public Func<string?>? Checks { get; set; }
@@ -314,7 +324,7 @@ public sealed class RunService : IDisposable
                     SplitNow(raised);
                 }
 
-                changed = raised.Count > 0;
+                changed = raised.Count > 0 | CheckCharacter(snapshot);
             }
 
             if (snapshot.Location.TryGet(out var room))
@@ -429,14 +439,38 @@ public sealed class RunService : IDisposable
             // Numbered across sessions: after the attempts already kept for these splits.
             Attempt = Math.Max(Status.Attempt, SavedAttempts(set)) + 1,
             Times = new SplitTime?[set.Splits.Count],
-            // A new game's clock is the run's (as on the leaderboard); from a save, the run starts at the save's time.
-            GameTimeOffset = loaded.IsNewGame ? TimeSpan.Zero : loaded.GameTime,
+            // A new game's clock is the run's (as on the leaderboard); from a save, the game's clock too, unless the
+            // player times from the load.
+            GameTimeOffset = loaded.IsNewGame || SaveRunsOnGameClock ? TimeSpan.Zero : loaded.GameTime,
             StartedAt = now,
             FromSave = !loaded.IsNewGame,
             CheatsUsed = _trainer?.Mode == TrainerMode.Trainer,
             Checks = Checks?.Invoke(),
         };
+        _characterChecked = false;
         raised.Add(new RunStarted(now, set.Name, Status.Attempt, !loaded.IsNewGame));
+    }
+
+    /// <summary>
+    /// Once per attempt, at its start: the splits are for the character being played. Checked only at the start, as
+    /// Chris's game hands control to Rebecca later on.
+    /// </summary>
+    private bool CheckCharacter(GameSnapshot snapshot)
+    {
+        if (_characterChecked || snapshot.InGameplay is not { HasValue: true, Value: true } || !snapshot.Character.TryGet(out var playing)
+            || playing is not (PlayableCharacter.Jill or PlayableCharacter.Chris))
+        {
+            return false;
+        }
+
+        _characterChecked = true;
+        if (Status.Set is not { Character: PlayableCharacter.Jill or PlayableCharacter.Chris } set || set.Character == playing)
+        {
+            return false;
+        }
+
+        Status = Status with { Warning = $"Wrong splits? These are {set.Character}'s, but you're playing {playing}: choose {playing}'s splits on the Runs page." };
+        return true;
     }
 
     private int SavedAttempts(SplitSet set)

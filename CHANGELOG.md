@@ -73,6 +73,10 @@ All notable changes to this project are documented here. The format follows
   whether it's in front or minimized.
 - **No focus taken over exclusive fullscreen** (#54): the ask-mode question shows without taking the focus while the
   game is exclusive fullscreen and in front (the game would minimize).
+- **Wrong-splits warning:** a run started with splits for the other character (e.g. Jill's in Chris's game) says so
+  at once — a big message and a note on the Runs page.
+- **Runs from a save on the game's clock:** practice from a save is now timed on the game's own clock, so the splits
+  match the game (an option times it from zero at the load instead). Splits it didn't see are never filled in.
 - **Story events in the right character's words:** a story-flag label is shown only in the games it was confirmed in
   (most were confirmed in Jill's): in Chris's game Lockpick no longer says "rescued after fainting" when he meets
   Rebecca in the save room, or announces the Emblem slot at the start (it's his starting state). Chris's own labels from

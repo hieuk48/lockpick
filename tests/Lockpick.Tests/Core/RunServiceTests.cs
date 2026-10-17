@@ -71,6 +71,35 @@ public sealed class RunServiceTests : IDisposable
     }
 
     [Fact]
+    public void A_run_from_a_save_is_timed_on_the_game_s_clock_unless_asked_to_count_from_the_load()
+    {
+        _runs.StartOnLoad = true;
+        _runs.Choose(Set);
+        _source.Poll(At("105", 600));
+        _source.Raise(new GameLoaded(_clock.GetUtcNow(), TimeSpan.FromSeconds(600), IsNewGame: false));
+        Assert.True(_runs.Status.FromSave);
+        Assert.Equal(TimeSpan.FromSeconds(610), _runs.Status.GameTime(At("105", 610))); // the game's own clock
+
+        _runs.Reset();
+        _runs.SaveRunsOnGameClock = false;
+        _source.Raise(new GameLoaded(_clock.GetUtcNow(), TimeSpan.FromSeconds(600), IsNewGame: false));
+        Assert.Equal(TimeSpan.FromSeconds(10), _runs.Status.GameTime(At("105", 610))); // from the load
+    }
+
+    [Fact]
+    public void Splits_for_the_other_character_are_flagged_at_the_start()
+    {
+        _runs.Choose(Set); // Jill's splits
+        NewGame();
+        _source.Poll(At("105", 1) with { Character = Field<PlayableCharacter>.Valid(PlayableCharacter.Chris) });
+        Assert.Contains("These are Jill's, but you're playing Chris", _runs.Status.Warning, StringComparison.Ordinal);
+
+        NewGame();
+        _source.Poll(At("105", 1) with { Character = Field<PlayableCharacter>.Valid(PlayableCharacter.Jill) });
+        Assert.Null(_runs.Status.Warning);
+    }
+
+    [Fact]
     public void A_new_game_starts_an_attempt_on_the_game_s_own_clock()
     {
         _runs.Choose(Set);
@@ -223,7 +252,7 @@ public sealed class RunServiceTests : IDisposable
     }
 
     [Fact]
-    public void A_run_from_a_save_starts_only_when_asked_and_counts_from_the_save()
+    public void A_run_from_a_save_starts_only_when_asked()
     {
         _runs.Choose(Set);
         _source.Raise(new GameLoaded(T0, TimeSpan.FromMinutes(20), IsNewGame: false));
@@ -233,7 +262,6 @@ public sealed class RunServiceTests : IDisposable
         _source.Raise(new GameLoaded(T0, TimeSpan.FromMinutes(20), IsNewGame: false));
         Assert.Equal(RunState.Running, _runs.Status.State);
         Assert.True(_runs.Status.FromSave);
-        Assert.Equal(TimeSpan.FromSeconds(30), _runs.Status.GameTime(At("105", 20 * 60 + 30)));
     }
 
     [Fact]

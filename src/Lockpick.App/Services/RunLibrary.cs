@@ -40,6 +40,7 @@ public sealed class RunLibrary
         }
 
         runs.StartOnLoad = settings.Current.RunStartOnLoad;
+        runs.SaveRunsOnGameClock = settings.Current.RunSaveOnGameClock;
         runs.AttemptEnded += (_, record) =>
         {
             lock (_gate)
@@ -123,6 +124,12 @@ public sealed class RunLibrary
         {
             _settings.Save(_settings.Current with { RunSetId = set?.Id });
         }
+    }
+
+    public void SetSaveOnGameClock(bool value)
+    {
+        _runs.SaveRunsOnGameClock = value;
+        _settings.Save(_settings.Current with { RunSaveOnGameClock = value });
     }
 
     public void SetStartOnLoad(bool value)

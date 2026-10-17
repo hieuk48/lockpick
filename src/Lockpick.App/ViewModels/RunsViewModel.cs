@@ -69,6 +69,7 @@ public sealed partial class RunsViewModel : PageViewModel
         _library.Changed += (_, _) => Dispatcher.UIThread.Post(Reload);
         state.PropertyChanged += OnStateChanged;
         StartOnLoad = services.Settings.Current.RunStartOnLoad;
+        SaveOnGameClock = services.Settings.Current.RunSaveOnGameClock;
         _settings = services.Settings;
         _liveSplit = services.LiveSplit;
         LiveSplitMode = LiveSplitChoices.FirstOrDefault(c => c.Id == services.Settings.Current.LiveSplitMode) ?? LiveSplitChoices[0];
@@ -229,6 +230,18 @@ public sealed partial class RunsViewModel : PageViewModel
 
         _settings.Save(_settings.Current with { LiveSplitMode = value.Id });
         _liveSplit.Configure(value.Id, _settings.Current.LiveSplitPort);
+    }
+
+    /// <summary>An attempt from a save is timed on the game's own clock (else from zero at the load).</summary>
+    [ObservableProperty]
+    public partial bool SaveOnGameClock { get; set; }
+
+    partial void OnSaveOnGameClockChanged(bool value)
+    {
+        if (!_syncing && _library is not null)
+        {
+            _library.SetSaveOnGameClock(value);
+        }
     }
 
     partial void OnStartOnLoadChanged(bool value)
@@ -428,6 +441,10 @@ public sealed partial class RunsViewModel : PageViewModel
                 (status.CheatsUsed ? "The trainer was on, so it doesn't count as a personal best. " : string.Empty) + "Start a new game for the next attempt."),
             _ => ($"Attempt {status.Attempt}: {Result(status.Result)}", "Start a new game for the next attempt."),
         };
+        if (status.State == RunState.Running && status.Warning is { } warning)
+        {
+            Detail = warning + " " + Detail;
+        }
         var records = _library.Records(set);
         Latest = records.Count > 0 ? records[^1] : null;
         HasLatest = Latest is not null;

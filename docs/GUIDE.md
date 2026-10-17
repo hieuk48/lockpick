@@ -77,7 +77,9 @@ the game closing or **Reset** ends the attempt; every attempt is kept.
   median, your latest run, balanced PB… Green is ahead, red behind, gold a best-ever segment.
 - Runs → *Training*: **Where the time is** lists the segments where your personal best loses most against your best
   segments — practice those first. Below it, your attempts.
-- *Also start when I load a save* times practice from a save (the time counts from the save; it never counts as a PB).
+- *Also start when I load a save* times practice from a save on the game's own clock (or from zero at the load); it
+  never counts as a personal best, and splits it didn't see stay empty.
+- If your splits are for the other character (Jill's splits in a Chris game), Lockpick tells you when the run starts.
 - Attempts with the trainer on never count as a personal best.
 
 Runs → *Leaderboard*:
