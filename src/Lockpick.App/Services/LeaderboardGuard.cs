@@ -225,7 +225,8 @@ public sealed class LeaderboardGuard
 
         checks.Add(_services.LiveSplit.Status.StartsWith("Connected", StringComparison.Ordinal)
             ? new GuardCheck(GuardState.Pass, "LiveSplit is connected.")
-            : new GuardCheck(GuardState.Warn, "The leaderboard requires LiveSplit's in-game time script on screen: run LiveSplit with the RE1 autosplitter."));
+            : new GuardCheck(GuardState.Warn,
+                "The rules name LiveSplit's in-game time script. Lockpick's timer reads the same in-game time, but the moderators haven't said whether its overlay counts: to be safe, also run LiveSplit with the RE1 autosplitter."));
         Checks = checks;
         Changed?.Invoke(this, EventArgs.Empty);
     }

@@ -6,23 +6,24 @@ All notable changes to this project are documented here. The format follows
 
 ## [Unreleased]
 
-### Added
-- **The Japanese PC game (`Biohazard.exe` 1.01), the version the speedrun.com PC board recommends, with or without
-  Classic REbirth:** every address Lockpick reads was found in that exe's own code and checked in play under REbirth
-  1.1.4; cheats work on what the check covered. REbirth's save folder, `JPN` room files and its own display setup
-  are handled.
-- **Leaderboard run on the Japanese game:** GOG's Japanese files are compared like the English ones; with Classic
-  REbirth the exe and REbirth (every release, 1.0.0–1.1.4) are checked by hash, the game data against GOG's, and
-  REbirth's banned quickturn, tactical reload and debug mode fail the check; cutscene skip and mod folders are flagged.
-  The check follows the game you're playing, so English and Japanese can share a folder.
-- **GOG's Japanese version (`Biohazard.exe`, 1.0 hotfix4)**, checked in play: rooms, HP, the timer, inventory, enemies
-  and pickups read as on the English game. It can share the English install's folder. Its window is found for the
-  overlay too.
-- `tools/re1/xmap.py` and `tools/re1/port_profile.py`: port the verified profile to another build by finding the same
-  code in it (developer tools).
+## [0.3.1] - 2026-10-17
 
-### Changed
-- Profiles name the tables and pointers the adapter reads (`addresses`), so no build's addresses live in code.
+Lockpick now works with every PC version the speedrun.com leaderboard allows.
+
+### Added
+- **The Japanese version with Classic REbirth**, the one most PC runners use (MediaKite, or GOG's Japanese release
+  with REbirth in its own folder), and **GOG's Japanese release** (`Biohazard.exe`). Both checked in play: rooms, HP,
+  the timer, inventory, enemies, pickups, the map and the overlay. Cheats cover what has been checked so far (health,
+  and ammo in the first slots on GOG's Japanese release).
+- **Leaderboard run on the Japanese versions:** checks the game files, the REbirth version, and that quickturn,
+  tactical reload and REbirth's debug menu are off.
+
+### Fixed
+- The leaderboard check and the map follow the game you're playing, so the English and Japanese releases can share
+  a folder.
+
+Developers: profiles for other builds are ported by finding the same code in them (`tools/re1/port_profile.py`), and
+name their tables and pointers instead of keeping addresses in code. Details in docs/COMPATIBILITY.md.
 
 ## [0.3.0] - 2026-10-16
 

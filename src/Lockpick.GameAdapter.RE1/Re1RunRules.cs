@@ -248,7 +248,7 @@ public sealed class Re1RunRules : IRunRules
     public IReadOnlyList<string> LeaderboardReminders { get; } =
     [
         "Start the run at the title screen.",
-        "Show LiveSplit's in-game time script on screen (the rules require it), and the final in-game time on the end screen in your video.",
+        "Show the in-game time on screen the whole run (the rules name LiveSplit's IGT script), and the final in-game time on the end screen in your video.",
         "Don't tab out or click off the game during the run.",
         "Don't open the options menu as a pause (it pauses the in-game time).",
         "No music over the game, no mods, no turbo or macros, no auto-aim cancel.",
