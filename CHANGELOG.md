@@ -6,6 +6,8 @@ All notable changes to this project are documented here. The format follows
 
 ## [Unreleased]
 
+## [0.3.0] - 2026-10-16
+
 ### Added
 - **Overlay** (Settings → Overlay, off until you turn it on): the in-game time, HP, the room and your challenge
   (clean, or failed with the reason) in a small panel on top of the game's picture, in the corner you pick. Clicks
@@ -77,6 +79,8 @@ All notable changes to this project are documented here. The format follows
   game is exclusive fullscreen and in front (the game would minimize).
 - **Wrong-splits warning:** a run started with splits for the other character (e.g. Jill's in Chris's game) says so
   at once — a big message and a note on the Runs page.
+- **A quieter event log:** it reads like the feed — rooms and damage in plain words (with the attack), no camera cuts
+  or duplicate HP lines. Captures still record every raw event.
 - **Your overlay, your way** (Settings → Overlay):
   - **Size per widget** (50–200%), and **live while you play**: keys or controller buttons for *Overlay: next widget to
     size*, *bigger* and *smaller* (Settings → Hotkeys; OBS hotkeys too) — a big message says which widget and its size.

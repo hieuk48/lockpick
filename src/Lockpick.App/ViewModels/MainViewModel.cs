@@ -37,13 +37,8 @@ public sealed partial class MainViewModel : ObservableObject, IDisposable
         _ = services.ApplyApiSettingsAsync();
         Updates = services.Updates;
         // The event log already has room changes and damage as their own events.
-        services.Feed.EventRaised += (_, e) =>
-        {
-            if (!e.Text.StartsWith("Entered ", StringComparison.Ordinal) && !e.Text.StartsWith("Took damage", StringComparison.Ordinal))
-            {
-                State.Add(e);
-            }
-        };
+        // What happened, in plain words (the raw room, camera, HP and damage events stay out of the log: LiveState).
+        services.Feed.EventRaised += (_, e) => State.Add(e);
         State.PropertyChanged += OnStateChanged;
         UpdateHeader();
 

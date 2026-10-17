@@ -133,6 +133,10 @@ Acceptance criteria:
 
 ## 0.3.0 — Play and stream with one app
 
+**Released 2026-10-16** (owner's call, for a tester). Still to confirm live after the release: chapter markers and a
+replay-buffer save with the OBS script (#66), the new feed lines in play (#43), a training capture through
+tools/rl/dataset.py (#61), frame pacing with OBS (B209), and code signing (#64, the owner's decision).
+
 Owner's direction (2026-10-15): the first release for other players. A runner doing a speedrun, a no-damage run, a
 knife-only run or a regular playthrough needs only Lockpick open — no second app for timing, splits or the stream —
 and their sessions can be captured for behaviour-cloning research (they will be playing 0.3.0, so training captures

@@ -13,10 +13,22 @@ as "no damage" or "knife only", puts all of it on your stream, and has optional 
 
 It never changes your game files. It only changes the running game if you switch cheats on.
 
-> **Status:** version 0.2 is the latest release. Version **0.3**, "play and stream with one app", is almost done and
-> already in the code here (see [what's new in 0.3](#new-in-03)). The plan is on the [roadmap](docs/ROADMAP.md).
+> **Status:** version **0.3**, "play and stream with one app", is out (see [what's new in 0.3](#new-in-03)). What's
+> next is on the [roadmap](docs/ROADMAP.md).
 
 ## Screenshots
+
+<p align="center">
+  <img src="docs/screenshots/stream.png" alt="Stream page: the time and HP, the splits in LiveSplit's look with the world record, and the minimap" width="49%">
+  <img src="docs/screenshots/runs.png" alt="Runs: the community's splits, practice from a save and this run's splits" width="49%">
+</p>
+<p align="center"><em>Your widgets inside Lockpick, as big as you like (left) and runs timed on the game's own clock (right).</em></p>
+
+<p align="center">
+  <img src="docs/screenshots/overlay-settings.png" alt="Settings, Overlay: each widget's place and size, the look, and the map's views" width="49%">
+  <img src="docs/screenshots/leaderboard.png" alt="Runs, Leaderboard: the speedrun.com board for the chosen category" width="49%">
+</p>
+<p align="center"><em>Make the overlay yours (left) and the speedrun.com leaderboard for your category (right).</em></p>
 
 <p align="center">
   <img src="docs/screenshots/challenges.png" alt="Challenges tab: a no-damage attempt running, still clean" width="49%">
@@ -53,8 +65,6 @@ It never changes your game files. It only changes the running game if you switch
   with the game, or portrait.
 
 ## New in 0.3
-
-Not released yet. You can try it now by [building from source](#build-from-source).
 
 **Speedrunning and practice**
 - **Run timer on the game's own clock** (the in-game time the leaderboard uses), with the community's splits for Jill

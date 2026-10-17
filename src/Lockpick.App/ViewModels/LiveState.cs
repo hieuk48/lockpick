@@ -42,6 +42,14 @@ public sealed partial class LiveState : ObservableObject
         };
         source.EventRaised += (_, e) =>
         {
+            // The event log reads like the feed: camera cuts are left out, and rooms and damage come from the feed's
+            // plain words ("Entered Dining room (105)", "Took damage (96 → 90, Zombie bite (6))") instead of the raw
+            // "Room 106 → 105" / "HP 96 → 86" / "Damaged for 10". Captures still record every raw event.
+            if (e is CameraChanged or RoomChanged or PlayerHealthChanged or PlayerDamaged)
+            {
+                return;
+            }
+
             _pendingEvents.Enqueue(e);
             ScheduleFlush();
         };
