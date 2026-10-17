@@ -133,10 +133,10 @@ public sealed class Re1JapaneseTests : IDisposable
         File.WriteAllText(Path.Combine(_folder, "config.ini"), "[RE1]\n[DLL]\nQuickTurn = 1\nTactReload = 0\nEnableDebug = 0\nCutSkip = 1\n");
         Directory.CreateDirectory(Path.Combine(_folder, "mod_hud"));
 
-        var check = rules.CheckInstall(_folder);
+        var check = rules.CheckInstall(Path.Combine(_folder, "Biohazard.exe"));
 
-        Assert.False(check.FilesCompared);
         Assert.False(check.Unchanged);
+        Assert.Contains(check.Notes, n => n.Level == InstallFindingLevel.Warn && n.Text.Contains("JPN data file(s) differ", StringComparison.Ordinal));
         Assert.StartsWith("the Japanese PC game with Classic REbirth", check.Release, StringComparison.Ordinal);
         Assert.Contains(check.Notes, n => n.Level == InstallFindingLevel.Fail && n.Text.Contains("quickturn", StringComparison.Ordinal));
         Assert.DoesNotContain(check.Notes, n => n.Level == InstallFindingLevel.Fail && n.Text.Contains("tactical", StringComparison.Ordinal));
@@ -152,7 +152,7 @@ public sealed class Re1JapaneseTests : IDisposable
         File.WriteAllText(Path.Combine(_folder, "Biohazard.exe"), "exe");
         File.WriteAllText(Path.Combine(_folder, "config.ini"), "[DLL]\nQuickTurn = 0\nTactReload = 0\nEnableDebug = 0\n");
 
-        var check = rules.CheckInstall(_folder);
+        var check = rules.CheckInstall(Path.Combine(_folder, "Biohazard.exe"));
 
         Assert.DoesNotContain(check.Notes, n => n.Level == InstallFindingLevel.Fail);
         Assert.Contains(check.Notes, n => n.Level == InstallFindingLevel.Pass && n.Text.Contains("are off", StringComparison.Ordinal));

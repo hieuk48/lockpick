@@ -454,3 +454,9 @@ reset `0x48CBAA`, `0x48CBCC`, `0x48DE45`) are untouched, so the 1.01 profile anc
 (Chris from the title to a death) showed the rooms, HP (to −10 at death), the timer (frozen from the death to the
 title), the main menu, position, the inventory pointer and slots, enemy slot 0, a room-item flag and the item box as
 on GOG (`data/games/re1/profiles/live/re1-jpn-101.json`).
+
+**Room files, JPN vs USA (2026-10-17, `tools/rdt/rdt_index.py` on both):** the doors (target, lock flag, key), the
+enemies (type, kill flag), the story flags and every item's pickup flag are identical. The only difference is ink
+ribbons: 3 per pickup in Japanese where English gives 2 (14 spots), and the main hall's ribbon (flag 52) is one entry
+for both characters. The map reads the player's own room files, so it shows each version's amounts; progress, the
+feed and splits go by flags, which match.

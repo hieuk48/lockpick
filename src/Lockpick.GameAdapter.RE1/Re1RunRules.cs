@@ -95,27 +95,40 @@ public sealed class Re1RunRules : IRunRules
     }
 
     /// <summary>
-    /// The install against what the PC leaderboard allows. GOG's English release (ResidentEvil.exe): every file against
-    /// the ones GOG's 1.0 hotfix4 ships (data/games/re1/install/gog-hotfix4.sha256, made by tools/re1/install_manifest.py
-    /// from an untouched install); files that change in normal use are not compared (saves, the display settings,
-    /// screenshots, GOG's log and uninstaller data). The Japanese game (Biohazard.exe; MediaKite, or GOG/Steam's Japanese
-    /// version with Classic REbirth, as the rules recommend): the executable and REbirth by hash
-    /// (data/games/re1/install/rebirth.json) and REbirth's banned options; its data files aren't listed yet.
+    /// The install of the game being played against what the PC leaderboard allows, by its executable (both GOG
+    /// releases can share one folder). GOG's English release (ResidentEvil.exe) and GOG's Japanese release
+    /// (Biohazard.exe): every file against the ones the release ships (data/games/re1/install/gog-hotfix4.sha256 and
+    /// gog-jpn-hotfix4.sha256, made by tools/re1/install_manifest.py from untouched installs); files that change in
+    /// normal use are not compared (saves, the display settings, screenshots, GOG's log and uninstaller data), and the
+    /// other release's files are not "extra". The Japanese game with Classic REbirth, as the rules recommend: the
+    /// executable and REbirth by hash (data/games/re1/install/rebirth.json), the JPN data against GOG's Japanese files
+    /// (a difference warns: a MediaKite disc's data may not match GOG's byte for byte), REbirth's banned options.
     /// </summary>
-    public InstallCheck CheckInstall(string installDirectory)
+    public InstallCheck CheckInstall(string executablePath)
     {
-        var install = Re1Install.Inspect(installDirectory);
-        if (File.Exists(Path.Combine(installDirectory, "Biohazard.exe")) && !File.Exists(Path.Combine(installDirectory, "ResidentEvil.exe")))
-        {
-            return CheckJapanese(install);
-        }
+        var directory = Path.GetDirectoryName(executablePath) ?? ".";
+        var install = Re1Install.Inspect(directory);
+        var japanese = string.Equals(Path.GetFileName(executablePath), "Biohazard.exe", StringComparison.OrdinalIgnoreCase);
+        var expected = japanese ? JapaneseManifest.Value : EnglishManifest.Value;
+        var other = japanese ? EnglishManifest.Value : JapaneseManifest.Value;
+        var rebirth = japanese ? install.Rebirth : null;
 
-        var expected = Manifest.Value;
         var changed = new List<string>();
         var missing = new List<string>();
         foreach (var (relative, digest) in expected)
         {
-            var path = Path.Combine(installDirectory, relative.Replace('/', Path.DirectorySeparatorChar));
+            if (Varies(relative))
+            {
+                continue;
+            }
+
+            // With REbirth only the game data is compared: it replaces the executable and GOG's wrapper on purpose.
+            if (rebirth is not null && !relative.StartsWith("JPN/", StringComparison.OrdinalIgnoreCase))
+            {
+                continue;
+            }
+
+            var path = Path.Combine(directory, relative.Replace('/', Path.DirectorySeparatorChar));
             if (!File.Exists(path))
             {
                 missing.Add(relative);
@@ -129,75 +142,98 @@ public sealed class Re1RunRules : IRunRules
             }
         }
 
-        var known = expected.Keys.ToHashSet(StringComparer.OrdinalIgnoreCase);
-        var extra = Directory.EnumerateFiles(installDirectory, "*", SearchOption.AllDirectories)
-            .Select(p => Path.GetRelativePath(installDirectory, p).Replace(Path.DirectorySeparatorChar, '/'))
-            .Where(r => !known.Contains(r) && !Varies(r))
+        var extra = Directory.EnumerateFiles(directory, "*", SearchOption.AllDirectories)
+            .Select(p => Path.GetRelativePath(directory, p).Replace(Path.DirectorySeparatorChar, '/'))
+            .Where(r => !expected.ContainsKey(r) && !other.ContainsKey(r) && !Varies(r) && !(rebirth is not null && RebirthOwns(r)))
             .Order(StringComparer.OrdinalIgnoreCase)
             .ToList();
-        List<InstallFinding> findings = install.Rebirth is null
-            ? []
-            : [new(InstallFindingLevel.Warn, "Classic REbirth's files are here, but REbirth runs only on the Japanese game (Biohazard.exe), not GOG's English one.")];
-        return new InstallCheck("GOG 1.0 hotfix4", changed, missing, extra, findings);
+
+        if (!japanese)
+        {
+            List<InstallFinding> notes = install.Rebirth is null
+                ? []
+                : [new(InstallFindingLevel.Warn, "Classic REbirth's files are here, but REbirth runs only on the Japanese game (Biohazard.exe), not GOG's English one.")];
+            return new InstallCheck("GOG 1.0 hotfix4", changed, missing, extra, notes);
+        }
+
+        if (rebirth is null)
+        {
+            return new InstallCheck("GOG's Japanese 1.0 hotfix4", changed, missing, extra);
+        }
+
+        // REbirth: data differences warn instead of failing (see above); the rest are findings.
+        var findings = RebirthFindings(directory, rebirth);
+        if (changed.Count + missing.Count > 0)
+        {
+            var differ = changed.Concat(missing.Select(m => m + " (missing)")).ToList();
+            findings.Add(new InstallFinding(InstallFindingLevel.Warn,
+                $"{differ.Count} JPN data file(s) differ from GOG's Japanese release: {string.Join(", ", differ.Take(5))}{(differ.Count > 5 ? ", …" : string.Empty)}. "
+                + "A MediaKite copy's data can differ; otherwise check for a mod."));
+        }
+        else
+        {
+            findings.Add(new InstallFinding(InstallFindingLevel.Pass, "The JPN data files are GOG's Japanese release's, unchanged."));
+        }
+
+        // FilesCompared false: the findings say how the data compared (the executable and wrapper are REbirth's).
+        return new InstallCheck($"the Japanese PC game with Classic REbirth{(rebirth.Version is { } v ? " " + v : string.Empty)}", [], [], extra, findings, FilesCompared: false);
     }
 
-    private static InstallCheck CheckJapanese(Re1Install install)
+    private static List<InstallFinding> RebirthFindings(string directory, RebirthInstall rebirth)
     {
         var findings = new List<InstallFinding>();
         var known = Re1Install.Known;
-        var exeHash = Re1Install.Hash(Path.Combine(install.Directory, "Biohazard.exe"));
+        var exeHash = Re1Install.Hash(Path.Combine(directory, "Biohazard.exe"));
         findings.Add(exeHash is not null && known.Executables.TryGetValue(exeHash, out var exeRelease)
             ? new InstallFinding(InstallFindingLevel.Pass, $"Biohazard.exe is {exeRelease}.")
             : new InstallFinding(InstallFindingLevel.Warn,
                 $"Biohazard.exe ({(exeHash is null ? "unreadable" : exeHash[..12] + "…")}) isn't one Lockpick knows, so it can't confirm it's an official release (REbirth installs the Japanese 1.01 executable)."));
-
-        string release;
-        if (install.Rebirth is not { } rebirth)
+        findings.Add(rebirth.Version is { } version
+            ? new InstallFinding(InstallFindingLevel.Pass, $"Classic REbirth {version} (allowed by the rules).")
+            : new InstallFinding(InstallFindingLevel.Warn, "ddraw.dll is a Classic REbirth build Lockpick doesn't know (a newer one?): check its version."));
+        if (rebirth.Settings.Count == 0)
         {
-            release = "the Japanese PC game";
             findings.Add(new InstallFinding(InstallFindingLevel.Warn,
-                "Classic REbirth isn't installed: the rules recommend it (or the 1.7/1.8 patch) for the Japanese PC version."));
+                "REbirth hasn't saved its settings yet (config.ini): start the game once, then check again (quickturn, tactical reload and the debug menu must be off)."));
         }
         else
         {
-            release = $"the Japanese PC game with Classic REbirth{(rebirth.Version is { } v ? " " + v : string.Empty)}";
-            findings.Add(rebirth.Version is { } version
-                ? new InstallFinding(InstallFindingLevel.Pass, $"Classic REbirth {version} (allowed by the rules).")
-                : new InstallFinding(InstallFindingLevel.Warn, "ddraw.dll is a Classic REbirth build Lockpick doesn't know (a newer one?): check its version."));
-            if (rebirth.Settings.Count == 0)
+            foreach (var (key, name, where) in BannedRebirthOptions)
             {
-                findings.Add(new InstallFinding(InstallFindingLevel.Warn,
-                    "REbirth hasn't saved its settings yet (config.ini): start the game once, then check again (quickturn, tactical reload and the debug menu must be off)."));
-            }
-            else
-            {
-                foreach (var (key, name, where) in BannedRebirthOptions)
+                if (rebirth.On(key))
                 {
-                    if (rebirth.On(key))
-                    {
-                        findings.Add(new InstallFinding(InstallFindingLevel.Fail, $"REbirth's {name} is on: the rules ban it (turn it off {where})."));
-                    }
-                }
-
-                if (!BannedRebirthOptions.Any(o => rebirth.On(o.Key)))
-                {
-                    findings.Add(new InstallFinding(InstallFindingLevel.Pass, "REbirth's quickturn, tactical reload and debug menu are off."));
-                }
-
-                if (rebirth.On("CutSkip"))
-                {
-                    findings.Add(new InstallFinding(InstallFindingLevel.Warn, "REbirth's cutscene skip is on: check the leaderboard allows it before submitting."));
+                    findings.Add(new InstallFinding(InstallFindingLevel.Fail, $"REbirth's {name} is on: the rules ban it (turn it off {where})."));
                 }
             }
 
-            if (rebirth.ModFolders.Count > 0)
+            if (!BannedRebirthOptions.Any(o => rebirth.On(o.Key)))
             {
-                findings.Add(new InstallFinding(InstallFindingLevel.Warn,
-                    $"REbirth mod folders are here ({string.Join(", ", rebirth.ModFolders.Take(5))}): the rules allow no mods, so make sure none is enabled."));
+                findings.Add(new InstallFinding(InstallFindingLevel.Pass, "REbirth's quickturn, tactical reload and debug menu are off."));
+            }
+
+            if (rebirth.On("CutSkip"))
+            {
+                findings.Add(new InstallFinding(InstallFindingLevel.Warn, "REbirth's cutscene skip is on: check the leaderboard allows it before submitting."));
             }
         }
 
-        return new InstallCheck(release, [], [], [], findings, FilesCompared: false);
+        if (rebirth.ModFolders.Count > 0)
+        {
+            findings.Add(new InstallFinding(InstallFindingLevel.Warn,
+                $"REbirth mod folders are here ({string.Join(", ", rebirth.ModFolders.Take(5))}): the rules allow no mods, so make sure none is enabled."));
+        }
+
+        return findings;
+    }
+
+    /// <summary>Files Classic REbirth installs or writes beside the game (its mods are reported on their own).</summary>
+    private static bool RebirthOwns(string relative)
+    {
+        var name = Path.GetFileName(relative).ToLowerInvariant();
+        return relative.StartsWith("savedata/", StringComparison.OrdinalIgnoreCase)
+            || relative.StartsWith("mod_", StringComparison.OrdinalIgnoreCase)
+            || (!relative.Contains('/', StringComparison.Ordinal)
+                && name is "biohazard.exe" or "ddraw.dll" or "sdl3.dll" or "gamecontrollerdb.txt" or "license.txt" or "config.ini" or "steam_appid.txt" or "xmessagebox.ini");
     }
 
     /// <summary>The REbirth options the PC rules ban (config.ini [DLL]), with where to turn them off.</summary>
@@ -219,10 +255,14 @@ public sealed class Re1RunRules : IRunRules
         "With Classic REbirth: quickturn and tactical reload off, and don't open its debug menu.",
     ];
 
-    private static readonly Lazy<Dictionary<string, string>> Manifest = new(() =>
+    private static readonly Lazy<Dictionary<string, string>> EnglishManifest = new(() => LoadManifest("gog-hotfix4.sha256"));
+
+    private static readonly Lazy<Dictionary<string, string>> JapaneseManifest = new(() => LoadManifest("gog-jpn-hotfix4.sha256"));
+
+    private static Dictionary<string, string> LoadManifest(string name)
     {
-        using var stream = typeof(Re1RunRules).Assembly.GetManifestResourceStream("Lockpick.GameAdapter.RE1.Data.gog-hotfix4.sha256")
-            ?? throw new InvalidOperationException("Missing embedded RE1 data gog-hotfix4.sha256.");
+        using var stream = typeof(Re1RunRules).Assembly.GetManifestResourceStream("Lockpick.GameAdapter.RE1.Data." + name)
+            ?? throw new InvalidOperationException($"Missing embedded RE1 data {name}.");
         using var reader = new StreamReader(stream);
         var files = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
         while (reader.ReadLine() is { } line)
@@ -234,15 +274,22 @@ public sealed class Re1RunRules : IRunRules
         }
 
         return files;
-    });
+    }
 
-    /// <summary>Files that change in normal use (as tools/re1/install_manifest.py leaves them out).</summary>
+    /// <summary>
+    /// Files that change in normal use (as tools/re1/install_manifest.py leaves them out), and GOG's own bookkeeping,
+    /// which the other language's installer rewrites when both share a folder (install metadata, the shortcut, the
+    /// readme and EULA, the uninstaller): none of them changes the game.
+    /// </summary>
     private static bool Varies(string relative)
     {
         var name = Path.GetFileName(relative).ToLowerInvariant();
         return relative.StartsWith("SAVE/", StringComparison.OrdinalIgnoreCase)
             || name is "dxcfg.ini" or "dxcfg.ini.bak" or "goglog.ini" or "unins000.dat" or "unins000.ini" or "unins000.msg" or "webcache.zip"
-            || name.EndsWith(".bmp", StringComparison.Ordinal);
+            || name.EndsWith(".bmp", StringComparison.Ordinal)
+            || (!relative.Contains('/', StringComparison.Ordinal)
+                && (name.StartsWith("goggame-", StringComparison.Ordinal)
+                    || name is "launch resident evil.lnk" or "readme.txt" or "eula.txt" or "unins000.exe" or "gog.ico" or "support.ico"));
     }
 
     private static long? Raw(GameSnapshot snapshot, string field) =>

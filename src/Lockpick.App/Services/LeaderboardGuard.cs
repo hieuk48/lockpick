@@ -53,11 +53,23 @@ public sealed class LeaderboardGuard
                 _ = RefreshAsync(); // fresh for the next attempt
             }
         };
+        services.Source.StatusChanged += (_, status) =>
+        {
+            // A different game attached (both releases can share a folder): check its install.
+            if (Enabled && status.Process?.ExecutablePath is { Length: > 0 } path
+                && !string.Equals(path, Volatile.Read(ref _checkedExe), StringComparison.OrdinalIgnoreCase))
+            {
+                _ = RefreshAsync();
+            }
+        };
         if (Enabled)
         {
             Engage();
         }
     }
+
+    /// <summary>The executable the install check last ran for.</summary>
+    private string? _checkedExe;
 
     public bool Enabled => _services.Settings.Current.LeaderboardMode;
 
@@ -113,15 +125,16 @@ public sealed class LeaderboardGuard
         try
         {
             Update(); // Lockpick's own checks at once, the files after
-            var exe = _services.ResolveInstalledExecutable();
-            var directory = exe is null ? null : Path.GetDirectoryName(exe);
-            (InstallCheck? install, string? problem) result = directory is null || _services.RunLibrary.Rules is not { } rules
+            // The game being played when there is one (both releases can share a folder), else the installed one.
+            var exe = _services.Source.Status.Process?.ExecutablePath is { Length: > 0 } running ? running : _services.ResolveInstalledExecutable();
+            Volatile.Write(ref _checkedExe, exe);
+            (InstallCheck? install, string? problem) result = exe is null || _services.RunLibrary.Rules is not { } rules
                 ? (null, "The game's install wasn't found (Settings → General → Game installation).")
                 : await Task.Run(() =>
                 {
                     try
                     {
-                        return (rules.CheckInstall(directory), (string?)null);
+                        return (rules.CheckInstall(exe), (string?)null);
                     }
                     catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
                     {
@@ -172,6 +185,10 @@ public sealed class LeaderboardGuard
             else if (_install is null)
             {
                 checks.Add(new GuardCheck(GuardState.Warn, "Checking the game files…"));
+            }
+            else if (!_install.FilesCompared && _install.Notes.Count > 0)
+            {
+                // The adapter's findings say what was compared (e.g. the data under Classic REbirth).
             }
             else if (!_install.FilesCompared)
             {

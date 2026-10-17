@@ -11,9 +11,10 @@ All notable changes to this project are documented here. The format follows
   Classic REbirth:** every address Lockpick reads was found in that exe's own code and checked in play under REbirth
   1.1.4; cheats work on what the check covered. REbirth's save folder, `JPN` room files and its own display setup
   are handled.
-- **Leaderboard run on the Japanese game:** the exe and Classic REbirth (every release, 1.0.0–1.1.4) are checked by
-  hash, and REbirth's banned quickturn, tactical reload and debug mode fail the check; cutscene skip and mod folders
-  are flagged.
+- **Leaderboard run on the Japanese game:** GOG's Japanese files are compared like the English ones; with Classic
+  REbirth the exe and REbirth (every release, 1.0.0–1.1.4) are checked by hash, the game data against GOG's, and
+  REbirth's banned quickturn, tactical reload and debug mode fail the check; cutscene skip and mod folders are flagged.
+  The check follows the game you're playing, so English and Japanese can share a folder.
 - **GOG's Japanese version (`Biohazard.exe`, 1.0 hotfix4)**, checked in play: rooms, HP, the timer, inventory, enemies
   and pickups read as on the English game. It can share the English install's folder. Its window is found for the
   overlay too.

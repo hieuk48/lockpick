@@ -192,7 +192,7 @@ public sealed class Re1RunRulesTests : IDisposable
         File.WriteAllText(Path.Combine(install, "SAVE", "savedat1.dat"), "save");    // saves
         File.WriteAllText(Path.Combine(install, "Mon Oct 12.BMP"), "screenshot");    // screenshots
 
-        var check = _rules.CheckInstall(install);
+        var check = _rules.CheckInstall(Path.Combine(install, "ResidentEvil.exe"));
         Assert.False(check.Unchanged);
         Assert.Equal(["ResidentEvil.exe"], check.Changed);
         Assert.Contains("ddraw.dll", check.Missing);

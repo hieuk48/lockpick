@@ -3,6 +3,12 @@ leaderboard check that the game is unmodified (docs/RUNS.md). Run against a fres
 
     python tools/re1/install_manifest.py "G:\GOG Games\Resident Evil" data/games/re1/install/gog-hotfix4.sha256
 
+The Japanese release (GOG's Japanese installer, unpacked with innoextract --gog so nothing is installed), only the
+files the game runs on:
+
+    python tools/re1/install_manifest.py <unpacked> data/games/re1/install/gog-jpn-hotfix4.sha256 ^
+        --only Biohazard.exe JPN ddraw.dll dinput.dll dxcfg.exe goginput.ini
+
 Files that change in normal play or setup are left out: saves, the display settings and their backup, screenshots,
 GOG's log and uninstaller data.
 """
@@ -19,9 +25,12 @@ SKIP_SUFFIXES = {".bmp"}
 
 def main(argv: list[str]) -> int:
     install, out = Path(argv[0]), Path(argv[1])
+    only = {name.lower() for name in argv[argv.index("--only") + 1:]} if "--only" in argv else None
     lines = []
     for path in sorted(install.rglob("*"), key=lambda p: str(p.relative_to(install)).lower()):
         rel = path.relative_to(install)
+        if only is not None and rel.parts[0].lower() not in only:
+            continue
         if not path.is_file() or rel.parts[0].lower() in SKIP_DIRS or rel.name.lower() in SKIP_FILES or path.suffix.lower() in SKIP_SUFFIXES:
             continue
         digest = hashlib.sha256(path.read_bytes()).hexdigest().upper()

@@ -335,8 +335,9 @@ MediaKite game with Classic REbirth; GOG and Steam are allowed (docs/COMPATIBILI
    account) to run it, then a probe trace to raise the fields to runtime and the trainer's writes back on; check that
    REbirth's in-memory patches leave the anchors alone.
 2. 🟡 **Leaderboard checks for REbirth** — the exe and every REbirth release (1.0.0–1.1.4) by hash, its banned options
-   (quickturn, tactical reload, debug) and cutscene skip from `config.ini`, `mod_*` folders. **Needs:** a list of the
-   Japanese data files (from the Japanese install, `tools/re1/install_manifest.py`).
+   (quickturn, tactical reload, debug) and cutscene skip from `config.ini`, `mod_*` folders. Done 2026-10-17: the
+   Japanese file list (`gog-jpn-hotfix4.sha256`), the check following the game being played (shared folders), and the
+   three real setups (GOG English, GOG Japanese, REbirth) checked against it.
 3. 🟡 **GOG Japanese and Steam** — GOG Japanese hotfix4 (`re1-gog-jpn-hotfix4`): ported and live-verified 2026-10-17
    (a Chris game, probe trace; `port_profile.py --live` keeps the live evidence when it's regenerated); the trainer
    writes what the trace confirmed. Steam (app 4249100): not yet, needs its executables.
