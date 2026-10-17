@@ -43,7 +43,9 @@ def notes(run: Path | None) -> list[dict]:
     names = json.loads((DATA / "names.json").read_text(encoding="utf-8"))
     rooms = json.loads((DATA / "rooms.json").read_text(encoding="utf-8"))
     labels = json.loads((DATA / "flag-labels.json").read_text(encoding="utf-8"))["labels"]
-    found = [{"text": f"Story flag {l['bank']} mask {l['mask']}: {l['label']}.", "kind": "flag"} for l in labels]
+    found = [{"text": f"Story flag {l['bank']} mask {l['mask']}"
+              + (f" ({', '.join(l['characters'])}'s game)" if l.get("characters") else "") + f": {l['label']}.", "kind": "flag"}
+             for l in labels if l["label"]]
     found += [{"text": f"Item {i}: {n}.", "kind": "item"} for i, n in names["items"].items()]
     found += [{"text": f"Enemy type {i}: {n}.", "kind": "enemy"} for i, n in names["enemies"].items()]
     for room, info in rooms["rooms"].items():

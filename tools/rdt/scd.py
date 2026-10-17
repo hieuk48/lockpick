@@ -40,7 +40,8 @@ class Names:
         for l in json.loads((DATA / "flag-labels.json").read_text(encoding="utf-8"))["labels"]:
             base = l["bank"].rstrip("0123456789")
             word = int(l["bank"][len(base):] or 0)
-            self.labels[(base, word * 32 + 31 - (int(l["mask"], 16).bit_length() - 1))] = l["label"]
+            if l["label"]:
+                self.labels.setdefault((base, word * 32 + 31 - (int(l["mask"], 16).bit_length() - 1)), l["label"])
 
     def item(self, i: int) -> str:
         return self.items.get(str(i), f"item {i}")

@@ -68,6 +68,28 @@ public class Re1ChangeExplainerTests
     }
 
     [Fact]
+    public void A_label_is_used_only_in_the_games_it_was_confirmed_in()
+    {
+        // Story B1 0x20000000: Jill is carried to the save room after fainting; Chris meets Rebecca there (live 2026-10-16).
+        (string, long) rescue = ("flagScenarioB1", 0x20000000), noRescue = ("flagScenarioB1", 0);
+        Assert.Equal(["rescued after fainting and carried to the save room"], _explainer.Explain(Jill(0, "100", noRescue), Jill(1, "100", rescue)).Known);
+        (string, long) chris = ("character", 0);
+        Assert.Equal(["Chris meets Rebecca in the save room (100)"], _explainer.Explain(Jill(0, "100", chris, noRescue), Jill(1, "100", chris, rescue)).Known);
+
+        // The Emblem slot flag is starting state in Chris's game: nothing to show; in Jill's it's her putting it back.
+        (string, long) emblem = ("flagScenarioB5", 0x01000000), noEmblem = ("flagScenarioB5", 0);
+        Assert.Empty(_explainer.Explain(Jill(0, "106", chris, noEmblem), Jill(1, "106", chris, emblem)).Known);
+        Assert.Equal(["wood Emblem put in the 10F slot, the door reopens"], _explainer.Explain(Jill(0, "10F", noEmblem), Jill(1, "10F", emblem)).Known);
+
+        // A label confirmed only in Jill's game isn't used in Chris's (Barry's lockpick): the change is asked about instead.
+        (string, long) lockpick = ("flagScenarioA3", 0x00000008), noLockpick = ("flagScenarioA3", 0);
+        Assert.Equal(["Barry gives Jill the lockpick"], _explainer.Explain(Jill(0, raw: noLockpick), Jill(1, raw: lockpick)).Known);
+        var forChris = _explainer.Explain(Jill(0, "105", chris, noLockpick), Jill(1, "105", chris, lockpick));
+        Assert.DoesNotContain("Barry gives Jill the lockpick", forChris.Known);
+        Assert.Single(forChris.Unexplained);
+    }
+
+    [Fact]
     public void First_visits_are_explained_but_other_room_bank_bits_are_not()
     {
         Assert.Empty(_explainer.Explain(Jill(0, "104"), Jill(1, "104", ("flagRoom0", 0x0E000000))).Unexplained); // room 104 = bit 27

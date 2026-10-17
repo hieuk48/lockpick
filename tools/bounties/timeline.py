@@ -26,8 +26,20 @@ INK_RIBBON = 47
 CHARACTERS = {0: "Chris", 1: "Jill", 3: "Rebecca"}
 
 # Flag bits whose meaning was confirmed in live sessions (data/games/re1/flag-labels.json).
-KNOWN_FLAGS = {(e["bank"], int(e["mask"], 16)): e["label"]
-               for e in json.loads((DATA / "flag-labels.json").read_text(encoding="utf-8"))["labels"]}
+# A label holds only in the games it was confirmed in ("characters"; none: both): the same flag can be another scene in
+# the other character's game. An empty label hides the flag there (starting state).
+FLAG_LABELS = json.loads((DATA / "flag-labels.json").read_text(encoding="utf-8"))["labels"]
+
+
+def known_flag(key: str, mask: int, player: str) -> str | None:
+    matches = [e for e in FLAG_LABELS if e["bank"] == key and int(e["mask"], 16) == mask]
+    for e in matches:
+        if player in e.get("characters", []):
+            return e["label"]
+    for e in matches:
+        if "characters" not in e:
+            return e["label"]
+    return None
 FLAG_BANKS = ("flagScenarioA", "flagScenarioB", "flagRoom")
 
 # Damage per hit by enemy type and attack, from SHiiDO's RE1 damage chart (speedrun.com guides; JP PC, new game).
@@ -204,7 +216,7 @@ class Timeline:
                     if key not in s:
                         continue
                     for bit, now_set in changed_bits(prev.get(key, 0), s.get(key, 0)):
-                        label = KNOWN_FLAGS.get((key, 1 << bit))
+                        label = known_flag(key, 1 << bit, player)
                         if label and now_set:
                             self.emit(s, label)
 

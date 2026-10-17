@@ -73,6 +73,10 @@ All notable changes to this project are documented here. The format follows
   whether it's in front or minimized.
 - **No focus taken over exclusive fullscreen** (#54): the ask-mode question shows without taking the focus while the
   game is exclusive fullscreen and in front (the game would minimize).
+- **Story events in the right character's words:** a story-flag label is shown only in the games it was confirmed in
+  (most were confirmed in Jill's): in Chris's game Lockpick no longer says "rescued after fainting" when he meets
+  Rebecca in the save room, or announces the Emblem slot at the start (it's his starting state). Chris's own labels from
+  a live run were added, and the research notes that were showing in two labels were taken out.
 - **Widgets only in a game:** the map (on the overlay, in OBS and in its own window) and the time/HP widget in OBS and
   pop-outs hide after a death and at the title, instead of showing the last game's room and values.
 - **The map's own window:** the popped-out map is drawn live at the window's size with its own view (right-click):

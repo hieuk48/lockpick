@@ -5,6 +5,12 @@ using Lockpick.Core.State;
 
 namespace Lockpick.GameAdapter.RE1;
 
+/// <summary>A flag's meaning confirmed in play, in the games it was confirmed in (null: both characters').</summary>
+internal sealed record FlagLabel(string Bank, uint Mask, string Label, IReadOnlyList<string>? Characters)
+{
+    public bool For(string player) => Characters is null || Characters.Contains(player);
+}
+
 /// <summary>One room-script use of a flag: which room, which character's room file, and what it is (item id, enemy type or door target).</summary>
 internal sealed record FlagUse(string Room, string Player, int Flag, int What, string? Target = null);
 
@@ -41,8 +47,9 @@ internal sealed class Re1Knowledge
 
         EnemyNames = Table(names.RootElement.GetProperty("enemies"));
         LabelOrder = [.. labels.RootElement.GetProperty("labels").EnumerateArray()
-            .Select(e => (e.GetProperty("bank").GetString()!, Convert.ToUInt32(e.GetProperty("mask").GetString(), 16), e.GetProperty("label").GetString()!))];
-        Labels = LabelOrder.GroupBy(l => (l.Bank, l.Mask)).ToDictionary(g => g.Key, g => g.First().Label);
+            .Select(e => new FlagLabel(e.GetProperty("bank").GetString()!, Convert.ToUInt32(e.GetProperty("mask").GetString(), 16),
+                e.GetProperty("label").GetString()!,
+                e.TryGetProperty("characters", out var who) ? [.. who.EnumerateArray().Select(c => c.GetString()!)] : null))];
         Fills = labels.RootElement.GetProperty("labels").EnumerateArray()
             .Where(e => e.TryGetProperty("fills", out _))
             .ToDictionary(e => (e.GetProperty("fills").GetProperty("room").GetString()!, e.GetProperty("fills").GetProperty("item").GetInt32()),
@@ -57,7 +64,17 @@ internal sealed class Re1Knowledge
     public Dictionary<(string Room, int Item), (string Bank, uint Mask)> Fills { get; }
 
     /// <summary>The confirmed labels in file order (roughly the order they happen in the game).</summary>
-    public List<(string Bank, uint Mask, string Label)> LabelOrder { get; }
+    public List<FlagLabel> LabelOrder { get; }
+
+    /// <summary>
+    /// What the flag means in <paramref name="player"/>'s game ("jill" or "chris"): its label confirmed there (one
+    /// for that character first, then one for both), "" when it's hidden there, or null when its meaning in that game
+    /// isn't known — a label confirmed only in the other character's game is never used (the same flag can be a
+    /// different scene, e.g. Barry's rescue in Jill's game, meeting Rebecca in Chris's).
+    /// </summary>
+    public string? Label(string bankWord, uint mask, string player) =>
+        (LabelOrder.Find(l => l.Bank == bankWord && l.Mask == mask && l.Characters?.Contains(player) == true)
+         ?? LabelOrder.Find(l => l.Bank == bankWord && l.Mask == mask && l.Characters is null))?.Label;
 
     /// <summary>Area name by the room id's stage digit ('1' = Mansion 1F ...).</summary>
     public Dictionary<char, string> Areas { get; }
@@ -80,8 +97,6 @@ internal sealed class Re1Knowledge
     public Dictionary<int, string> ItemNames { get; }
 
     public Dictionary<int, string> EnemyNames { get; }
-
-    public Dictionary<(string Bank, uint Mask), string> Labels { get; }
 
     public static Re1Knowledge LoadEmbedded()
     {
@@ -294,7 +309,7 @@ internal sealed class Re1ChangeExplainer(Re1Knowledge knowledge) : IChangeExplai
     /// <summary>A description of an explained change ("" when not worth showing), or null when it is unexplained.</summary>
     private string? Explain(string bank, int word, uint mask, int flag, bool set, string room, string player)
     {
-        if (knowledge.Labels.TryGetValue(($"{bank}{word}", mask), out var label))
+        if (knowledge.Label($"{bank}{word}", mask, player) is { } label)
         {
             return set ? label : string.Empty;
         }

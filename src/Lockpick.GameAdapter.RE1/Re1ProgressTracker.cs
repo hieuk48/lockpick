@@ -95,8 +95,10 @@ internal sealed class Re1ProgressTracker(Re1Knowledge knowledge) : IProgressTrac
             }
         }
 
+        // The story so far in this character's game: labels confirmed there only (a Jill label can be another scene for Chris).
         var story = knowledge.LabelOrder
-            .Where(l => l.Bank.StartsWith("flagScenario", StringComparison.Ordinal) && (Raw(snapshot, l.Bank) is { } v) && (v & l.Mask) != 0)
+            .Where(l => l.Bank.StartsWith("flagScenario", StringComparison.Ordinal) && l.For(player) && l.Label.Length > 0
+                && knowledge.Label(l.Bank, l.Mask, player) == l.Label && (Raw(snapshot, l.Bank) is { } v) && (v & l.Mask) != 0)
             .Select(l => l.Label).Distinct().ToList();
         var unnamed = 0;
         foreach (var (bank, words) in new[] { ("flagScenarioA", 4), ("flagScenarioB", 8) })
@@ -107,7 +109,7 @@ internal sealed class Re1ProgressTracker(Re1Knowledge knowledge) : IProgressTrac
                 {
                     for (var bit = 0; bit < 32; bit++)
                     {
-                        if ((value & (1u << bit)) != 0 && !knowledge.Labels.ContainsKey(($"{bank}{word}", 1u << bit)))
+                        if ((value & (1u << bit)) != 0 && knowledge.Label($"{bank}{word}", 1u << bit, player) is null)
                         {
                             unnamed++;
                         }
