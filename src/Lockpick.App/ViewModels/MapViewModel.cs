@@ -187,18 +187,21 @@ public sealed partial class MapViewModel : PageViewModel
         }
     }
 
+    /// <summary>The room files of the game being played (its own folder and language), else of the installed game.</summary>
     private IRoomMapSource? Maps()
     {
-        if (!_mapsTried)
+        var exe = State.Status.Process?.ExecutablePath is { Length: > 0 } running ? running : _services.ResolveInstalledExecutable();
+        if (!_mapsTried || !string.Equals(exe, _mapsFor, StringComparison.OrdinalIgnoreCase))
         {
             _mapsTried = true;
-            var exe = _services.ResolveInstalledExecutable();
-            var directory = exe is null ? null : Path.GetDirectoryName(exe);
-            _maps = directory is null ? null : _services.Adapter.CreateRoomMaps(directory);
+            _mapsFor = exe;
+            _maps = exe is null ? null : _services.Adapter.CreateRoomMaps(exe);
         }
 
         return _maps;
     }
+
+    private string? _mapsFor;
 
     private void Refresh(bool force)
     {

@@ -151,7 +151,7 @@ public class Re1RoomMapsTests
     [Fact]
     public void Missing_install_gives_no_map()
     {
-        var maps = new Re1Adapter().CreateRoomMaps(Path.Combine(Path.GetTempPath(), "no-such-install"));
+        var maps = new Re1Adapter().CreateRoomMaps(Path.Combine(Path.GetTempPath(), "no-such-install", "ResidentEvil.exe"));
         Assert.Null(maps.Load(Room105, PlayableCharacter.Jill));
     }
 }

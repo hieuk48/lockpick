@@ -1,6 +1,7 @@
 # Lockpick player guide
 
-Lockpick sits next to the original **Resident Evil** (GOG, PC) and reads the game as you play: your health, the room
+Lockpick sits next to the original **Resident Evil** on PC (GOG's English or Japanese release, or the Japanese
+version with Classic REbirth) and reads the game as you play: your health, the room
 you're in, a live map, items, story progress, the enemies around you. On top of that it times runs the way the
 leaderboard does, runs challenges, puts it all on your stream, and — only if you turn them on — has cheats for
 practice. It never changes your game files.
@@ -23,10 +24,14 @@ practice. It never changes your game files.
 1. Download **[Lockpick-win-Setup.exe](https://github.com/mscrnt/lockpick/releases/latest/download/Lockpick-win-Setup.exe)**
    and run it. It installs for your Windows user only (no administrator rights needed). Windows SmartScreen may warn
    because Lockpick isn't code-signed yet: *More info → Run anyway*.
-2. The first start finds your game and checks its build. Lockpick supports the **GOG 1.0 hotfix4** release of
-   Resident Evil; other builds are refused rather than guessed at.
-3. Start Resident Evil from its own `ResidentEvil.exe` (not the GOG installer's *Launch* button, which starts it as
-   administrator). Lockpick connects by itself — the badge at the top right turns green.
+2. The first start finds your game and checks its build. Lockpick supports GOG's English and Japanese 1.0 hotfix4
+   releases and the Japanese 1.01 version with Classic REbirth; other builds are refused rather than guessed at.
+   With REbirth or a MediaKite copy, point Lockpick at your `Biohazard.exe` (Settings → General → Game installation).
+3. Start Resident Evil from its own `ResidentEvil.exe` or `Biohazard.exe` (not the GOG installer's *Launch* button,
+   which starts it as administrator). Lockpick connects by itself — the badge at the top right turns green.
+
+**Classic REbirth:** keep it in its own folder (it replaces `ddraw.dll`, which GOG's English game needs). Lockpick
+reads REbirth's save folder and settings; change the window size in REbirth's own setup window.
 
 Updates are checked in the background; when one is ready the version at the bottom of the sidebar turns green.
 Nothing installs without your click.
@@ -89,8 +94,9 @@ Runs → *Leaderboard*:
 - **Submit to speedrun.com:** a finished clean attempt, with its in-game time, the date and your video link, in two
   presses. It needs your speedrun.com API key (Settings → speedrun.com): the key is kept encrypted for your Windows
   account and only ever sent to speedrun.com.
-- **Leaderboard run:** for runs you'll submit. Lockpick locks its cheats read-only, keeps ask mode off, checks every
-  game file against GOG's release (no mods) and lists the rules only you can keep. Each attempt's record notes
+- **Leaderboard run:** for runs you'll submit. Lockpick locks its cheats read-only, keeps ask mode off, checks the
+  game files of the version you're playing (no mods; with Classic REbirth also that quickturn, tactical reload and its
+  debug menu are off) and lists the rules only you can keep. Each attempt's record notes
   whether every check passed.
 
 The leaderboard's rules for PC require LiveSplit's in-game time script on screen — see [LiveSplit](#livesplit).
@@ -187,9 +193,10 @@ challenge fails are marked by themselves. See [CAPTURE.md](CAPTURE.md) and the o
 ## Troubleshooting
 
 - **Lockpick never connects:** the game was probably started as administrator (e.g. from the GOG installer's
-  *Launch* button), which Lockpick can't read. Close it and start it from `ResidentEvil.exe`.
-- **"Unsupported build":** Lockpick only reads GOG 1.0 hotfix4; other builds are refused until they're verified
-  ([COMPATIBILITY.md](COMPATIBILITY.md)).
+  *Launch* button), which Lockpick can't read. Close it and start it from `ResidentEvil.exe` or `Biohazard.exe`.
+- **"Unsupported build":** Lockpick reads GOG's English and Japanese 1.0 hotfix4 and the Japanese 1.01 version
+  (Classic REbirth); other builds are refused until they're verified ([COMPATIBILITY.md](COMPATIBILITY.md)). Run
+  `lockpick-probe identify` on yours and open an issue to ask for it.
 - **The overlay doesn't show in OBS:** that's by design — use the browser sources or a popped-out window.
 - **The overlay doesn't show at all:** check Settings → Overlay (on, and the widgets aren't all *Off*); its status line
   says why it's hidden.

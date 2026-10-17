@@ -50,10 +50,10 @@ public interface IGameAdapter
     Insight.IProgressTracker? CreateProgressTracker(VersionProfile profile) => null;
 
     /// <summary>
-    /// Reads room layouts (collision, doors, items, cameras) from the player's own install at
-    /// <paramref name="installDirectory"/>; null when the adapter can't.
+    /// Reads room layouts (collision, doors, items, cameras) from the player's own install of the game run from
+    /// <paramref name="executablePath"/> (one folder can hold two releases); null when the adapter can't.
     /// </summary>
-    Maps.IRoomMapSource? CreateRoomMaps(string installDirectory) => null;
+    Maps.IRoomMapSource? CreateRoomMaps(string executablePath) => null;
 
     /// <summary>The folder the game writes its saves to, for the executable at <paramref name="executablePath"/>; null if unknown.</summary>
     string? SaveDirectory(string executablePath) => null;

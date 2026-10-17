@@ -6,7 +6,8 @@
 [![License: MIT](https://img.shields.io/badge/license-MIT-green)](LICENSE)
 [![Discussions](https://img.shields.io/github/discussions/mscrnt/lockpick)](https://github.com/mscrnt/lockpick/discussions)
 
-**Lockpick** is a free companion app for the original **Resident Evil (1996)** on PC, GOG release. Run it next to
+**Lockpick** is a free companion app for the original **Resident Evil (1996)** on PC: GOG's English or Japanese
+release, or the Japanese version with Classic REbirth that most speedrunners use. Run it next to
 the game and it shows what the game is doing as you play: your health, the room you're in, a live map, your items,
 your progress and the enemies around you. It also times speedruns the way the leaderboard does, runs challenges such
 as "no damage" or "knife only", puts all of it on your stream, and has optional cheats for practice.
@@ -76,7 +77,8 @@ It never changes your game files. It only changes the running game if you switch
 - **Practice from a save:** start timing when you load a save, on the game's clock, from the split you choose. These
   runs never count as a personal best.
 - **Leaderboard runs:** one switch keeps Lockpick hands-off (cheats locked, nothing that pauses the game), checks your
-  game files against GOG's release for mods, and lists the rules only you can keep.
+  game files for mods (and, with Classic REbirth, that quickturn, tactical reload and its debug menu are off), and
+  lists the rules only you can keep.
 - **speedrun.com:** see the leaderboard and where your time would place, and submit a finished run from the app.
 - **Warnings** when your splits are for the other character.
 
@@ -102,14 +104,21 @@ split into sections in the sidebar, a support bundle for bug reports, and a [pla
    and run it. It installs for your Windows user only (no administrator rights needed). Windows may warn that it
    doesn't know the app, because Lockpick isn't code-signed yet: click *More info → Run anyway*.
 2. The first start helps you find your game and checks that it's a supported version.
-3. Start Resident Evil from its own `ResidentEvil.exe` (not the GOG installer's *Launch* button, which starts it as
-   administrator). Lockpick connects by itself.
+3. Start Resident Evil from its own `ResidentEvil.exe` (or `Biohazard.exe` for the Japanese version), not the GOG
+   installer's *Launch* button, which starts it as administrator. Lockpick connects by itself.
 
 **Updates:** Lockpick checks for new versions in the background. When one is ready, the version number at the bottom
 of the sidebar turns green; nothing installs until you click. Each release also has a portable zip.
 
-**Which game version?** Lockpick supports the **GOG release, version 1.0 hotfix4** (`ResidentEvil.exe`, SHA-256
-`205BD6FE…4A78`). It refuses other versions instead of guessing; see [docs/COMPATIBILITY.md](docs/COMPATIBILITY.md).
+**Which game version?** Lockpick supports:
+
+- **GOG's English release**, 1.0 hotfix4 (`ResidentEvil.exe`);
+- **GOG's Japanese release**, 1.0 hotfix4 (`Biohazard.exe`; GOG offers it as a separate download of the same game);
+- **the Japanese 1.01 version with Classic REbirth**, the version the speedrun.com PC board recommends (MediaKite, or
+  GOG's Japanese release with REbirth in its own folder).
+
+It refuses other versions instead of guessing; see [docs/COMPATIBILITY.md](docs/COMPATIBILITY.md). The PlayStation,
+Saturn and emulator boards aren't supported yet.
 
 ## Safe by design
 
@@ -130,7 +139,9 @@ Challenge mode records what Lockpick did. It is not an anti-cheat system.
 
 ## Known limitations
 
-- Only the GOG 1.0 hotfix4 version of Resident Evil is supported for now.
+- Supported: GOG's English and Japanese releases and the Japanese 1.01 version with Classic REbirth. Not yet: Steam,
+  emulators. On the Japanese versions, cheats only cover what has been checked in play so far: health, and ammo in
+  the first four slots on GOG's Japanese release. The rest follows as it's tested.
 - Resident Evil pauses and goes black whenever it isn't the active window (that's the original game). An OBS capture
   shows black while you click elsewhere, and in exclusive fullscreen the game minimizes instead.
 - The built-in split points come from the community's autosplitter and haven't all been checked in full runs yet.

@@ -115,10 +115,12 @@ public sealed class Re1Adapter : IGameAdapter
 
     public string? RoomName(string roomId) => Knowledge.Value.RoomNames.TryGetValue(roomId, out var name) ? name : null;
 
-    public Core.Maps.IRoomMapSource CreateRoomMaps(string installDirectory)
+    /// <summary>The room files of the game being played: JPN for Biohazard.exe, USA for ResidentEvil.exe.</summary>
+    public Core.Maps.IRoomMapSource CreateRoomMaps(string executablePath)
     {
         var knowledge = Re1Knowledge.LoadEmbedded();
-        return new Re1RoomMaps(Re1Install.Inspect(installDirectory).DataDirectory, knowledge.Item, knowledge.Fills);
+        var install = Re1Install.Inspect(Path.GetDirectoryName(executablePath) ?? ".");
+        return new Re1RoomMaps(install.DataDirectoryFor(Path.GetFileName(executablePath)), knowledge.Item, knowledge.Fills);
     }
 
     public static IEnumerable<VersionProfile> LoadEmbeddedProfiles()

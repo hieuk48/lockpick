@@ -60,9 +60,16 @@ public sealed record Re1Install(string Directory, RebirthInstall? Rebirth)
                 : "savedata")
             : Path.Combine(Directory, "SAVE");
 
-    /// <summary>The room files' folder: USA (English data) or JPN (Japanese data).</summary>
+    /// <summary>The room files' folder: USA (English data) or JPN (Japanese data), whichever is there.</summary>
     public string DataDirectory =>
         DataFolders.Select(d => Path.Combine(Directory, d)).FirstOrDefault(System.IO.Directory.Exists) ?? Directory;
+
+    /// <summary>The room files of the game run as <paramref name="executableName"/>: both releases can share a folder.</summary>
+    public string DataDirectoryFor(string executableName)
+    {
+        var own = Path.Combine(Directory, string.Equals(executableName, "Biohazard.exe", StringComparison.OrdinalIgnoreCase) ? "JPN" : "USA");
+        return System.IO.Directory.Exists(own) ? own : DataDirectory;
+    }
 
     private static readonly string[] DataFolders = ["USA", "JPN"];
 

@@ -115,6 +115,17 @@ public sealed class Re1JapaneseTests : IDisposable
     }
 
     [Fact]
+    public void A_shared_folder_gives_each_game_its_own_room_files()
+    {
+        Directory.CreateDirectory(Path.Combine(_folder, "USA"));
+        Directory.CreateDirectory(Path.Combine(_folder, "JPN"));
+        var install = Re1Install.Inspect(_folder);
+
+        Assert.Equal(Path.Combine(_folder, "JPN"), install.DataDirectoryFor("Biohazard.exe"));
+        Assert.Equal(Path.Combine(_folder, "USA"), install.DataDirectoryFor("ResidentEvil.exe"));
+    }
+
+    [Fact]
     public void A_gog_install_keeps_its_save_folder_and_display_settings()
     {
         File.WriteAllText(Path.Combine(_folder, "ResidentEvil.exe"), "exe");

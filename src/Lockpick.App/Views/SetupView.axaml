@@ -61,9 +61,9 @@
               <TextBlock Classes="caption" Text="FIND YOUR GAME" />
             </StackPanel>
             <TextBlock Classes="body" Text="{Binding DetectedInstall}" />
-            <TextBlock Classes="label" Text="Game executable (ResidentEvil.exe)" />
+            <TextBlock Classes="label" Text="Game executable (ResidentEvil.exe, or Biohazard.exe for the Japanese version)" />
             <Grid ColumnDefinitions="*,Auto,Auto" ColumnSpacing="8">
-              <TextBox Text="{Binding GameExecutablePath}" FontFamily="{StaticResource LpMono}" PlaceholderText="Path to ResidentEvil.exe" />
+              <TextBox Text="{Binding GameExecutablePath}" FontFamily="{StaticResource LpMono}" PlaceholderText="Path to ResidentEvil.exe or Biohazard.exe" />
               <Button Grid.Column="1" Content="Browse..." Click="OnBrowse" />
               <Button Grid.Column="2" Content="Check" Command="{Binding CheckBuildCommand}" />
             </Grid>

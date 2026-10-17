@@ -17,7 +17,8 @@ Status legend: ✅ done and verified · 🟡 done, partially verified · ⬜ not
 | 0.1.6 | Progress tracker (read-only), Items and Map pages, controller capture markers | ✅ released 2026-10-15 |
 | 0.2.0 | Core trainer (Trainer Mode, HP/ammo/inventory, hotkeys), Challenges tab, API for other tools, branding | ✅ released 2026-10-15 |
 | 0.3.0 | Play and stream with one app: overlay, runs (timer, splits, LiveSplit), OBS sources, training captures | 🟡 released 2026-10-16 (live checks pending) |
-| 0.3.2 | Every speedrun.com RE1 run: the Japanese PC game with Classic REbirth, then GOG/Steam Japanese, then emulators | 🟡 GOG Japanese and 1.01 + REbirth live-verified; Steam and EMU next |
+| 0.3.1 | Every PC version runners use: the Japanese game with Classic REbirth, GOG's Japanese release (Steam and emulators to follow) | 🟡 PC versions live-verified 2026-10-17; Steam and EMU next |
+| 0.3.2 | OBS WebSocket automation and keep-running | ⬜ |
 | 0.4.0 | Room, camera, item and enemy database | ⬜ |
 | 0.5.0 | Object highlighting and ESP | ⬜ |
 | 0.6.0 | Advanced trainer and gameplay manipulation | ⬜ |
@@ -172,7 +173,7 @@ itself through an **OBS script shipped with Lockpick**; the timer defaults to th
 speedrun.com); Lockpick may switch the game to borderless by editing `dxcfg.ini` on the player's click; code signing
 is decided later. Keep-running stays out of challenges (it patches the game, and runners can't click off anyway).
 
-**Sprints.** 0.3.0 ships after sprints 1–6; the keep-running option and OBS WebSocket control follow as 0.3.1.
+**Sprints.** 0.3.0 ships after sprints 1–6; the keep-running option and OBS WebSocket control follow as 0.3.2 (0.3.1 became the PC versions release).
 
 1. **Responsive app — done 2026-10-15:** every page at ultrawide (full, half, third, quarter), 1080p, 720p, 1024×768,
    800×600, portrait (720×1280 at 150 %) and the 150 % 1080p monitor (full to quarter); content scrolls instead of
@@ -301,28 +302,7 @@ is decided later. Keep-running stays out of challenges (it patches the game, and
    code signing so Windows stops warning about the installer (owner decision: certificate or Azure Trusted Signing);
    OBS + Lockpick + the game together checked for frame pacing (B209).
 
-### 0.3.1 — OBS automation and keep-running
-
-- **OBS WebSocket (optional, for setups the script can't cover, e.g. OBS on another PC; the password kept with
-  Windows DPAPI):** the same automation as `lockpick.lua` from Lockpick's side — scene setup, recording with runs,
-  chapters (`CreateRecordChapter`), replay buffer, the "paused" scene.
-- **Keep the game running when it isn't the active window** (opt-in, Trainer Mode only, never in challenges; the
-  in-process focus patch `0x44126B`, MEMORY_MAP "Focus and input"; chosen by the owner 2026-10-13) — the alternative
-  to the OBS "paused" scene for people who aren't running a challenge.
-
-Known HUD data (already understood, read-only) for sprint 2 and #42:
-- HP status as the game rates it — Jill Fine 73–96 / Caution 25–48 / Danger 0–24, Chris 106 / 36 / 0
-  thresholds (speedrun damage chart, matches the GOG build);
-- poisoned indicator (status byte `0xBE63C0` bit `0x02`, Yawn's poison `0x20`; −2 HP each time the timer
-  `0xBE6458` runs out, ~4 s) and the status screen's own HP band (`0xAE9F2F`) — runtime-verified 2026-10-14;
-- enemy health in the current room (enemy slots: type, HP, active);
-- what just happened: an event feed in plain words (picked up the Emblem, Zombie ankle bite (6), first visit to
-  room 11D, Barry gives Jill the lockpick) — the capture timeline's logic in the app (#43);
-- current room and area by name (areas from the game's room table; names as they are confirmed);
-- room map — in the app since 2026-10-14 (`Re1RoomMaps`, `RoomMapControl`); next: script-placed objects (the
-  dining-room clock) and the whole-floor view (tools/rdt/floor_map.py), then an overlay / browser-source version.
-
-### 0.3.2 — Every speedrun.com RE1 run
+### 0.3.1 — Every speedrun.com RE1 run
 
 Owner's direction (2026-10-17): "one tool for all speedrun.com RE1 runs". The PC board recommends the Japanese
 MediaKite game with Classic REbirth; GOG and Steam are allowed (docs/COMPATIBILITY.md has every board). Order:
@@ -344,6 +324,27 @@ MediaKite game with Classic REbirth; GOG and Steam are allowed (docs/COMPATIBILI
 4. ⬜ **EMU board** — read the PS1 game inside DuckStation (and BizHawk / PSXjin): find the console RAM in the
    emulator, identify the disc, a profile per PS1 version (Director's Cut first, the board's fast version). Needs a PS1
    disc image the owner owns for the research; console boards (PS, PSN, Saturn) stay out of reach.
+
+### 0.3.2 — OBS automation and keep-running
+
+- **OBS WebSocket (optional, for setups the script can't cover, e.g. OBS on another PC; the password kept with
+  Windows DPAPI):** the same automation as `lockpick.lua` from Lockpick's side — scene setup, recording with runs,
+  chapters (`CreateRecordChapter`), replay buffer, the "paused" scene.
+- **Keep the game running when it isn't the active window** (opt-in, Trainer Mode only, never in challenges; the
+  in-process focus patch `0x44126B`, MEMORY_MAP "Focus and input"; chosen by the owner 2026-10-13) — the alternative
+  to the OBS "paused" scene for people who aren't running a challenge.
+
+Known HUD data (already understood, read-only) for sprint 2 and #42:
+- HP status as the game rates it — Jill Fine 73–96 / Caution 25–48 / Danger 0–24, Chris 106 / 36 / 0
+  thresholds (speedrun damage chart, matches the GOG build);
+- poisoned indicator (status byte `0xBE63C0` bit `0x02`, Yawn's poison `0x20`; −2 HP each time the timer
+  `0xBE6458` runs out, ~4 s) and the status screen's own HP band (`0xAE9F2F`) — runtime-verified 2026-10-14;
+- enemy health in the current room (enemy slots: type, HP, active);
+- what just happened: an event feed in plain words (picked up the Emblem, Zombie ankle bite (6), first visit to
+  room 11D, Barry gives Jill the lockpick) — the capture timeline's logic in the app (#43);
+- current room and area by name (areas from the game's room table; names as they are confirmed);
+- room map — in the app since 2026-10-14 (`Re1RoomMaps`, `RoomMapControl`); next: script-placed objects (the
+  dining-room clock) and the whole-floor view (tools/rdt/floor_map.py), then an overlay / browser-source version.
 
 ## Developer tooling (never shipped)
 
