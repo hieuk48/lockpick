@@ -53,6 +53,19 @@ public sealed class Re1JapaneseTests : IDisposable
     }
 
     [Fact]
+    public void Gogs_japanese_exe_has_the_1_01_layout_and_what_its_live_trace_showed_is_runtime()
+    {
+        var gogJp = _adapter.Profiles.Single(p => p.Id == "re1-gog-jpn-hotfix4");
+        Assert.Equal(0x4991000u, gogJp.Executable.SizeOfImage); // the autosplitter's "JapaneseGOG"
+        Assert.Equal(Japanese.Fields.Select(f => (f.Name, f.Address)), gogJp.Fields.Select(f => (f.Name, f.Address)));
+        Assert.True(gogJp.IsLiveVerified);
+        Assert.Equal(Verification.Runtime, gogJp.FindField("hp")!.Verification);
+        Assert.True(gogJp.FindField("hp")!.IsWritable);
+        Assert.Equal(Verification.Static, gogJp.FindField("stateFlags")!.Verification); // not shown by the trace
+        Assert.Equal("re1-gog-usa-hotfix4", _adapter.Profiles[0].Id); // live-verified English first, the default
+    }
+
+    [Fact]
     public void The_build_is_identified_by_its_hash()
     {
         var match = _adapter.Identify(FakeFingerprintProvider.For(Japanese, @"G:\Games\Biohazard\Biohazard.exe"));

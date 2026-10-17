@@ -1,0 +1,38 @@
+{
+  "comment": "What the probe trace of GOG's Japanese Biohazard.exe showed behaving as described (tools/Lockpick.Probe trace, 15 min, owner playing Chris from the title: main hall, 1F west, 2F and back; pickups, a first aid spray, zombie and dog fights). Applied by tools/re1/port_profile.py --live. Fields not listed stay static.",
+  "date": "2026-10-17",
+  "session": "Chris new game, owner, probe trace",
+  "fields": {
+    "stage": "0 on 1F, 1 after the stairs to 2F, 0 again back down.",
+    "room": "0x1B for the intro, then 06 (main hall) and the rooms the owner walked through (05, 04, 07, 08 …), changing at each door.",
+    "camera": "157 changes, at the camera cuts while walking.",
+    "hp": "140 at the start; 130/120/110/100 in steps of 10 from zombie bites; back to 140 with the first aid spray; down to 46 later.",
+    "maxHp": "140 (Chris) from the start of the game.",
+    "character": "0 (Chris) for the whole game.",
+    "gameTimer": "0 at New Game, 21 984 frames (12.2 min at 30/s) after 13.4 min, still in menus and door transitions.",
+    "mainMenu": "1 on the title menu, 0 once the game started.",
+    "positionX": "Changes as the player walks (trace context).",
+    "positionZ": "Changes as the player walks (trace context).",
+    "inventoryPtr": "Holds 0xC38814 (the inventory) from the start of Chris's game.",
+    "inv0": "Combat knife (0x01) from the start.",
+    "inv1": "First aid spray (0x41 x1) at the start, the Emblem after the spray was used (HP back to 140 at the same moment), later the Beretta counting down.",
+    "inv2": "Items as picked up (Emblem, Beretta 15 counting down per shot, Clip, Shells).",
+    "inv3": "Beretta 15 → 14 → 13 … per shot, the Sword key, Shells.",
+    "inv0Qty": "0 for the knife.",
+    "inv1Qty": "1 for the spray; the Beretta's rounds per shot.",
+    "inv2Qty": "The Beretta's rounds per shot.",
+    "inv3Qty": "The Beretta's rounds per shot.",
+    "equippedSlot": "4, 3, 2 as the Beretta moved between slots.",
+    "enemy0Hp": "A zombie's HP fell by 9 at the moments the Beretta's rounds dropped; −1 when it died.",
+    "enemy0Type": "0 (zombie), 2 (dog), 0x11, and NPC types 0x23/0x24/0x26 in the cutscene rooms.",
+    "flagRoomItems0": "Bits cleared at the moments items appeared in the inventory.",
+    "flagRoomItems1": "Bits cleared at the moments items appeared in the inventory.",
+    "box0": "0x0F0B (Clip x15) at the start, then the item stored."
+  },
+  "addresses": {
+    "inventoryPointer": "Holds the inventory's address (0xC38814) during Chris's game.",
+    "inventory": "The slots above, as picked up and used.",
+    "itemBox": "Its first entry is the box's starting Clip x15, then what was stored.",
+    "actorSlots": "Slot 0's type and HP above (zombie hit by the Beretta, then dead)."
+  }
+}

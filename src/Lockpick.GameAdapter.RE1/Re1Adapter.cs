@@ -34,7 +34,8 @@ public sealed class Re1Adapter : IGameAdapter
             profiles.Add(extra);
         }
 
-        Profiles = profiles;
+        // The most live-verified build first: the default where no game is attached yet (the Debug and Progress pages).
+        Profiles = [.. profiles.OrderByDescending(p => p.Fields.Count(f => f.Verification == Verification.Runtime))];
     }
 
     public string GameId => Id;
@@ -84,7 +85,8 @@ public sealed class Re1Adapter : IGameAdapter
             ? fileName[7] - '0'
             : null;
 
-    public string WindowClass => "RESIDENT EVIL";
+    /// <summary>GOG's English game's window, then the Japanese game's (live 2026-10-17: class "BIOHAZARD").</summary>
+    public string WindowClass => "RESIDENT EVIL;BIOHAZARD";
 
     /// <summary>
     /// GOG's DirectDraw wrapper settings (<c>dxcfg.ini</c>, docs/DISPLAY.md): <c>aspect=disabled</c> stretches the

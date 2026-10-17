@@ -17,7 +17,7 @@ Status legend: ✅ done and verified · 🟡 done, partially verified · ⬜ not
 | 0.1.6 | Progress tracker (read-only), Items and Map pages, controller capture markers | ✅ released 2026-10-15 |
 | 0.2.0 | Core trainer (Trainer Mode, HP/ammo/inventory, hotkeys), Challenges tab, API for other tools, branding | ✅ released 2026-10-15 |
 | 0.3.0 | Play and stream with one app: overlay, runs (timer, splits, LiveSplit), OBS sources, training captures | 🟡 released 2026-10-16 (live checks pending) |
-| 0.3.2 | Every speedrun.com RE1 run: the Japanese PC game with Classic REbirth, then GOG/Steam Japanese, then emulators | ⬜ next — 1.01 profile static, needs a live trace |
+| 0.3.2 | Every speedrun.com RE1 run: the Japanese PC game with Classic REbirth, then GOG/Steam Japanese, then emulators | 🟡 GOG Japanese live-verified; 1.01 + REbirth static |
 | 0.4.0 | Room, camera, item and enemy database | ⬜ |
 | 0.5.0 | Object highlighting and ESP | ⬜ |
 | 0.6.0 | Advanced trainer and gameplay manipulation | ⬜ |
@@ -337,8 +337,9 @@ MediaKite game with Classic REbirth; GOG and Steam are allowed (docs/COMPATIBILI
 2. 🟡 **Leaderboard checks for REbirth** — the exe and every REbirth release (1.0.0–1.1.4) by hash, its banned options
    (quickturn, tactical reload, debug) and cutscene skip from `config.ini`, `mod_*` folders. **Needs:** a list of the
    Japanese data files (from the Japanese install, `tools/re1/install_manifest.py`).
-3. ⬜ **GOG Japanese unpatched and Steam** — port profiles from their executables (GOG Japanese: the installer;
-   Steam app 4249100: owner's copy, if any).
+3. 🟡 **GOG Japanese and Steam** — GOG Japanese hotfix4 (`re1-gog-jpn-hotfix4`): ported and live-verified 2026-10-17
+   (a Chris game, probe trace; `port_profile.py --live` keeps the live evidence when it's regenerated); the trainer
+   writes what the trace confirmed. Steam (app 4249100): not yet, needs its executables.
 4. ⬜ **EMU board** — read the PS1 game inside DuckStation (and BizHawk / PSXjin): find the console RAM in the
    emulator, identify the disc, a profile per PS1 version (Director's Cut first, the board's fast version). Needs a PS1
    disc image the owner owns for the research; console boards (PS, PSN, Saturn) stay out of reach.

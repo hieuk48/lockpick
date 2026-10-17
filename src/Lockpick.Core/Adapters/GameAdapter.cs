@@ -61,7 +61,8 @@ public interface IGameAdapter
     /// <summary>The save slot a file in <see cref="SaveDirectory"/> belongs to, or null for any other file.</summary>
     int? SaveSlot(string fileName) => null;
 
-    /// <summary>The game window's class name, to tell it from the process's other windows; null to take the first visible one.</summary>
+    /// <summary>The game window's class names (one per build, e.g. "RESIDENT EVIL;BIOHAZARD"), to tell it from the
+    /// process's other windows, separated by ';'; null to take the first visible one.</summary>
     string? WindowClass => null;
 
     /// <summary>

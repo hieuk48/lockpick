@@ -14,6 +14,9 @@ All notable changes to this project are documented here. The format follows
 - **Leaderboard run on the Japanese game:** the exe and Classic REbirth (every release, 1.0.0–1.1.4) are checked by
   hash, and REbirth's banned quickturn, tactical reload and debug mode fail the check; cutscene skip and mod folders
   are flagged.
+- **GOG's Japanese version (`Biohazard.exe`, 1.0 hotfix4)**, checked in play: rooms, HP, the timer, inventory, enemies
+  and pickups read as on the English game. It can share the English install's folder. Its window is found for the
+  overlay too.
 - `tools/re1/xmap.py` and `tools/re1/port_profile.py`: port the verified profile to another build by finding the same
   code in it (developer tools).
 

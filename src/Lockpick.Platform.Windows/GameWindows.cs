@@ -16,12 +16,16 @@ public static class GameWindows
             return previous;
         }
 
-        var window = nint.Zero;
-        while ((window = NativeMethods.FindWindowEx(0, window, windowClass, null)) != 0)
+        // Several classes (one per build) are separated by ';'.
+        foreach (var name in windowClass?.Split(';', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries) ?? [null!])
         {
-            if (OwnedBy(window, processId) && NativeMethods.IsWindowVisible(window))
+            var window = nint.Zero;
+            while ((window = NativeMethods.FindWindowEx(0, window, name, null)) != 0)
             {
-                return window;
+                if (OwnedBy(window, processId) && NativeMethods.IsWindowVisible(window))
+                {
+                    return window;
+                }
             }
         }
 

@@ -440,6 +440,13 @@ check's `cmp word [0xC3523C],0` at `0x45B7EE`). The autosplitter's leads for thi
 `0x8386F0`, HP `0x83523C`, character `0x8386F9`, module-relative) match. Room files: `JPN\StageN\ROOMsRRp.RDT` (the
 exe's template is `d:/horr/jpn/stage /room    .rdt`).
 
-**Not yet:** a live trace on this build (the Japanese data is needed to run it). Until then every field is "static",
+**GOG's Japanese `Biohazard.exe`** (972,880 bytes, SHA-256 `9F38420B5B608CBB12ED38A1DBFAD690BB79D7407856EE0BADC76DC7168E8012`,
+the same link timestamp `0x3642D468`, SizeOfImage `0x4991000` = the autosplitter's "JapaneseGOG") is the 1.01 code
+with GOG's changes: the port gives every address and anchor exactly as in 1.01. **Live 2026-10-17** (probe trace, the
+owner playing Chris for 13 min; `data/games/re1/profiles/live/re1-gog-jpn-hotfix4.json`): stage, room, camera, HP and
+max HP, character, timer, main menu, position, the inventory pointer (it holds `0xC38814`) and slots 0–3, the equipped
+slot, enemy slot 0, the room-item flags and the item box behaved as on GOG English, so those are runtime there.
+
+**Not yet:** a live trace on the 1.01 exe itself (with REbirth) (the Japanese data is needed to run it). Until then every field is "static",
 the trainer's writes stay off, and Classic REbirth's in-memory patches are unchecked — if it rewrites an anchor, the
 attach is refused (the anchor check), never misread.
