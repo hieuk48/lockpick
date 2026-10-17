@@ -93,9 +93,9 @@ public sealed partial class EventFeed : IDisposable
     /// <summary>The explainer's words for a player: room names for ids, a capital first letter; null to leave it out.</summary>
     private string? Words(string text)
     {
-        if (StoryEnded().IsMatch(text))
+        if (StoryEnded().IsMatch(text) || text is "started pushing something" or "stopped pushing")
         {
-            return null; // a state set earlier ends: nothing the player would notice
+            return null; // a state set earlier ends, or a push still under way / too short: told when it ends
         }
 
         text = RoomId().Replace(text, m => _roomName(m.Groups[1].Value) is { } name ? $"{name} ({m.Groups[1].Value})" : m.Value);

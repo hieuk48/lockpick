@@ -68,6 +68,39 @@ public class Re1ChangeExplainerTests
     }
 
     [Fact]
+    public void Hits_are_named_by_the_damage_chart_and_poison_by_the_status()
+    {
+        (string, long)[] zombie = [("enemy0Flags", 1), ("enemy0Type", 0), ("playerStatus", 0)];
+        var hit = _explainer.Explain(Jill(0, "105", [.. zombie, ("hp", 96)]), Jill(1, "105", [.. zombie, ("hp", 90)]));
+        Assert.Contains("took damage (96 → 90, Zombie ankle bite (6))", hit.Known);
+
+        // Damage no enemy here deals: no name.
+        Assert.Contains("took damage (96 → 89)", _explainer.Explain(Jill(0, "105", [.. zombie, ("hp", 96)]), Jill(1, "105", [.. zombie, ("hp", 89)])).Known);
+
+        // Poisoned, nothing in the chart fits: the poison.
+        (string, long)[] poisoned = [("playerStatus", 0x02)];
+        Assert.Contains("took damage (50 → 48, poison)", _explainer.Explain(Jill(0, "20E", [.. poisoned, ("hp", 50)]), Jill(1, "20E", [.. poisoned, ("hp", 48)])).Known);
+    }
+
+    [Fact]
+    public void A_zombie_getting_back_up_is_told()
+    {
+        (string, long)[] slot = [("enemy0Flags", 1), ("enemy0Type", 0)];
+        var explainer = new Re1Adapter().CreateChangeExplainer(new Re1Adapter().Profiles[0]);
+        explainer.Explain(Jill(0, "104", [.. slot, ("enemy0Hp", 20)]), Jill(1, "104", [.. slot, ("enemy0Hp", -5)])); // down
+        var up = explainer.Explain(Jill(2, "104", [.. slot, ("enemy0Hp", -5)]), Jill(3, "104", [.. slot, ("enemy0Hp", 40)]));
+        Assert.Contains("Zombie got back up", up.Known);
+    }
+
+    [Fact]
+    public void A_push_is_told_with_its_length_when_it_ends()
+    {
+        var explainer = new Re1Adapter().CreateChangeExplainer(new Re1Adapter().Profiles[0]);
+        Assert.Contains("started pushing something", explainer.Explain(Jill(0, "202", ("stateFlags", 0)), Jill(1, "202", ("stateFlags", 0x40))).Known);
+        Assert.Contains("pushed something (5.5 s)", explainer.Explain(Jill(6, "202", ("stateFlags", 0x40)), Jill(6.5, "202", ("stateFlags", 0))).Known);
+    }
+
+    [Fact]
     public void A_label_is_used_only_in_the_games_it_was_confirmed_in()
     {
         // Story B1 0x20000000: Jill is carried to the save room after fainting; Chris meets Rebecca there (live 2026-10-16).

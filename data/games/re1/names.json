@@ -189,5 +189,33 @@
   "95": "Researcher's will",
   "97": "Keeper's diary",
   "110": "Book about mixing herbs"
+ },
+ "attacks": {
+  "comment": "Damage per hit by enemy type and attack, from SHiiDO's RE1 damage chart (speedrun.com guides; JP PC, new game). Every value seen in GOG captures so far matches it, so a hit's damage names the attack when one enemy in the room deals it.",
+  "0": {
+   "10": "bite",
+   "6": "ankle bite",
+   "5": "vomit"
+  },
+  "1": {
+   "10": "bite",
+   "6": "ankle bite",
+   "5": "vomit"
+  },
+  "17": {
+   "10": "bite",
+   "6": "ankle bite",
+   "5": "vomit"
+  },
+  "2": {
+   "12": "jump attack"
+  },
+  "5": {
+   "6": "peck",
+   "3": "peck"
+  },
+  "15": {
+   "2": "slap"
+  }
  }
 }

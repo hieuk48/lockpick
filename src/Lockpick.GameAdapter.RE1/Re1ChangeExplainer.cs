@@ -46,6 +46,11 @@ internal sealed class Re1Knowledge
         }
 
         EnemyNames = Table(names.RootElement.GetProperty("enemies"));
+        Attacks = names.RootElement.TryGetProperty("attacks", out var attacks)
+            ? attacks.EnumerateObject().Where(p => int.TryParse(p.Name, out _))
+                .ToDictionary(p => int.Parse(p.Name, System.Globalization.CultureInfo.InvariantCulture),
+                    p => p.Value.EnumerateObject().ToDictionary(a => int.Parse(a.Name, System.Globalization.CultureInfo.InvariantCulture), a => a.Value.GetString()!))
+            : [];
         LabelOrder = [.. labels.RootElement.GetProperty("labels").EnumerateArray()
             .Select(e => new FlagLabel(e.GetProperty("bank").GetString()!, Convert.ToUInt32(e.GetProperty("mask").GetString(), 16),
                 e.GetProperty("label").GetString()!,
@@ -97,6 +102,9 @@ internal sealed class Re1Knowledge
     public Dictionary<int, string> ItemNames { get; }
 
     public Dictionary<int, string> EnemyNames { get; }
+
+    /// <summary>Damage per hit by enemy type → attack name (SHiiDO's chart; names.json "attacks").</summary>
+    public Dictionary<int, Dictionary<int, string>> Attacks { get; }
 
     public static Re1Knowledge LoadEmbedded()
     {
@@ -221,15 +229,59 @@ internal sealed class Re1ChangeExplainer(Re1Knowledge knowledge) : IChangeExplai
             actions.AddRange(came.Select(id => $"received {knowledge.Item(id)}"));
         }
 
-        // Getting hurt, and pushing (stateFlags 0x40), start and end events too (Yawn's first bite, the statue falls).
+        // Getting hurt — named by the damage chart when one enemy here deals that much, or poison — and pushing
+        // (stateFlags 0x40): start and end events too (Yawn's first bite, the statue falls).
         if (Raw(previous, "hp") is { } hpBefore && Raw(current, "hp") is { } hpNow && (short)hpNow < (short)hpBefore)
         {
-            actions.Add($"took damage ({(short)hpBefore} → {(short)hpNow})");
+            var amount = (short)hpBefore - (short)hpNow;
+            var cause = Attack(current, amount)
+                ?? ((Raw(current, "playerStatus") is { } status && (status & PoisonedBit) != 0) ? "poison" : null);
+            actions.Add($"took damage ({(short)hpBefore} → {(short)hpNow}{(cause is null ? string.Empty : $", {cause}")})");
         }
 
         if (Raw(previous, "stateFlags") is { } sfBefore && Raw(current, "stateFlags") is { } sfNow && ((sfBefore ^ sfNow) & PushingBit) != 0)
         {
-            actions.Add((sfNow & PushingBit) != 0 ? "started pushing something" : "stopped pushing");
+            if ((sfNow & PushingBit) != 0)
+            {
+                _pushStarted = current.CapturedAt;
+                actions.Add("started pushing something");
+            }
+            else
+            {
+                var seconds = _pushStarted is { } start ? (current.CapturedAt - start).TotalSeconds : 0;
+                _pushStarted = null;
+                actions.Add(seconds >= 0.5
+                    ? string.Create(System.Globalization.CultureInfo.InvariantCulture, $"pushed something ({seconds:0.0} s)")
+                    : "stopped pushing");
+            }
+        }
+
+        // Enemies falling (HP to 0 or below) and getting back up in the room the player is in (zombies do).
+        if (previousLocation != location)
+        {
+            _down.Clear();
+        }
+        else
+        {
+            for (var slot = 0; slot < 8; slot++)
+            {
+                if (Raw(current, $"enemy{slot}Flags") is not { } active || (active & 1) == 0
+                    || Raw(previous, $"enemy{slot}Hp") is not { } was || Raw(current, $"enemy{slot}Hp") is not { } hp
+                    || Raw(current, $"enemy{slot}Type") is not { } type)
+                {
+                    continue;
+                }
+
+                if ((short)was > 0 && (short)hp <= 0)
+                {
+                    _down[slot] = (int)type;
+                }
+                else if ((short)hp > 0 && _down.TryGetValue(slot, out var downType) && downType == (int)type)
+                {
+                    _down.Remove(slot);
+                    actions.Add($"{knowledge.Enemy((int)type)} got back up");
+                }
+            }
         }
 
         // Enemies appearing in the room the player is in (not the slots refilled by a room load).
@@ -264,6 +316,27 @@ internal sealed class Re1ChangeExplainer(Re1Knowledge knowledge) : IChangeExplai
 
     /// <summary>stateFlags bit set while the player pushes an object (statue in 202, stairs in 107; live 2026-10-13).</summary>
     private const uint PushingBit = 0x40;
+
+    /// <summary>playerStatus bit set while the player is poisoned (docs/MEMORY_MAP.md; the status screen's Poison band).</summary>
+    private const uint PoisonedBit = 0x02;
+
+    /// <summary>Enemies down in this room (slot → type), to tell when one gets back up.</summary>
+    private readonly Dictionary<int, int> _down = [];
+
+    /// <summary>When the push under way started (its length is told when it ends).</summary>
+    private DateTimeOffset? _pushStarted;
+
+    /// <summary>A hit named from its damage and the enemies in the room ("Zombie ankle bite (6)"), when only one fits.</summary>
+    private string? Attack(GameSnapshot snapshot, int amount)
+    {
+        var matches = Enumerable.Range(0, 8)
+            .Where(i => Raw(snapshot, $"enemy{i}Flags") is { } flags && (flags & 1) != 0)
+            .Select(i => (int)(Raw(snapshot, $"enemy{i}Type") ?? uint.MaxValue))
+            .Where(type => knowledge.Attacks.TryGetValue(type, out var hits) && hits.ContainsKey(amount))
+            .Select(type => (Enemy: knowledge.Enemy(type).Split(" (")[0], Attack: knowledge.Attacks[type][amount]))
+            .Distinct().ToList();
+        return matches.Count == 1 ? $"{matches[0].Enemy} {matches[0].Attack} ({amount})" : null;
+    }
 
     /// <summary>Kill flag for enemies a room script doesn't remember (em_set kill flag 255).</summary>
     private const int NotRemembered = 255;

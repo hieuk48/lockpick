@@ -75,6 +75,8 @@ All notable changes to this project are documented here. The format follows
   game is exclusive fullscreen and in front (the game would minimize).
 - **Wrong-splits warning:** a run started with splits for the other character (e.g. Jill's in Chris's game) says so
   at once — a big message and a note on the Runs page.
+- **More in "what just happened"** (#43): hits named by the damage chart ("took damage (96 → 90, Zombie ankle bite
+  (6))"), poison ticks, zombies getting back up, and pushes told once with their length ("pushed something (5.7 s)").
 - **Split editor** (#57, Runs → *Edit splits*): rename splits and choose what triggers each — entering a room (from
   a given room, or from another area), getting an item (anywhere or in a room), the ending, or the split key — add,
   remove and reorder them, and save them as your own splits. Built-in and imported splits stay as they are: editing

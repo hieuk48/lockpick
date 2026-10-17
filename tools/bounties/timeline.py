@@ -42,13 +42,9 @@ def known_flag(key: str, mask: int, player: str) -> str | None:
     return None
 FLAG_BANKS = ("flagScenarioA", "flagScenarioB", "flagRoom")
 
-# Damage per hit by enemy type and attack, from SHiiDO's RE1 damage chart (speedrun.com guides; JP PC, new game).
-# Every value seen in GOG captures so far matches it, so a hit's damage names the attack.
-ATTACKS = {
-    0: {10: "bite", 6: "ankle bite", 5: "vomit"}, 1: {10: "bite", 6: "ankle bite", 5: "vomit"},
-    17: {10: "bite", 6: "ankle bite", 5: "vomit"},
-    2: {12: "jump attack"}, 5: {6: "peck", 3: "peck"}, 15: {2: "slap"},
-}
+# Damage per hit by enemy type and attack (data/games/re1/names.json "attacks", from SHiiDO's chart; shared with the app).
+ATTACKS = {int(enemy): {int(damage): name for damage, name in hits.items()}
+           for enemy, hits in json.loads((DATA / "names.json").read_text(encoding="utf-8"))["attacks"].items() if enemy.isdigit()}
 
 
 def flag_index(word: int, bit: int) -> int:
