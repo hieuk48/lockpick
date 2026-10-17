@@ -35,10 +35,10 @@
       "evidence": "The same instruction as re1-gog-usa-hotfix4's anchor at 0x462A4C, found by its surrounding code (tools/re1/xmap.py); mov al,[0xC386F2] written into the cut digit of the 'RC' background filename"
     },
     {
-      "name": "frame loop increments game timer",
-      "address": "0x48D36E",
-      "bytes": "FF 05 10 8E AA 00",
-      "evidence": "The same instruction as re1-gog-usa-hotfix4's anchor at 0x4810D1, found by its surrounding code (tools/re1/xmap.py); inc dword [0xAA8E10]"
+      "name": "New Game zeroes the game timer",
+      "address": "0x48CBAA",
+      "bytes": "C7 05 10 8E AA 00 00 00 00 00",
+      "evidence": "The same instruction as re1-gog-usa-hotfix4's anchor at 0x48090A, found by its surrounding code (tools/re1/xmap.py); mov dword [0xAA8E10],0 when a new game starts (GOG: 0x48090A). Used instead of the frame loop's inc dword [0xAA8E10], which Classic REbirth 1.1.4 replaces in memory with a call to its own tick (cmp byte [0xC330AC],0xFF / je / inc dword [0xAA8E10]: the same timer; seen live 2026-10-17)."
     },
     {
       "name": "death check reads HP",
@@ -76,17 +76,17 @@
       "name": "inventoryPointer",
       "address": "0xAA8E48",
       "length": "0x4",
-      "verification": "static",
+      "verification": "runtime",
       "description": "Pointer to the inventory the game is using: 0xC38814 (Chris/Jill) or 0xC38820 (Rebecca).",
-      "evidence": "Cross-mapped from re1-gog-usa-hotfix4 (0xD22768) by tools/re1/xmap.py: 73 of 85 code sites that use it there are found here and use 0xAA8E48 at the same instruction."
+      "evidence": "Live 2026-10-17 (Classic REbirth 1.1.4, Chris new game to a death, owner, probe trace): Holds the inventory's address (0xC38814) during Chris's game. Cross-mapped from re1-gog-usa-hotfix4 (0xD22768) by tools/re1/xmap.py: 73 of 85 code sites that use it there are found here and use 0xAA8E48 at the same instruction."
     },
     {
       "name": "inventory",
       "address": "0xC38814",
       "length": "0x10",
-      "verification": "static",
+      "verification": "runtime",
       "description": "Chris's and Jill's inventory: 8 u16 slots, low byte item id, high byte quantity.",
-      "evidence": "Cross-mapped from re1-gog-usa-hotfix4 (0xBE9944) by tools/re1/xmap.py: 17 of 18 code sites that use it there are found here and use 0xC38814 at the same instruction."
+      "evidence": "Live 2026-10-17 (Classic REbirth 1.1.4, Chris new game to a death, owner, probe trace): The slots above, as picked up. Cross-mapped from re1-gog-usa-hotfix4 (0xBE9944) by tools/re1/xmap.py: 17 of 18 code sites that use it there are found here and use 0xC38814 at the same instruction."
     },
     {
       "name": "inventoryRebecca",
@@ -108,9 +108,9 @@
       "name": "itemBox",
       "address": "0xC387B4",
       "length": "0x60",
-      "verification": "static",
+      "verification": "runtime",
       "description": "Item box: 48 u16 entries, low byte id, high byte quantity.",
-      "evidence": "Cross-mapped from re1-gog-usa-hotfix4 (0xBE98E4) by tools/re1/xmap.py: 13 of 14 code sites that use it there are found here and use 0xC387B4 at the same instruction."
+      "evidence": "Live 2026-10-17 (Classic REbirth 1.1.4, Chris new game to a death, owner, probe trace): Its first entry is the box's starting Clip x15. Cross-mapped from re1-gog-usa-hotfix4 (0xBE98E4) by tools/re1/xmap.py: 13 of 14 code sites that use it there are found here and use 0xC387B4 at the same instruction."
     },
     {
       "name": "actionTable",
@@ -132,9 +132,9 @@
       "name": "actorSlots",
       "address": "0xC35334",
       "length": "0x2E68",
-      "verification": "static",
+      "verification": "runtime",
       "description": "Enemy/NPC slots: 30 x 0x18C; +0x00 bit 0 active, +0x01 type, +0x34/+0x3C X/Z, +0x74 facing, +0x88 HP.",
-      "evidence": "Cross-mapped from re1-gog-usa-hotfix4 (0xBE6464) by tools/re1/xmap.py: 135 of 142 code sites that use it there are found here and use 0xC35334 at the same instruction."
+      "evidence": "Live 2026-10-17 (Classic REbirth 1.1.4, Chris new game to a death, owner, probe trace): Slot 0's type and HP above. Cross-mapped from re1-gog-usa-hotfix4 (0xBE6464) by tools/re1/xmap.py: 135 of 142 code sites that use it there are found here and use 0xC35334 at the same instruction."
     }
   ],
   "captureRegions": [
@@ -175,8 +175,8 @@
       "address": "0xC386F0",
       "type": "u8",
       "description": "Current stage, 0-based (0 = STAGE1).",
-      "verification": "static",
-      "evidence": "Cross-mapped from re1-gog-usa-hotfix4 (0xBE9820) by tools/re1/xmap.py: 114 of 122 code sites that use it there are found here and use 0xC386F0 at the same instruction.",
+      "verification": "runtime",
+      "evidence": "Live 2026-10-17 (Classic REbirth 1.1.4, Chris new game to a death, owner, probe trace): 0 on 1F throughout. Cross-mapped from re1-gog-usa-hotfix4 (0xBE9820) by tools/re1/xmap.py: 114 of 122 code sites that use it there are found here and use 0xC386F0 at the same instruction.",
       "sources": [
         "static cross-map from re1-gog-usa-hotfix4",
         "re1-gog-usa-hotfix4: static analysis of this executable",
@@ -189,8 +189,8 @@
       "address": "0xC386F1",
       "type": "u8",
       "description": "Current room number within the stage (the two hex digits of ROOMsRRp.RDT).",
-      "verification": "static",
-      "evidence": "Cross-mapped from re1-gog-usa-hotfix4 (0xBE9821) by tools/re1/xmap.py: 123 of 136 code sites that use it there are found here and use 0xC386F1 at the same instruction.",
+      "verification": "runtime",
+      "evidence": "Live 2026-10-17 (Classic REbirth 1.1.4, Chris new game to a death, owner, probe trace): 0x1B for the intro, then 06 (main hall), 05 and 04, changing at each door. Cross-mapped from re1-gog-usa-hotfix4 (0xBE9821) by tools/re1/xmap.py: 123 of 136 code sites that use it there are found here and use 0xC386F1 at the same instruction.",
       "sources": [
         "static cross-map from re1-gog-usa-hotfix4",
         "re1-gog-usa-hotfix4: static analysis of this executable",
@@ -203,8 +203,8 @@
       "address": "0xC386F2",
       "type": "u8",
       "description": "Current camera (cut) number in the room.",
-      "verification": "static",
-      "evidence": "Cross-mapped from re1-gog-usa-hotfix4 (0xBE9822) by tools/re1/xmap.py: 95 of 100 code sites that use it there are found here and use 0xC386F2 at the same instruction.",
+      "verification": "runtime",
+      "evidence": "Live 2026-10-17 (Classic REbirth 1.1.4, Chris new game to a death, owner, probe trace): Changes at the camera cuts while walking (21). Cross-mapped from re1-gog-usa-hotfix4 (0xBE9822) by tools/re1/xmap.py: 95 of 100 code sites that use it there are found here and use 0xC386F2 at the same instruction.",
       "sources": [
         "static cross-map from re1-gog-usa-hotfix4",
         "re1-gog-usa-hotfix4: static analysis of this executable",
@@ -217,8 +217,13 @@
       "address": "0xC3523C",
       "type": "i16",
       "description": "Player current HP (player entity +0x88).",
-      "verification": "static",
-      "evidence": "Cross-mapped from re1-gog-usa-hotfix4 (0xBE636C) by tools/re1/xmap.py: 160 of 164 code sites that use it there are found here and use 0xC3523C at the same instruction.",
+      "verification": "runtime",
+      "evidence": "Live 2026-10-17 (Classic REbirth 1.1.4, Chris new game to a death, owner, probe trace): 140 at the start, down 10 per zombie bite to 0, then −10 at death. Cross-mapped from re1-gog-usa-hotfix4 (0xBE636C) by tools/re1/xmap.py: 160 of 164 code sites that use it there are found here and use 0xC3523C at the same instruction.",
+      "write": {
+        "min": 1,
+        "max": 255,
+        "maxField": "maxHp"
+      },
       "sources": [
         "static cross-map from re1-gog-usa-hotfix4",
         "re1-gog-usa-hotfix4: static analysis of this executable",
@@ -231,8 +236,8 @@
       "address": "0xC35329",
       "type": "u8",
       "description": "Player maximum HP (player entity +0x175).",
-      "verification": "static",
-      "evidence": "Cross-mapped from re1-gog-usa-hotfix4 (0xBE6459) by tools/re1/xmap.py: 6 of 6 code sites that use it there are found here and use 0xC35329 at the same instruction.",
+      "verification": "runtime",
+      "evidence": "Live 2026-10-17 (Classic REbirth 1.1.4, Chris new game to a death, owner, probe trace): 140 (Chris) from the start of the game. Cross-mapped from re1-gog-usa-hotfix4 (0xBE6459) by tools/re1/xmap.py: 6 of 6 code sites that use it there are found here and use 0xC35329 at the same instruction.",
       "sources": [
         "static cross-map from re1-gog-usa-hotfix4",
         "re1-gog-usa-hotfix4: static analysis of this executable",
@@ -258,8 +263,8 @@
       "type": "u8",
       "mask": "0x03",
       "description": "Player character id (player entity +0x01). After masking: 0 Chris, 1 Jill, 3 Rebecca. Bit 0x08 = alternate costume.",
-      "verification": "static",
-      "evidence": "Cross-mapped from re1-gog-usa-hotfix4 (0xBE62E5) by tools/re1/xmap.py: 117 of 122 code sites that use it there are found here and use 0xC351B5 at the same instruction.",
+      "verification": "runtime",
+      "evidence": "Live 2026-10-17 (Classic REbirth 1.1.4, Chris new game to a death, owner, probe trace): 0 (Chris) for the whole game. Cross-mapped from re1-gog-usa-hotfix4 (0xBE62E5) by tools/re1/xmap.py: 117 of 122 code sites that use it there are found here and use 0xC351B5 at the same instruction.",
       "sources": [
         "static cross-map from re1-gog-usa-hotfix4",
         "re1-gog-usa-hotfix4: static analysis of this executable",
@@ -271,8 +276,8 @@
       "address": "0xAA8E10",
       "type": "u32",
       "description": "In-game time in frames at 30 per second.",
-      "verification": "static",
-      "evidence": "Cross-mapped from re1-gog-usa-hotfix4 (0xD22730) by tools/re1/xmap.py: 6 of 7 code sites that use it there are found here and use 0xAA8E10 at the same instruction.",
+      "verification": "runtime",
+      "evidence": "Live 2026-10-17 (Classic REbirth 1.1.4, Chris new game to a death, owner, probe trace): 0 at New Game, counting while playing (REbirth's own tick increments this same counter), frozen at 2 732 frames from the death until the title menu. Cross-mapped from re1-gog-usa-hotfix4 (0xD22730) by tools/re1/xmap.py: 6 of 7 code sites that use it there are found here and use 0xAA8E10 at the same instruction.",
       "sources": [
         "static cross-map from re1-gog-usa-hotfix4",
         "re1-gog-usa-hotfix4: static analysis of this executable",
@@ -311,8 +316,8 @@
       "address": "0xC351E8",
       "type": "i32",
       "description": "Player world X (player entity +0x34).",
-      "verification": "static",
-      "evidence": "Cross-mapped from re1-gog-usa-hotfix4 (0xBE6318) by tools/re1/xmap.py: 408 of 439 code sites that use it there are found here and use 0xC351E8 at the same instruction.",
+      "verification": "runtime",
+      "evidence": "Live 2026-10-17 (Classic REbirth 1.1.4, Chris new game to a death, owner, probe trace): Changes as the player walks (54 positions in the trace context). Cross-mapped from re1-gog-usa-hotfix4 (0xBE6318) by tools/re1/xmap.py: 408 of 439 code sites that use it there are found here and use 0xC351E8 at the same instruction.",
       "sources": [
         "static cross-map from re1-gog-usa-hotfix4",
         "re1-gog-usa-hotfix4: static analysis of this executable",
@@ -338,8 +343,8 @@
       "address": "0xC351F0",
       "type": "i32",
       "description": "Player world Z (player entity +0x3C).",
-      "verification": "static",
-      "evidence": "Cross-mapped from re1-gog-usa-hotfix4 (0xBE6320) by tools/re1/xmap.py: 126 of 135 code sites that use it there are found here and use 0xC351F0 at the same instruction.",
+      "verification": "runtime",
+      "evidence": "Live 2026-10-17 (Classic REbirth 1.1.4, Chris new game to a death, owner, probe trace): Changes as the player walks (54 positions in the trace context). Cross-mapped from re1-gog-usa-hotfix4 (0xBE6320) by tools/re1/xmap.py: 126 of 135 code sites that use it there are found here and use 0xC351F0 at the same instruction.",
       "sources": [
         "static cross-map from re1-gog-usa-hotfix4",
         "re1-gog-usa-hotfix4: static analysis of this executable",
@@ -364,8 +369,8 @@
       "address": "0xAA8E57",
       "type": "u8",
       "description": "1 while the title/main menu is shown, 0 during a game.",
-      "verification": "static",
-      "evidence": "Cross-mapped from re1-gog-usa-hotfix4 (0xD22777) by tools/re1/xmap.py: 3 of 4 code sites that use it there are found here and use 0xAA8E57 at the same instruction.",
+      "verification": "runtime",
+      "evidence": "Live 2026-10-17 (Classic REbirth 1.1.4, Chris new game to a death, owner, probe trace): 1 on the title menu, 0 once the game started, 1 again after the death. Cross-mapped from re1-gog-usa-hotfix4 (0xD22777) by tools/re1/xmap.py: 3 of 4 code sites that use it there are found here and use 0xAA8E57 at the same instruction.",
       "sources": [
         "static cross-map from re1-gog-usa-hotfix4",
         "re1-gog-usa-hotfix4: deserteagle417/RE1-Autosplitter mainMenu (EnglishGOG)"
@@ -376,8 +381,8 @@
       "address": "0xC38814",
       "type": "u16",
       "description": "Inventory slot 1: low byte item id, high byte quantity/ammo. Slots 7-8 are Jill only.",
-      "verification": "static",
-      "evidence": "Cross-mapped from re1-gog-usa-hotfix4 (0xBE9944) by tools/re1/xmap.py: 14 of 15 code sites that use it there are found here and use 0xC38814 at the same instruction.",
+      "verification": "runtime",
+      "evidence": "Live 2026-10-17 (Classic REbirth 1.1.4, Chris new game to a death, owner, probe trace): Combat knife (0x01) from the start. Cross-mapped from re1-gog-usa-hotfix4 (0xBE9944) by tools/re1/xmap.py: 14 of 15 code sites that use it there are found here and use 0xC38814 at the same instruction.",
       "sources": [
         "static cross-map from re1-gog-usa-hotfix4",
         "re1-gog-usa-hotfix4: static analysis of this executable (item writes at 0xBE9944/0xBE9945)",
@@ -390,8 +395,8 @@
       "address": "0xC38816",
       "type": "u16",
       "description": "Inventory slot 2: low byte item id, high byte quantity/ammo. Slots 7-8 are Jill only.",
-      "verification": "static",
-      "evidence": "Not used directly by code in re1-gog-usa-hotfix4 (0xBE9946); it is part of 'inventory' (0xBE9944, 0x10 bytes), whose references map by +0x4eed0 at 17 of 18 code sites, so the layout carries over (tools/re1/xmap.py).",
+      "verification": "runtime",
+      "evidence": "Live 2026-10-17 (Classic REbirth 1.1.4, Chris new game to a death, owner, probe trace): First aid spray (0x41 x1) from the start. Not used directly by code in re1-gog-usa-hotfix4 (0xBE9946); it is part of 'inventory' (0xBE9944, 0x10 bytes), whose references map by +0x4eed0 at 17 of 18 code sites, so the layout carries over (tools/re1/xmap.py).",
       "sources": [
         "static cross-map from re1-gog-usa-hotfix4",
         "re1-gog-usa-hotfix4: static analysis of this executable (item writes at 0xBE9944/0xBE9945)",
@@ -404,8 +409,8 @@
       "address": "0xC38818",
       "type": "u16",
       "description": "Inventory slot 3: low byte item id, high byte quantity/ammo. Slots 7-8 are Jill only.",
-      "verification": "static",
-      "evidence": "Not used directly by code in re1-gog-usa-hotfix4 (0xBE9948); it is part of 'inventory' (0xBE9944, 0x10 bytes), whose references map by +0x4eed0 at 17 of 18 code sites, so the layout carries over (tools/re1/xmap.py).",
+      "verification": "runtime",
+      "evidence": "Live 2026-10-17 (Classic REbirth 1.1.4, Chris new game to a death, owner, probe trace): The Emblem (0x1F) at the moment it was picked up. Not used directly by code in re1-gog-usa-hotfix4 (0xBE9948); it is part of 'inventory' (0xBE9944, 0x10 bytes), whose references map by +0x4eed0 at 17 of 18 code sites, so the layout carries over (tools/re1/xmap.py).",
       "sources": [
         "static cross-map from re1-gog-usa-hotfix4",
         "re1-gog-usa-hotfix4: static analysis of this executable (item writes at 0xBE9944/0xBE9945)",
@@ -674,8 +679,8 @@
       "address": "0xAA8E48",
       "type": "u32",
       "description": "Pointer to the active character's inventory (0xC38814, or 0xC38820 for Rebecca).",
-      "verification": "static",
-      "evidence": "Cross-mapped from re1-gog-usa-hotfix4 (0xD22768) by tools/re1/xmap.py: 73 of 85 code sites that use it there are found here and use 0xAA8E48 at the same instruction.",
+      "verification": "runtime",
+      "evidence": "Live 2026-10-17 (Classic REbirth 1.1.4, Chris new game to a death, owner, probe trace): Holds 0xC38814 (the inventory) from the start of Chris's game. Cross-mapped from re1-gog-usa-hotfix4 (0xD22768) by tools/re1/xmap.py: 73 of 85 code sites that use it there are found here and use 0xAA8E48 at the same instruction.",
       "sources": [
         "static cross-map from re1-gog-usa-hotfix4",
         "re1-gog-usa-hotfix4: ecruells/resident-evil-pc-decomp Globals.h",
@@ -687,8 +692,12 @@
       "address": "0xC387B4",
       "type": "u16",
       "description": "Item box entry 1 (low byte id, high byte quantity).",
-      "verification": "static",
-      "evidence": "Cross-mapped from re1-gog-usa-hotfix4 (0xBE98E4) by tools/re1/xmap.py: 12 of 13 code sites that use it there are found here and use 0xC387B4 at the same instruction.",
+      "verification": "runtime",
+      "evidence": "Live 2026-10-17 (Classic REbirth 1.1.4, Chris new game to a death, owner, probe trace): 0x0F0B (Clip x15) at the start. Cross-mapped from re1-gog-usa-hotfix4 (0xBE98E4) by tools/re1/xmap.py: 12 of 13 code sites that use it there are found here and use 0xC387B4 at the same instruction.",
+      "write": {
+        "min": 0,
+        "max": 65535
+      },
       "sources": [
         "static cross-map from re1-gog-usa-hotfix4",
         "re1-gog-usa-hotfix4: ecruells/resident-evil-pc-decomp BioCard.h"
@@ -761,8 +770,8 @@
       "address": "0xC353BC",
       "type": "i16",
       "description": "Enemy slot 0: HP.",
-      "verification": "static",
-      "evidence": "Cross-mapped from re1-gog-usa-hotfix4 (0xBE64EC) by tools/re1/xmap.py: 10 of 10 code sites that use it there are found here and use 0xC353BC at the same instruction.",
+      "verification": "runtime",
+      "evidence": "Live 2026-10-17 (Classic REbirth 1.1.4, Chris new game to a death, owner, probe trace): −1 in the empty slot, then a zombie's HP (68, 65) in the dining room. Cross-mapped from re1-gog-usa-hotfix4 (0xBE64EC) by tools/re1/xmap.py: 10 of 10 code sites that use it there are found here and use 0xC353BC at the same instruction.",
       "sources": [
         "static cross-map from re1-gog-usa-hotfix4",
         "re1-gog-usa-hotfix4: ecruells/resident-evil-pc-decomp Entities.h",
@@ -2040,6 +2049,6 @@
     }
   ],
   "notes": [
-    "Ported from re1-gog-usa-hotfix4 by tools/re1/port_profile.py: static evidence only. No field is runtime-verified on this build yet, so the trainer's writes stay off until a live trace confirms them."
+    "Ported from re1-gog-usa-hotfix4 by tools/re1/port_profile.py; fields seen in play on this build (2026-10-17, data/games/re1/profiles/live/re1-jpn-101.json) are runtime, the rest static (the trainer writes only runtime fields)."
   ]
 }

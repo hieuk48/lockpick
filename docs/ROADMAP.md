@@ -17,7 +17,7 @@ Status legend: ✅ done and verified · 🟡 done, partially verified · ⬜ not
 | 0.1.6 | Progress tracker (read-only), Items and Map pages, controller capture markers | ✅ released 2026-10-15 |
 | 0.2.0 | Core trainer (Trainer Mode, HP/ammo/inventory, hotkeys), Challenges tab, API for other tools, branding | ✅ released 2026-10-15 |
 | 0.3.0 | Play and stream with one app: overlay, runs (timer, splits, LiveSplit), OBS sources, training captures | 🟡 released 2026-10-16 (live checks pending) |
-| 0.3.2 | Every speedrun.com RE1 run: the Japanese PC game with Classic REbirth, then GOG/Steam Japanese, then emulators | 🟡 GOG Japanese live-verified; 1.01 + REbirth static |
+| 0.3.2 | Every speedrun.com RE1 run: the Japanese PC game with Classic REbirth, then GOG/Steam Japanese, then emulators | 🟡 GOG Japanese and 1.01 + REbirth live-verified; Steam and EMU next |
 | 0.4.0 | Room, camera, item and enemy database | ⬜ |
 | 0.5.0 | Object highlighting and ESP | ⬜ |
 | 0.6.0 | Advanced trainer and gameplay manipulation | ⬜ |
@@ -327,7 +327,7 @@ Known HUD data (already understood, read-only) for sprint 2 and #42:
 Owner's direction (2026-10-17): "one tool for all speedrun.com RE1 runs". The PC board recommends the Japanese
 MediaKite game with Classic REbirth; GOG and Steam are allowed (docs/COMPATIBILITY.md has every board). Order:
 
-1. 🟡 **Japanese PC 1.01 (`Biohazard.exe`), with or without REbirth** — profile `re1-jpn-101` ported from the GOG one by
+1. ✅ **Japanese PC 1.01 (`Biohazard.exe`), with or without REbirth** (live-verified under REbirth 1.1.4 2026-10-17) — profile `re1-jpn-101` ported from the GOG one by
    static cross-mapping (`tools/re1/xmap.py`, `tools/re1/port_profile.py`; every address and anchor found in the
    1.01 exe's own code, MEMORY_MAP "Japanese PC 1.01"). Profiles now name their tables and pointers (`addresses`), so
    the session has no build's addresses in code. REbirth installs: saves in its save folder, room files in `JPN\`,

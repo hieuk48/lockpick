@@ -447,6 +447,10 @@ owner playing Chris for 13 min; `data/games/re1/profiles/live/re1-gog-jpn-hotfix
 max HP, character, timer, main menu, position, the inventory pointer (it holds `0xC38814`) and slots 0–3, the equipped
 slot, enemy slot 0, the room-item flags and the item box behaved as on GOG English, so those are runtime there.
 
-**Not yet:** a live trace on the 1.01 exe itself (with REbirth) (the Japanese data is needed to run it). Until then every field is "static",
-the trainer's writes stay off, and Classic REbirth's in-memory patches are unchecked — if it rewrites an anchor, the
-attach is refused (the anchor check), never misread.
+**Classic REbirth 1.1.4 (live 2026-10-17)** rewrites the frame loop's `inc dword [0xAA8E10]` at `0x48D36E` (and the
+one at `0x40B5B4`) into `call` + `nop` to its own tick: `cmp byte [0xC330AC],0xFF / je skip / inc dword [0xAA8E10] /
+ret` — the same timer, skipped in one game state. The other `0xAA8E10` references (`0x484AE3`, `0x48CA0F`, the New Game
+reset `0x48CBAA`, `0x48CBCC`, `0x48DE45`) are untouched, so the 1.01 profile anchors on the reset. A trace under REbirth
+(Chris from the title to a death) showed the rooms, HP (to −10 at death), the timer (frozen from the death to the
+title), the main menu, position, the inventory pointer and slots, enemy slot 0, a room-item flag and the item box as
+on GOG (`data/games/re1/profiles/live/re1-jpn-101.json`).

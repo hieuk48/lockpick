@@ -8,8 +8,8 @@ All notable changes to this project are documented here. The format follows
 
 ### Added
 - **The Japanese PC game (`Biohazard.exe` 1.01), the version the speedrun.com PC board recommends, with or without
-  Classic REbirth (preview):** every address Lockpick reads was found in that exe's own code; state, runs and splits
-  work, cheats stay off until it is checked in play. REbirth's save folder, `JPN` room files and its own display setup
+  Classic REbirth:** every address Lockpick reads was found in that exe's own code and checked in play under REbirth
+  1.1.4; cheats work on what the check covered. REbirth's save folder, `JPN` room files and its own display setup
   are handled.
 - **Leaderboard run on the Japanese game:** the exe and Classic REbirth (every release, 1.0.0–1.1.4) are checked by
   hash, and REbirth's banned quickturn, tactical reload and debug mode fail the check; cutscene skip and mod folders

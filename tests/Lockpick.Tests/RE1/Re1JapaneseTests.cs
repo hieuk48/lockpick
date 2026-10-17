@@ -24,16 +24,19 @@ public sealed class Re1JapaneseTests : IDisposable
     private VersionProfile Gog => _adapter.Profiles.Single(p => p.Id == "re1-gog-usa-hotfix4");
 
     [Fact]
-    public void The_japanese_profile_is_the_official_1_01_executable_with_static_evidence_only()
+    public void The_japanese_profile_is_the_official_1_01_executable_checked_in_play_under_rebirth()
     {
         var jp = Japanese;
         Assert.Equal("Biohazard.exe", jp.Executable.FileName);
         Assert.Equal("25BE34D4F4586E9EC84E39412915AE1DE38AF1FC5924C02824D38E15C8406458", jp.Executable.Sha256);
         Assert.Equal(0x990000u, jp.Executable.SizeOfImage); // the RE1 autosplitter's "JapaneseREbirth" module size
-        Assert.False(jp.IsLiveVerified);
-        Assert.True(Gog.IsLiveVerified);
-        Assert.All(jp.Fields.Where(f => f.IsTrusted), f => Assert.Equal(Verification.Static, f.Verification));
-        Assert.DoesNotContain(jp.Fields, f => f.IsWritable); // the trainer stays off until a live trace
+        Assert.True(jp.IsLiveVerified); // Classic REbirth 1.1.4, 2026-10-17
+        Assert.Equal(Verification.Runtime, jp.FindField("gameTimer")!.Verification);
+        Assert.Equal(Verification.Static, jp.FindField("inv5")!.Verification); // not shown by the trace: no writes
+        Assert.False(jp.FindField("inv5Qty")!.IsWritable);
+        // REbirth replaces the frame loop's timer tick in memory, so the timer's anchor is the New Game reset.
+        Assert.Contains(jp.Anchors, a => a.Name == "New Game zeroes the game timer" && a.Address == 0x48CBAA);
+        Assert.DoesNotContain(jp.Anchors, a => a.Address == 0x48D36E);
         Assert.Contains(_adapter.ExecutableNames, n => n == "Biohazard.exe");
     }
 
@@ -43,7 +46,7 @@ public sealed class Re1JapaneseTests : IDisposable
         var jp = Japanese;
         Assert.Equal(Gog.Fields.Select(f => f.Name), jp.Fields.Select(f => f.Name));
         Assert.Equal(Gog.Addresses.Select(a => a.Name), jp.Addresses.Select(a => a.Name));
-        Assert.Equal(Gog.Anchors.Select(a => a.Name), jp.Anchors.Select(a => a.Name));
+        Assert.Equal(Gog.Anchors.Count, jp.Anchors.Count);
         Assert.Equal(Gog.CaptureRegions.Select(r => r.Name), jp.CaptureRegions.Select(r => r.Name));
         // The leads the autosplitter gives for this build agree (module-relative there, 0x400000 + offset here).
         Assert.Equal(0x400000ul + 0x6A8E10, jp.FindField("gameTimer")!.Address);

@@ -59,6 +59,8 @@ def main() -> int:
     ap.add_argument("--name", required=True)
     ap.add_argument("--out", type=Path, required=True)
     ap.add_argument("--note", action="append", default=[])
+    ap.add_argument("--replace-anchor", action="append", default=[], metavar="NAME=0xSOURCE=NEW NAME=WHY",
+                    help="use another source instruction for an anchor (e.g. one a patch like Classic REbirth rewrites in memory)")
     ap.add_argument("--live", type=Path, help="live evidence for this build (data/games/re1/profiles/live/<id>.json): "
                     "fields and addresses seen behaving as described in a trace become runtime")
     args = ap.parse_args()
@@ -178,7 +180,11 @@ def main() -> int:
                             "description": translate(r.get("description")) + f" (Mapped from {source['id']}; code addresses and live observations quoted are that build's.)"})
 
     anchors = []
+    replacements = {r.split("=")[0]: r.split("=", 3)[1:] for r in args.replace_anchor}
     for anchor in source["anchors"]:
+        if anchor["name"] in replacements:
+            address, name, why = replacements[anchor["name"]]
+            anchor = {"name": name, "address": address, "evidence": why}
         found = map_code(a, b, int(anchor["address"], 16))
         if found is None:
             print(f"anchor not found: {anchor['name']}", file=sys.stderr)

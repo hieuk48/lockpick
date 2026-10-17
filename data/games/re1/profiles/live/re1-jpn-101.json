@@ -1,0 +1,31 @@
+{
+  "comment": "What the probe trace of the Japanese 1.01 Biohazard.exe running under Classic REbirth 1.1.4 showed behaving as described (tools/Lockpick.Probe trace, owner playing Chris from the title: main hall, dining room, the corridor, killed by a zombie, back to the title). Applied by tools/re1/port_profile.py --live. Fields not listed stay static.",
+  "date": "2026-10-17",
+  "session": "Classic REbirth 1.1.4, Chris new game to a death, owner, probe trace",
+  "fields": {
+    "stage": "0 on 1F throughout.",
+    "room": "0x1B for the intro, then 06 (main hall), 05 and 04, changing at each door.",
+    "camera": "Changes at the camera cuts while walking (21).",
+    "hp": "140 at the start, down 10 per zombie bite to 0, then −10 at death.",
+    "maxHp": "140 (Chris) from the start of the game.",
+    "character": "0 (Chris) for the whole game.",
+    "gameTimer": "0 at New Game, counting while playing (REbirth's own tick increments this same counter), frozen at 2 732 frames from the death until the title menu.",
+    "mainMenu": "1 on the title menu, 0 once the game started, 1 again after the death.",
+    "positionX": "Changes as the player walks (54 positions in the trace context).",
+    "positionZ": "Changes as the player walks (54 positions in the trace context).",
+    "inventoryPtr": "Holds 0xC38814 (the inventory) from the start of Chris's game.",
+    "inv0": "Combat knife (0x01) from the start.",
+    "inv1": "First aid spray (0x41 x1) from the start.",
+    "inv2": "The Emblem (0x1F) at the moment it was picked up.",
+    "enemy0Hp": "−1 in the empty slot, then a zombie's HP (68, 65) in the dining room.",
+    "enemy0Type": "NPC 0x24 in the opening, then 0x11 in the dining room.",
+    "flagRoomItems1": "The Emblem's bit cleared at the moment it appeared in the inventory.",
+    "box0": "0x0F0B (Clip x15) at the start."
+  },
+  "addresses": {
+    "inventoryPointer": "Holds the inventory's address (0xC38814) during Chris's game.",
+    "inventory": "The slots above, as picked up.",
+    "itemBox": "Its first entry is the box's starting Clip x15.",
+    "actorSlots": "Slot 0's type and HP above."
+  }
+}
