@@ -299,7 +299,7 @@
           "verifies": "When the in-game clock runs (the docs disagree about menus) — for a run timer that matches the game",
           "status": "partial",
           "evidence": [
-            "2026-10-17 dev harness (tools/autoplay/clock.py, clock2.py; GOG English, the clock 0xD22730 sampled every 100 ms against real time): it keeps running in the status screen, the item box screen, the item viewer (CHECK), with a message on screen and through the in-engine opening scenes; it stops during a door transition (about 5.2 s) and in stretches of the opening (the first 10 s). The Back button blacked the screen and stopped the clock completely (likely the options screen, which the PC rules say pauses the in-game time; not confirmed on screen). Not yet measured: a document read from the FILE menu."
+            "2026-10-17 dev harness (tools/autoplay/clock.py, clock2.py; GOG English, the clock 0xD22730 sampled every 100 ms against real time): it keeps running in the status screen, the item box screen, the item viewer (CHECK), with a message on screen and through the in-engine opening scenes; it stops during a door transition (about 5.2 s) and in stretches of the opening (the first 10 s). The Back button blacked the screen and stopped the clock completely. Confirmed 2026-10-17 by the owner putting the game on the options screen: the clock stood at 4 588 frames over 5 s (still in a game, main-menu flag 0), as the PC rules say. Not yet measured: a document read from the FILE menu."
           ]
         },
         {
