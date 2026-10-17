@@ -23,6 +23,11 @@ public sealed class TrainerHotkeys : IDisposable
     public const string RunSkip = "run-skip";
     public const string RunReset = "run-reset";
 
+    /// <summary>Live resizing while playing: choose the widget, then make it bigger or smaller (saved at once).</summary>
+    public const string OverlayNextWidget = "overlay-widget";
+    public const string OverlayBigger = "overlay-bigger";
+    public const string OverlaySmaller = "overlay-smaller";
+
     /// <summary>Starts the challenge's attempt over (after a fail); works any time a challenge is on.</summary>
     public const string ChallengeRetry = "challenge-retry";
 
@@ -52,6 +57,9 @@ public sealed class TrainerHotkeys : IDisposable
         (ToggleOverlay, "Overlay on / off"),
         (NextMapView, "Map: next view"),
         (MapZoom, "Map: zoom the whole floor"),
+        (OverlayNextWidget, "Overlay: next widget to size"),
+        (OverlayBigger, "Overlay: widget bigger"),
+        (OverlaySmaller, "Overlay: widget smaller"),
         (RunSplit, "Run: split"),
         (RunUndo, "Run: undo split"),
         (RunSkip, "Run: skip split"),

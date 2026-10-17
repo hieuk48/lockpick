@@ -112,6 +112,10 @@ take the focus, so the game keeps running; they work windowed, borderless and in
   you died, run finished, new personal best).
 - **Where:** each widget goes in a corner (widgets in the same corner stack), or **anywhere**: drag it on the
   *Layout* preview and it keeps that spot at any window size. *Back to the corners* undoes it.
+- **Size and look:** each widget has its own size (50–200%), also while you play with the keys *Overlay: next widget to
+  size*, *bigger* and *smaller* (Settings → Hotkeys); *Look* sets the panels' transparency, text colour and font and
+  which lines the time/HP widget shows. **Save layout…** keeps the whole setup in a file to share; **Load layout…** uses
+  one (yours or someone else's).
 - **The map's views** (*Map views*): the map key moves through the ones you tick — a minimap around you, the whole room
   over the picture (solid or see-through), the whole floor. Reach, size, see-through strength and names are there too.
 - **Keep the picture clean:** every widget can **Pop out** into a window of its own instead — move it to another

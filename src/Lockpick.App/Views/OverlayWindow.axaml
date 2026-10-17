@@ -12,12 +12,13 @@
        styling — so the bar and colours come straight from the model; the scale is set when rendering. The widgets
        overlap here; each is measured and rendered on its own. -->
   <Panel>
-  <LayoutTransformControl x:Name="StatusPanel">
-    <Border Background="#C80B0F0E" BorderBrush="{StaticResource LpBorderBrush}" BorderThickness="1" CornerRadius="3"
+  <LayoutTransformControl x:Name="StatusPanel" TextElement.FontFamily="{Binding PanelFont}">
+    <Border Background="{Binding PanelBackground}" BorderBrush="{StaticResource LpBorderBrush}" BorderThickness="1" CornerRadius="3"
             Padding="7,4" MinWidth="120">
       <StackPanel Spacing="2">
         <TextBlock Text="{Binding Time}" FontFamily="{StaticResource LpMono}" FontSize="16" FontWeight="SemiBold"
-                   Foreground="{StaticResource LpTextBrush}" HorizontalAlignment="Right" />
+                   Foreground="{Binding TextBrush}" HorizontalAlignment="Right" IsVisible="{Binding ShowTime}" />
+        <Panel IsVisible="{Binding ShowHealth}">
         <Grid ColumnDefinitions="Auto,Auto,*" ColumnSpacing="6" IsVisible="{Binding Health, Converter={x:Static StringConverters.IsNotNullOrEmpty}}">
           <TextBlock Text="{Binding Condition}" FontSize="10" FontWeight="SemiBold" Foreground="{Binding HealthBrush}"
                      IsVisible="{Binding Condition, Converter={x:Static StringConverters.IsNotNullOrEmpty}}" />
@@ -27,42 +28,47 @@
             <Border Width="{Binding HealthBarWidth}" CornerRadius="1" Background="{Binding HealthBrush}" HorizontalAlignment="Left" />
           </Border>
         </Grid>
+        </Panel>
+        <Panel IsVisible="{Binding ShowRoom}">
         <TextBlock Text="{Binding Room}" FontSize="9" Foreground="{StaticResource LpMutedBrush}" HorizontalAlignment="Right"
                    IsVisible="{Binding Room, Converter={x:Static StringConverters.IsNotNullOrEmpty}}" />
+        </Panel>
+        <Panel IsVisible="{Binding ShowChallengeLine}">
         <TextBlock Text="{Binding Challenge}" Foreground="{Binding ChallengeBrush}" FontSize="9"
                    FontWeight="SemiBold" TextWrapping="Wrap" MaxWidth="220" IsVisible="{Binding HasChallenge}" />
+        </Panel>
       </StackPanel>
     </Border>
   </LayoutTransformControl>
 
   <!-- Big messages, centred at the top: a challenge failed, a death, a run finished. -->
-  <LayoutTransformControl x:Name="BannerPanel">
-    <Border Background="#E00B0F0E" BorderBrush="{Binding BannerBrush}" BorderThickness="2" CornerRadius="4" Padding="16,8" MinWidth="260">
+  <LayoutTransformControl x:Name="BannerPanel" TextElement.FontFamily="{Binding PanelFont}">
+    <Border Background="{Binding PanelBackground}" BorderBrush="{Binding BannerBrush}" BorderThickness="2" CornerRadius="4" Padding="16,8" MinWidth="260">
       <StackPanel Spacing="2">
         <TextBlock Text="{Binding BannerTitle}" FontSize="22" FontWeight="Bold" Foreground="{Binding BannerBrush}" HorizontalAlignment="Center" />
-        <TextBlock Text="{Binding BannerDetail}" FontSize="12" Foreground="{StaticResource LpTextBrush}" HorizontalAlignment="Center"
+        <TextBlock Text="{Binding BannerDetail}" FontSize="12" Foreground="{Binding TextBrush}" HorizontalAlignment="Center"
                    TextWrapping="Wrap" MaxWidth="420" TextAlignment="Center" />
       </StackPanel>
     </Border>
   </LayoutTransformControl>
 
   <!-- What just happened; lines are built in code (OverlayWindow.ShowFeed). -->
-  <LayoutTransformControl x:Name="FeedPanel">
-    <Border Background="#C80B0F0E" BorderBrush="{StaticResource LpBorderBrush}" BorderThickness="1" CornerRadius="3" Padding="7,4" MaxWidth="260">
+  <LayoutTransformControl x:Name="FeedPanel" TextElement.FontFamily="{Binding PanelFont}">
+    <Border Background="{Binding PanelBackground}" BorderBrush="{StaticResource LpBorderBrush}" BorderThickness="1" CornerRadius="3" Padding="7,4" MaxWidth="260">
       <StackPanel x:Name="FeedList" Spacing="1" />
     </Border>
   </LayoutTransformControl>
 
   <!-- Run splits; rows are built in code (OverlayWindow.ShowSplits). -->
-  <LayoutTransformControl x:Name="SplitsPanel">
-    <Border Background="#C80B0F0E" BorderBrush="{StaticResource LpBorderBrush}" BorderThickness="1" CornerRadius="3" Padding="7,4" Width="190">
+  <LayoutTransformControl x:Name="SplitsPanel" TextElement.FontFamily="{Binding PanelFont}">
+    <Border Background="{Binding PanelBackground}" BorderBrush="{StaticResource LpBorderBrush}" BorderThickness="1" CornerRadius="3" Padding="7,4" Width="190">
       <StackPanel x:Name="SplitList" Spacing="1" />
     </Border>
   </LayoutTransformControl>
 
   <!-- Enemies in the room with their HP; rows are built in code (OverlayWindow.ShowEnemies: no templates here). -->
-  <LayoutTransformControl x:Name="EnemiesPanel">
-    <Border Background="#C80B0F0E" BorderBrush="{StaticResource LpBorderBrush}" BorderThickness="1" CornerRadius="3" Padding="7,4" MinWidth="120">
+  <LayoutTransformControl x:Name="EnemiesPanel" TextElement.FontFamily="{Binding PanelFont}">
+    <Border Background="{Binding PanelBackground}" BorderBrush="{StaticResource LpBorderBrush}" BorderThickness="1" CornerRadius="3" Padding="7,4" MinWidth="120">
       <StackPanel x:Name="EnemyList" Spacing="3" />
     </Border>
   </LayoutTransformControl>

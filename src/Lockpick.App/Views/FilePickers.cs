@@ -85,6 +85,38 @@ internal static class FilePickers
         return file?.TryGetLocalPath();
     }
 
+    private static readonly FilePickerFileType Layout = new("Lockpick layout (*.lockpick-layout.json)") { Patterns = ["*.lockpick-layout.json", "*.json"] };
+
+    /// <summary>Asks where to save an overlay layout; returns the local path or null when cancelled.</summary>
+    public static async Task<string?> SaveLayoutFileAsync(Visual anchor)
+    {
+        if (TopLevel.GetTopLevel(anchor)?.StorageProvider is not { CanSave: true } storage)
+        {
+            return null;
+        }
+
+        var file = await storage.SaveFilePickerAsync(new FilePickerSaveOptions
+        {
+            Title = "Save overlay layout",
+            SuggestedFileName = "My layout.lockpick-layout.json",
+            DefaultExtension = "json",
+            FileTypeChoices = [Layout],
+        });
+        return file?.TryGetLocalPath();
+    }
+
+    /// <summary>Lets the user pick an overlay layout; returns its local path or null when cancelled.</summary>
+    public static async Task<string?> PickLayoutFileAsync(Visual anchor)
+    {
+        if (TopLevel.GetTopLevel(anchor)?.StorageProvider is not { CanOpen: true } storage)
+        {
+            return null;
+        }
+
+        var files = await storage.OpenFilePickerAsync(new FilePickerOpenOptions { Title = "Load overlay layout", AllowMultiple = false, FileTypeFilter = [Layout] });
+        return files.Count > 0 ? files[0].TryGetLocalPath() : null;
+    }
+
     /// <summary>Lets the user pick the game executable; returns its local path or null when cancelled.</summary>
     public static async Task<string?> PickGameExecutableAsync(Visual anchor)
     {

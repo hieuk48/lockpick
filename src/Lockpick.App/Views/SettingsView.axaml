@@ -188,6 +188,8 @@
                     <TextBlock Classes="label" Text="{Binding Name}" VerticalAlignment="Center" MinWidth="180" />
                     <ComboBox ItemsSource="{Binding Choices}" SelectedItem="{Binding Corner}" MinWidth="160"
                               AutomationProperties.Name="{Binding Name}" />
+                    <ComboBox ItemsSource="{x:Static vm:OverlayWidgetRow.SizeChoices}" SelectedItem="{Binding Size}" MinWidth="86"
+                              AutomationProperties.Name="{Binding Name, StringFormat='Size of {0}'}" ToolTip.Tip="Its size on the overlay (also live: Settings → Hotkeys → Overlay: bigger / smaller)" />
                     <Button Content="{Binding PopOutText}" Command="{Binding PopOutCommand}" MinWidth="110"
                             ToolTip.Tip="Show this widget in a window of its own: move it anywhere, resize it, or capture it in OBS (right-click it for a green background and always on top)." />
                   </WrapPanel>
@@ -195,6 +197,31 @@
               </ItemsControl.ItemTemplate>
             </ItemsControl>
             <TextBlock Text="{Binding Overlay.Status}" TextWrapping="Wrap" Foreground="{StaticResource LpMutedBrush}" />
+          </StackPanel>
+        </Border>
+
+        <!-- The look: panel transparency, text colour, font, and what the time/HP widget shows. -->
+        <Border Classes="card">
+          <StackPanel Spacing="8">
+            <TextBlock Classes="caption" Text="LOOK" />
+            <Grid ColumnDefinitions="Auto,*,Auto" ColumnSpacing="10">
+              <TextBlock Classes="label" Text="Background" VerticalAlignment="Center" />
+              <Slider Grid.Column="1" Minimum="0" Maximum="100" Value="{Binding LookBackground}" AutomationProperties.Name="Panel background" />
+              <TextBlock Grid.Column="2" Text="{Binding LookBackground, StringFormat='{}{0:0}%'}" VerticalAlignment="Center" MinWidth="40" />
+            </Grid>
+            <WrapPanel ItemSpacing="8" LineSpacing="6">
+              <TextBlock Classes="label" Text="Text" VerticalAlignment="Center" MinWidth="70" />
+              <ComboBox ItemsSource="{Binding TextColorChoices}" SelectedItem="{Binding LookTextColor}" MinWidth="150" AutomationProperties.Name="Text colour" />
+              <TextBlock Classes="label" Text="Font" VerticalAlignment="Center" MinWidth="40" />
+              <ComboBox ItemsSource="{Binding FontChoices}" SelectedItem="{Binding LookFont}" MinWidth="170" AutomationProperties.Name="Font" />
+            </WrapPanel>
+            <TextBlock Classes="label" Text="The time and HP widget shows" />
+            <WrapPanel ItemSpacing="14" LineSpacing="4">
+              <CheckBox IsChecked="{Binding LookShowTime}" Content="the time" />
+              <CheckBox IsChecked="{Binding LookShowHealth}" Content="HP" />
+              <CheckBox IsChecked="{Binding LookShowRoom}" Content="the room" />
+              <CheckBox IsChecked="{Binding LookShowChallenge}" Content="the challenge" />
+            </WrapPanel>
           </StackPanel>
         </Border>
 
@@ -240,7 +267,14 @@
                        Text="Drag a widget to put it anywhere on the game's picture: it keeps that spot at any size (its place above reads Your spot). Choosing a corner above puts it back. Widgets with nothing to show yet are boxes." />
             <c:OverlayLayoutEditor x:Name="LayoutEditor" Rows="{Binding OverlayWidgetRows}"
                                    AutomationProperties.Name="Overlay layout: drag widgets to place them" />
-            <Button Content="Back to the corners" Command="{Binding ResetOverlayLayoutCommand}" HorizontalAlignment="Left" />
+            <WrapPanel ItemSpacing="8" LineSpacing="6">
+              <Button Content="Back to the corners" Command="{Binding ResetOverlayLayoutCommand}" />
+              <Button Content="Save layout…" Click="OnSaveLayout"
+                      ToolTip.Tip="The whole overlay setup — corners and spots, sizes, the look, the map's options — as one file to keep or share" />
+              <Button Content="Load layout…" Click="OnLoadLayout" ToolTip.Tip="Use a layout file (yours or someone else's)" />
+            </WrapPanel>
+            <TextBlock Text="{Binding LayoutMessage}" TextWrapping="Wrap"
+                       IsVisible="{Binding LayoutMessage, Converter={x:Static StringConverters.IsNotNullOrEmpty}}" />
           </StackPanel>
         </Border>
       </c:CardColumns>

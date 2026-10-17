@@ -11,7 +11,7 @@ public sealed partial class OverlayWidgetRow : ObservableObject
     private readonly WidgetWindows _windows;
     private readonly bool _loading = true;
 
-    public OverlayWidgetRow(string id, string name, string corner, IReadOnlyList<string> choices, Action<OverlayWidgetRow> apply, WidgetWindows windows)
+    public OverlayWidgetRow(string id, string name, string corner, IReadOnlyList<string> choices, Action<OverlayWidgetRow> apply, WidgetWindows windows, int size = 100)
     {
         Id = id;
         Name = name;
@@ -19,6 +19,7 @@ public sealed partial class OverlayWidgetRow : ObservableObject
         _apply = apply;
         _windows = windows;
         Corner = corner;
+        Size = $"{size}%";
         _loading = false;
         windows.Changed += (_, _) => OnPropertyChanged(nameof(PopOutText));
     }
@@ -41,9 +42,38 @@ public sealed partial class OverlayWidgetRow : ObservableObject
     [ObservableProperty]
     public partial string Corner { get; set; }
 
+    /// <summary>The widget's size on the overlay ("100%" is the usual).</summary>
+    [ObservableProperty]
+    public partial string Size { get; set; } = "100%";
+
+    public static IReadOnlyList<string> SizeChoices { get; } = [.. OverlayLayout.Sizes.Select(s => $"{s}%")];
+
+    /// <summary>Shows a loaded layout's values without saving them again (they are saved already).</summary>
+    public void Load(string corner, int size, WidgetSpot? spot)
+    {
+        _reloading = true;
+        Spot = spot;
+        Corner = corner;
+        Size = $"{size}%";
+        _reloading = false;
+    }
+
+    private bool _reloading;
+
+    /// <summary>The size as a number (100 = the usual).</summary>
+    public int SizePercent => int.TryParse(Size.TrimEnd('%'), out var value) ? value : 100;
+
+    partial void OnSizeChanged(string value)
+    {
+        if (!_loading && !_reloading && SizeChoices.Contains(value))
+        {
+            _apply(this);
+        }
+    }
+
     partial void OnCornerChanged(string value)
     {
-        if (!_loading && Choices.Contains(value))
+        if (!_loading && !_reloading && Choices.Contains(value))
         {
             _apply(this);
         }

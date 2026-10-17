@@ -77,6 +77,13 @@ All notable changes to this project are documented here. The format follows
   game is exclusive fullscreen and in front (the game would minimize).
 - **Wrong-splits warning:** a run started with splits for the other character (e.g. Jill's in Chris's game) says so
   at once — a big message and a note on the Runs page.
+- **Your overlay, your way** (Settings → Overlay):
+  - **Size per widget** (50–200%), and **live while you play**: keys or controller buttons for *Overlay: next widget to
+    size*, *bigger* and *smaller* (Settings → Hotkeys; OBS hotkeys too) — a big message says which widget and its size.
+  - **What the time/HP widget shows:** the time, HP, the room and the challenge line, each on or off.
+  - **Look:** the panels' background transparency, the text colour and the font.
+  - **Layouts to keep and share:** *Save layout…* / *Load layout…* — corners and spots, sizes, the look and the map's
+    options in one file (nothing else from your settings); a loaded file's values are checked.
 - **Training captures** (#61, Debug → Capture, opt-in each time): every game frame with the buttons the game read,
   for research on AI that learns to play from people — the same game data as a capture, more often, plus the inputs;
   nothing about you.

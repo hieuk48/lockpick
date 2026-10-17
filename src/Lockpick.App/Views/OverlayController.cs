@@ -57,6 +57,7 @@ public sealed class OverlayController : IDisposable
     {
         var settings = _services.Settings.Current;
         _model.UseMapSettings(settings.MapOverlay);
+        _model.UseLook(settings.OverlayLook);
         var status = _services.Source.Status;
         var minimapOn = (settings.OverlayEnabled && OverlayLayout.Corner(settings, OverlayLayout.Minimap) != OverlayLayout.Off)
             || _renderer.Watched(OverlayLayout.Minimap); // a pop-out or the Stream page shows it
@@ -169,20 +170,22 @@ public sealed class OverlayController : IDisposable
     {
         widget.Window ??= new LayeredWindow($"Lockpick overlay ({widget.Id})");
         var version = _renderer.Version(widget.Id);
+        // Each widget's own size (Settings → Overlay) on top of the picture's scale; full-screen maps follow the picture.
+        var scale = _renderer.Full(widget.Id) ? _model.Scale : _model.Scale * OverlayLayout.SizeOf(_services.Settings.Current, widget.Id);
         if (!_renderer.Live(widget.Id) && version == widget.RenderedVersion && game.Dpi == widget.RenderedDpi
-            && _model.Scale == widget.RenderedScale && widget.Window.IsVisible)
+            && scale == widget.RenderedScale && widget.Window.IsVisible)
         {
             return null;
         }
 
-        if (_renderer.Render(widget.Id, _model.Scale, game.Dpi) is not var (pixels, width, height))
+        if (_renderer.Render(widget.Id, scale, game.Dpi) is not var (pixels, width, height))
         {
             return null;
         }
 
         widget.Size = (width, height);
         widget.RenderedDpi = game.Dpi;
-        widget.RenderedScale = _model.Scale;
+        widget.RenderedScale = scale;
         widget.RenderedVersion = version;
         return pixels;
     }

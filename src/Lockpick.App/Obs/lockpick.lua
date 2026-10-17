@@ -31,6 +31,9 @@ local hotkeys = {
   { action = "map-view", name = "Lockpick: map, next view" },
   { action = "map-zoom", name = "Lockpick: map, zoom the floor" },
   { action = "marker", name = "Lockpick: capture marker" },
+  { action = "overlay-widget", name = "Lockpick: overlay, next widget to size" },
+  { action = "overlay-bigger", name = "Lockpick: overlay, widget bigger" },
+  { action = "overlay-smaller", name = "Lockpick: overlay, widget smaller" },
 }
 
 local function send(action)

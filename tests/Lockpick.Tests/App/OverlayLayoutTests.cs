@@ -168,6 +168,55 @@ public sealed class OverlayLayoutTests : IDisposable
     }
 
     [Fact]
+    public void A_layout_file_carries_the_overlay_setup_and_nothing_else()
+    {
+        var path = Path.Combine(_folder, "mine" + OverlayLayoutFile.Extension);
+        Directory.CreateDirectory(_folder);
+        var mine = new AppSettings
+        {
+            ApiToken = "secret",
+            OverlayWidgetCorners = new Dictionary<string, string> { [OverlayLayout.Minimap] = OverlayCorners.Custom },
+            OverlayWidgetSpots = new Dictionary<string, WidgetSpot> { [OverlayLayout.Minimap] = new(0.3, 0.9) },
+            OverlayWidgetSizes = new Dictionary<string, int> { [OverlayLayout.Minimap] = 150, [OverlayLayout.Status] = 75 },
+            OverlayLook = new OverlayLook { BackgroundOpacity = 20, TextColor = "amber", Font = "mono", ShowRoom = false },
+            MapOverlay = new MapOverlaySettings { Views = [MapViews.Floor], Reach = 9000 },
+        };
+        OverlayLayoutFile.Write(path, mine);
+        Assert.DoesNotContain("secret", File.ReadAllText(path), StringComparison.Ordinal);
+
+        var theirs = OverlayLayoutFile.Apply(path, new AppSettings { ApiToken = "theirs" });
+        Assert.Equal("theirs", theirs.ApiToken); // only the overlay changes
+        Assert.Equal(OverlayCorners.Custom, OverlayLayout.Corner(theirs, OverlayLayout.Minimap));
+        Assert.Equal(new WidgetSpot(0.3, 0.9), theirs.OverlayWidgetSpots[OverlayLayout.Minimap]);
+        Assert.Equal(1.5, OverlayLayout.SizeOf(theirs, OverlayLayout.Minimap));
+        Assert.Equal(mine.OverlayLook, theirs.OverlayLook);
+        Assert.Equal([MapViews.Floor], theirs.MapOverlay.Views);
+    }
+
+    [Fact]
+    public void A_layout_file_s_values_are_checked()
+    {
+        var path = Path.Combine(_folder, "odd.json");
+        Directory.CreateDirectory(_folder);
+        File.WriteAllText(path, """
+            {"version": 1, "corners": {"minimap": "On the ceiling", "nope": "Top left", "status": "Top left"},
+             "spots": {"feed": {"x": 7, "y": -2}}, "sizes": {"status": 5000},
+             "look": {"backgroundOpacity": 300, "textColor": "plaid", "font": "comic"}}
+            """);
+        var loaded = OverlayLayoutFile.Apply(path, new AppSettings());
+        Assert.Equal(OverlayCorners.TopLeft, OverlayLayout.Corner(loaded, OverlayLayout.Status));
+        Assert.Equal(OverlayCorners.BottomRight, OverlayLayout.Corner(loaded, OverlayLayout.Minimap)); // unknown corner: the default
+        Assert.Equal(new WidgetSpot(1, 0), loaded.OverlayWidgetSpots[OverlayLayout.Feed]);
+        Assert.Equal(4.0, OverlayLayout.SizeOf(loaded, OverlayLayout.Status));
+        Assert.Equal((100, "default", "default"), (loaded.OverlayLook.BackgroundOpacity, loaded.OverlayLook.TextColor, loaded.OverlayLook.Font));
+
+        File.WriteAllText(path, "{\"version\": 9}");
+        Assert.Throws<InvalidDataException>(() => OverlayLayoutFile.Apply(path, new AppSettings()));
+        File.WriteAllText(path, "not json");
+        Assert.Throws<InvalidDataException>(() => OverlayLayoutFile.Apply(path, new AppSettings()));
+    }
+
+    [Fact]
     public void Only_the_room_views_cover_the_picture()
     {
         Assert.True(MapViews.IsFull(MapViews.Room));

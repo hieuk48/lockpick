@@ -161,6 +161,21 @@ public sealed class WidgetRenderer : IDisposable
         {
             case nameof(OverlayViewModel.Status):
                 return;
+            case OverlayViewModel.LookChanged:
+                // The look changed: every panel draws again (the rows built in code take the new colours too).
+                _host.ShowSplits(_model);
+                _host.ShowFeed(_model.FeedLines);
+                _host.ShowEnemies(_model.Enemies);
+                foreach (var entry in _entries.Values)
+                {
+                    entry.Version++;
+                }
+
+                return;
+            case nameof(OverlayViewModel.PanelBackground) or nameof(OverlayViewModel.TextBrush) or nameof(OverlayViewModel.PanelFont)
+                or nameof(OverlayViewModel.ShowTime) or nameof(OverlayViewModel.ShowHealth) or nameof(OverlayViewModel.ShowRoom)
+                or nameof(OverlayViewModel.ShowChallengeLine):
+                return; // told once by LookChanged
             case nameof(OverlayViewModel.SplitRows) or nameof(OverlayViewModel.RunClock) or nameof(OverlayViewModel.RunTitle)
                 or nameof(OverlayViewModel.RunComparison) or nameof(OverlayViewModel.RunBehind):
                 _host.ShowSplits(_model);

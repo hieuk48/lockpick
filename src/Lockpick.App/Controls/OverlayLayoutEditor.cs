@@ -106,7 +106,7 @@ public sealed class OverlayLayoutEditor : Control
         List<OverlayPlacement.Item> items = [];
         foreach (var row in rows.Where(r => r.Corner != OverlayLayout.Off))
         {
-            var (w, h) = SizeOf(row.Id, renderer);
+            var (w, h) = SizeOf(row.Id, renderer, renderer.Full(row.Id) ? 1 : row.SizePercent / 100.0);
             var full = renderer.Full(row.Id);
             items.Add(new OverlayPlacement.Item(row.Id, row.Corner, row.Spot,
                 full ? width - (2 * margin) : w, full ? height - (2 * margin) : h, full));
@@ -198,19 +198,20 @@ public sealed class OverlayLayoutEditor : Control
     }
 
     /// <summary>The widget's size in the preview; its picture is drawn again when it changed.</summary>
-    private (double Width, double Height) SizeOf(string id, WidgetRenderer renderer)
+    private (double Width, double Height) SizeOf(string id, WidgetRenderer renderer, double factor)
     {
+        var scale = _scale * factor;
         if (renderer.Full(id) || !renderer.HasContent(id))
         {
             var (w, h) = EmptySizes.GetValueOrDefault(id, (120, 60));
-            return (w * _scale, h * _scale);
+            return (w * scale, h * scale);
         }
 
         var scaling = TopLevel.GetTopLevel(this)?.RenderScaling ?? 1;
         var version = renderer.Version(id);
-        if (!_pictures.TryGetValue(id, out var known) || known.Version != version || known.Scale != _scale || renderer.Live(id))
+        if (!_pictures.TryGetValue(id, out var known) || known.Version != version || known.Scale != scale || renderer.Live(id))
         {
-            if (renderer.Render(id, _scale, (int)Math.Round(96 * scaling)) is var (pixels, width, height))
+            if (renderer.Render(id, scale, (int)Math.Round(96 * scaling)) is var (pixels, width, height))
             {
                 var bitmap = new WriteableBitmap(new PixelSize(width, height), new Vector(96 * scaling, 96 * scaling), PixelFormat.Bgra8888, AlphaFormat.Premul);
                 using (var frame = bitmap.Lock())
@@ -226,7 +227,7 @@ public sealed class OverlayLayoutEditor : Control
                     old.Dispose();
                 }
 
-                _pictures[id] = known = (bitmap, version, _scale);
+                _pictures[id] = known = (bitmap, version, scale);
             }
         }
 

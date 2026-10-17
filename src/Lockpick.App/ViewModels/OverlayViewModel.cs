@@ -30,6 +30,7 @@ public sealed partial class OverlayViewModel : ObservableObject
 
     private readonly AppServices _services;
     private MapOverlaySettings _mapSettings;
+    private OverlayLook? _look;
     private (double Width, double Height) _picture = (640, 480);
     private static readonly TimeSpan BannerTime = TimeSpan.FromSeconds(6);
     private int _banner;
@@ -61,6 +62,14 @@ public sealed partial class OverlayViewModel : ObservableObject
             else if (action == TrainerHotkeys.MapZoom)
             {
                 Dispatcher.UIThread.Post(() => MinimapZoomLevel = (MinimapZoomLevel + 1) % FloorZooms.Length);
+            }
+            else if (action == TrainerHotkeys.OverlayNextWidget)
+            {
+                Dispatcher.UIThread.Post(() => SizeWidget(next: true, step: 0));
+            }
+            else if (action is TrainerHotkeys.OverlayBigger or TrainerHotkeys.OverlaySmaller)
+            {
+                Dispatcher.UIThread.Post(() => SizeWidget(next: false, step: action == TrainerHotkeys.OverlayBigger ? 1 : -1));
             }
         };
         state.PropertyChanged += (_, e) =>
@@ -193,6 +202,56 @@ public sealed partial class OverlayViewModel : ObservableObject
     /// <summary>Size of the widgets: they are designed for a 480-pixel-high picture and grow with the picture.</summary>
     [ObservableProperty]
     public partial double Scale { get; private set; } = 1;
+
+    /// <summary>The panels' background (its transparency from the look).</summary>
+    [ObservableProperty]
+    public partial IBrush PanelBackground { get; private set; } = new SolidColorBrush(Color.FromArgb(0xC8, 0x0B, 0x0F, 0x0E));
+
+    /// <summary>The main text colour of the panels.</summary>
+    [ObservableProperty]
+    public partial IBrush TextBrush { get; private set; } = Brush("LpTextBrush");
+
+    /// <summary>The panels' font (the time and numbers keep the monospace one).</summary>
+    [ObservableProperty]
+    public partial FontFamily PanelFont { get; private set; } = FontFamily.Default;
+
+    [ObservableProperty]
+    public partial bool ShowTime { get; private set; } = true;
+
+    [ObservableProperty]
+    public partial bool ShowHealth { get; private set; } = true;
+
+    [ObservableProperty]
+    public partial bool ShowRoom { get; private set; } = true;
+
+    [ObservableProperty]
+    public partial bool ShowChallengeLine { get; private set; } = true;
+
+    /// <summary>Raised (as a property change) when the look changed: every panel draws again.</summary>
+    public const string LookChanged = "Look";
+
+    /// <summary>Takes the look from Settings (cheap when unchanged; called by the overlay each tick).</summary>
+    public void UseLook(OverlayLook look)
+    {
+        if (ReferenceEquals(look, _look))
+        {
+            return;
+        }
+
+        _look = look;
+        var alpha = (byte)Math.Round(Math.Clamp(look.BackgroundOpacity, 0, 100) * 2.55);
+        PanelBackground = new SolidColorBrush(Color.FromArgb(alpha, 0x0B, 0x0F, 0x0E));
+        var color = OverlayLook.TextColors.FirstOrDefault(c => c.Id == look.TextColor).Color ?? OverlayLook.TextColors[0].Color;
+        TextBrush = new SolidColorBrush(Color.Parse(color));
+        var font = OverlayLook.Fonts.FirstOrDefault(f => f.Id == look.Font).Resource;
+        PanelFont = font is not null && Avalonia.Application.Current?.TryFindResource(font, out var value) == true && value is FontFamily family
+            ? family : FontFamily.Default;
+        ShowTime = look.ShowTime;
+        ShowHealth = look.ShowHealth;
+        ShowRoom = look.ShowRoom;
+        ShowChallengeLine = look.ShowChallenge;
+        OnPropertyChanged(LookChanged);
+    }
 
     /// <summary>Takes the map options from Settings (cheap when unchanged; called by the overlay each tick).</summary>
     public void UseMapSettings(MapOverlaySettings settings)
@@ -453,6 +512,49 @@ public sealed partial class OverlayViewModel : ObservableObject
     public partial IBrush BannerBrush { get; private set; } = Brush("LpRedBrush");
 
     /// <summary>Shows a big message for a few seconds (a newer one replaces it).</summary>
+    /// <summary>The widget the size keys work on (Settings → Hotkeys → Overlay: …).</summary>
+    private string? _sizing;
+
+    /// <summary>
+    /// Live resizing while playing (no mouse needed, the game keeps the focus): the next widget that's on, or the chosen
+    /// one a step bigger or smaller; saved at once and told as a big message.
+    /// </summary>
+    private void SizeWidget(bool next, int step)
+    {
+        var settings = _services.Settings.Current;
+        var on = OverlayLayout.Widgets.Where(w => w.Id != OverlayLayout.Banner && OverlayLayout.Corner(settings, w.Id) != OverlayLayout.Off)
+            .Select(w => w.Id).ToList();
+        if (on.Count == 0)
+        {
+            return;
+        }
+
+        if (next || _sizing is null || !on.Contains(_sizing))
+        {
+            _sizing = next && _sizing is not null && on.IndexOf(_sizing) is >= 0 and var at ? on[(at + 1) % on.Count] : on[0];
+        }
+
+        var sizes = OverlayLayout.Sizes;
+        var current = settings.OverlayWidgetSizes.GetValueOrDefault(_sizing, 100);
+        var index = Math.Clamp(sizes.ToList().FindIndex(s => s >= current) is var i and >= 0 ? i : sizes.Count - 1, 0, sizes.Count - 1);
+        var size = sizes[Math.Clamp(index + step, 0, sizes.Count - 1)];
+        if (size != current)
+        {
+            var all = new Dictionary<string, int>(settings.OverlayWidgetSizes) { [_sizing] = size };
+            try
+            {
+                _services.Settings.Save(settings with { OverlayWidgetSizes = all });
+            }
+            catch (IOException)
+            {
+                // The size still applies until Lockpick closes.
+            }
+        }
+
+        var name = OverlayLayout.Widgets.First(w => w.Id == _sizing).Name;
+        ShowBanner(step == 0 ? "Sizing" : step > 0 ? "Bigger" : "Smaller", $"{name}: {size}%", "LpAmberBrush");
+    }
+
     private void ShowBanner(string title, string detail, string brush)
     {
         BannerTitle = title;

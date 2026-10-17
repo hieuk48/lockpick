@@ -90,6 +90,12 @@ public sealed record AppSettings
     /// <summary>Each overlay widget's corner, or "Off" (<see cref="OverlayLayout"/>); missing: the widget's default.</summary>
     public IReadOnlyDictionary<string, string> OverlayWidgetCorners { get; init; } = new Dictionary<string, string>();
 
+    /// <summary>Each widget's size on the overlay, in percent of the usual (widget id → 50–200; missing: 100).</summary>
+    public IReadOnlyDictionary<string, int> OverlayWidgetSizes { get; init; } = new Dictionary<string, int>();
+
+    /// <summary>How the overlay's panels look, and what the time/HP widget shows.</summary>
+    public OverlayLook OverlayLook { get; init; } = new();
+
     /// <summary>Where each widget placed by hand sits (widget id → spot), for the corner <see cref="OverlayCorners.Custom"/>.</summary>
     public IReadOnlyDictionary<string, WidgetSpot> OverlayWidgetSpots { get; init; } = new Dictionary<string, WidgetSpot>();
 
@@ -275,6 +281,39 @@ public sealed record MapOverlaySettings
     public static IReadOnlyList<(int Value, string Name)> SizeChoices { get; } = [(100, "Small"), (130, "Medium"), (170, "Large")];
 }
 
+/// <summary>The overlay's look (#55 follow-up): panel transparency, text colour, font, and the time/HP widget's lines.</summary>
+public sealed record OverlayLook
+{
+    /// <summary>How solid the panels' dark background is, in percent (0: text only, over the game).</summary>
+    public int BackgroundOpacity { get; init; } = 78;
+
+    /// <summary>A <see cref="TextColors"/> id.</summary>
+    public string TextColor { get; init; } = "default";
+
+    /// <summary>A <see cref="Fonts"/> id.</summary>
+    public string Font { get; init; } = "default";
+
+    public bool ShowTime { get; init; } = true;
+
+    public bool ShowHealth { get; init; } = true;
+
+    public bool ShowRoom { get; init; } = true;
+
+    public bool ShowChallenge { get; init; } = true;
+
+    public static IReadOnlyList<(string Id, string Name, string Color)> TextColors { get; } =
+    [
+        ("default", "Light (Lockpick)", "#DFE8E3"), ("white", "White", "#FFFFFF"), ("green", "Green", "#4EC36D"),
+        ("amber", "Amber", "#E3B341"), ("cyan", "Cyan", "#5BC8E0"), ("pink", "Pink", "#F07AB8"),
+    ];
+
+    /// <summary>Font ids → the app resource holding the family (null: the app's own font).</summary>
+    public static IReadOnlyList<(string Id, string Name, string? Resource)> Fonts { get; } =
+    [
+        ("default", "Lockpick (default)", null), ("mono", "Monospace", "LpMono"), ("typewriter", "Typewriter", "LpWordmark"),
+    ];
+}
+
 /// <summary>Where Lockpick's window was, in physical pixels, and whether it was maximized.</summary>
 public sealed record WindowPlacement(int X, int Y, double Width, double Height, bool Maximized);
 
@@ -339,6 +378,13 @@ public static class OverlayLayout
 
     /// <summary>A corner, or off.</summary>
     public static IReadOnlyList<string> Choices { get; } = [.. OverlayCorners.All, OverlayCorners.Custom, Off];
+
+    /// <summary>The sizes a widget can have, in percent.</summary>
+    public static IReadOnlyList<int> Sizes { get; } = [50, 75, 100, 125, 150, 200];
+
+    /// <summary>The widget's size factor on the overlay (1 = the usual).</summary>
+    public static double SizeOf(AppSettings settings, string id) =>
+        Math.Clamp(settings.OverlayWidgetSizes.GetValueOrDefault(id, 100), 25, 400) / 100.0;
 
     public static string Corner(AppSettings settings, string id) =>
         settings.OverlayWidgetCorners.TryGetValue(id, out var corner) && Choices.Contains(corner) ? corner

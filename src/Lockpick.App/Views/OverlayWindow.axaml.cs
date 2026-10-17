@@ -30,7 +30,7 @@ public partial class OverlayWindow : Window
             var color = new SolidColorBrush(enemy.Color);
             var row = new Grid { ColumnDefinitions = new ColumnDefinitions("Auto,Auto,*"), ColumnSpacing = 6 };
             row.Children.Add(new Border { Width = 6, Height = 6, CornerRadius = new CornerRadius(3), Background = color, VerticalAlignment = Avalonia.Layout.VerticalAlignment.Center });
-            var name = new TextBlock { Text = enemy.Name, FontSize = 10, Foreground = enemy.IsBoss ? color : Brush("LpTextBrush"), FontWeight = enemy.IsBoss ? FontWeight.SemiBold : FontWeight.Normal };
+            var name = new TextBlock { Text = enemy.Name, FontSize = 10, Foreground = enemy.IsBoss ? color : MainText, FontWeight = enemy.IsBoss ? FontWeight.SemiBold : FontWeight.Normal };
             Grid.SetColumn(name, 1);
             row.Children.Add(name);
             var hp = new StackPanel { Orientation = Avalonia.Layout.Orientation.Horizontal, Spacing = 6, HorizontalAlignment = Avalonia.Layout.HorizontalAlignment.Right };
@@ -66,7 +66,7 @@ public partial class OverlayWindow : Window
                 Text = lines[i],
                 FontSize = 10,
                 TextWrapping = TextWrapping.Wrap,
-                Foreground = i == lines.Count - 1 ? Brush("LpTextBrush") : Brush("LpMutedBrush"),
+                Foreground = i == lines.Count - 1 ? MainText : Brush("LpMutedBrush"),
             });
         }
     }
@@ -76,7 +76,7 @@ public partial class OverlayWindow : Window
     {
         SplitList.Children.Clear();
         var muted = Brush("LpMutedBrush");
-        var text = Brush("LpTextBrush");
+        var text = MainText;
         var mono = Font("LpMono");
         SplitList.Children.Add(new TextBlock { Text = model.RunTitle, FontSize = 9, Foreground = muted, TextTrimming = TextTrimming.CharacterEllipsis, Margin = new Thickness(0, 0, 0, 2) });
         foreach (var row in model.SplitRows)
@@ -121,6 +121,9 @@ public partial class OverlayWindow : Window
         ViewModels.SplitMark.Gold => new SolidColorBrush(Color.Parse("#E8C547")),
         _ => Brush("LpMutedBrush"),
     };
+
+    /// <summary>The look's text colour (Settings → Overlay), or the app's.</summary>
+    private IBrush MainText => (DataContext as ViewModels.OverlayViewModel)?.TextBrush ?? Brush("LpTextBrush");
 
     private static IBrush Brush(string key) =>
         Application.Current?.TryFindResource(key, out var value) == true && value is IBrush brush ? brush : Brushes.White;

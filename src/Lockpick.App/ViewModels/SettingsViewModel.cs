@@ -44,9 +44,11 @@ public sealed partial class SettingsViewModel : PageViewModel
         MarkerHotkeyStatus = services.MarkerHotkeyName is null && MarkerHotkey != "Off" ? $"{MarkerHotkey} is used by another program." : string.Empty;
         MarkerButtonName = services.MarkerButton.DisplayName;
         OverlayEnabled = current.OverlayEnabled;
+        LoadLook(current.OverlayLook);
         StreamerMode = current.StreamerMode;
         OverlayWidgetRows = [.. OverlayLayout.Widgets.Select(w =>
-            new OverlayWidgetRow(w.Id, w.Name, OverlayLayout.Corner(current, w.Id), OverlayLayout.Choices, ApplyOverlayWidget, services.WidgetWindows)
+            new OverlayWidgetRow(w.Id, w.Name, OverlayLayout.Corner(current, w.Id), OverlayLayout.Choices, ApplyOverlayWidget, services.WidgetWindows,
+                current.OverlayWidgetSizes.GetValueOrDefault(w.Id, 100))
             {
                 Spot = current.OverlayWidgetSpots.TryGetValue(w.Id, out var spot) ? spot : null,
             })];
@@ -335,6 +337,13 @@ public sealed partial class SettingsViewModel : PageViewModel
         if (visible)
         {
             GameDisplay.Load();
+            // Sizes may have changed live (the size keys) while the page was hidden.
+            var current = _services.Settings.Current;
+            foreach (var row in OverlayWidgetRows)
+            {
+                row.Load(OverlayLayout.Corner(current, row.Id), current.OverlayWidgetSizes.GetValueOrDefault(row.Id, 100),
+                    current.OverlayWidgetSpots.TryGetValue(row.Id, out var spot) ? spot : null);
+            }
         }
     }
 
@@ -360,8 +369,49 @@ public sealed partial class SettingsViewModel : PageViewModel
     /// <summary>Each overlay widget and its corner (or off).</summary>
     public IReadOnlyList<OverlayWidgetRow> OverlayWidgetRows { get; }
 
-    /// <summary>The overlay map's views and look.</summary>
-    public MapOverlayOptionsViewModel MapOptions { get; }
+    /// <summary>The overlay map's views and look (made again when a layout is loaded).</summary>
+    [ObservableProperty]
+    public partial MapOverlayOptionsViewModel MapOptions { get; private set; }
+
+    [ObservableProperty]
+    public partial string LayoutMessage { get; private set; } = string.Empty;
+
+    /// <summary>Saves the overlay's layout (corners, spots, sizes, look, map options) to share.</summary>
+    public void ExportLayout(string path)
+    {
+        try
+        {
+            OverlayLayoutFile.Write(path, _services.Settings.Current);
+            LayoutMessage = $"Saved {Path.GetFileName(path)}. Anyone can load it in Settings → Overlay → Layout.";
+        }
+        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
+        {
+            LayoutMessage = $"Couldn't save the layout: {ex.Message}";
+        }
+    }
+
+    /// <summary>Loads a layout: the overlay, its rows, the look and the map's options take it at once.</summary>
+    public void ImportLayout(string path)
+    {
+        try
+        {
+            var settings = OverlayLayoutFile.Apply(path, _services.Settings.Current);
+            Persist(_ => settings);
+            foreach (var row in OverlayWidgetRows)
+            {
+                row.Load(OverlayLayout.Corner(settings, row.Id), settings.OverlayWidgetSizes.GetValueOrDefault(row.Id, 100),
+                    settings.OverlayWidgetSpots.TryGetValue(row.Id, out var spot) ? spot : null);
+            }
+
+            LoadLook(settings.OverlayLook);
+            MapOptions = new MapOverlayOptionsViewModel(_services);
+            LayoutMessage = $"Loaded {Path.GetFileName(path)}.";
+        }
+        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or InvalidDataException)
+        {
+            LayoutMessage = $"Couldn't load that layout: {ex.Message}";
+        }
+    }
 
     partial void OnOverlayEnabledChanged(bool value)
     {
@@ -369,6 +419,82 @@ public sealed partial class SettingsViewModel : PageViewModel
         {
             Persist(s => s with { OverlayEnabled = value });
         }
+    }
+
+    public IReadOnlyList<string> TextColorChoices { get; } = [.. OverlayLook.TextColors.Select(c => c.Name)];
+
+    public IReadOnlyList<string> FontChoices { get; } = [.. OverlayLook.Fonts.Select(f => f.Name)];
+
+    /// <summary>How solid the panels' background is, in percent.</summary>
+    [ObservableProperty]
+    public partial double LookBackground { get; set; }
+
+    [ObservableProperty]
+    public partial string LookTextColor { get; set; } = string.Empty;
+
+    [ObservableProperty]
+    public partial string LookFont { get; set; } = string.Empty;
+
+    [ObservableProperty]
+    public partial bool LookShowTime { get; set; }
+
+    [ObservableProperty]
+    public partial bool LookShowHealth { get; set; }
+
+    [ObservableProperty]
+    public partial bool LookShowRoom { get; set; }
+
+    [ObservableProperty]
+    public partial bool LookShowChallenge { get; set; }
+
+    partial void OnLookBackgroundChanged(double value) => SaveLook();
+
+    partial void OnLookTextColorChanged(string value) => SaveLook();
+
+    partial void OnLookFontChanged(string value) => SaveLook();
+
+    partial void OnLookShowTimeChanged(bool value) => SaveLook();
+
+    partial void OnLookShowHealthChanged(bool value) => SaveLook();
+
+    partial void OnLookShowRoomChanged(bool value) => SaveLook();
+
+    partial void OnLookShowChallengeChanged(bool value) => SaveLook();
+
+    private void LoadLook(OverlayLook look)
+    {
+        var loading = _lookLoading;
+        _lookLoading = true;
+        LookBackground = look.BackgroundOpacity;
+        LookTextColor = (OverlayLook.TextColors.FirstOrDefault(c => c.Id == look.TextColor).Name ?? OverlayLook.TextColors[0].Name);
+        LookFont = (OverlayLook.Fonts.FirstOrDefault(f => f.Id == look.Font).Name ?? OverlayLook.Fonts[0].Name);
+        LookShowTime = look.ShowTime;
+        LookShowHealth = look.ShowHealth;
+        LookShowRoom = look.ShowRoom;
+        LookShowChallenge = look.ShowChallenge;
+        _lookLoading = loading;
+    }
+
+    private bool _lookLoading;
+
+    private void SaveLook()
+    {
+        if (_loading || _lookLoading)
+        {
+            return;
+        }
+
+        var look = new OverlayLook
+        {
+            BackgroundOpacity = (int)Math.Round(Math.Clamp(LookBackground, 0, 100)),
+            TextColor = OverlayLook.TextColors.FirstOrDefault(c => c.Name == LookTextColor).Id ?? "default",
+            Font = OverlayLook.Fonts.FirstOrDefault(f => f.Name == LookFont).Id ?? "default",
+            ShowTime = LookShowTime,
+            ShowHealth = LookShowHealth,
+            ShowRoom = LookShowRoom,
+            ShowChallenge = LookShowChallenge,
+        };
+        Persist(s => s with { OverlayLook = look });
     }
 
     /// <summary>A widget dropped in the layout editor: it keeps that spot on the picture.</summary>
@@ -404,7 +530,8 @@ public sealed partial class SettingsViewModel : PageViewModel
     private void ApplyOverlayWidget(OverlayWidgetRow row)
     {
         var corners = new Dictionary<string, string>(_services.Settings.Current.OverlayWidgetCorners) { [row.Id] = row.Corner };
-        Persist(s => s with { OverlayWidgetCorners = corners });
+        var sizes = new Dictionary<string, int>(_services.Settings.Current.OverlayWidgetSizes) { [row.Id] = row.SizePercent };
+        Persist(s => s with { OverlayWidgetCorners = corners, OverlayWidgetSizes = sizes });
     }
 
     partial void OnCheckForUpdatesChanged(bool value)

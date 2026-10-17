@@ -31,6 +31,7 @@ public sealed class ObsEvents : IDisposable
     [
         TrainerHotkeys.RunSplit, TrainerHotkeys.RunUndo, TrainerHotkeys.RunSkip, TrainerHotkeys.RunReset,
         TrainerHotkeys.ChallengeRetry, TrainerHotkeys.ToggleOverlay, TrainerHotkeys.NextMapView, TrainerHotkeys.MapZoom, "marker",
+        TrainerHotkeys.OverlayNextWidget, TrainerHotkeys.OverlayBigger, TrainerHotkeys.OverlaySmaller,
     ];
 
     public ObsEvents(AppServices services, ILogger log)

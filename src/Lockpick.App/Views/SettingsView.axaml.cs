@@ -20,6 +20,22 @@ public partial class SettingsView : UserControl
         }
     }
 
+    private async void OnSaveLayout(object? sender, RoutedEventArgs e)
+    {
+        if (DataContext is SettingsViewModel vm && await FilePickers.SaveLayoutFileAsync(this) is { } path)
+        {
+            vm.ExportLayout(path);
+        }
+    }
+
+    private async void OnLoadLayout(object? sender, RoutedEventArgs e)
+    {
+        if (DataContext is SettingsViewModel vm && await FilePickers.PickLayoutFileAsync(this) is { } path)
+        {
+            vm.ImportLayout(path);
+        }
+    }
+
     private async void OnBrowse(object? sender, RoutedEventArgs e)
     {
         if (DataContext is SettingsViewModel vm && await FilePickers.PickGameExecutableAsync(this) is { } path)
