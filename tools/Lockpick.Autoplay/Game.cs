@@ -59,7 +59,10 @@ internal sealed class Game : IDisposable
     {
         var installed = GogInstallLocator.Find(Re1Adapter.GogProductId)
             ?? throw new InvalidOperationException("no GOG Resident Evil install found");
-        var exe = installed.ExecutablePath ?? throw new InvalidOperationException("GOG install has no executable path");
+        // The English game, whichever release GOG's registry names (both can share the folder): the harness's
+        // addresses are the English build's.
+        var english = Path.Combine(installed.InstallPath, "ResidentEvil.exe");
+        var exe = File.Exists(english) ? english : installed.ExecutablePath ?? throw new InvalidOperationException("GOG install has no executable path");
         using var _ = Process.Start(new ProcessStartInfo(exe) { WorkingDirectory = Path.GetDirectoryName(exe), UseShellExecute = true });
     }
 

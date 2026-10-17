@@ -277,7 +277,7 @@
       "type": "u32",
       "description": "In-game time in frames at 30 per second.",
       "verification": "runtime",
-      "evidence": "Live 2026-10-17 (Chris new game, owner, probe trace): 0 at New Game, 21 984 frames (12.2 min at 30/s) after 13.4 min, still in menus and door transitions. Cross-mapped from re1-gog-usa-hotfix4 (0xD22730) by tools/re1/xmap.py: 7 of 7 code sites that use it there are found here and use 0xAA8E10 at the same instruction.",
+      "evidence": "Live 2026-10-17 (Chris new game, owner, probe trace): 0 at New Game, 21 984 frames (12.2 min at 30/s) after 13.4 min of play: it stands still in door transitions (B206). Cross-mapped from re1-gog-usa-hotfix4 (0xD22730) by tools/re1/xmap.py: 7 of 7 code sites that use it there are found here and use 0xAA8E10 at the same instruction.",
       "sources": [
         "static cross-map from re1-gog-usa-hotfix4",
         "re1-gog-usa-hotfix4: static analysis of this executable",

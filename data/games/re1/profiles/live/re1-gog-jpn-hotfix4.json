@@ -9,7 +9,7 @@
     "hp": "140 at the start; 130/120/110/100 in steps of 10 from zombie bites; back to 140 with the first aid spray; down to 46 later.",
     "maxHp": "140 (Chris) from the start of the game.",
     "character": "0 (Chris) for the whole game.",
-    "gameTimer": "0 at New Game, 21 984 frames (12.2 min at 30/s) after 13.4 min, still in menus and door transitions.",
+    "gameTimer": "0 at New Game, 21 984 frames (12.2 min at 30/s) after 13.4 min of play: it stands still in door transitions (B206).",
     "mainMenu": "1 on the title menu, 0 once the game started.",
     "positionX": "Changes as the player walks (trace context).",
     "positionZ": "Changes as the player walks (trace context).",

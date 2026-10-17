@@ -22,7 +22,7 @@ from a third-party source, diagnostics only.
 | `0xBE63C0` | u8 | playerStatus | Player status flags (entity +0xDC): `0x02` poisoned | runtime (2026-10-14 lab; static test/and/or byte refs) |
 | `0xBE64EC + 0x18C·i` | i16 | enemy0..7Hp | Enemy slot HP (+0x88): below 0 once dead (zombies −1) | runtime (static: `sub`/`cmp word [0xBE64EC]`; 2026-10-14 lab) |
 | `0xBE62E5` | u8 & 3 | character | 0 Chris, 1 Jill, 3 Rebecca (entity +0x01; bit 0x08 = alt costume) | runtime (Chris, Jill; Rebecca live 2026-10-15) |
-| `0xD22730` | u32 | gameTimer | In-game time, frames at 30/s; frozen in menus and door transitions | runtime |
+| `0xD22730` | u32 | gameTimer | In-game time, frames at 30/s; runs in the status screen, the item box and messages, stops in door transitions and (likely) the options screen (B206, 2026-10-17) | runtime |
 | `0xD22777` | u8 | mainMenu | 1 while the title/main menu is shown | runtime |
 | `0xBE41C0` | u32 | stateFlags | Main state bitfield (diagnostics only, see below) | static |
 | `0xBE6318` | i32 | positionX | Player X (entity +0x34) | runtime |
@@ -339,7 +339,7 @@ message closed, state-flag bits `0x100000` (camera lock), `0x20000` (voice), `0x
 
 | Address / rule | What | Evidence |
 |---|---|---|
-| `0xD22730` (u32) | In-game timer, frames at 30 fps (counts in menus too — contradicts "frozen in menus" in the table at the top; to settle: bounty B206) | live: 153 frames in 5.07 s |
+| `0xD22730` (u32) | In-game timer, frames at 30 fps (counts in menus too; settled by B206 2026-10-17: runs in the status screen, item box, item viewer and messages, stops in door transitions and after Back, likely the options screen) | live: 153 frames in 5.07 s |
 | `0xAE9F2F` (u8) | Status-screen ECG band, only updated while the screen is drawn: `(HP − 1) / (maxHP >> 2)` → 0 Danger, 1 Caution, 2–3 Fine; 4 while poisoned | live: Jill at HP 1, 24, 25, 48, 49, 72, 73, 96 gave 0,0,1,1,2,2,3,3; poisoned 4. The screen's word, seen 2026-10-15: HP 60 (band 2) "Fine" with a yellow trace, HP 30 (band 1) "Caution" in orange |
 | `0xBE63C0` (u8, player +0xDC; profile field `playerStatus`) | Status: `0x02` poisoned (`0x20` Yawn poison per the decomp; `0x10`/`0x80` are other bits) | live: wasp stings (408) set `0x02`; the blue herb cleared it; the serum said "You don't need to use this item at the moment." |
 | `0xBE6458` (u8, player +0x174) | Poison timer: counts down per frame; at 0 it reloads to ~120 and HP drops 2 | live: −2 HP at frames 7988, 8108, 8230 |

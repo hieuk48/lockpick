@@ -288,13 +288,19 @@
           "id": "B205",
           "task": "Die and reach the **Game Over** screen: once choose to continue, once quit to the title",
           "verifies": "Death and Game Over detection, and how a run attempt ends (continue vs. quit)",
-          "status": "needed"
+          "status": "partial",
+          "evidence": [
+            "2026-10-16/17 owner's play (run records): three deaths (two on GOG English, one on the Japanese 1.01 under REbirth) ended the attempts as 'died', five quits to the title as 'quitToTitle'. The REbirth probe trace (2026-10-17): HP fell to -10, the clock froze at the death and stayed frozen until the title menu came back about a minute later (no room reload). Still open: whether the game ever offers Continue after a death."
+          ]
         },
         {
           "id": "B206",
           "task": "Stand still a few seconds in each: the status screen, the options screen, a file being read, a door, a cutscene, the item box",
           "verifies": "When the in-game clock runs (the docs disagree about menus) — for a run timer that matches the game",
-          "status": "needed"
+          "status": "partial",
+          "evidence": [
+            "2026-10-17 dev harness (tools/autoplay/clock.py, clock2.py; GOG English, the clock 0xD22730 sampled every 100 ms against real time): it keeps running in the status screen, the item box screen, the item viewer (CHECK), with a message on screen and through the in-engine opening scenes; it stops during a door transition (about 5.2 s) and in stretches of the opening (the first 10 s). The Back button blacked the screen and stopped the clock completely (likely the options screen, which the PC rules say pauses the in-game time; not confirmed on screen). Not yet measured: a document read from the FILE menu."
+          ]
         },
         {
           "id": "B207",
