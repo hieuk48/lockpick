@@ -73,6 +73,14 @@ None is verified yet: their split points come from the community autosplitter, n
 (capture bounties B701, B702 for full runs, B703 for the ending). Until then the app says so, and the split key
 fixes a missed split.
 
+## Your own splits
+
+Runs → *Edit splits* edits the chosen splits: each split's name and trigger (entering a room — optionally from a
+given room, or from another area —, getting an item — anywhere or in a given room —, the ending, or the split key),
+adding, removing and reordering them. **Save as my splits** keeps them as your own set (a JSON file in Lockpick's
+data folder, `splits\mine`), chosen at once; built-in and imported splits are never changed, editing one saves a
+copy. Your sets are listed with the others and can be removed like imported ones; their attempts are kept per set.
+
 ## LiveSplit files
 
 - **Import** (Runs → Import LiveSplit file…) reads a `.lss` file — the community's from speedrun.com, or the

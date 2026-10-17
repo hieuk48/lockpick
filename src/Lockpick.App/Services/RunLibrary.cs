@@ -15,15 +15,19 @@ public sealed class RunLibrary
     private readonly SettingsStore _settings;
     private readonly ILogger _log;
     private readonly List<SplitSet> _imported = [];
+    private readonly List<SplitSet> _custom = [];
+    private readonly string _customDirectory;
     private readonly Dictionary<string, RunComparison> _fileComparisons = [];
     private readonly Dictionary<string, RunComparison> _comparisons = [];
     private readonly object _gate = new();
 
-    public RunLibrary(RunService runs, IGameAdapter adapter, RunHistoryStore history, SettingsStore settings, ILogger log)
+    public RunLibrary(RunService runs, IGameAdapter adapter, RunHistoryStore history, SettingsStore settings, ILogger log, string? customDirectory = null)
     {
         _runs = runs;
         _settings = settings;
         _log = log;
+        _customDirectory = customDirectory ?? Path.Combine(AppPaths.DataRoot, "splits", "mine");
+        Adapter = adapter;
         History = history;
         Rules = adapter.Profiles.Select(adapter.CreateRunRules).FirstOrDefault(r => r is not null);
         BuiltIn = Rules?.SplitSets ?? [];
@@ -36,6 +40,21 @@ public sealed class RunLibrary
             catch (Exception ex) when (ex is IOException or InvalidDataException or UnauthorizedAccessException)
             {
                 _log.LogWarning("Imported splits {Path} couldn't be read again: {Message}", path, ex.Message);
+            }
+        }
+
+        if (Directory.Exists(_customDirectory))
+        {
+            foreach (var path in Directory.EnumerateFiles(_customDirectory, "*.json").Order(StringComparer.OrdinalIgnoreCase))
+            {
+                try
+                {
+                    _custom.Add(SplitSetFile.Read(path));
+                }
+                catch (Exception ex) when (ex is IOException or InvalidDataException or UnauthorizedAccessException or System.Text.Json.JsonException)
+                {
+                    _log.LogWarning("Your splits {Path} couldn't be read: {Message}", path, ex.Message);
+                }
             }
         }
 
@@ -64,16 +83,40 @@ public sealed class RunLibrary
 
     public IReadOnlyList<SplitSet> BuiltIn { get; }
 
-    /// <summary>Built-in sets, then imported ones.</summary>
+    /// <summary>The game (item and room names for the split editor).</summary>
+    public IGameAdapter Adapter { get; }
+
+    /// <summary>Built-in sets, then imported ones, then the player's own (the split editor).</summary>
     public IReadOnlyList<SplitSet> Sets
     {
         get
         {
             lock (_gate)
             {
-                return [.. BuiltIn, .. _imported];
+                return [.. BuiltIn, .. _imported, .. _custom];
             }
         }
+    }
+
+    /// <summary>
+    /// Saves <paramref name="set"/> as the player's own splits named <paramref name="name"/> (replacing their set of that
+    /// name); returns it as saved. Built-in and imported sets are never changed: editing one makes the player's copy.
+    /// </summary>
+    public SplitSet SaveCustom(SplitSet set, string name)
+    {
+        var file = SplitSetFile.FileNameFor(name);
+        var path = Path.Combine(_customDirectory, file + ".json");
+        SplitSetFile.Write(path, set with { Name = name.Trim(), Category = set.Category });
+        var saved = SplitSetFile.Read(path);
+        lock (_gate)
+        {
+            _custom.RemoveAll(s => s.Id == saved.Id);
+            _custom.Add(saved);
+            _comparisons.Remove(saved.Id);
+        }
+
+        Changed?.Invoke(this, EventArgs.Empty);
+        return saved;
     }
 
     /// <summary>Raised when sets, records or comparisons change (any thread).</summary>
@@ -91,12 +134,23 @@ public sealed class RunLibrary
         return set;
     }
 
-    /// <summary>Forgets an imported set (its attempts stay on disk).</summary>
+    /// <summary>Forgets an imported set, or deletes the player's own (its attempts stay on disk).</summary>
     public void Remove(SplitSet set)
     {
         lock (_gate)
         {
             _imported.RemoveAll(s => s.Id == set.Id);
+            if (_custom.RemoveAll(s => s.Id == set.Id) > 0)
+            {
+                try
+                {
+                    File.Delete(Path.Combine(_customDirectory, set.Id["mine-".Length..] + ".json"));
+                }
+                catch (IOException ex)
+                {
+                    _log.LogWarning("Your splits {Set} couldn't be deleted: {Message}", set.Id, ex.Message);
+                }
+            }
         }
 
         var files = _settings.Current.ImportedSplitFiles.Where(p => !string.Equals(p, set.ImportedFrom, StringComparison.OrdinalIgnoreCase)).ToList();

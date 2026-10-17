@@ -75,6 +75,10 @@ All notable changes to this project are documented here. The format follows
   game is exclusive fullscreen and in front (the game would minimize).
 - **Wrong-splits warning:** a run started with splits for the other character (e.g. Jill's in Chris's game) says so
   at once — a big message and a note on the Runs page.
+- **Split editor** (#57, Runs → *Edit splits*): rename splits and choose what triggers each — entering a room (from
+  a given room, or from another area), getting an item (anywhere or in a room), the ending, or the split key — add,
+  remove and reorder them, and save them as your own splits. Built-in and imported splits stay as they are: editing
+  one saves your copy.
 - **Runs from a save start at your split:** Runs → Splits → *Start at* picks where your save is in the route; the
   splits before it stay empty (nothing is filled in), and LiveSplit — built in or driven — starts there too.
 - **Runs from a save on the game's clock:** practice from a save is now timed on the game's own clock, so the splits

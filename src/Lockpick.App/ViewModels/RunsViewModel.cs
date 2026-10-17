@@ -47,6 +47,7 @@ public sealed partial class RunsViewModel : PageViewModel
     private readonly LiveSplitLink _liveSplit;
     private readonly LiveState _state;
     private readonly AppServices _services;
+    private SplitSet? _editing;
     private bool _syncing;
     private bool _visible;
     private DateTimeOffset _lastTick;
@@ -56,6 +57,7 @@ public sealed partial class RunsViewModel : PageViewModel
     {
         SetSections(
             new PageSection("splits", "Splits"),
+            new PageSection("editor", "Edit splits"),
             new PageSection("training", "Training"),
             new PageSection("leaderboard", "Leaderboard"),
             new PageSection("livesplit", "LiveSplit"));
@@ -76,6 +78,7 @@ public sealed partial class RunsViewModel : PageViewModel
         LiveSplitStatus = _liveSplit.Status;
         _liveSplit.StatusChanged += (_, _) => Dispatcher.UIThread.Post(() => LiveSplitStatus = _liveSplit.Status);
         Leaderboard = new LeaderboardViewModel(services);
+        Editor = new SplitEditorViewModel(services.RunLibrary);
         _guard = services.LeaderboardGuard;
         LeaderboardRun = _guard.Enabled;
         _guard.Changed += (_, _) => Dispatcher.UIThread.Post(SyncGuard);
@@ -120,6 +123,9 @@ public sealed partial class RunsViewModel : PageViewModel
 
     /// <summary>The speedrun.com leaderboard for the chosen splits.</summary>
     public LeaderboardViewModel Leaderboard { get; }
+
+    /// <summary>The split editor (Runs → Edit splits).</summary>
+    public SplitEditorViewModel Editor { get; }
 
     /// <summary>Submitting a finished attempt to speedrun.com.</summary>
     public SubmitRunViewModel Submit { get; }
@@ -344,7 +350,7 @@ public sealed partial class RunsViewModel : PageViewModel
     [RelayCommand]
     private void RemoveImported()
     {
-        if (Selected?.Set is { ImportedFrom: not null } set)
+        if (Selected?.Set is { } set && (set.ImportedFrom is not null || set.Source == SplitSetFile.Custom))
         {
             _library.Remove(set);
             Message = $"Removed {set.Name} (its attempts stay in your runs folder).";
@@ -402,7 +408,12 @@ public sealed partial class RunsViewModel : PageViewModel
             Submit?.Show(set); // not while a run is going: the form would reset under the player
         }
         HasSet = set is not null;
-        IsImported = set?.ImportedFrom is not null;
+        IsImported = set?.ImportedFrom is not null || set?.Source == SplitSetFile.Custom;
+        if (set?.Id != _editing?.Id)
+        {
+            _editing = set;
+            Editor.Load(set); // the editor follows the chosen splits
+        }
         IsRunning = status.State == RunState.Running;
         if (set is null)
         {

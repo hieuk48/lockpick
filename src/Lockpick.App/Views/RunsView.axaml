@@ -296,6 +296,54 @@
           </Border>
         </c:CardColumns>
 
+        <!-- The split editor (#57) -->
+        <Border Classes="card" VerticalAlignment="Top"
+                IsVisible="{Binding SelectedSection, Converter={x:Static c:SectionIs.Instance}, ConverterParameter=editor}">
+          <StackPanel Spacing="8" DataContext="{Binding Editor}" x:DataType="vm:SplitEditorViewModel">
+            <TextBlock Classes="caption" Text="EDIT SPLITS" />
+            <TextBlock Text="{Binding Heading}" TextWrapping="Wrap" Foreground="{StaticResource LpMutedBrush}" />
+            <StackPanel Spacing="8" IsVisible="{Binding HasSet}">
+              <WrapPanel ItemSpacing="8" LineSpacing="6">
+                <TextBox Text="{Binding SetName}" MinWidth="280" Watermark="Name" AutomationProperties.Name="Name of your splits" />
+                <ComboBox ItemsSource="{Binding Characters}" SelectedItem="{Binding Character}" MinWidth="110" AutomationProperties.Name="Character" />
+              </WrapPanel>
+              <TextBlock TextWrapping="Wrap" Foreground="{StaticResource LpMutedBrush}"
+                         Text="Rooms are a stage digit and two hex digits, as in the game's files and on the Map page (203 = main hall 2F, 60B, 71B). &quot;From&quot; narrows a room split to one way in; &quot;from another area&quot; splits only when you arrive from a different stage." />
+              <ItemsControl ItemsSource="{Binding Rows}">
+                <ItemsControl.ItemTemplate>
+                  <DataTemplate x:DataType="vm:SplitEditRow">
+                    <Border BorderBrush="{StaticResource LpBorderBrush}" BorderThickness="0,0,0,1" Padding="0,6">
+                      <WrapPanel ItemSpacing="6" LineSpacing="6">
+                        <TextBox Text="{Binding Name}" Width="170" AutomationProperties.Name="Split name" />
+                        <ComboBox ItemsSource="{x:Static vm:SplitEditRow.Kinds}" SelectedItem="{Binding Kind}" Width="160" AutomationProperties.Name="Split on" />
+                        <StackPanel Orientation="Horizontal" Spacing="6" IsVisible="{Binding IsRoom}">
+                          <TextBox Text="{Binding RoomId}" Width="60" Watermark="room" AutomationProperties.Name="Room" />
+                          <TextBox Text="{Binding FromRoom}" Width="70" Watermark="from" AutomationProperties.Name="From room" />
+                          <CheckBox IsChecked="{Binding OtherArea}" Content="from another area" />
+                        </StackPanel>
+                        <StackPanel Orientation="Horizontal" Spacing="6" IsVisible="{Binding IsItem}">
+                          <ComboBox ItemsSource="{Binding Items}" SelectedItem="{Binding ItemPick}" Width="200" AutomationProperties.Name="Item" />
+                          <TextBox Text="{Binding ItemRoom}" Width="70" Watermark="in room" AutomationProperties.Name="Item's room" />
+                        </StackPanel>
+                        <Button Content="▲" Command="{Binding UpCommand}" AutomationProperties.Name="Move up" />
+                        <Button Content="▼" Command="{Binding DownCommand}" AutomationProperties.Name="Move down" />
+                        <Button Content="✕" Command="{Binding RemoveCommand}" AutomationProperties.Name="Remove the split" />
+                      </WrapPanel>
+                    </Border>
+                  </DataTemplate>
+                </ItemsControl.ItemTemplate>
+              </ItemsControl>
+              <WrapPanel ItemSpacing="8" LineSpacing="6">
+                <Button Content="Add a split" Command="{Binding AddSplitCommand}" />
+                <Button Content="Save as my splits" Command="{Binding SaveCommand}" Classes="accent" />
+                <Button Content="Undo my changes" Command="{Binding RevertCommand}" />
+              </WrapPanel>
+              <TextBlock Text="{Binding Message}" TextWrapping="Wrap"
+                         IsVisible="{Binding Message, Converter={x:Static StringConverters.IsNotNullOrEmpty}}" />
+            </StackPanel>
+          </StackPanel>
+        </Border>
+
         <c:CardColumns MinColumnWidth="380" MaxColumns="2" IsVisible="{Binding SelectedSection, Converter={x:Static c:SectionIs.Instance}, ConverterParameter=livesplit}">
           <!-- Working with the runner's LiveSplit -->
           <Border Classes="card">

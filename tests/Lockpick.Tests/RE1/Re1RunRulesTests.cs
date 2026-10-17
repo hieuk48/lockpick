@@ -95,6 +95,35 @@ public sealed class Re1RunRulesTests : IDisposable
     }
 
     [Fact]
+    public void Your_own_splits_are_saved_and_read_back_exactly()
+    {
+        var jill = _rules.SplitSets.Single(s => s.Id == "re1-jill-bad-nmg-segments");
+        var edited = jill with
+        {
+            Name = "My Jill route",
+            Splits = [.. jill.Splits.Take(2), new SplitDefinition("Battery", new ItemObtained(39, "719")), new SplitDefinition("Check", new ManualSplit()), jill.Splits[^1]],
+        };
+        var path = Path.Combine(_folder, SplitSetFile.FileNameFor("My Jill route!") + ".json");
+        SplitSetFile.Write(path, edited);
+        var back = SplitSetFile.Read(path);
+
+        Assert.Equal("mine-my-jill-route", back.Id);
+        Assert.Equal("My Jill route", back.Name);
+        Assert.Equal(SplitSetFile.Custom, back.Source);
+        Assert.Equal(PlayableCharacter.Jill, back.Character);
+        Assert.Equal(edited.Splits, back.Splits); // names and triggers, room-from and other-area flags included
+        Assert.False(back.Verified);
+    }
+
+    [Fact]
+    public void A_splits_file_without_splits_is_refused()
+    {
+        var path = Path.Combine(_folder, "empty.json");
+        File.WriteAllText(path, "{\"name\": \"x\", \"splits\": []}");
+        Assert.Throws<InvalidDataException>(() => SplitSetFile.Read(path));
+    }
+
+    [Fact]
     public void Files_with_a_dtd_are_refused()
     {
         var path = Path.Combine(_folder, "evil.lss");
