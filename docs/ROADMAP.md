@@ -227,7 +227,7 @@ is decided later. Keep-running stays out of challenges (it patches the game, and
    segments, a Runs page, run hotkeys and a splits overlay widget — live: a new Jill game started an attempt, the
    Emblem split at 14.9 s, reset kept the record. **Then:** the run API and OBS splits page (#60), LiveSplit
    follow and drive modes over LiveSplit's TCP server (#58; tested against a stand-in server, LiveSplit itself is
-   B208). Next: a split editor, `.lss` import of the community files checked by a player.
+   B208). **Split editor, runs from a save at a chosen split, the wrong-splits warning — done 2026-10-16.** Next: `.lss` import of the community files checked by a player.
    - run sessions: start on New Game (or a loaded save, marked as such), end on the ending's results screen
      (B703), a death / Game Over (B205), quitting to the title, or the game closing; a local record per attempt
      (category, character, in-game time, splits, deaths, damage taken, result, whether cheats were on);
@@ -283,7 +283,7 @@ is decided later. Keep-running stays out of challenges (it patches the game, and
      (OBS Lua has no network), so no WebSocket password is involved; browser pages that need OBS access get the
      lowest control level that works (4 for scenes and replays);
    - the docs recommend Game Capture (works in every mode, 640×480 native, no pillarbox).
-5. **Training captures:** opt-in, every game frame (the in-game clock's ticks): state, the held and new input words
+5. **Training captures — built 2026-10-16 (#61; a live capture and the dataset check to go):** opt-in, every game frame (the in-game clock's ticks): state, the held and new input words
    and the raw pad word, control type, room and camera, enemies; a consent screen (what is recorded, nothing
    personal); submitted like play captures; checked by `tools/rl/dataset.py` and a small behaviour-cloning model
    (dev). Optional pairing with an OBS recording (its start time and chapters) for models that learn from video.
