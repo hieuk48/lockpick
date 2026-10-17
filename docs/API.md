@@ -67,7 +67,10 @@ they change) and `events.txt` (emptied at each start; one line per moment: `time
 The script's settings, each optional: **Add Lockpick to this scene** (the browser sources above and a Game Capture of
 the game), record each run (stop a few seconds after it ends), chapter markers at splits, deaths and fails (Hybrid
 MP4, OBS 30.2+), save the replay buffer on a death, a fail or a new best, and switch to a "paused" scene while the
-game isn't in front. A popped-out widget
+game isn't in front. Its **OBS hotkeys** (OBS Settings → Hotkeys, "Lockpick: …") split, undo, skip, reset, retry a
+challenge, toggle the overlay, change the map's view or zoom, or drop a capture marker: the script appends them to
+`commands.txt` (`time-ms<TAB>action`, emptied when Lockpick starts), and Lockpick does only those actions — never a
+cheat. A popped-out widget
 window (Settings → Overlay → Pop out) can be captured with Window Capture too.
 
 Lockpick's in-game overlay (Settings → Overlay) is not part of any OBS capture — it's a window of its own on top of

@@ -240,6 +240,9 @@ public sealed class AppServices : IAsyncDisposable
     /// <summary>Raised (on a background thread) when the marker hotkey is pressed, whichever window has focus.</summary>
     public event EventHandler? MarkerHotkeyPressed;
 
+    /// <summary>A capture marker asked for from elsewhere (an OBS hotkey), as the marker key does.</summary>
+    public void RequestMarker() => MarkerHotkeyPressed?.Invoke(this, EventArgs.Empty);
+
     /// <summary>The registered marker hotkey's name, or null when it is off or Windows refused it.</summary>
     public string? MarkerHotkeyName => _markerHotkey is { IsRegistered: true } hotkey ? hotkey.Name : null;
 

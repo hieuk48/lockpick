@@ -5,6 +5,9 @@ Lockpick writes two files for it in %LOCALAPPDATA%\Lockpick\obs (OBS's Lua has n
   connection.json - the API's port and token: "Add Lockpick to this scene" makes the browser sources with them
   events.txt      - one line per moment: time-ms <TAB> kind <TAB> detail
                     (run-start, split, run-end, finished, new-best, death, challenge-fail, game-active, game-inactive)
+and reads one the script writes:
+  commands.txt    - OBS hotkeys for Lockpick (Settings -> Hotkeys in OBS): split, undo, skip, reset, try again, the
+                    overlay, the map's view and zoom, a capture marker. Lockpick takes only these; never a cheat.
 
 Every action is optional (the script's settings). Nothing here changes the game or Lockpick.
 ]]
@@ -16,6 +19,29 @@ local options = {}
 local offset = nil          -- how far events.txt has been read (nil: not yet opened; start at its end)
 local stop_pending = false
 local scene_before_pause = nil
+
+-- OBS hotkeys for Lockpick's own actions (bound in OBS: Settings -> Hotkeys, "Lockpick: ...").
+local hotkeys = {
+  { action = "run-split", name = "Lockpick: split" },
+  { action = "run-undo", name = "Lockpick: undo split" },
+  { action = "run-skip", name = "Lockpick: skip split" },
+  { action = "run-reset", name = "Lockpick: reset the run" },
+  { action = "challenge-retry", name = "Lockpick: challenge, try again" },
+  { action = "toggle-overlay", name = "Lockpick: overlay on / off" },
+  { action = "map-view", name = "Lockpick: map, next view" },
+  { action = "map-zoom", name = "Lockpick: map, zoom the floor" },
+  { action = "marker", name = "Lockpick: capture marker" },
+}
+
+local function send(action)
+  local f = io.open(folder .. "commands.txt", "a")
+  if not f then
+    obs.script_log(obs.LOG_WARNING, "Lockpick: is Lockpick running? (its OBS folder isn't there)")
+    return
+  end
+  f:write(string.format("%d\t%s\n", math.floor(os.time() * 1000), action))
+  f:close()
+end
 
 -- ---------------------------------------------------------------- files
 
@@ -227,8 +253,9 @@ end
 function script_description()
   return [[<b>Lockpick</b> — Resident Evil training and challenges on your stream.<br>
 Records with each run, adds chapter markers at splits, deaths and fails, saves the replay buffer on the moments you
-pick, and can switch to a "paused" scene while the game isn't in front. Lockpick must be running; for the widgets,
-turn on its API (Settings → API and profiles).]]
+pick, and can switch to a "paused" scene while the game isn't in front. Its hotkeys (OBS Settings → Hotkeys,
+"Lockpick: …") split, undo, skip, reset, retry a challenge, toggle the overlay or the map, or drop a capture marker.
+Lockpick must be running; for the widgets, turn on its API (Settings → API and profiles).]]
 end
 
 function script_properties()
@@ -277,7 +304,25 @@ end
 
 function script_load(settings)
   script_update(settings)
+  for _, h in ipairs(hotkeys) do
+    h.id = obs.obs_hotkey_register_frontend("lockpick_" .. h.action, h.name, function(pressed)
+      if pressed then send(h.action) end
+    end)
+    local saved = obs.obs_data_get_array(settings, "lockpick_" .. h.action)
+    obs.obs_hotkey_load(h.id, saved)
+    obs.obs_data_array_release(saved)
+  end
   obs.timer_add(tick, 250)
+end
+
+function script_save(settings)
+  for _, h in ipairs(hotkeys) do
+    if h.id then
+      local saved = obs.obs_hotkey_save(h.id)
+      obs.obs_data_set_array(settings, "lockpick_" .. h.action, saved)
+      obs.obs_data_array_release(saved)
+    end
+  end
 end
 
 function script_unload()

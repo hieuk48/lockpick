@@ -130,7 +130,8 @@ The overlay is drawn over the game on your screen, so OBS doesn't see it. For yo
 - **Lockpick's OBS script:** in OBS, *Tools → Scripts → +* and pick `lockpick.lua` (Stream → *OBS* shows where it
   is). **Add Lockpick to this scene** adds all the browser sources and a Game Capture of the game. Its options, each
   optional: record each run, chapter markers at splits, deaths and fails, save the replay buffer on a death, a fail
-  or a new best, and switch to a "paused" scene while the game isn't in front.
+  or a new best, and switch to a "paused" scene while the game isn't in front. It also adds **OBS hotkeys** for
+  Lockpick (OBS Settings → Hotkeys, "Lockpick: …"): split, undo, skip, reset, try again, the overlay and the map.
 - **Window Capture** of a popped-out widget window works too (use its green background with a chroma key).
 - **Streamer mode** (Settings → General) blurs file paths, process ids and the API token in Lockpick's window, if you
   show the app on stream.

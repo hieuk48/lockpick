@@ -58,6 +58,8 @@ All notable changes to this project are documented here. The format follows
   remembered for each monitor setup; a place that's no longer on a screen falls back to centred.
 - **Streamer mode** (#63, Settings → General): file paths, process ids and the API token are blurred wherever Lockpick
   shows them, so its window can be on stream (copy buttons still work).
+- **OBS hotkeys for Lockpick** (the OBS script): split, undo, skip, reset, try a challenge again, the overlay, the map's
+  view and zoom, and capture markers from OBS's own hotkeys — no cheats.
 - **Lockpick's OBS script** (#66, `obs/lockpick.lua` next to Lockpick.exe; Stream → OBS shows where): one button
   adds Lockpick's sources and a Game Capture of the game to the scene, and, each optional, records each run, puts
   chapter markers at splits, deaths and fails, saves the replay buffer on a death, a fail or a new best, and switches to

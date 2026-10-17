@@ -12,6 +12,8 @@ namespace Lockpick.App.Services;
 /// <c>events.txt</c>, one line per moment — <c>time-ms TAB kind TAB detail</c> — for recording with runs, chapters,
 /// the replay buffer and the "paused" scene. The events file starts empty each time Lockpick starts.
 /// Kinds: run-start, split, run-end, finished, new-best, death, challenge-fail, game-active, game-inactive.
+/// The other way, the script's OBS hotkeys append to <c>commands.txt</c> (<c>time-ms TAB action</c>): only the run keys,
+/// try again, the overlay and map keys and the capture marker are taken — never a cheat.
 /// </summary>
 public sealed class ObsEvents : IDisposable
 {
@@ -22,6 +24,14 @@ public sealed class ObsEvents : IDisposable
     private readonly object _gate = new();
     private readonly Timer _timer;
     private bool? _gameActive;
+    private long _commandsRead;
+
+    /// <summary>What an OBS hotkey may ask for (the same actions as Lockpick's own keys; no cheats).</summary>
+    private static readonly HashSet<string> Commands =
+    [
+        TrainerHotkeys.RunSplit, TrainerHotkeys.RunUndo, TrainerHotkeys.RunSkip, TrainerHotkeys.RunReset,
+        TrainerHotkeys.ChallengeRetry, TrainerHotkeys.ToggleOverlay, TrainerHotkeys.NextMapView, TrainerHotkeys.MapZoom, "marker",
+    ];
 
     public ObsEvents(AppServices services, ILogger log)
     {
@@ -29,12 +39,21 @@ public sealed class ObsEvents : IDisposable
         _log = log;
         Directory = Path.Combine(AppPaths.DataRoot, "obs");
         Write(truncate: true, null);
+        try
+        {
+            File.WriteAllText(Path.Combine(Directory, "commands.txt"), string.Empty); // what OBS asked before now is done
+        }
+        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
+        {
+            _log.LogDebug("The OBS commands file couldn't be emptied: {Message}", ex.Message);
+        }
+
         WriteConnection();
         services.Runs.EventRaised += OnRunEvent;
         services.Runs.AttemptEnded += OnAttemptEnded;
         services.Runs.Died += OnDied;
         services.Challenges.EventRaised += OnChallengeEvent;
-        _timer = new Timer(_ => CheckGame(), null, TimeSpan.FromSeconds(1), TimeSpan.FromMilliseconds(500));
+        _timer = new Timer(_ => { CheckGame(); ReadCommands(); }, null, TimeSpan.FromSeconds(1), TimeSpan.FromMilliseconds(200));
     }
 
     /// <summary>Where the files are (the script finds them in %LOCALAPPDATA%\Lockpick\obs).</summary>
@@ -125,6 +144,60 @@ public sealed class ObsEvents : IDisposable
         {
             _gameActive = active;
             Add(active ? "game-active" : "game-inactive", string.Empty);
+        }
+    }
+
+    /// <summary>The OBS hotkeys pressed since the last look (commands.txt), each done as Lockpick's own key would.</summary>
+    private void ReadCommands()
+    {
+        string text;
+        try
+        {
+            using var stream = new FileStream(Path.Combine(Directory, "commands.txt"), FileMode.OpenOrCreate, FileAccess.Read, FileShare.ReadWrite | FileShare.Delete);
+            if (stream.Length < _commandsRead)
+            {
+                _commandsRead = 0; // emptied
+            }
+
+            if (stream.Length == _commandsRead)
+            {
+                return;
+            }
+
+            stream.Seek(_commandsRead, SeekOrigin.Begin);
+            using var reader = new StreamReader(stream);
+            text = reader.ReadToEnd();
+        }
+        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
+        {
+            return;
+        }
+
+        var complete = text.LastIndexOf('\n');
+        if (complete < 0)
+        {
+            return; // a line still being written
+        }
+
+        _commandsRead += System.Text.Encoding.UTF8.GetByteCount(text[..(complete + 1)]);
+        foreach (var line in text[..complete].Split('\n'))
+        {
+            var parts = line.Trim().Split('\t');
+            var action = parts.Length > 1 ? parts[1] : parts[0];
+            if (!Commands.Contains(action))
+            {
+                continue;
+            }
+
+            _log.LogInformation("OBS hotkey: {Action}", action);
+            if (action == "marker")
+            {
+                _services.RequestMarker();
+            }
+            else
+            {
+                _services.TrainerHotkeys.Fire(action);
+            }
         }
     }
 
