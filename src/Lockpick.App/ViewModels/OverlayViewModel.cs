@@ -439,7 +439,7 @@ public sealed partial class OverlayViewModel : ObservableObject
         }
 
         RunTitle = set.Category;
-        RunClock = now is { } t ? RunRows.Clock(t) : "0:00.0";
+        RunClock = now is { } t ? RunRows.Clock(t) : "0:00.00";
         RunBehind = rows.ElementAtOrDefault(current) is { IsCurrent: true, IsBehind: true };
         var pb = comparison.PersonalBest.Count > 0 ? comparison.PersonalBest[^1] : null;
         var parts = new List<string>();

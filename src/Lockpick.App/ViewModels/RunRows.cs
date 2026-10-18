@@ -89,23 +89,23 @@ public static class RunRows
         return [.. rows.OrderByDescending(r => r.GainTime)];
     }
 
-    /// <summary>"1:02:03.4", "2:03.4" under an hour.</summary>
+    /// <summary>"1:02:03.47", "2:03.47" under an hour: hundredths, cut off rather than rounded, as LiveSplit shows them.</summary>
     public static string Clock(TimeSpan time)
     {
-        var tenths = (int)(time.Ticks / TimeSpan.TicksPerMillisecond % 1000 / 100);
+        var hundredths = (int)(time.Ticks / TimeSpan.TicksPerMillisecond % 1000 / 10);
         return time.TotalHours >= 1
-            ? string.Create(CultureInfo.InvariantCulture, $"{(int)time.TotalHours}:{time.Minutes:D2}:{time.Seconds:D2}.{tenths}")
-            : string.Create(CultureInfo.InvariantCulture, $"{time.Minutes}:{time.Seconds:D2}.{tenths}");
+            ? string.Create(CultureInfo.InvariantCulture, $"{(int)time.TotalHours}:{time.Minutes:D2}:{time.Seconds:D2}.{hundredths:D2}")
+            : string.Create(CultureInfo.InvariantCulture, $"{time.Minutes}:{time.Seconds:D2}.{hundredths:D2}");
     }
 
-    /// <summary>"+1:02.3" behind, "−0:05.1" ahead.</summary>
+    /// <summary>"+1:02.34" behind, "−0:05.13" ahead (hundredths, as LiveSplit).</summary>
     public static string Delta(TimeSpan difference)
     {
         var sign = difference < TimeSpan.Zero ? "−" : "+";
         var size = difference.Duration();
-        var tenths = (int)(size.Ticks / TimeSpan.TicksPerMillisecond % 1000 / 100);
+        var hundredths = (int)(size.Ticks / TimeSpan.TicksPerMillisecond % 1000 / 10);
         return size.TotalMinutes >= 1
-            ? string.Create(CultureInfo.InvariantCulture, $"{sign}{(int)size.TotalMinutes}:{size.Seconds:D2}.{tenths}")
-            : string.Create(CultureInfo.InvariantCulture, $"{sign}{size.Seconds}.{tenths}");
+            ? string.Create(CultureInfo.InvariantCulture, $"{sign}{(int)size.TotalMinutes}:{size.Seconds:D2}.{hundredths:D2}")
+            : string.Create(CultureInfo.InvariantCulture, $"{sign}{size.Seconds}.{hundredths:D2}");
     }
 }

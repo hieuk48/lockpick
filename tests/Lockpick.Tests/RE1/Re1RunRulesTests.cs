@@ -209,6 +209,39 @@ public sealed class Re1RunRulesTests : IDisposable
     }
 
     [Fact]
+    public void Imported_splits_named_after_items_split_when_the_item_is_obtained()
+    {
+        var path = Path.Combine(_folder, "items.lss");
+        File.WriteAllText(path, """
+            <?xml version="1.0" encoding="UTF-8"?><Run version="1.8.1"><GameName>Resident Evil</GameName><CategoryName>Jill test</CategoryName>
+            <Segments><Segment><Name>Shotgun</Name></Segment><Segment><Name>Star Crest</Name></Segment><Segment><Name>Chemical</Name></Segment><Segment><Name>Tea</Name></Segment></Segments></Run>
+            """);
+        var items = new Dictionary<string, int> { ["shotgun"] = 3, ["starcrest"] = 45, ["chemical"] = 38 };
+
+        var set = LiveSplitFile.ToSplitSet(LiveSplitFile.Read(path), path, _rules.SplitSets,
+            name => items.TryGetValue(LiveSplitFile.Normalize(name), out var id) ? id : null);
+
+        Assert.Equal(new ItemObtained(3), set.Splits[0].Trigger);
+        Assert.Equal(new ItemObtained(45), set.Splits[1].Trigger);
+        Assert.Equal(new ItemObtained(38), set.Splits[2].Trigger);
+        Assert.IsType<ManualSplit>(set.Splits[3].Trigger); // not an item, not a known split
+    }
+
+    [Fact]
+    public void Only_a_new_game_in_the_main_hall_is_real_the_demo_starts_elsewhere()
+    {
+        GameSnapshot In(string room) => new()
+        {
+            InGameplay = Field<bool>.Valid(true),
+            Location = Field<RoomLocation>.Valid(new RoomLocation(room[0] - '0', Convert.ToInt32(room[1..], 16))),
+        };
+
+        Assert.True(_rules.IsRealNewGame(In("106")));
+        Assert.False(_rules.IsRealNewGame(In("11B"))); // the REbirth build's demo (live 2026-10-18)
+        Assert.False(_rules.IsRealNewGame(In("107"))); // GOG English's demo
+    }
+
+    [Fact]
     public void The_title_menu_is_the_main_menu_flag()
     {
         Assert.True(_rules.AtTitle(Raw(0, 0, 1)));

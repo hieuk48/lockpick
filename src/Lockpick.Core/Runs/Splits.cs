@@ -75,6 +75,12 @@ public interface IRunRules
     /// <summary>The game is at its title menu (the player quit, or reset the game).</summary>
     bool AtTitle(GameSnapshot snapshot);
 
+    /// <summary>
+    /// Whether a new game seen in <paramref name="snapshot"/> is a real one a run can start on, not the game's own demo
+    /// (attract mode), which can look like a new game.
+    /// </summary>
+    bool IsRealNewGame(GameSnapshot snapshot) => true;
+
     /// <summary>The game's speedrun.com leaderboard, or null when it has none Lockpick knows.</summary>
     LeaderboardDefinition? Leaderboard => null;
 

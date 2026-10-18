@@ -94,6 +94,12 @@ public sealed class RunService : IDisposable
     private bool? _dead; // null: not known yet (just attached), so a death already on screen isn't counted
     private RoomLocation? _room;
     private IReadOnlyList<HeldItem>? _inventory;
+
+    // After a split, the next item split also counts an item already held (picked up out of the route's order), as
+    // LiveSplit's RE1 autosplitter does: checked once, on the first poll after the split, so a run never waits for a
+    // pickup that already happened.
+    private bool _heldCheckNext;
+    private bool _heldCheck;
     private TimeSpan? _gameTime;
     private RunRecord? _pendingRecord;
 
@@ -325,9 +331,16 @@ public sealed class RunService : IDisposable
                     Status = Status with { Current = Status.Times.Count - 1 };
                     SplitNow(raised);
                 }
-                else if (Triggered(Status.Set!.Splits[Status.Current].Trigger, snapshot))
+                else
                 {
-                    SplitNow(raised);
+                    _heldCheck = _heldCheckNext;
+                    _heldCheckNext = false;
+                    if (Triggered(Status.Set!.Splits[Status.Current].Trigger, snapshot))
+                    {
+                        SplitNow(raised);
+                    }
+
+                    _heldCheck = false;
                 }
 
                 changed = raised.Count > 0 | CheckCharacter(snapshot);
@@ -366,7 +379,7 @@ public sealed class RunService : IDisposable
                     && (entered.From is null || before.Id == entered.From)
                     && (!entered.FromOtherStage || before.Stage != room.Stage);
             case ItemObtained item when snapshot.Inventory.TryGet(out var held) && _inventory is { } previous:
-                return Count(held, item.ItemId) > Count(previous, item.ItemId)
+                return (Count(held, item.ItemId) > Count(previous, item.ItemId) || (_heldCheck && Count(held, item.ItemId) > 0))
                     && (item.Room is null || (snapshot.Location.TryGet(out var here) && here.Id == item.Room));
             default:
                 return false;
@@ -388,6 +401,8 @@ public sealed class RunService : IDisposable
 
             switch (gameEvent)
             {
+                case GameLoaded loaded when loaded.IsNewGame && _source.Latest is { } shown && Rules is { } r && !r.IsRealNewGame(shown):
+                    break; // the game's demo (attract mode), not a run
                 case GameLoaded loaded when Status.State != RunState.Off && (loaded.IsNewGame || (StartOnLoad && Status.State != RunState.Running)):
                     if (Status.State == RunState.Running)
                     {
@@ -480,7 +495,8 @@ public sealed class RunService : IDisposable
         return true;
     }
 
-    private int SavedAttempts(SplitSet set)
+    /// <summary>The highest attempt number recorded for <paramref name="set"/> (0 when none): the next one is this + 1.</summary>
+    public int SavedAttempts(SplitSet set)
     {
         try
         {
@@ -508,6 +524,7 @@ public sealed class RunService : IDisposable
         else
         {
             Status = Status with { Current = index + 1, Times = times };
+            _heldCheckNext = true;
         }
     }
 

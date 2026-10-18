@@ -324,14 +324,18 @@
           "verifies": "Lockpick's splits and in-game time match LiveSplit's",
           "status": "partial",
           "evidence": [
-            "2026-10-17 owner, Japanese 1.01 with Classic REbirth 1.1.4: LiveSplit 1.8.36 with the RE1 autosplitter (deserteagle417's RE1aio.asl) against the game's clock, both read every 0.5 s for 17 min (5 attempts, resets, a death; Leaderboard run on; capture LockpickCapture-20261017-192555): 1 099 of 1 497 samples while running identical, the other 398 one frame apart (the game ticked between the two reads), never more. LiveSplit's own splits (0:45.07 every attempt, then 1:14 / 1:24) landed on the game clock exactly. Lockpick ran the community-segment set imported from the same file; no attempt reached its first split (King Henry), so split moments weren't compared: the autosplitter's split points come from its own settings, not the file. Still to do: the same split definitions on both sides, and GOG English (the autosplitter's EnglishGOG module size doesn't match hotfix4)."
+            "2026-10-17 owner, Japanese 1.01 with Classic REbirth 1.1.4: LiveSplit 1.8.36 with the RE1 autosplitter (deserteagle417's RE1aio.asl) against the game's clock, both read every 0.5 s for 17 min (5 attempts, resets, a death; Leaderboard run on; capture LockpickCapture-20261017-192555): 1 099 of 1 497 samples while running identical, the other 398 one frame apart (the game ticked between the two reads), never more. LiveSplit's own splits (0:45.07 every attempt, then 1:14 / 1:24) landed on the game clock exactly. Lockpick ran the community-segment set imported from the same file; no attempt reached its first split (King Henry), so split moments weren't compared: the autosplitter's split points come from its own settings, not the file. Still to do: the same split definitions on both sides, and GOG English (the autosplitter's EnglishGOG module size doesn't match hotfix4).",
+            "2026-10-18 owner, REbirth, one splits file in both apps: LiveSplit ran a test script with Lockpick's six rules (tools: research/livesplit-test/lockpick-test-6.asl; rooms 104 from 105 and 107 from 106, items 3, 45, 38, 17), Lockpick the same file. Room splits identical to the hundredth (Tea room 1:14.13, Art room 3:33.30 in both). Item splits came up to 0.8 s late in Lockpick: it read the inventory once a second; now every poll (fixed, to confirm in the next run). Lockpick also now splits at once on an item already held when its split comes due, as the community autosplitter does."
           ]
         },
         {
           "id": "B209",
           "task": "Play with **OBS** recording or streaming (Game Capture) while a capture runs",
           "verifies": "The game's frame pacing with OBS and Lockpick together (overlay/HUD performance budget)",
-          "status": "needed"
+          "status": "partial",
+          "evidence": [
+            "2026-10-18 owner: a 10-minute REbirth run recorded by OBS (Lockpick's script started and stopped the recording with the run) with a Lockpick capture running and LiveSplit open; nothing felt off. Lockpick sent every split to OBS; the MP4 has no chapters because OBS wrote plain MP4 (chapters need Hybrid MP4, #66). Frame pacing not measured yet."
+          ]
         },
         {
           "id": "B701",

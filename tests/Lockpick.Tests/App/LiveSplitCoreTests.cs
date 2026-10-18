@@ -195,8 +195,8 @@ public sealed class LiveSplitCoreTests : IDisposable
         var comparison = new RunComparison([S(20), S(80), S(140), S(200)], [S(20), S(50), S(60), S(58)]);
         var rows = Lockpick.App.ViewModels.RunRows.TimeSaves(set, comparison);
         Assert.Equal(["Yawn 1", "End"], rows.Select(r => r.Name)); // 10 s and 2 s to gain; the others are already best
-        Assert.Equal("−10.0", rows[0].Gain);
-        Assert.Equal("1:00.0", rows[0].PersonalBest);
+        Assert.Equal("−10.00", rows[0].Gain);
+        Assert.Equal("1:00.00", rows[0].PersonalBest);
     }
 
     [Fact]

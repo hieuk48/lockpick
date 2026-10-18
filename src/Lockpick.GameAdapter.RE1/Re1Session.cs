@@ -150,10 +150,14 @@ internal sealed class Re1Session : IGameSession
         var snapshot = Interpret(raw, sequence, now);
         if (snapshot.Location.TryGet(out var room) && snapshot.InGameplay is { HasValue: true, Value: true })
         {
+            // The inventory every poll: item splits must land on the frame the item arrives, as LiveSplit's RE1
+            // autosplitter does (live 2026-10-18: with a once-a-second read Lockpick's item splits were up to 0.8 s
+            // late). The item box and the room's placed items change rarely and are read once a second.
+            _inventory = ReadInventory(ref calls);
             if (_placedRoom != room || now - _placedAt >= PlacedRefresh)
             {
                 _placed = ReadPlacedItems(ref calls);
-                (_inventory, _box) = ReadItems(ref calls);
+                _box = ReadBox(ref calls);
                 _placedRoom = room;
                 _placedAt = now;
             }
@@ -185,7 +189,7 @@ internal sealed class Re1Session : IGameSession
         return snapshot;
     }
 
-    private (Field<IReadOnlyList<HeldItem>> Inventory, Field<IReadOnlyList<HeldItem>> Box) ReadItems(ref int calls)
+    private Field<IReadOnlyList<HeldItem>> ReadInventory(ref int calls)
     {
         var inventory = Field<IReadOnlyList<HeldItem>>.Unavailable;
         calls += 3;
@@ -207,6 +211,11 @@ internal sealed class Re1Session : IGameSession
             inventory = Field<IReadOnlyList<HeldItem>>.Valid(held);
         }
 
+        return inventory;
+    }
+
+    private Field<IReadOnlyList<HeldItem>> ReadBox(ref int calls)
+    {
         var box = Field<IReadOnlyList<HeldItem>>.Unavailable;
         calls++;
         Span<byte> entries = stackalloc byte[ItemBoxCount * 2];
@@ -224,7 +233,7 @@ internal sealed class Re1Session : IGameSession
             box = Field<IReadOnlyList<HeldItem>>.Valid(stored);
         }
 
-        return (inventory, box);
+        return box;
     }
 
     private Field<IReadOnlyList<LiveActor>> ReadActors()

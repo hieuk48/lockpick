@@ -370,6 +370,12 @@ public sealed partial class RunsViewModel : PageViewModel
             return;
         }
 
+        // The clock follows every game tick (30 a second, as LiveSplit shows it); the rest of the page is throttled.
+        if (_runs.Status.GameTime(_state.Snapshot) is { } time)
+        {
+            RunTime = RunRows.Clock(time);
+        }
+
         var now = DateTimeOffset.UtcNow;
         if (now - _lastTick < Throttle)
         {
@@ -437,7 +443,7 @@ public sealed partial class RunsViewModel : PageViewModel
         var comparison = _services.ComparisonFor(set);
         var now = status.GameTime(_state.Snapshot);
         Rows = RunRows.Build(status, comparison, now);
-        RunTime = now is { } t ? RunRows.Clock(t) : status.State == RunState.Ready ? "0:00.0" : string.Empty;
+        RunTime = now is { } t ? RunRows.Clock(t) : status.State == RunState.Ready ? "0:00.00" : string.Empty;
         var pb = own.PersonalBest.Count > 0 ? own.PersonalBest[^1] : null;
         var chosen = _services.LiveSplitEngine.Comparison;
         var against = ReferenceEquals(comparison, own) ? null

@@ -87,6 +87,33 @@ public sealed class RunServiceTests : IDisposable
     }
 
     [Fact]
+    public void An_item_picked_up_before_its_split_is_due_splits_right_after_the_split_before_it()
+    {
+        // Live 2026-10-18: the owner took the Shotgun before reaching the art room; the Shotgun split came next and
+        // waited for a pickup that had already happened. LiveSplit's RE1 autosplitter splits on an item already held.
+        var set = new SplitSet("order", "Order", "Jill - Test", PlayableCharacter.Jill,
+        [
+            new SplitDefinition("Art room", new RoomEntered("117", From: "10A")),
+            new SplitDefinition("Shotgun", new ItemObtained(3)),
+            new SplitDefinition("Star crest", new ItemObtained(45)),
+        ], Verified: false, "test");
+        _runs.Choose(set);
+        NewGame();
+        Play("116", 10, 3);     // the Shotgun first, out of order: not its turn
+        Assert.Equal(0, _runs.Status.Current);
+        Play("10A", 20, 3);
+        Play("117", 30, 3);     // the art room splits…
+        Assert.Equal(1, _runs.Status.Current);
+        Play("117", 31, 3);     // …and the Shotgun, already held, at once
+        Assert.Equal(2, _runs.Status.Current);
+        Assert.Equal(TimeSpan.FromSeconds(31), _runs.Status.Times[1]!.GameTime);
+        Play("117", 40, 3);     // the Star crest isn't held: it waits for its pickup
+        Assert.Equal(2, _runs.Status.Current);
+        Play("117", 50, 3, 45);
+        Assert.Equal(RunState.Finished, _runs.Status.State);
+    }
+
+    [Fact]
     public void A_run_from_a_save_starts_at_the_chosen_split_and_leaves_the_ones_before_it_empty()
     {
         _runs.StartOnLoad = true;

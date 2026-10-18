@@ -195,6 +195,11 @@ public sealed class LiveSplitEngine : IDisposable
                     try
                     {
                         var kept = PathFor(set);
+                        if (File.Exists(kept))
+                        {
+                            SyncAttemptCount(kept, _runs.SavedAttempts(set));
+                        }
+
                         _timer = LiveSplitTimer.Create(File.Exists(kept) ? kept : set.ImportedFrom, "Resident Evil", set.Category,
                             [.. set.Splits.Select(s => s.Name)]);
                         if (_record is not null)
@@ -312,6 +317,29 @@ public sealed class LiveSplitEngine : IDisposable
         catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
         {
             _log.LogWarning("The LiveSplit file for {Set} couldn't be saved: {Message}", _setId, ex.Message);
+        }
+    }
+
+    /// <summary>
+    /// The engine's copy counts attempts itself (shown on the overlay's splits); it can fall behind Lockpick's records
+    /// (an attempt cut off when Lockpick closed, attempts made before the copy existed). Raised to Lockpick's count
+    /// before loading, so the overlay and the Runs page say the same attempt (live 2026-10-18: 2 against 5).
+    /// </summary>
+    private void SyncAttemptCount(string path, int attempts)
+    {
+        try
+        {
+            var text = File.ReadAllText(path);
+            var match = System.Text.RegularExpressions.Regex.Match(text, @"<AttemptCount>(\d+)</AttemptCount>");
+            if (match.Success && int.Parse(match.Groups[1].Value, System.Globalization.CultureInfo.InvariantCulture) < attempts)
+            {
+                File.WriteAllText(path, text.Remove(match.Index, match.Length).Insert(match.Index,
+                    string.Create(System.Globalization.CultureInfo.InvariantCulture, $"<AttemptCount>{attempts}</AttemptCount>")));
+            }
+        }
+        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
+        {
+            _log.LogWarning("The LiveSplit file for {Set} couldn't be updated: {Message}", _setId, ex.Message);
         }
     }
 

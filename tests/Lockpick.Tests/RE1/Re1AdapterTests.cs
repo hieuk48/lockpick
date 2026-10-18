@@ -106,6 +106,20 @@ public class Re1AdapterTests
     }
 
     [Fact]
+    public void The_inventory_is_read_every_poll_so_item_splits_land_on_time()
+    {
+        // Live 2026-10-18: read once a second, Lockpick's item splits came up to 0.8 s after LiveSplit's.
+        NewChrisGameInMainHall();
+        _memory.Write(Address(Re1Session.Addresses.InventoryPointer), BitConverter.GetBytes(0xBE9944u));
+        _memory.WriteU8(Address(Re1Session.Addresses.HeldCount), 6);
+        _memory.Write(0xBE9944, [0x01, 0x00]);
+        Assert.Single(_session.Read(1, T0).Inventory.Value);
+
+        _memory.Write(0xBE9946, [0x03, 0x02]); // the Shotgun arrives 33 ms later
+        Assert.Contains(_session.Read(2, T0.AddMilliseconds(33)).Inventory.Value, i => i.ItemId == 3);
+    }
+
+    [Fact]
     public void Active_typewriters_and_item_boxes_come_from_the_live_action_table()
     {
         NewChrisGameInMainHall();

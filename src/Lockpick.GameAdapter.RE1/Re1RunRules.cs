@@ -73,6 +73,14 @@ public sealed class Re1RunRules : IRunRules
     public bool AtTitle(GameSnapshot snapshot) => Raw(snapshot, Re1Session.Fields.MainMenu) == 1;
 
     /// <summary>
+    /// Every real new game opens in the main hall (106); the attract demo starts elsewhere (GOG English: 107 with HP 0;
+    /// the Japanese 1.01 under REbirth: 11B with HP 60, live 2026-10-18, when it started an attempt). The community
+    /// RE1 autosplitter starts on room 106 for the same reason.
+    /// </summary>
+    public bool IsRealNewGame(GameSnapshot snapshot) =>
+        !snapshot.Location.TryGet(out var room) || room.Id == "106";
+
+    /// <summary>
     /// The final cutscene: the state flags drop to 0 at the heliport (the community autosplitter's final split, RE1aio.asl).
     /// Not yet seen live by Lockpick (capture bounty B703).
     /// </summary>

@@ -77,9 +77,11 @@ public static class LiveSplitFile
     /// The file's splits as a split set. Each split takes the trigger of the same name from the built-in set that fits
     /// the file best (same character, most names in common, then the same category), else from any built-in set for
     /// the character, else the split key. Names differ in meaning between categories (e.g. Jill's "Basement" in the
-    /// good and bad endings), hence the best-fitting set first.
+    /// good and bad endings), hence the best-fitting set first. A split no set names but called after an item
+    /// ("Shotgun", "Star Crest") splits when that item is obtained (<paramref name="itemNamed"/>: the game's item id for
+    /// a name, or null), as LiveSplit's item autosplits do.
     /// </summary>
-    public static SplitSet ToSplitSet(LiveSplitRun run, string fileName, IReadOnlyList<SplitSet> builtIn)
+    public static SplitSet ToSplitSet(LiveSplitRun run, string fileName, IReadOnlyList<SplitSet> builtIn, Func<string, int?>? itemNamed = null)
     {
         var character = CharacterOf(run.CategoryName + " " + fileName);
         var names = run.Segments.Select(s => Normalize(s.Name)).ToHashSet();
@@ -91,7 +93,8 @@ public static class LiveSplitFile
         SplitTrigger? TriggerFor(string name) =>
             (best?.Splits.FirstOrDefault(s => Normalize(s.Name) == Normalize(name))
                 ?? candidates.SelectMany(s => s.Splits).FirstOrDefault(s => Normalize(s.Name) == Normalize(name)))?.Trigger;
-        var splits = run.Segments.Select(s => new SplitDefinition(s.Name, TriggerFor(s.Name) ?? new ManualSplit())).ToList();
+        var splits = run.Segments.Select(s => new SplitDefinition(s.Name,
+            TriggerFor(s.Name) ?? (itemNamed?.Invoke(s.Name) is { } item ? new ItemObtained(item) : (SplitTrigger?)null) ?? new ManualSplit())).ToList();
         if (character == PlayableCharacter.Unknown && best is not null)
         {
             character = best.Character;
@@ -187,7 +190,8 @@ public static class LiveSplitFile
         : PlayableCharacter.Unknown;
 
     /// <summary>Names compared without case, spaces or punctuation ("002-Key" = "002 key").</summary>
-    private static string Normalize(string name) => string.Concat(name.Where(char.IsLetterOrDigit)).ToLowerInvariant();
+    /// <summary>A name compared without case, spaces or punctuation ("Star Crest" = "star crest").</summary>
+    public static string Normalize(string name) => string.Concat(name.Where(char.IsLetterOrDigit)).ToLowerInvariant();
 
     private static string Slug(string text) =>
         string.Concat(text.ToLowerInvariant().Select(c => char.IsLetterOrDigit(c) ? c : '-')).Trim('-');

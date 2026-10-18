@@ -31,18 +31,7 @@ public sealed class RunLibrary
         History = history;
         Rules = adapter.Profiles.Select(adapter.CreateRunRules).FirstOrDefault(r => r is not null);
         BuiltIn = Rules?.SplitSets ?? [];
-        foreach (var path in settings.Current.ImportedSplitFiles)
-        {
-            try
-            {
-                Add(path);
-            }
-            catch (Exception ex) when (ex is IOException or InvalidDataException or UnauthorizedAccessException)
-            {
-                _log.LogWarning("Imported splits {Path} couldn't be read again: {Message}", path, ex.Message);
-            }
-        }
-
+        // The player's own sets first: an imported file takes triggers from them too (the same split names).
         if (Directory.Exists(_customDirectory))
         {
             foreach (var path in Directory.EnumerateFiles(_customDirectory, "*.json").Order(StringComparer.OrdinalIgnoreCase))
@@ -55,6 +44,18 @@ public sealed class RunLibrary
                 {
                     _log.LogWarning("Your splits {Path} couldn't be read: {Message}", path, ex.Message);
                 }
+            }
+        }
+
+        foreach (var path in settings.Current.ImportedSplitFiles)
+        {
+            try
+            {
+                Add(path);
+            }
+            catch (Exception ex) when (ex is IOException or InvalidDataException or UnauthorizedAccessException)
+            {
+                _log.LogWarning("Imported splits {Path} couldn't be read again: {Message}", path, ex.Message);
             }
         }
 
@@ -115,6 +116,7 @@ public sealed class RunLibrary
             _comparisons.Remove(saved.Id);
         }
 
+        ReloadImported(); // imported files may take triggers from this set
         Changed?.Invoke(this, EventArgs.Empty);
         return saved;
     }
@@ -240,10 +242,67 @@ public sealed class RunLibrary
         }
     }
 
+    /// <summary>
+    /// The game's item called <paramref name="name"/>: its full name or a part in brackets ("Herbicide (chemical)" is
+    /// also "Herbicide" and "Chemical"), without case or punctuation; null when no item is called that.
+    /// </summary>
+    private int? ItemNamed(string name)
+    {
+        _itemNames ??= BuildItemNames();
+        return _itemNames.TryGetValue(LiveSplitFile.Normalize(name), out var id) ? id : null;
+    }
+
+    private Dictionary<string, int>? _itemNames;
+
+    private Dictionary<string, int> BuildItemNames()
+    {
+        var names = new Dictionary<string, int>();
+        for (var id = 1; id < 256; id++)
+        {
+            if (Adapter.ItemName(id) is not { Length: > 0 } item)
+            {
+                continue;
+            }
+
+            var open = item.IndexOf('(', StringComparison.Ordinal);
+            string[] forms = open > 0 && item.EndsWith(')')
+                ? [item, item[..open], item[(open + 1)..^1]]
+                : [item];
+            foreach (var form in forms)
+            {
+                names.TryAdd(LiveSplitFile.Normalize(form), id); // the first item keeps a shared name
+            }
+        }
+
+        return names;
+    }
+
+    private void ReloadImported()
+    {
+        foreach (var path in _settings.Current.ImportedSplitFiles)
+        {
+            try
+            {
+                Add(path);
+            }
+            catch (Exception ex) when (ex is IOException or InvalidDataException or UnauthorizedAccessException)
+            {
+                _log.LogWarning("Imported splits {Path} couldn't be read again: {Message}", path, ex.Message);
+            }
+        }
+    }
+
     private SplitSet Add(string path)
     {
         var run = LiveSplitFile.Read(path);
-        var set = LiveSplitFile.ToSplitSet(run, path, BuiltIn);
+        // The player's own sets first, then the built-in ones: a split named as in one of them gets its trigger.
+        List<SplitSet> known;
+        lock (_gate)
+        {
+            known = [.. _custom, .. BuiltIn];
+        }
+
+        var set = LiveSplitFile.ToSplitSet(run, path, known, ItemNamed);
         lock (_gate)
         {
             _imported.RemoveAll(s => s.Id == set.Id);
