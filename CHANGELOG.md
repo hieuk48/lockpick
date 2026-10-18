@@ -6,6 +6,19 @@ All notable changes to this project are documented here. The format follows
 
 ## [Unreleased]
 
+### Changed
+- **One page for running:** Challenges is now a tab on the Runs page. Starting a challenge switches to the splits, with
+  the challenge (and Try again / Stop) above the timer; whether a leaderboard run is ready shows there too. LiveSplit's
+  settings sit with the splits.
+- **Splits like LiveSplit:** item splits land on the frame the item arrives (they were up to a second late); an item
+  picked up before its split is due splits as soon as it comes up; times show hundredths, updated every game tick.
+- A LiveSplit file you import takes its splits' rules from your own sets with the same names, then the built-in ones,
+  then item names; splits left without a rule are listed above the timer with a way to fix them.
+
+### Fixed
+- The game's own demo (left at the title) no longer starts an attempt, or an OBS recording.
+- The overlay shows one attempt number, the run's.
+
 ## [0.3.1] - 2026-10-17
 
 Lockpick now works with every PC version the speedrun.com leaderboard allows.

@@ -87,7 +87,7 @@ public sealed class AppServices : IAsyncDisposable
             }
         };
 
-        // The optional alert (Challenges page): a challenge failing, or a death.
+        // The optional alert (Runs → Challenges): a challenge failing, or a death.
         Challenges.StatusChanged += (_, status) =>
         {
             if (status.State == Core.Challenges.ChallengeState.Failed && status.FailedAt != _alertedFail)
@@ -121,7 +121,7 @@ public sealed class AppServices : IAsyncDisposable
         }
     }
 
-    /// <summary>The challenge the player chose (Challenges page, API).</summary>
+    /// <summary>The challenge the player chose (Runs → Challenges, API).</summary>
     public Core.Challenges.ChallengeService Challenges { get; }
 
     /// <summary>What just happened in the game, in plain words (event log, overlay).</summary>

@@ -345,7 +345,7 @@ public sealed partial class TrainerViewModel : PageViewModel
             var attached = State.Status.State == ConnectionState.Attached;
             ModeText = Mode switch
             {
-                _ when ChallengeActive => $"A challenge is running ({challenge.Challenge?.Name}). Cheats stay off until you stop it on the Challenges page.",
+                _ when ChallengeActive => $"A challenge is running ({challenge.Challenge?.Name}). Cheats stay off until you stop it (Runs → Challenges).",
                 TrainerMode.ReadOnly => "Cheats are off: Lockpick only reads the game and has no way to change it.",
                 TrainerMode.Challenge => "Challenge Mode: Lockpick refuses every change.",
                 _ when _trainer.HasWriteAccess => "Cheats are on. Every change is checked against the game's limits, read back and logged below.",

@@ -44,8 +44,7 @@ narrow window they appear as a row above the page instead). Each page remembers 
 | Page | What it's for |
 |---|---|
 | Dashboard | Whether Lockpick sees the game, the game's state, and the event log |
-| Challenges | Start a challenge (*New challenge*), sounds and feedback (*Feedback*) |
-| Runs | The run timer and splits (*Splits*), where your time goes (*Training*), speedrun.com (*Leaderboard*), *LiveSplit* |
+| Runs | Everything for a run on one page: the timer, splits and LiveSplit (*Splits*), challenges and their sounds (*Challenges*), your own splits (*Edit splits*), where your time goes (*Training*), speedrun.com and leaderboard runs (*Leaderboard*). The challenge you're on and whether a leaderboard run is ready show above the timer on every tab |
 | Trainer | Cheats (off until you turn them on): health, ammo, inventory, and what was changed |
 | Progress | Items, documents, maps and rooms of each area, from the game's own flags (works from a save too) |
 | Map | The room you're in, live, or the whole floor |
@@ -56,19 +55,19 @@ narrow window they appear as a row above the page instead). Each page remembers 
 
 ## Challenges
 
-Challenges → *New challenge*: pick one, add rules if you like, press **Start challenge**, then start a new game or load
-a save — the attempt begins when you're in the game.
+Runs → *Challenges*: pick one, add rules if you like, press **Start challenge**: Lockpick switches to the splits, with
+the challenge above the timer. Then start a new game or load a save — the attempt begins when you're in the game.
 
 - **Speedrun:** finish as fast as you can. Lockpick can't change your game while it runs, so the run is clean.
 - **No damage:** one hit (or poison) and the attempt is over.
 - **Knife only:** firing any other weapon ends the attempt (carrying one is fine).
 
 Rules can be combined (a knife-only speedrun, a no-damage knife run). When a challenge fails you see why and when (in
-in-game time) on the Challenges page and as a big message on the overlay. **Try again** starts over — also from a key or
+in-game time) above the run's timer and as a big message on the overlay. **Try again** starts over — also from a key or
 a controller button (Settings → Hotkeys → *Challenge: try again*). A new game or a loaded save starts a new attempt;
 closing the game ends one. Deaths are counted for the whole session.
 
-Challenges → *Feedback*: a sound when a challenge fails or you die — one of Windows' sounds or a `.wav` of your own,
+Runs → *Challenges*, under the steps: a sound when a challenge fails or you die — one of Windows' sounds or a `.wav` of your own,
 each with a Play button.
 
 ## Runs, splits and the leaderboard

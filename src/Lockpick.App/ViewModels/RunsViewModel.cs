@@ -55,12 +55,13 @@ public sealed partial class RunsViewModel : PageViewModel
     public RunsViewModel(AppServices services, LiveState state)
         : base("Runs", "Icon.Timer")
     {
+        // One page for running (owner, 2026-10-18): challenges are a tab here, and LiveSplit sits with the splits.
         SetSections(
             new PageSection("splits", "Splits"),
+            new PageSection("challenges", "Challenges"),
             new PageSection("editor", "Edit splits"),
             new PageSection("training", "Training"),
-            new PageSection("leaderboard", "Leaderboard"),
-            new PageSection("livesplit", "LiveSplit"));
+            new PageSection("leaderboard", "Leaderboard"));
         _services = services;
         _runs = services.Runs;
         _appVersion = services.AppVersion;
@@ -84,6 +85,10 @@ public sealed partial class RunsViewModel : PageViewModel
         _guard.Changed += (_, _) => Dispatcher.UIThread.Post(SyncGuard);
         SyncGuard();
         Submit = new SubmitRunViewModel(services, Leaderboard);
+        Challenges = new ChallengesViewModel(services, state);
+        _challengeState = services.Challenges.Status.State;
+        _challengeId = services.Challenges.Status.Challenge?.Id;
+        services.Challenges.StatusChanged += (_, _) => Dispatcher.UIThread.Post(OnChallengeChanged);
         _runs.AttemptEnded += (_, _) => Dispatcher.UIThread.Post(Leaderboard.Refresh);
         Reload();
     }
@@ -119,6 +124,52 @@ public sealed partial class RunsViewModel : PageViewModel
         GuardSummary = !_guard.Enabled ? string.Empty
             : _guard.Checks.Count == 0 ? "Checking…"
             : _guard.Ready ? "Ready for a leaderboard run." : "Not ready: fix what's marked below before you start.";
+        LeaderboardLine = !_guard.Enabled ? string.Empty
+            : _guard.Checks.Count == 0 ? "Leaderboard run on: checking…"
+            : _guard.Ready ? "Leaderboard run on: every check passed." : "Leaderboard run on: not ready, see the checks.";
+        LeaderboardNotReady = _guard.Enabled && _guard.Checks.Count > 0 && !_guard.Ready;
+    }
+
+    /// <summary>The challenges (Runs → Challenges); the one on shows above the timer.</summary>
+    public ChallengesViewModel Challenges { get; }
+
+    /// <summary>A line above the timer while leaderboard runs are on: ready or not.</summary>
+    [ObservableProperty]
+    public partial string LeaderboardLine { get; private set; } = string.Empty;
+
+    [ObservableProperty]
+    public partial bool LeaderboardNotReady { get; private set; }
+
+    /// <summary>"2 splits split only by hand: …" when the chosen splits have splits without a rule.</summary>
+    [ObservableProperty]
+    public partial string ManualNotice { get; private set; } = string.Empty;
+
+    [RelayCommand]
+    private void ShowLeaderboard() => ShowSection("leaderboard");
+
+    [RelayCommand]
+    private void EditTriggers() => ShowSection("editor");
+
+    private Lockpick.Core.Challenges.ChallengeState _challengeState;
+    private string? _challengeId;
+
+    /// <summary>
+    /// Starting a challenge (Runs → Challenges) brings the splits to the front, where the challenge shows above the
+    /// timer: no extra click to watch the attempt. Leaderboard runs hold the Speedrun challenge themselves, so turning
+    /// them on doesn't move the page.
+    /// </summary>
+    private void OnChallengeChanged()
+    {
+        var status = _services.Challenges.Status;
+        // A challenge started, or another one took over (e.g. Knife only replacing the Speedrun a leaderboard run holds).
+        var started = status.State != Lockpick.Core.Challenges.ChallengeState.Off
+            && (_challengeState == Lockpick.Core.Challenges.ChallengeState.Off || status.Challenge?.Id != _challengeId);
+        _challengeState = status.State;
+        _challengeId = status.Challenge?.Id;
+        if (started && !(_guard.Enabled && status.Challenge?.Id == "speedrun"))
+        {
+            ShowSection("splits");
+        }
     }
 
     /// <summary>The speedrun.com leaderboard for the chosen splits.</summary>
@@ -415,6 +466,9 @@ public sealed partial class RunsViewModel : PageViewModel
         }
         HasSet = set is not null;
         IsImported = set?.ImportedFrom is not null || set?.Source == SplitSetFile.Custom;
+        var manual = set?.Splits.Where(s => s.Trigger is ManualSplit && s.Name != "End").Select(s => s.Name).ToList() ?? [];
+        ManualNotice = manual.Count == 0 ? string.Empty
+            : $"{manual.Count} split{(manual.Count == 1 ? string.Empty : "s")} only by hand (the split key): {string.Join(", ", manual.Take(4))}{(manual.Count > 4 ? ", …" : string.Empty)}. Give them a rule in Edit splits and Lockpick splits them itself.";
         if (set?.Id != _editing?.Id)
         {
             _editing = set;
@@ -469,8 +523,10 @@ public sealed partial class RunsViewModel : PageViewModel
                 ? $"Your personal best is {RunRows.Clock(total - best)} slower than your best segments put together ({RunRows.Clock(best)}). Most of it is here:"
                 : pb is null ? "Finish a clean run to see where your time goes." : "Your personal best already matches your best segments.";
         }
-        SetNote = (set.ImportedFrom is not null ? $"From {Path.GetFileName(set.ImportedFrom)}. " : "Built in. ")
-            + (set.Verified ? string.Empty : "Its split points come from the community's autosplitter and aren't yet checked in a full run with Lockpick; the split key fixes a missed one.");
+        SetNote = set.ImportedFrom is not null
+            ? $"From {Path.GetFileName(set.ImportedFrom)}. Each split takes its rule from a set with the same split name (yours first, then the built-in ones) or from an item's name; the split key fixes a missed one."
+            : set.Source == SplitSetFile.Custom ? "Yours (Edit splits)."
+            : "Built in." + (set.Verified ? string.Empty : " Its split points come from the community's autosplitter and aren't yet checked in a full run with Lockpick; the split key fixes a missed one.");
         (Headline, Detail) = status.State switch
         {
             RunState.Ready => ($"{set.Name}: ready",

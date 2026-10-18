@@ -7,8 +7,8 @@ using Lockpick.Core.Challenges;
 namespace Lockpick.App.ViewModels;
 
 /// <summary>
-/// Challenges page, laid out as steps: choose a challenge, check its rules, start it, then see whether the attempt is
-/// still clean. While a challenge runs Lockpick can't change the game (Challenge Mode).
+/// Challenges (Runs → Challenges), laid out as steps: choose a challenge, check its rules, start it; its status shows
+/// above the run's timer. While a challenge runs Lockpick can't change the game (Challenge Mode).
 /// </summary>
 /// <summary>An alert sound to choose: a Windows sound's id, "none", or a .wav file's path.</summary>
 public sealed record SoundChoice(string Id, string Name)
@@ -25,9 +25,6 @@ public sealed partial class ChallengesViewModel : PageViewModel
     public ChallengesViewModel(AppServices services, LiveState state)
         : base("Challenges", "Icon.Trophy")
     {
-        SetSections(
-            new PageSection("new", "New challenge"),
-            new PageSection("feedback", "Feedback"));
         _services = services;
         _challenges = services.Challenges;
         _challenges.EventRaised += (_, e) => state.Add(e);

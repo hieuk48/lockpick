@@ -11,39 +11,10 @@
       <Setter Property="FontSize" Value="16" />
       <Setter Property="FontWeight" Value="SemiBold" />
     </Style>
-    <Style Selector="Border.status.failed">
-      <Setter Property="BorderBrush" Value="{StaticResource LpRedBrush}" />
-      <Setter Property="BorderThickness" Value="2" />
-    </Style>
-    <Style Selector="Border.status.running">
-      <Setter Property="BorderBrush" Value="{StaticResource LpGreenBrush}" />
-      <Setter Property="BorderThickness" Value="2" />
-    </Style>
   </UserControl.Styles>
 
-  <ScrollViewer c:SectionScroll.Section="{Binding SelectedSection}">
-    <StackPanel Spacing="12">
-      <!-- Where things stand -->
-      <Border Classes="card status" Classes.running="{Binding IsRunning}" Classes.failed="{Binding IsFailed}">
-        <StackPanel Spacing="8">
-          <StackPanel Classes="cardhead">
-            <c:LucideIcon Data="{StaticResource Icon.Trophy}" />
-            <TextBlock Classes="caption" Text="CHALLENGE" />
-          </StackPanel>
-          <TextBlock Classes="headline" Text="{Binding StatusTitle}" TextWrapping="Wrap" />
-          <TextBlock Text="{Binding StatusDetail}" TextWrapping="Wrap" Foreground="{StaticResource LpMutedBrush}" />
-          <TextBlock Text="{Binding Deaths}" Foreground="{StaticResource LpMutedBrush}" />
-          <WrapPanel ItemSpacing="8" LineSpacing="8" IsVisible="{Binding IsActive}">
-            <Button Content="Try again" Command="{Binding RetryCommand}" IsVisible="{Binding IsFailed}" Classes="accent"
-                    AutomationProperties.Name="Try the challenge again"
-                    ToolTip.Tip="Also from a key or a controller button: Settings → Hotkeys → Challenge: try again." />
-            <Button Content="Stop challenge" Command="{Binding StopCommand}" AutomationProperties.Name="Stop the challenge" />
-          </WrapPanel>
-        </StackPanel>
-      </Border>
-
-      <Panel>
-        <c:CardColumns MinColumnWidth="380" MaxColumns="3" IsVisible="{Binding SelectedSection, Converter={x:Static c:SectionIs.Instance}, ConverterParameter=new}">
+  <StackPanel Spacing="12">
+        <c:CardColumns MinColumnWidth="380" MaxColumns="3">
           <!-- Step 1 -->
           <Border Classes="card" IsEnabled="{Binding CanChoose}">
             <StackPanel Spacing="8">
@@ -95,7 +66,7 @@
           </Border>
         </c:CardColumns>
 
-        <c:CardColumns MinColumnWidth="380" MaxColumns="3" IsVisible="{Binding SelectedSection, Converter={x:Static c:SectionIs.Instance}, ConverterParameter=feedback}">
+        <c:CardColumns MinColumnWidth="380" MaxColumns="3">
           <!-- Feedback while playing -->
           <Border Classes="card">
             <StackPanel Spacing="8">
@@ -126,7 +97,5 @@
             </StackPanel>
           </Border>
         </c:CardColumns>
-      </Panel>
-    </StackPanel>
-  </ScrollViewer>
+  </StackPanel>
 </UserControl>

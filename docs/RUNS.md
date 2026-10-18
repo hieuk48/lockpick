@@ -96,7 +96,7 @@ Reading is defensive (no DTDs or external entities, size and split limits): thes
 ## LiveSplit
 
 Lockpick talks to LiveSplit through LiveSplit's own TCP server (in LiveSplit: Control → Start TCP Server; port 16834,
-Runs → LiveSplit):
+Runs → Splits, the LiveSplit card):
 
 - **Follow** — for leaderboard runs, which must be timed by LiveSplit's own autosplitter: Lockpick doesn't split by
   itself; LiveSplit's splits, undos and resets move Lockpick's run (its records, overlay and OBS page), so nothing is
@@ -123,7 +123,7 @@ speedrun.com, read 2026-10-16):
 | No mods (GOG English) | Every file GOG's 1.0 hotfix4 ships is hashed and compared with `data/games/re1/install/gog-hotfix4.sha256` (2 951 files, made by `tools/re1/install_manifest.py` from an untouched install; about 1.5 s); files beside the game that the release doesn't have (a mod loader, a plugin) are flagged. Saves, the display settings, screenshots, GOG's log and uninstaller data aren't compared |
 | GOG Japanese (`Biohazard.exe`) | Every file against `data/games/re1/install/gog-jpn-hotfix4.sha256` (2 990 files, from GOG's Japanese installer unpacked with innoextract). Both releases can share a folder: the check goes by the game being played, and the other release's files aren't "extra". GOG's bookkeeping (install metadata, shortcut, readme, EULA, uninstaller) isn't compared, since the other installer rewrites it |
 | Japanese game + Classic REbirth (`Biohazard.exe`) | The exe is the official 1.01 one and `ddraw.dll` a published REbirth release (1.0.0–1.1.4), by SHA-256 (`data/games/re1/install/rebirth.json`); the `JPN` data against GOG's Japanese files (a difference warns: a MediaKite disc's data may not match GOG's); REbirth's `config.ini`: quickturn, tactical reload or debug mode on fails the check, cutscene skip on and `mod_*` folders warn |
-| LiveSplit's IGT script | Required by the rules; a warning until LiveSplit is connected (Runs → LiveSplit) |
+| LiveSplit's IGT script | Required by the rules; a warning until LiveSplit is connected (Runs → Splits, LiveSplit) |
 
 What only the player can keep is listed as reminders: start at the title; LiveSplit's IGT script and the final
 in-game time on the end screen in the video; no tabbing out; no options menu as a pause (it pauses the IGT); no

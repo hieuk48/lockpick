@@ -42,6 +42,15 @@
       <Setter Property="FontWeight" Value="Bold" />
       <Setter Property="Foreground" Value="{StaticResource LpGreenBrush}" />
     </Style>
+    <Style Selector="Border.challenge">
+      <Setter Property="BorderBrush" Value="{StaticResource LpBorderBrush}" />
+    </Style>
+    <Style Selector="Border.challenge.running">
+      <Setter Property="BorderBrush" Value="{StaticResource LpGreenBrush}" />
+    </Style>
+    <Style Selector="Border.challenge.failed">
+      <Setter Property="BorderBrush" Value="{StaticResource LpRedBrush}" />
+    </Style>
     <Style Selector="TextBlock.delta.gold">
       <Setter Property="Foreground" Value="#E8C547" />
     </Style>
@@ -64,6 +73,40 @@
           <WrapPanel ItemSpacing="8" LineSpacing="8" IsVisible="{Binding IsRunning}">
             <Button Content="Split now" Command="{Binding SplitCommand}" AutomationProperties.Name="Split now" />
             <Button Content="Reset attempt" Command="{Binding ResetCommand}" AutomationProperties.Name="Reset the attempt" />
+          </WrapPanel>
+
+          <!-- The challenge on, if any (started from the Challenges tab) -->
+          <Border Classes="challenge" DataContext="{Binding Challenges}" x:DataType="vm:ChallengesViewModel" IsVisible="{Binding IsActive}"
+                  Classes.running="{Binding IsRunning}" Classes.failed="{Binding IsFailed}"
+                  BorderThickness="2" CornerRadius="4" Padding="10,8" Margin="0,4,0,0">
+            <StackPanel Spacing="4">
+              <StackPanel Orientation="Horizontal" Spacing="6">
+                <c:LucideIcon Data="{StaticResource Icon.Trophy}" />
+                <TextBlock Text="{Binding StatusTitle}" FontWeight="SemiBold" TextWrapping="Wrap" />
+              </StackPanel>
+              <TextBlock Text="{Binding StatusDetail}" TextWrapping="Wrap" Foreground="{StaticResource LpMutedBrush}" />
+              <TextBlock Text="{Binding Deaths}" Foreground="{StaticResource LpMutedBrush}"
+                         IsVisible="{Binding Deaths, Converter={x:Static StringConverters.IsNotNullOrEmpty}}" />
+              <WrapPanel ItemSpacing="8" LineSpacing="8">
+                <Button Content="Try again" Command="{Binding RetryCommand}" IsVisible="{Binding IsFailed}" Classes="accent"
+                        AutomationProperties.Name="Try the challenge again"
+                        ToolTip.Tip="Also from a key or a controller button: Settings → Hotkeys → Challenge: try again." />
+                <Button Content="Stop challenge" Command="{Binding StopCommand}" AutomationProperties.Name="Stop the challenge" />
+              </WrapPanel>
+            </StackPanel>
+          </Border>
+
+          <!-- Leaderboard runs: one line here, the checks on the Leaderboard tab -->
+          <WrapPanel ItemSpacing="8" LineSpacing="6" IsVisible="{Binding LeaderboardLine, Converter={x:Static StringConverters.IsNotNullOrEmpty}}">
+            <TextBlock Text="{Binding LeaderboardLine}" VerticalAlignment="Center" TextWrapping="Wrap"
+                       Classes.warning="{Binding LeaderboardNotReady}" />
+            <Button Content="Checks" Command="{Binding ShowLeaderboardCommand}" AutomationProperties.Name="Show the leaderboard checks" />
+          </WrapPanel>
+
+          <!-- Splits without a rule -->
+          <WrapPanel ItemSpacing="8" LineSpacing="6" IsVisible="{Binding ManualNotice, Converter={x:Static StringConverters.IsNotNullOrEmpty}}">
+            <TextBlock Text="{Binding ManualNotice}" Classes="warning" TextWrapping="Wrap" MaxWidth="720" />
+            <Button Content="Edit splits" Command="{Binding EditTriggersCommand}" AutomationProperties.Name="Give the splits a rule" />
           </WrapPanel>
         </StackPanel>
       </Border>
@@ -130,7 +173,23 @@
               </ItemsControl>
             </StackPanel>
           </Border>
+
+          <!-- Working with the runner's LiveSplit (with the splits it times) -->
+          <Border Classes="card">
+            <StackPanel Spacing="8">
+              <TextBlock Classes="caption" Text="LIVESPLIT" />
+              <ComboBox ItemsSource="{Binding LiveSplitChoices}" SelectedItem="{Binding LiveSplitMode}" HorizontalAlignment="Stretch"
+                        AutomationProperties.Name="Work with LiveSplit" />
+              <TextBlock TextWrapping="Wrap" Foreground="{StaticResource LpMutedBrush}"
+                         Text="Off: Lockpick times on its own (its built-in LiveSplit engine; no LiveSplit needed). Follow: Lockpick moves with LiveSplit's own autosplitter. Drive: Lockpick splits LiveSplit and sets its game time. Follow and Drive need LiveSplit's server (Control → Start TCP Server)." />
+              <TextBlock Text="{Binding LiveSplitStatus}" TextWrapping="Wrap" />
+            </StackPanel>
+          </Border>
         </c:CardColumns>
+
+        <!-- Challenges: choose, check the rules, start (the status shows above the timer) -->
+        <ContentControl Content="{Binding Challenges}"
+                        IsVisible="{Binding SelectedSection, Converter={x:Static c:SectionIs.Instance}, ConverterParameter=challenges}" />
 
         <c:CardColumns MinColumnWidth="380" MaxColumns="2" IsVisible="{Binding SelectedSection, Converter={x:Static c:SectionIs.Instance}, ConverterParameter=training}">
           <!-- Training: where the personal best loses time -->
@@ -344,19 +403,6 @@
           </StackPanel>
         </Border>
 
-        <c:CardColumns MinColumnWidth="380" MaxColumns="2" IsVisible="{Binding SelectedSection, Converter={x:Static c:SectionIs.Instance}, ConverterParameter=livesplit}">
-          <!-- Working with the runner's LiveSplit -->
-          <Border Classes="card">
-            <StackPanel Spacing="8">
-              <TextBlock Classes="caption" Text="LIVESPLIT" />
-              <ComboBox ItemsSource="{Binding LiveSplitChoices}" SelectedItem="{Binding LiveSplitMode}" HorizontalAlignment="Stretch"
-                        AutomationProperties.Name="Work with LiveSplit" />
-              <TextBlock TextWrapping="Wrap" Foreground="{StaticResource LpMutedBrush}"
-                         Text="Leaderboard runs time with LiveSplit's own autosplitter: choose Follow and Lockpick moves with LiveSplit's splits instead of splitting itself. Without an autosplitter, Drive lets Lockpick split LiveSplit and set its game time. Both need LiveSplit's server (Control → Start TCP Server)." />
-              <TextBlock Text="{Binding LiveSplitStatus}" TextWrapping="Wrap" />
-            </StackPanel>
-          </Border>
-        </c:CardColumns>
       </Panel>
     </StackPanel>
   </ScrollViewer>
