@@ -599,9 +599,14 @@ public sealed partial class OverlayViewModel : ObservableObject
         ChallengeFailed = status.State == ChallengeState.Failed;
         ChallengeBrush = Brush(ChallengeFailed ? "LpRedBrush" : "LpGreenBrush");
         var deaths = _services.Runs.Deaths switch { 0 => string.Empty, 1 => " · 1 death", var n => $" · {n} deaths" };
+        // One attempt number on screen: during a run it is the run's (as the splits widget and the Runs page show),
+        // not the challenge's own count (the Speedrun challenge that leaderboard runs hold counts separately).
+        var attempt = _services.Runs.Status is { Attempt: > 0, State: Core.Runs.RunState.Running or Core.Runs.RunState.Finished or Core.Runs.RunState.Ended } run
+            ? run.Attempt
+            : status.Attempt;
         Challenge = status.State switch
         {
-            ChallengeState.Running => $"{status.Challenge?.Name} · attempt {status.Attempt} · clean{deaths}",
+            ChallengeState.Running => $"{status.Challenge?.Name} · attempt {attempt} · clean{deaths}",
             ChallengeState.Failed => $"{status.Challenge?.Name} · failed: {status.FailReason}{deaths}",
             _ => string.Empty,
         };

@@ -142,6 +142,8 @@ The overlay is drawn over the game on your screen, so OBS doesn't see it. For yo
   optional: record each run, chapter markers at splits, deaths and fails, save the replay buffer on a death, a fail
   or a new best, and switch to a "paused" scene while the game isn't in front. It also adds **OBS hotkeys** for
   Lockpick (OBS Settings → Hotkeys, "Lockpick: …"): split, undo, skip, reset, try again, the overlay and the map.
+  For chapter markers, set OBS *Settings → Output → Recording → Recording Format* to **Hybrid MP4**: plain MP4 and
+  MKV recordings get no chapters.
 - **Window Capture** of a popped-out widget window works too (use its green background with a chroma key).
 - **Streamer mode** (Settings → General) blurs file paths, process ids and the API token in Lockpick's window, if you
   show the app on stream.
