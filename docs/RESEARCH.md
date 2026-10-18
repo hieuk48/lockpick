@@ -157,6 +157,11 @@ SCD opcodes: `0x0C door_aot_set` (26 bytes; target = stage<<5 | room), `0x18 ite
   were written at the save times). **Chris's** game uses them: each of his saves consumed one ink ribbon (id `0x2F`,
   BioRand id 47) — ribbon use depends on the scenario, not the platform. During a save the in-game timer freezes (~7 s) and no profile field or state-flag bit changes,
   so saves are detected from the save files, not memory.
+- **Lead (2026-10-17, owner's Knife only session, Jill):** entering 107 cleared its ink ribbon's item flag (39) with
+  nothing reaching the inventory, 3 s before the lockpick opened the door to 108. Jill's rooms seem to mark their
+  ribbon spots taken as she enters, which fits her game saving without ribbons. The owner's idea: the game hands Jill
+  an "invisible" ribbon supply around then (she usually can't save before that point). To check: which rooms clear
+  their ribbon flags for Jill, and when her typewriter starts allowing saves. The event feed no longer calls it a pickup.
 - **From the leaderboard's rules (speedrun.com, read 2026-10-16):** opening the options menu pauses the in-game timer
   (the PC rules forbid it as a pause for that reason). One answer for B206; the status screen, files, doors,
   cutscenes and the item box are still to be measured.

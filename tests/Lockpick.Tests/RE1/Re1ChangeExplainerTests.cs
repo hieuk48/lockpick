@@ -57,6 +57,19 @@ public class Re1ChangeExplainerTests
     }
 
     [Fact]
+    public void Jills_ribbon_flags_clearing_as_she_enters_a_room_are_not_pickups()
+    {
+        // Live 2026-10-17: entering 107 as Jill cleared ink ribbon flag 39 (word 1, bit 24) with nothing picked up.
+        var before = Jill(0, "106", ("flagRoomItems1", 0xFFFFFFFF));
+        var after = Jill(1, "107", ("flagRoomItems1", 0xFEFFFFFF));
+
+        var report = _explainer.Explain(before, after);
+
+        Assert.Empty(report.Unexplained);
+        Assert.DoesNotContain(report.Known, k => k.Contains("Ink ribbon", StringComparison.Ordinal));
+    }
+
+    [Fact]
     public void Story_flags_are_unexplained_unless_confirmed()
     {
         var change = Assert.Single(_explainer.Explain(Jill(0), Jill(1, raw: ("flagScenarioB0", 0xC0000000))).Unexplained);

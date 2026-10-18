@@ -180,7 +180,7 @@ internal sealed class Re1ChangeExplainer(Re1Knowledge knowledge) : IChangeExplai
 
                     var set = (value & mask) != 0;
                     var flag = (word * 32) + (31 - bit);
-                    if (bank == "flagRoomItems" && !set && Find(knowledge.Items, flag, room, player) is { } taken)
+                    if (bank == "flagRoomItems" && !set && Find(knowledge.Items, flag, room, player) is { } taken && !NoRibbonFor(player, taken))
                     {
                         picked.Add(taken.What);
                     }
@@ -340,6 +340,12 @@ internal sealed class Re1ChangeExplainer(Re1Knowledge knowledge) : IChangeExplai
 
     /// <summary>Kill flag for enemies a room script doesn't remember (em_set kill flag 255).</summary>
     private const int NotRemembered = 255;
+
+    // Jill's game never places ink ribbons (Re1ProgressTracker.InkRibbon): her rooms clear their ribbon flags as she
+    // enters (live 2026-10-17: flag 39 on entering 107, nothing reached the inventory), which isn't a pickup.
+    private const int InkRibbon = 0x2F;
+
+    private static bool NoRibbonFor(string player, FlagUse item) => player == "jill" && item.What == InkRibbon;
     private const int FirstDocumentFlag = 130;
 
     /// <summary>
@@ -389,6 +395,8 @@ internal sealed class Re1ChangeExplainer(Re1Knowledge knowledge) : IChangeExplai
 
         switch (bank)
         {
+            case "flagRoomItems" when !set && Find(knowledge.Items, flag, room, player) is { } ribbon && NoRibbonFor(player, ribbon):
+                return string.Empty; // the room clears the flag on entering, nothing is picked up
             case "flagRoomItems" when Find(knowledge.Items, flag, room, player) is { } item:
                 return set ? $"put {knowledge.Item(item.What)} back" : $"picked up {knowledge.Item(item.What)}";
             case "flagEnemies" when set && flag == NotRemembered:
