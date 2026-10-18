@@ -675,15 +675,21 @@
           "id": "B803",
           "task": "Capture with this build running: GOG **Japanese** (`Biohazard.exe`)",
           "verifies": "Build fingerprint (and a profile, with a short play session)",
-          "status": "needed",
-          "detector": "other_build"
+          "status": "done",
+          "detector": "other_build",
+          "evidence": [
+            "2026-10-17 owner's GOG Japanese hotfix4 install (Biohazard.exe, 972 880 bytes, SHA-256 9F38420B…7168E8012, SizeOfImage 0x4991000): profile re1-gog-jpn-hotfix4 ported from the English one by tools/re1/port_profile.py (the 1.01 code: every address and anchor found), then a 13-minute probe trace of a Chris game confirmed rooms, HP, the timer, inventory, enemies, pickups and the item box (data/games/re1/profiles/live/re1-gog-jpn-hotfix4.json)."
+          ]
         },
         {
           "id": "B804",
           "task": "Capture with this build running: Sourcenext/Mediakite Japanese + **Classic REbirth**",
           "verifies": "Build fingerprint (and a profile, with a short play session)",
-          "status": "needed",
-          "detector": "other_build"
+          "status": "done",
+          "detector": "other_build",
+          "evidence": [
+            "2026-10-17: the official Japanese 1.01 Biohazard.exe (MediaKite patch 1.01, 962 560 bytes, SHA-256 25BE34D4…D23A85302, SizeOfImage 0x990000 = the autosplitter's JapaneseREbirth) with Classic REbirth 1.1.4, on GOG's Japanese data in its own folder: profile re1-jpn-101, a probe trace (Chris to a death) and an app check (connection, map, overlay, run timing, leaderboard checks). REbirth rewrites the frame loop's timer tick in memory, so the profile anchors the timer on the New Game reset. A MediaKite disc's data files may differ from GOG's; the executable is the same file."
+          ]
         },
         {
           "id": "B805",
